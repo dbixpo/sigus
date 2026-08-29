@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Novo Chamado{% endblock %}
+
+{% block head %}
+<style>
+.escolha-wrapper {
+    max-width: 680px;
+    margin: 2rem auto;
+}
+.escolha-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: #fff;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.6rem 1.8rem;
+    text-decoration: none !important;
+    color: #111827;
+    transition: border-color .18s, box-shadow .18s, transform .15s;
+    cursor: pointer;
+}
+.escolha-card:hover {
+    border-color: var(--sigus-primary);
+    box-shadow: 0 6px 24px rgba(0,0,0,.10);
+    transform: translateY(-2px);
+    color: #111827;
+}
+.escolha-icone {
+    width: 64px; height: 64px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+.escolha-texto-titulo {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: .2rem;
+}
+.escolha-texto-desc {
+    font-size: .82rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+.escolha-seta {
+    margin-left: auto;
+    font-size: 1.3rem;
+    color: #d1d5db;
+    transition: color .15s, transform .15s;
+}
+.escolha-card:hover .escolha-seta {
+    color: var(--sigus-primary);
+    transform: translateX(4px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="escolha-wrapper">
+    <div class="page-header mb-4">
+        <h1><i class="bi bi-wrench-adjustable me-2"></i>Novo Chamado</h1>
+        <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+
+    <p class="text-muted mb-4">Selecione o tipo de chamado que deseja abrir:</p>
+
+    <div class="d-flex flex-column gap-3">
+
+        {# ── Bem Permanente ─────────────────────────────────────────── #}
+        <a href="{{ url_for('chamados.novo_bem_permanente') }}" class="escolha-card">
+            <div class="escolha-icone" style="background: linear-gradient(135deg,#1a6abf,#0e4a7a);">
+                <i class="bi bi-pc-display-horizontal"></i>
+            </div>
+            <div>
+                <div class="escolha-texto-titulo">Bem Permanente</div>
+                <div class="escolha-texto-desc">
+                    Equipamentos, mobiliários e itens patrimoniais.<br>
+                    Ex: computador, maca, ar-condicionado, cadeira, geladeira.
+                </div>
+            </div>
+            <i class="bi bi-chevron-right escolha-seta"></i>
+        </a>
+
+        {# ── Predial ────────────────────────────────────────────────── #}
+        <a href="{{ url_for('chamados.novo_predial') }}" class="escolha-card">
+            <div class="escolha-icone" style="background: linear-gradient(135deg,#d97706,#92400e);">
+                <i class="bi bi-building-gear"></i>
+            </div>
+            <div>
+                <div class="escolha-texto-titulo">Predial</div>
+                <div class="escolha-texto-desc">
+                    Problemas na estrutura física do imóvel.<br>
+                    Ex: janela, porta, elétrica, hidráulica, pintura, infiltração.
+                </div>
+            </div>
+            <i class="bi bi-chevron-right escolha-seta"></i>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

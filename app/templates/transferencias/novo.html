@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block title %}Novo Termo de Transferência/Empréstimo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('transferencias.listar') }}" class="btn btn-sm btn-outline-secondary me-2">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1><i class="bi bi-file-earmark-plus"></i> Novo Termo</h1>
+</div>
+
+<form method="POST" id="formDocumento">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="items_json" id="itemsJson" value="">
+
+    <div class="card mb-3">
+        <div class="card-header">Tipo e Unidades</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">É um Empréstimo ou uma Transferência? <span class="text-danger">*</span></label>
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tipo" id="tipoEmprestimo" value="emprestimo" required>
+                        <label class="form-check-label" for="tipoEmprestimo">Empréstimo</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="tipo" id="tipoTransferencia" value="transferencia">
+                        <label class="form-check-label" for="tipoTransferencia">Transferência</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label">Unidade de origem <span class="text-danger">*</span></label>
+                    <select name="unidade_origem_id" id="unidadeOrigem" class="form-select" required>
+                        <option value="">— Selecione —</option>
+                        {% for u in unidades_origem %}
+                        <option value="{{ u.id }}">{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Unidade de destino <span class="text-danger">*</span></label>
+                    <select name="unidade_destino_id" id="unidadeDestino" class="form-select" required>
+                        <option value="">— Selecione —</option>
+                        {% for u in unidades_destino %}
+                        <option value="{{ u.id }}">{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mt-2">
+                <label class="form-label">Observação (opcional)</label>
+                <textarea name="observacao" class="form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Materiais</span>
+            <div class="btn-group btn-group-sm">
+                <button type="button" class="btn btn-outline-primary" id="btnAddInventario">
+                    <i class="bi bi-box-seam me-1"></i>Do inventário
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="btnAddManual">
+                    <i class="bi bi-pencil-square me-1"></i>Item manual
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm" id="tabelaItens">
+                    <thead>
+                        <tr>
+                            <th>Qtd</th>
+                            <th>Descrição</th>
+                            <th>Nº Patrimônio / Série</th>
+                            <th>Classificação</th>
+                            <th width="50"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="corpoItens">
+                    </tbody>
+                </table>
+            </div>
+            <p class="small text-muted mb-0">
+                <strong>A</strong> — Inservíveis ao setor, porém com plenas condições de uso.
+                <strong>B</strong> — Inservíveis ao setor, com condições de uso porém necessitando reparos.
+            </p>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" id="btnSubmit">
+            <i class="bi bi-check-lg me-1"></i>Criar documento
+        </button>
+        <a href="{{ url_for('transferencias.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+<!-- Modal escolher equipamento -->
+<div class="modal fade" id="modalInventario" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar do inventário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Equipamento</label>
+                <select id="selectEquipamento" class="form-select">
+                    <option value="">— Selecione a unidade de origem primeiro —</option>
+                </select>
+                <div class="row mt-2">
+                    <div class="col-4">
+                        <label class="form-label small">Quantidade</label>
+                        <input type="number" id="invQtd" class="form-control form-control-sm" value="1" min="1">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small">Classificação</label>
+                        <select id="invClass" class="form-select form-select-sm">
+                            <option value="A">A</option>
+                            <option value="B">B</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmInventario">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal item manual -->
+<div class="modal fade" id="modalManual" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Adicionar item manual</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label small">Quantidade *</label>
+                    <input type="number" id="manQtd" class="form-control" value="1" min="1" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Descrição *</label>
+                    <input type="text" id="manDesc" class="form-control" placeholder="Ex: Teclado USB" required>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label small">Nº Patrimônio</label>
+                        <input type="text" id="manPat" class="form-control" placeholder="Opcional">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label small">Nº Série</label>
+                        <input type="text" id="manSer" class="form-control" placeholder="Se não tiver patrimônio">
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-label small">Classificação *</label>
+                    <select id="manClass" class="form-select">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmManual">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const items = [];
+    const corpo = document.getElementById('corpoItens');
+    const itemsJson = document.getElementById('itemsJson');
+    const unidadeOrigem = document.getElementById('unidadeOrigem');
+    const selectEquipamento = document.getElementById('selectEquipamento');
+
+    function serializar() {
+        itemsJson.value = JSON.stringify(items);
+    }
+
+    function renderizar() {
+        corpo.innerHTML = items.map((it, idx) => {
+            const desc = it.equipamento_id ? (it._display || '—') : it.descricao;
+            const patSer = it.equipamento_id ? (it._patrimonio || it._serie || '—') : (it.numero_patrimonio || it.numero_serie || '—');
+            return `<tr data-idx="${idx}">
+                <td>${it.quantidade}</td>
+                <td>${escapeHtml(desc)}</td>
+                <td class="small text-muted">${escapeHtml(patSer)}</td>
+                <td><span class="badge bg-secondary">${it.classificacao}</span></td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger btn-remover" data-idx="${idx}"><i class="bi bi-trash"></i></button></td>
+            </tr>`;
+        }).join('');
+        serializar();
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+
+    document.getElementById('btnAddInventario').addEventListener('click', function() {
+        const uid = unidadeOrigem.value;
+        if (!uid) { alert('Selecione a unidade de origem primeiro.'); return; }
+        selectEquipamento.innerHTML = '<option value="">Carregando...</option>';
+        fetch(`/transferencias/api/equipamentos-unidade/${uid}`)
+            .then(r => r.json())
+            .then(data => {
+                selectEquipamento.innerHTML = '<option value="">— Selecione —</option>' +
+                    data.map(e => `<option value="${e.id}" data-nome="${escapeHtml(e.nome)}" data-pat="${escapeHtml(e.patrimonio)}" data-serie="${escapeHtml(e.serie)}">${escapeHtml(e.nome)} ${e.patrimonio ? '· ' + e.patrimonio : ''}</option>`).join('');
+                document.getElementById('invQtd').value = 1;
+                new bootstrap.Modal(document.getElementById('modalInventario')).show();
+            });
+    });
+
+    document.getElementById('btnConfirmInventario').addEventListener('click', function() {
+        const opt = selectEquipamento.options[selectEquipamento.selectedIndex];
+        if (!opt || !opt.value) { alert('Selecione um equipamento.'); return; }
+        const qtd = parseInt(document.getElementById('invQtd').value) || 1;
+        const cl = document.getElementById('invClass').value;
+        items.push({
+            equipamento_id: parseInt(opt.value),
+            quantidade: qtd,
+            descricao: '',
+            classificacao: cl,
+            numero_patrimonio: '',
+            numero_serie: '',
+            _display: opt.dataset.nome,
+            _patrimonio: opt.dataset.pat,
+            _serie: opt.dataset.serie
+        });
+        renderizar();
+        bootstrap.Modal.getInstance(document.getElementById('modalInventario')).hide();
+    });
+
+    document.getElementById('btnAddManual').addEventListener('click', function() {
+        document.getElementById('manQtd').value = 1;
+        document.getElementById('manDesc').value = '';
+        document.getElementById('manPat').value = '';
+        document.getElementById('manSer').value = '';
+        new bootstrap.Modal(document.getElementById('modalManual')).show();
+    });
+
+    document.getElementById('btnConfirmManual').addEventListener('click', function() {
+        const desc = document.getElementById('manDesc').value.trim();
+        if (!desc) { alert('Informe a descrição.'); return; }
+        const qtd = parseInt(document.getElementById('manQtd').value) || 1;
+        const pat = document.getElementById('manPat').value.trim();
+        const ser = document.getElementById('manSer').value.trim();
+        const cl = document.getElementById('manClass').value;
+        if (!pat && !ser) {
+            if (!confirm('Nenhum patrimônio ou série informado. Continuar?')) return;
+        }
+        items.push({
+            equipamento_id: null,
+            quantidade: qtd,
+            descricao: desc,
+            classificacao: cl,
+            numero_patrimonio: pat || '',
+            numero_serie: ser || ''
+        });
+        renderizar();
+        bootstrap.Modal.getInstance(document.getElementById('modalManual')).hide();
+    });
+
+    corpo.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-remover');
+        if (btn) {
+            const idx = parseInt(btn.dataset.idx);
+            items.splice(idx, 1);
+            renderizar();
+        }
+    });
+
+    document.getElementById('formDocumento').addEventListener('submit', function(e) {
+        if (items.length === 0) {
+            e.preventDefault();
+            alert('Adicione pelo menos um item.');
+            return;
+        }
+        serializar();
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,401 @@
+{% extends 'base.html' %}
+{% block title %}Contrato {{ contrato.identificador }}{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trix@2.1.0/dist/trix.css">
+<style>
+.trix-editor-wrapper { border: 1px solid #ced4da; border-radius: 6px; background: #fff; }
+.trix-editor-wrapper trix-editor { min-height: 100px; border: none; }
+.trix-editor-wrapper trix-toolbar .trix-button-group { border: none; }
+.resp-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.resp-inicial { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-width: 28px; border-radius: 50%; font-size: .7rem; font-weight: 700; background: linear-gradient(135deg, var(--sigus-primary), #0ea5e9); color: #fff; }
+.observacao-html { font-size: .85rem; max-height: 120px; overflow-y: auto; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/trix@2.1.0/dist/trix.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('contratos.listar') }}">Contratos</a></li>
+        <li class="breadcrumb-item active">{{ contrato.identificador }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-text"></i> {{ contrato.identificador }}
+        <span class="badge bg-{{ contrato.status_badge }} ms-2 fs-6">{{ contrato.status_label }}</span>
+    </h1>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                onclick="abrirImpresso('{{ url_for('contratos.imprimir', id=contrato.id) }}', 'Resumo — {{ contrato.identificador | e }}')">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% if current_user.pode('editar_contrato') %}
+        <a href="{{ url_for('contratos.editar', id=contrato.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
+    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ contrato.criado_em | br_datetime }}</strong></span>
+    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ contrato.atualizado_em | br_datetime }}</strong></span>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">Dados do Contrato</div>
+            <div class="card-body small">
+                {% if contrato.cpl %}
+                <div class="mb-2"><strong>CPL:</strong>
+                    {% if contrato.cpl_url_transparencia %}
+                    <a href="{{ contrato.cpl_url_transparencia }}" target="_blank" rel="noopener">{{ contrato.cpl }}</a>
+                    <i class="bi bi-box-arrow-up-right text-muted" style="font-size:.7rem;"></i>
+                    {% else %}
+                    {{ contrato.cpl }}
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="mb-2"><strong>Nº do Processo SEI:</strong> {{ contrato.numero_sei or '—' }}</div>
+                {% if contrato.link_sei %}
+                <div class="mb-2"><strong>Link SEI:</strong> <a href="{{ contrato.link_sei }}" target="_blank" rel="noopener">Acessar processo <i class="bi bi-box-arrow-up-right"></i></a></div>
+                {% endif %}
+                {% if contrato.modalidade %}
+                <div class="mb-2"><strong>Modalidade:</strong> {{ contrato.modalidade }}</div>
+                {% endif %}
+                <div class="mb-2"><strong>Empresa:</strong>
+                    {% if contrato.empresa_contratada %}
+                    <a href="{{ url_for('empresas.detalhe', id=contrato.empresa_contratada.id) }}">{{ contrato.empresa_display }}</a>
+                    {% else %}
+                    {{ contrato.empresa_display }}
+                    {% endif %}
+                </div>
+                <div class="mb-2"><strong>Tipo:</strong> {{ contrato.tipo_contrato or '—' }}</div>
+                <div class="mb-2"><strong>Início:</strong> {{ contrato.data_inicio | br_date }}</div>
+                <div class="mb-2">
+                    <strong>Vencimento:</strong> {{ contrato.data_fim | br_date }}
+                    <span class="ms-1 {% if contrato.dias_restantes < 0 %}text-danger{% elif contrato.dias_restantes <= 60 %}text-warning{% else %}text-success{% endif %} fw-semibold">
+                        ({% if contrato.dias_restantes < 0 %}vencido há {{ (-contrato.dias_restantes) }} dias{% else %}{{ contrato.dias_restantes }} dias restantes{% endif %})
+                    </span>
+                </div>
+                {% if contrato.mandado_judicial %}
+                <div class="mb-2"><strong>Mandado Judicial:</strong> <span class="badge bg-warning text-dark">Sim</span></div>
+                {% endif %}
+                {% if contrato.valor_total %}
+                <div class="mb-2"><strong>Valor Total:</strong> {{ contrato.valor_total | br_currency }}</div>
+                {% endif %}
+                {% if contrato.valor_inicial or contrato.valor_atual or contrato.valor_mensal_atual %}
+                <div class="mb-2"><strong>Valores:</strong>
+                    {% if contrato.valor_inicial %}Inicial: {{ contrato.valor_inicial | br_currency }}{% endif %}
+                    {% if contrato.valor_atual %} | Atual: {{ contrato.valor_atual | br_currency }}{% endif %}
+                    {% if contrato.valor_mensal_atual %} | Mensal: {{ contrato.valor_mensal_atual | br_currency }}{% endif %}
+                </div>
+                {% endif %}
+                {% if contrato.fonte %}<div class="mb-2"><strong>Fonte:</strong> {{ contrato.fonte }}</div>{% endif %}
+                {% if contrato.contato_nome_telefone %}<div class="mb-2"><strong>Contato:</strong> {{ contrato.contato_nome_telefone }}</div>{% endif %}
+                {% if contrato.empenhos %}<div class="mb-2"><strong>Empenhos:</strong> {{ contrato.empenhos }}</div>{% endif %}
+                {% if contrato.objeto %}
+                <div class="mt-3">
+                    <strong>Objeto:</strong>
+                    <p class="text-muted mt-1">{{ contrato.objeto }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-pc-display me-2"></i>Equipamentos Cobertos ({{ itens | length }})</span>
+            </div>
+            <div class="card-body p-0">
+                {% if itens %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Tipo / Marca / Modelo</th><th>Cobertura</th><th></th></tr></thead>
+                        <tbody>
+                            {% for item in itens %}
+                            <tr>
+                                <td class="small">{{ item.cobertura_resumo }}</td>
+                                <td class="small text-muted">{{ item.descricao_cobertura or '—' }}</td>
+                                <td>
+                                    {% if current_user.pode('editar_contrato') %}
+                                    <form method="POST" action="{{ url_for('contratos.remover_item', item_id=item.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-confirm="Remover este item do contrato?">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-3"><i class="bi bi-pc-display"></i><p class="small">Nenhum item vinculado.</p></div>
+                {% endif %}
+            </div>
+            {% if current_user.pode('editar_contrato') %}
+            <div class="card-footer">
+                <form method="POST" action="{{ url_for('contratos.vincular_item', id=contrato.id) }}" id="formVincularItem">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-3">
+                            <label class="form-label form-label-sm mb-0">Tipo *</label>
+                            <select name="tipo_equipamento_id" id="vinculoTipo" class="form-select form-select-sm" required>
+                                <option value="">Selecionar tipo...</option>
+                                {% for t in tipos_equipamento_disponiveis %}
+                                <option value="{{ t.id }}">{{ t.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label form-label-sm mb-0">Marca</label>
+                            <select name="marca_id" id="vinculoMarca" class="form-select form-select-sm">
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label form-label-sm mb-0">Modelo</label>
+                            <select name="modelo_id" id="vinculoModelo" class="form-select form-select-sm">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label form-label-sm mb-0">Descrição cobertura</label>
+                            <input type="text" name="descricao_cobertura" class="form-control form-control-sm"
+                                   placeholder="Opcional">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Vincular</button>
+                        </div>
+                    </div>
+                    <small class="text-muted">Tipo obrigatório. Marca/modelo opcionais — vazios = todos.</small>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="bi bi-clock-history me-2"></i>Histórico ({{ historico | length }})</span>
+                <div class="d-flex gap-2">
+                    {% if current_user.pode('cadastrar_contrato') %}
+                    <a href="{{ url_for('contrato_financeiro.novo') }}?contrato_id={{ contrato.id }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-currency-dollar me-1"></i>Cadastrar empenho
+                    </a>
+                    {% endif %}
+                    {% if current_user.pode('editar_contrato') %}
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#formAcao">
+                        <i class="bi bi-plus-circle me-1"></i>Adicionar ação
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="collapse" id="formAcao">
+                <div class="card-body border-bottom">
+                    <form method="POST" action="{{ url_for('contratos.adicionar_acao', id=contrato.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="form-label form-label-sm">Tipo *</label>
+                                <select name="tipo" id="acaoTipo" class="form-select form-select-sm" required>
+                                    {% for val, label in acao_tipos %}
+                                    <option value="{{ val }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label form-label-sm">Data *</label>
+                                <input type="date" name="data_acao" id="dataAcao" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label form-label-sm">Observação / Texto com formatação</label>
+                                <div class="trix-editor-wrapper">
+                                    <input type="hidden" name="observacao" id="acaoObservacao">
+                                    <trix-editor input="acaoObservacao" placeholder="Escreva uma observação, se precisar..."></trix-editor>
+                                </div>
+                            </div>
+                            <div class="col-md-4 acao-campo acao-prorrogacao acao-renovacao acao-prorrogacao_excepcional">
+                                <label class="form-label form-label-sm">Período (meses)</label>
+                                <input type="number" name="periodo_meses" class="form-control form-control-sm" min="1" placeholder="Ex: 12">
+                            </div>
+                            <div class="col-md-4 acao-campo acao-prorrogacao acao-renovacao acao-prorrogacao_excepcional">
+                                <label class="form-label form-label-sm">OU Nova data de vencimento</label>
+                                <input type="date" name="nova_data_fim" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-md-4 acao-campo acao-termo_aditivo">
+                                <label class="form-label form-label-sm">Valor adicional (R$)</label>
+                                <input type="text" name="valor_adicional" class="form-control form-control-sm" placeholder="Ex: 10000,00">
+                            </div>
+                            <div class="col-md-4 acao-campo acao-termo_aditivo">
+                                <label class="form-label form-label-sm">OU Porcentagem (%)</label>
+                                <input type="text" name="porcentagem_adicional" class="form-control form-control-sm" placeholder="Ex: 10">
+                            </div>
+                            <div class="col-md-4 acao-campo acao-multa">
+                                <label class="form-label form-label-sm">Porcentagem da multa (%)</label>
+                                <input type="text" name="porcentagem_multa" class="form-control form-control-sm" placeholder="Sobre valor do contrato">
+                            </div>
+                            <div class="col-md-6 acao-campo acao-notificacao">
+                                <label class="form-label form-label-sm">Anexar arquivo</label>
+                                <input type="file" name="anexo" class="form-control form-control-sm" accept="image/*,.pdf,.doc,.docx">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">Registrar ação</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if historico %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Tipo</th>
+                                <th>Registrado por</th>
+                                <th>Detalhes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for h in historico %}
+                            {% if h.tipo == 'acao' %}
+                            {% set a = h.item %}
+                            <tr>
+                                <td class="small">{{ a.data_acao | br_date }}</td>
+                                <td><span class="badge bg-secondary">{{ a.tipo_label }}</span></td>
+                                <td class="small">
+                                    {% if a.criador %}
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if a.criador.foto_url %}
+                                        <img src="{{ a.criador.foto_url }}" alt="" class="resp-avatar">
+                                        {% else %}
+                                        <span class="resp-inicial">{{ (a.criador.nome or '?')[0]|upper }}</span>
+                                        {% endif %}
+                                        <span>{{ (a.criador.nome or '').split()[0] or '—' }}</span>
+                                    </div>
+                                    {% else %}
+                                    —
+                                    {% endif %}
+                                </td>
+                                <td class="small">
+                                    {% if a.periodo_meses %}Por {{ a.periodo_meses }} {{ 'mês' if a.periodo_meses == 1 else 'meses' }}. {% endif %}
+                                    {% if a.nova_data_fim %}Nova data: {{ a.nova_data_fim | br_date }}{% endif %}
+                                    {% if a.valor_adicional %}Valor: {{ a.valor_adicional | br_currency }}{% endif %}
+                                    {% if a.porcentagem_adicional %}Aditivo: {{ a.porcentagem_adicional }}%{% endif %}
+                                    {% if a.porcentagem_multa %}
+                                        {{ a.porcentagem_multa }}% = {{ a.valor_multa_calculado | br_currency if a.valor_multa_calculado else '—' }}
+                                    {% endif %}
+                                    {% if a.novo_valor_total %}Novo total: {{ a.novo_valor_total | br_currency }}{% endif %}
+                                    {% if a.tipo == 'termo_encerramento' %}<em>Contrato encerrado</em>{% endif %}
+                                    {% if a.anexo_url %}
+                                        <a href="{{ a.anexo_url }}" target="_blank" class="ms-1"><i class="bi bi-paperclip"></i> Anexo</a>
+                                    {% endif %}
+                                    {% if a.observacao %}
+                                    <div class="observacao-html mt-1 text-muted">{{ a.observacao | safe }}</div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            {% set e = h.item %}
+                            <tr>
+                                <td class="small">{{ e.criado_em | br_date if e.criado_em else '—' }}</td>
+                                <td><span class="badge bg-info text-dark">Empenho</span></td>
+                                <td class="small">—</td>
+                                <td class="small">
+                                    <strong>{{ e.tipo or '—' }}</strong>{% if e.motivo %} — {{ e.motivo }}{% endif %}
+                                    {% if e.valor_total %}<br>Valor: {{ e.valor_total | br_currency }}{% endif %}
+                                    {% if e.referencia %}<br>Ref.: {{ e.referencia }}{% endif %}
+                                    {% if e.observacao %}<br><span class="text-muted">{{ e.observacao | truncate(80) }}</span>{% endif %}
+                                    <br><a href="{{ url_for('contrato_financeiro.editar', id=e.id) }}" class="small">Editar empenho</a>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted small py-3">Nenhum registro no histórico.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+(function(){
+    // Selects cascata: tipo -> marca -> modelo
+    var vinculoTipo = document.getElementById('vinculoTipo');
+    var vinculoMarca = document.getElementById('vinculoMarca');
+    var vinculoModelo = document.getElementById('vinculoModelo');
+    if (vinculoTipo) {
+        vinculoTipo.addEventListener('change', function(){
+            var tid = vinculoTipo.value;
+            vinculoMarca.innerHTML = '<option value="">Todas</option>';
+            vinculoModelo.innerHTML = '<option value="">Todos</option>';
+            if (!tid) return;
+            fetch('/contratos/api/marcas-por-tipo/' + tid)
+                .then(function(r){ return r.json(); })
+                .then(function(arr){
+                    arr.forEach(function(m){
+                        var o = document.createElement('option');
+                        o.value = m.id;
+                        o.textContent = m.nome;
+                        vinculoMarca.appendChild(o);
+                    });
+                });
+        });
+    }
+    if (vinculoMarca) {
+        vinculoMarca.addEventListener('change', function(){
+            var mid = vinculoMarca.value;
+            var tid = vinculoTipo && vinculoTipo.value;
+            vinculoModelo.innerHTML = '<option value="">Todos</option>';
+            if (!mid) return;
+            var url = '/contratos/api/modelos?marca_id=' + mid;
+            if (tid) url += '&tipo_id=' + tid;
+            fetch(url)
+                .then(function(r){ return r.json(); })
+                .then(function(arr){
+                    arr.forEach(function(m){
+                        var o = document.createElement('option');
+                        o.value = m.id;
+                        o.textContent = m.nome;
+                        vinculoModelo.appendChild(o);
+                    });
+                });
+        });
+    }
+
+    var sel = document.getElementById('acaoTipo');
+    if (!sel) return;
+    function toggle(){
+        var v = (sel.value || '').replace(' ', '_');
+        document.querySelectorAll('.acao-campo').forEach(function(el){
+            var show = el.classList.contains('acao-' + v);
+            el.style.display = show ? '' : 'none';
+        });
+    }
+    sel.addEventListener('change', toggle);
+    toggle();
+    document.addEventListener('trix-file-accept', function(e){ e.preventDefault(); });
+    document.querySelector('[data-bs-target="#formAcao"]')?.addEventListener('click', function(){
+        var d = document.getElementById('dataAcao');
+        if (d && !d.value) {
+            var today = new Date().toISOString().slice(0, 10);
+            d.value = today;
+        }
+    });
+})();
+</script>
+{% endblock %}
+{% endblock %}

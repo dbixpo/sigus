@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-gear"></i> Configurações do Sistema</h1>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-hospital fs-1 text-primary d-block mb-3"></i>
+                <h5 class="fw-bold">Tipos de Unidade</h5>
+                <p class="text-muted small mb-3">
+                    UBS, USF, UPA, Centro de Especialidades etc.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-primary fs-6">{{ total_tipos_unidade }} tipo(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.tipos_unidade') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-door-open fs-1 text-warning d-block mb-3"></i>
+                <h5 class="fw-bold">Tipos de Sala</h5>
+                <p class="text-muted small mb-3">
+                    Consultório, Farmácia, Sala de Enfermagem etc.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-warning text-dark fs-6">{{ total_tipos_sala }} tipo(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-tags fs-1 text-success d-block mb-3"></i>
+                <h5 class="fw-bold">Tipos de Equipamento</h5>
+                <p class="text-muted small mb-3">
+                    Computador, Maca, Ar-condicionado etc.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-success fs-6">{{ total_tipos_equip }} tipo(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.tipos_equipamento') }}" class="btn btn-success btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-tag fs-1 text-secondary d-block mb-3"></i>
+                <h5 class="fw-bold">Marcas</h5>
+                <p class="text-muted small mb-3">
+                    Dell, HP, Philips — vinculadas aos tipos de equipamento.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-secondary fs-6">{{ total_marcas }} marca(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.listar_marcas') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-cpu fs-1 text-info d-block mb-3"></i>
+                <h5 class="fw-bold">Modelos</h5>
+                <p class="text-muted small mb-3">
+                    OptiPlex 3000, LaserJet Pro — vinculados a tipo e marca.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-info text-dark fs-6">{{ total_modelos }} modelo(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.listar_modelos') }}" class="btn btn-info btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-shield-lock fs-1 text-danger d-block mb-3"></i>
+                <h5 class="fw-bold">Gestão de Perfis</h5>
+                <p class="text-muted small mb-3">
+                    Configure permissões (Ver, Editar, Adicionar) por seção para cada perfil.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-danger fs-6">{{ total_perfis }} perfil(is)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.perfis') }}" class="btn btn-danger btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-tags fs-1 text-secondary d-block mb-3"></i>
+                <h5 class="fw-bold">Tipos de Link</h5>
+                <p class="text-muted small mb-3">
+                    Categorias para organizar os Links Úteis.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-secondary fs-6">{{ total_tipos_link }} tipo(s)</span>
+                </div>
+                <a href="{{ url_for('links.admin_tipos') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-link-45deg fs-1 text-primary d-block mb-3"></i>
+                <h5 class="fw-bold">Links Úteis</h5>
+                <p class="text-muted small mb-3">
+                    Linktree interno — links, portais e recursos por perfil.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-primary fs-6">{{ total_links }} link(s)</span>
+                </div>
+                <a href="{{ url_for('links.admin') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- Divisões e Setores -->
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-diagram-3 fs-1 text-secondary d-block mb-3"></i>
+                <h5 class="fw-bold">Divisões e Setores</h5>
+                <p class="text-muted small mb-3">
+                    Organize quem vê e quem trabalha nos chamados por divisão.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-secondary fs-6">{{ total_divisoes | default(0) }} divisão(ões) · {{ total_setores | default(0) }} setor(es)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.divisoes') }}" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status de Chamados -->
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-tags fs-1 text-warning d-block mb-3"></i>
+                <h5 class="fw-bold">Status de Chamados</h5>
+                <p class="text-muted small mb-3">Ative, desative e configure os status disponíveis para chamados.</p>
+                <div class="mb-3"><span class="badge bg-warning text-dark fs-6">{{ total_status_chamado }} ativo(s)</span></div>
+                <a href="{{ url_for('configuracoes.status_chamados') }}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if current_user.pode('ver_auditoria') %}
+    <!-- Auditoria (apenas administrador) -->
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="bi bi-journal-text fs-1 text-dark d-block mb-3"></i>
+                <h5 class="fw-bold">Auditoria</h5>
+                <p class="text-muted small mb-3">Registro de todas as requisições HTTP do sistema.</p>
+                <a href="{{ url_for('configuracoes.auditoria') }}" class="btn btn-dark btn-sm">
+                    <i class="bi bi-arrow-right me-1"></i>Visualizar
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

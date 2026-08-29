@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Relatório de Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-person-lines-fill"></i> Relatório de Usuários</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_usuarios', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_usuarios', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_usuarios', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" class="row g-2 align-items-end mb-2">
+        <div class="col-md-3">{{ filtro_multiselect('Perfil', 'perfil', perfis, filtro_perfis, 'Todos os perfis') }}</div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Situação</label>
+            <select name="apenas_ativos" class="form-select form-select-sm" data-singleselect data-placeholder="Todos">
+                <option value="1" {{ 'selected' if apenas_ativos == '1' }}>Apenas ativos</option>
+                <option value="0" {{ 'selected' if apenas_ativos == '0' }}>Todos (incl. inativos)</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i></button>
+            <a href="{{ url_for('relatorios.usuarios') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Nome',        0, 'nome') }}
+        {{ filtro_rapido('E-mail',      1, 'email') }}
+        {{ filtro_rapido('Telefone',    2, 'telefone') }}
+        {{ filtro_rapido('Perfil',      3, 'perfil') }}
+        {{ filtro_rapido('Matrícula',   4, 'matricula') }}
+        {{ filtro_rapido('CBO',         5, 'cbo') }}
+        {{ filtro_rapido('Status',      6, 'status') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsUsuarios">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ total }}</strong></span>
+    <span class="mini-stat">Perfis: <strong data-stat-col="3">—</strong></span>
+    <span class="mini-stat">CBOs: <strong data-stat-col="5">—</strong></span>
+    <span class="mini-stat">Ativos: <strong data-stat-col="6">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if usuarios %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle" id="tblUsuarios">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th><i class="bi bi-whatsapp text-success me-1"></i>Telefone</th>
+                        <th>Perfil</th>
+                        <th>Matrícula(s)</th>
+                        <th>CBO</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    {% set mats = mats_por_usuario.get(u.id, []) %}
+                    <tr>
+                        <td class="fw-semibold small">{{ u.nome }}</td>
+                        <td class="small text-muted">
+                            {% if u.email %}<a href="mailto:{{ u.email }}" class="text-decoration-none text-muted">{{ u.email }}</a>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="small">
+                            {% set _fone = u.whatsapp or u.telefone %}
+                            {% if _fone %}
+                            {% set wnum = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
+                            <a href="https://wa.me/55{{ wnum }}" target="_blank"
+                               class="text-success text-decoration-none d-flex align-items-center gap-1">
+                                <i class="bi bi-whatsapp"></i>{{ _fone | br_fone }}
+                            </a>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ u.perfil_label }}</span></td>
+                        {# ── Matrícula(s) ── #}
+                        <td class="small">
+                            {% if mats %}
+                            <div class="d-flex flex-column gap-1">
+                                {% for m in mats %}
+                                <span class="{{ 'text-muted' if not m.ativo else '' }}">
+                                    <span class="fw-semibold">{{ m.numero }}</span>
+                                    {% if not m.ativo %}<span class="badge bg-light text-secondary ms-1" style="font-size:.7rem">inativa</span>{% endif %}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% else %}<span class="text-muted fst-italic">—</span>{% endif %}
+                        </td>
+                        {# ── CBO ── #}
+                        <td class="small">
+                            {% set cbos_mats = mats | selectattr('ativo') | selectattr('cbo') | list %}
+                            {% if cbos_mats %}
+                            <div class="d-flex flex-column gap-1">
+                                {% for m in cbos_mats %}<span>{{ m.cbo_label }}</span>{% endfor %}
+                            </div>
+                            {% elif u.cbo %}<span>{{ u.cbo_label }}</span>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if u.ativo else 'danger' }}">
+                                {{ 'Ativo' if u.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('usuarios.editar', id=u.id) }}"
+                               class="btn btn-sm btn-outline-secondary" title="Ver perfil">
+                                <i class="bi bi-person"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4 text-center text-muted">
+            <i class="bi bi-person-lines-fill fs-1 d-block mb-3"></i>
+            <h6>Nenhum usuário encontrado com estes filtros.</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initFiltrosRapidos('tblUsuarios', 'miniStatsUsuarios');</script>
+{% endblock %}

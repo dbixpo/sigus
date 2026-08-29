@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}{{ sala.nome }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=sala.unidade_id) }}">{{ sala.unidade.nome }}</a></li>
+        <li class="breadcrumb-item active">{{ sala.nome }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-door-open"></i> {{ sala.nome }}
+        <small class="text-muted fs-6">— {{ sala.tipo or '' }}</small>
+        {% if sala.ramal %}
+        <span class="badge bg-secondary fs-6 ms-2 fw-normal">
+            <i class="bi bi-telephone-plus me-1"></i>Ramal {{ sala.ramal }}
+        </span>
+        {% endif %}
+    </h1>
+    <div class="d-flex gap-2">
+        {% if current_user.pode('cadastrar_equipamento') %}
+        <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Novo Equipamento
+        </a>
+        {% endif %}
+        {% if current_user.pode('editar_sala') %}
+        <a href="{{ url_for('salas.editar', id=sala.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
+    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ sala.criado_em | br_datetime }}</strong></span>
+    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ sala.atualizado_em | br_datetime }}</strong></span>
+</div>
+
+<!-- Abas -->
+<ul class="nav nav-tabs" id="tabSala" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-equip">
+            <i class="bi bi-pc-display me-1"></i>Equipamentos
+            <span class="badge bg-primary ms-1">{{ equipamentos | length }}</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-chamados-sala">
+            <i class="bi bi-wrench me-1"></i>Chamados
+            {% if chamados_sala %}<span class="badge bg-danger ms-1">{{ chamados_sala | length }}</span>{% endif %}
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content card border-top-0 rounded-top-0">
+    <!-- Equipamentos -->
+    <div class="tab-pane fade show active p-0" id="tab-equip">
+        {% if equipamentos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Patrimônio</th>
+                        <th>Tipo</th>
+                        <th>Marca/Modelo</th>
+                        <th>Status</th>
+                        <th>Condição</th>
+                        <th>Nº Série</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in equipamentos %}
+                    <tr onclick="window.location='{{ url_for('equipamentos.detalhe', id=e.id) }}'" style="cursor:pointer;">
+                        <td><span class="fw-mono small">{{ e.numero_patrimonio or '—' }}</span></td>
+                        <td>
+                            <i class="{{ e.tipo_equipamento.icone }} me-1 text-primary"></i>
+                            <span class="small fw-semibold">{{ e.nome_display }}</span>
+                            {% if e.usuario_vinculado_nome %}
+                            <div class="text-muted" style="font-size:.78rem"><i class="bi bi-person-circle me-1"></i>{{ e.usuario_vinculado_nome }}</div>
+                            {% endif %}
+                            <div class="text-muted" style="font-size:.78rem">
+                                {% if e.numero_patrimonio %}<i class="bi bi-tag me-1"></i>{{ e.numero_patrimonio }}
+                                {% elif e.numero_serie %}<i class="bi bi-upc me-1"></i>{{ e.numero_serie }}
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="small">
+                            {{ e.marca.nome if e.marca else '—' }}
+                            {% if e.modelo %}<span class="text-muted">/ {{ e.modelo.nome }}</span>{% endif %}
+                        </td>
+                        <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
+                        <td><span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao_label }}</span></td>
+                        <td class="small text-muted">{{ e.numero_serie or '—' }}</td>
+                        <td>
+                            <a href="{{ url_for('equipamentos.detalhe', id=e.id) }}"
+                               class="btn btn-sm btn-outline-primary">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-pc-display"></i>
+            <h6>Nenhum equipamento cadastrado nesta sala</h6>
+            {% if current_user.pode('cadastrar_equipamento') %}
+            <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary mt-2">Cadastrar Equipamento</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Chamados da sala -->
+    <div class="tab-pane fade p-0" id="tab-chamados-sala">
+        {% if chamados_sala %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Número</th>
+                        <th>Título</th>
+                        <th>Equipamento</th>
+                        <th>Status</th>
+                        <th>Abertura</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in chamados_sala %}
+                    <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
+                        <td class="small text-primary fw-semibold">{{ c.numero }}</td>
+                        <td class="small">{{ c.titulo | truncate(45) }}</td>
+                        <td class="small text-muted">
+                            {% if c.equipamento %}
+                            <i class="{{ c.equipamento.tipo_equipamento.icone }} me-1"></i>{{ c.equipamento.tipo_equipamento.nome }}
+                            {% else %}—{% endif %}
+                        </td>
+                        <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                        <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-3">
+            <i class="bi bi-check-circle text-success"></i>
+            <p class="small">Nenhum chamado registrado para esta sala.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

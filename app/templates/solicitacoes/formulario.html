@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGUS — Solicitação de Vínculo Profissional</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+:root {
+  --sigus-primary: #1A82B8;
+  --sigus-dark:    #1E3A50;
+}
+
+/* ── Reset de foco — outline fino e discreto ── */
+*:focus, *:focus-visible {
+  outline: 1.5px solid var(--sigus-primary) !important;
+  outline-offset: 1px !important;
+  box-shadow: 0 0 0 2px rgba(26,130,184,.15) !important;
+}
+.ts-control:focus-within {
+  outline: 1.5px solid var(--sigus-primary) !important;
+  box-shadow: 0 0 0 2px rgba(26,130,184,.15) !important;
+}
+
+body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; }
+
+/* ── Topo ── */
+.topo {
+  background: var(--sigus-dark);
+  border-bottom: 3px solid var(--sigus-primary);
+  padding: 14px 24px;
+  display: flex; align-items: center; gap: 14px;
+}
+.topo img { height: 44px; }
+.topo-titulo { color: #fff; line-height: 1.2; }
+.topo-titulo strong { font-size: 1.05rem; display: block; }
+.topo-titulo small  { font-size: .7rem; opacity: .7; }
+
+/* ── Card principal ── */
+.form-card {
+  max-width: 840px; margin: 28px auto 48px;
+  background: #fff; border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.09);
+  overflow: hidden;
+}
+.form-card-header {
+  background: var(--sigus-primary); color: #fff;
+  padding: 16px 24px;
+}
+.form-card-header h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.form-card-header p  { margin: 4px 0 0; font-size: .8rem; opacity: .85; }
+.form-body { padding: 22px 24px; }
+
+/* ── Seção — igual à ficha CNES ── */
+.secao {
+  border-top: 1px solid #c8d8e4;
+  margin-top: 18px; padding-top: 10px;
+}
+.secao:first-of-type { border-top: none; margin-top: 0; }
+.secao-titulo {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  color: var(--sigus-primary); letter-spacing: .08em; margin-bottom: 12px;
+}
+
+/* ── Campos ── */
+.form-label { font-size: .78rem; font-weight: 600; color: #444; margin-bottom: 3px; }
+.form-control, .form-select {
+  font-size: .85rem; border-color: #c8d4dc; border-radius: 5px;
+  padding: 5px 9px; height: auto;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--sigus-primary);
+}
+.input-group .btn { border-color: #c8d4dc; }
+
+/* Asterisco obrigatório */
+.obrig label::after,
+.campo-obrig > label::after { content: ' *'; color: #dc3545; }
+
+/* ── Bloco condicional (empresa / estrangeiro) ── */
+.bloco-cond {
+  background: #f8fafc; border: 1px solid #dce8f0;
+  border-radius: 7px; padding: 14px; margin-top: 4px;
+}
+.bloco-cond-aviso {
+  font-size: .78rem; color: #555; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Botão enviar ── */
+.btn-enviar {
+  background: var(--sigus-primary); color: #fff; border: none;
+  padding: 11px 0; border-radius: 7px; font-size: .95rem;
+  font-weight: 600; cursor: pointer; width: 100%;
+  margin-top: 6px;
+}
+.btn-enviar:hover { background: #1569a0; }
+
+/* ── Tom Select override fino ── */
+.ts-control {
+  border-color: #c8d4dc !important;
+  border-radius: 5px !important;
+  padding: 4px 8px !important;
+  font-size: .85rem !important;
+  min-height: 34px !important;
+}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <img src="{{ url_for('static', filename='img/logo-sd-branco.png') }}" alt="Saúde Digital">
+  <div class="topo-titulo">
+    <strong>SIGUS — Solicitação de Vínculo Profissional</strong>
+    <small>Sistema Integrado de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba</small>
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h4><i class="bi bi-person-plus me-2"></i>Formulário de Auto-Cadastro</h4>
+    <p>Preencha os dados abaixo para solicitar seu cadastro em uma unidade de saúde. Um gestor irá revisar e aprovar sua solicitação.</p>
+  </div>
+
+  <div class="form-body">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }} alert-dismissible fade show py-2 small" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endwith %}
+
+    <form method="POST" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- ── UNIDADE ── -->
+      <div class="secao">
+        <div class="secao-titulo"><i class="bi bi-hospital me-1"></i>Unidade de Destino</div>
+        <div class="row g-2">
+          <div class="col-12 campo-obrig">
+            <label class="form-label">Unidade de Saúde</label>
+            <select name="unidade_id" id="selUnidade" class="form-select" required
+                    data-singleselect data-placeholder="Selecione a unidade...">
+              <option value="">Selecione...</option>
+              {% for u in unidades %}
+              <option value="{{ u.id }}" {% if form.get('unidade_id')|string == u.id|string %}selected{% endif %}>{{ u.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── IDENTIFICAÇÃO ── -->
+      <div class="secao">
+        <div class="secao-titulo"><i class="bi bi-person me-1"></i>Identificação</div>
+        <div class="row g-2">
+          <div class="col-md-8 campo-obrig">
+            <label class="form-label">Nome Completo</label>
+            <input type="text" name="nome" class="form-control" required
+                   value="{{ form.get('nome', '') }}" placeholder="Nome completo como no documento">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Sexo</label>
+            <select name="sexo" class="form-select">
+              <option value="">—</option>
+              <option value="M" {% if form.get('sexo') == 'M' %}selected{% endif %}>Masculino</option>
+              <option value="F" {% if form.get('sexo') == 'F' %}selected{% endif %}>Feminino</option>
+            </select>
+          </div>
+
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label">CPF</label>
+            <input type="text" name="cpf" id="campoCPF" class="form-control" required
+                   value="{{ form.get('cpf', '') }}" placeholder="000.000.000-00" maxlength="14">
+            <div class="invalid-feedback">CPF inválido. Verifique os dígitos.</div>
+          </div>
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label" for="campoCNS">CNS (Cartão Nacional de Saúde)</label>
+            <div class="input-group">
+              <input type="text" name="cns" id="campoCNS" class="form-control" required
+                     value="{{ form.get('cns', '') }}" placeholder="000 0000 0000 0000"
+                     maxlength="18" disabled>
+              <button type="button" id="btnBuscarCNS" class="btn btn-outline-secondary"
+                      title="Buscar CNS no CADSUS pelo CPF (nova aba)" disabled>
+                <i class="bi bi-search" style="font-size:.8rem;"></i>
+              </button>
+            </div>
+            <div class="form-text" style="font-size:.7rem;">Preencha o CPF primeiro para habilitar.</div>
+          </div>
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label">E-mail</label>
+            <input type="email" name="email" class="form-control" required
+                   value="{{ form.get('email', '') }}" placeholder="seu@email.com">
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Telefone / WhatsApp</label>
+            <input type="text" name="telefone" id="campoTelefone" class="form-control"
+                   value="{{ form.get('telefone', '') }}" placeholder="(00) 00000-0000" maxlength="15">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Data de Nascimento</label>
+            <input type="date" name="data_nasc" class="form-control"
+                   value="{{ form.get('data_nasc', '') }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Escolaridade</label>
+            <select name="escolaridade" class="form-select">
+              <option value="">Selecione...</option>
+              {% for k, v in escolaridades.items() %}
+              <option value="{{ k }}" {% if form.get('escolaridade') == k %}selected{% endif %}>{{ k }} – {{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Nome da Mãe</label>
+            <input type="text" name="nome_mae" class="form-control" value="{{ form.get('nome_mae', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nome do Pai</label>
+            <input type="text" name="nome_pai" class="form-control" value="{{ form.get('nome_pai', '') }}">
+          </div>
+
+          <!-- Nacionalidade -->
+          <div class="col-md-4">
+            <label class="form-label">Nacionalidade</label>
+            <select name="nacionalidade" id="selNacionalidade" class="form-select">
+              <option value="brasileira" {% if form.get('nacionalidade','brasileira') == 'brasileira' %}selected{% endif %}>Brasileira</option>
+              <option value="estrangeira" {% if form.get('nacionalidade') == 'estrangeira' %}selected{% endif %}>Estrangeira</option>
+            </select>
+          </div>
+
+          <!-- Bloco brasileiro: município + UF de nascimento -->
+          <div class="col-md-5" id="blocoMunicipioNasc">
+            <label class="form-label">Município de Nascimento</label>
+            <input type="text" name="municipio_nasc" class="form-control"
+                   value="{{ form.get('municipio_nasc', '') }}">
+          </div>
+          <div class="col-md-3" id="blocoUFNasc">
+            <label class="form-label">UF Nasc.</label>
+            <input type="text" name="uf_nasc" class="form-control" maxlength="2"
+                   value="{{ form.get('uf_nasc', '') }}" placeholder="SP">
+          </div>
+
+          <!-- Bloco estrangeiro: data de entrada + país de origem -->
+          <div class="col-12" id="blocoEstrangeiro" style="display:none;">
+            <div class="bloco-cond">
+              <div class="bloco-cond-aviso">
+                <i class="bi bi-globe text-primary"></i>
+                Informe os dados de entrada no país.
+              </div>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label">Data de Entrada no Brasil</label>
+                  <input type="date" name="dt_entrada_pais" class="form-control"
+                         value="{{ form.get('dt_entrada_pais', '') }}">
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">País de Origem</label>
+                  <input type="text" name="pais_origem" class="form-control"
+                         value="{{ form.get('pais_origem', '') }}" placeholder="Ex: Portugal, Argentina...">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DOCUMENTO DE IDENTIDADE ── -->
+      <div class="secao">
+        <div class="secao-titulo"><i class="bi bi-card-text me-1"></i>Informações Complementares</div>
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label">RG</label>
+            <input type="text" name="rg" class="form-control" value="{{ form.get('rg', '') }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">UF</label>
+            <input type="text" name="rg_uf" class="form-control" maxlength="2"
+                   value="{{ form.get('rg_uf', '') }}" placeholder="SP">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Órgão Emissor</label>
+            <input type="text" name="rg_orgao" class="form-control"
+                   value="{{ form.get('rg_orgao', '') }}" placeholder="SSP">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Data de Emissão</label>
+            <input type="date" name="rg_emissao" class="form-control"
+                   value="{{ form.get('rg_emissao', '') }}">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ENDEREÇO ── -->
+      <div class="secao">
+        <div class="secao-titulo"><i class="bi bi-geo-alt me-1"></i>Endereço</div>
+        <div class="row g-2">
+          <div class="col-md-7">
+            <label class="form-label">Logradouro</label>
+            <input type="text" name="end_logradouro" class="form-control"
+                   value="{{ form.get('end_logradouro', '') }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Nº</label>
+            <input type="text" name="end_numero" class="form-control"
+                   value="{{ form.get('end_numero', '') }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">CEP</label>
+            <input type="text" name="end_cep" class="form-control" maxlength="9"
+                   value="{{ form.get('end_cep', '') }}" placeholder="00000-000">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Bairro</label>
+            <input type="text" name="end_bairro" class="form-control"
+                   value="{{ form.get('end_bairro', '') }}">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Município</label>
+            <input type="text" name="end_municipio" class="form-control"
+                   value="{{ form.get('end_municipio', '') }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">UF</label>
+            <input type="text" name="end_uf" class="form-control" maxlength="2"
+                   value="{{ form.get('end_uf', '') }}" placeholder="SP">
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DADOS PROFISSIONAIS ── -->
+      <div class="secao">
+        <div class="secao-titulo"><i class="bi bi-briefcase me-1"></i>Dados Profissionais</div>
+        <div class="row g-2">
+          <div class="col-md-5">
+            <label class="form-label">Categoria / Órgão Emissor (CRM, CRO, COREN...)</label>
+            <input type="text" name="orgao_emissor" class="form-control"
+                   value="{{ form.get('orgao_emissor', '') }}" placeholder="Ex: CRM, COREN, CRF...">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Nº de Registro no Conselho de Classe</label>
+            <input type="text" name="reg_conselho" class="form-control"
+                   value="{{ form.get('reg_conselho', '') }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Data de Entrada na Unidade</label>
+            <input type="date" name="dt_entrada" class="form-control"
+                   value="{{ form.get('dt_entrada', '') }}">
+          </div>
+
+          <div class="col-12 campo-obrig">
+            <label class="form-label">CBO — Especialidade de Atuação na Unidade</label>
+            <select name="cbo" id="selCBO" class="form-select" required
+                    data-singleselect data-placeholder="Digite para buscar CBO...">
+              <option value="">Selecione...</option>
+              {% for cod, desc in cbos %}
+              <option value="{{ cod }}" {% if form.get('cbo') == cod %}selected{% endif %}>{{ cod }} – {{ desc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label">Vínculo</label>
+            <select name="vinculo" id="selVinculo" class="form-select" required>
+              <option value="">Selecione...</option>
+              {% for k, v in vinculos.items() %}
+              <option value="{{ k }}" {% if form.get('vinculo') == k %}selected{% endif %}>{{ k }} – {{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label">Tipo de Vínculo</label>
+            <select name="tipo_vinculo" id="selTipoVinculo" class="form-select" required>
+              <option value="">Selecione...</option>
+              {% for k, v in tipos_vinculo.items() %}
+              <option value="{{ k }}" {% if form.get('tipo_vinculo') == k %}selected{% endif %}>{{ k }} – {{ v }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-4 campo-obrig">
+            <label class="form-label">Carga Horária Semanal (h/sem)</label>
+            <input type="number" name="carga_horaria" class="form-control" required
+                   min="1" max="60" placeholder="40"
+                   value="{{ form.get('carga_horaria', '') }}">
+          </div>
+
+          <!-- Bloco empresa (Estágio ou Contrato PD) -->
+          <div class="col-12" id="blocoEmpresa" style="display:none;">
+            <div class="bloco-cond">
+              <div class="bloco-cond-aviso">
+                <i class="bi bi-building text-primary"></i>
+                <span id="avisoEmpresaTexto">Informe os dados da empresa intermediadora.</span>
+              </div>
+              <div class="row g-2">
+                <div class="col-md-5">
+                  <label class="form-label fw-semibold">CNPJ Empresa Intermediadora</label>
+                  <input type="text" name="cnpj_empresa" class="form-control"
+                         placeholder="00.000.000/0000-00" maxlength="20"
+                         value="{{ form.get('cnpj_empresa', '') }}">
+                </div>
+                <div class="col-md-7">
+                  <label class="form-label fw-semibold">Razão Social da Empresa Intermediadora</label>
+                  <input type="text" name="nome_empresa" class="form-control"
+                         placeholder="Razão social..."
+                         value="{{ form.get('nome_empresa', '') }}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      {# ── Assinatura digital ── #}
+      <div class="secao mb-3">
+        <div class="secao-titulo">Assinatura do Profissional</div>
+        <p class="small text-muted mb-2">
+          <i class="bi bi-pencil-square me-1"></i>
+          Assine no campo abaixo usando o mouse (no computador) ou o dedo (no celular/tablet).
+        </p>
+        <div style="border:1px solid #ced4da; border-radius:6px; overflow:hidden; background:#fff; touch-action:none; cursor:crosshair;">
+          <canvas id="canvasAssinatura" style="width:100%; display:block;"
+                  width="900" height="160"></canvas>
+        </div>
+        <div class="d-flex gap-2 mt-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimparAssinatura">
+            <i class="bi bi-eraser me-1"></i>Limpar
+          </button>
+          <span id="avisoAssinatura" class="small text-muted align-self-center"></span>
+        </div>
+        <input type="hidden" name="assinatura_base64" id="inputAssinatura">
+      </div>
+
+      <div class="alert alert-info small py-2 px-3">
+        <i class="bi bi-info-circle me-1"></i>
+        Após o envio, um gestor irá revisar sua solicitação. Quando aprovado, você receberá as informações de acesso no e-mail informado.
+      </div>
+      <button type="submit" class="btn-enviar" id="btnEnviar">
+        <i class="bi bi-send me-2"></i>Enviar Solicitação
+      </button>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+// ── Tom Select ──────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-singleselect]').forEach(function (el) {
+    new TomSelect(el, { placeholder: el.dataset.placeholder || 'Selecione...', maxOptions: 200 });
+});
+
+// ── Validação CPF ────────────────────────────────────────────────────────────
+function validarCPF(cpf) {
+    var d = cpf.replace(/\D/g, '');
+    if (d.length !== 11 || /^(.)\1{10}$/.test(d)) return false;
+    var s1 = 0; for (var i = 0; i < 9;  i++) s1 += parseInt(d[i]) * (10 - i);
+    if ((s1 * 10 % 11) % 10 !== parseInt(d[9])) return false;
+    var s2 = 0; for (var i = 0; i < 10; i++) s2 += parseInt(d[i]) * (11 - i);
+    return (s2 * 10 % 11) % 10 === parseInt(d[10]);
+}
+(function () {
+    var inp     = document.getElementById('campoCPF');
+    var cns     = document.getElementById('campoCNS');
+    var btnCns  = document.getElementById('btnBuscarCNS');
+
+    inp.addEventListener('input', function () {
+        var v = this.value.replace(/\D/g, '');
+        this.value = v.replace(/^(\d{3})(\d)/,           '$1.$2')
+                      .replace(/^(\d{3})\.(\d{3})(\d)/,  '$1.$2.$3')
+                      .replace(/\.(\d{3})(\d)/,           '.$1-$2')
+                      .substring(0, 14);
+        avaliar();
+    });
+    inp.addEventListener('blur', avaliar);
+    if (inp.value) avaliar();
+
+    function avaliar() {
+        var digits = inp.value.replace(/\D/g, '');
+        var ok = validarCPF(digits);
+        cns.disabled    = !ok;
+        btnCns.disabled = !ok;
+        if (!digits) { inp.classList.remove('is-invalid','is-valid'); return; }
+        inp.classList.toggle('is-valid',   ok);
+        inp.classList.toggle('is-invalid', !ok);
+    }
+
+    btnCns.addEventListener('click', function () {
+        var d = inp.value.replace(/\D/g,'');
+        if (d) window.open('https://cnes.datasus.gov.br/pages/profissionais/consulta.jsp?search=' + d, '_blank');
+    });
+})();
+
+// ── Máscara telefone ─────────────────────────────────────────────────────────
+(function () {
+    var tel = document.getElementById('campoTelefone');
+    if (!tel) return;
+    tel.addEventListener('input', function () {
+        var v = this.value.replace(/\D/g,'').substring(0, 11);
+        if      (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/,   '($1) $2-$3');
+        else if (v.length >  6) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+        else if (v.length >  2) v = v.replace(/^(\d{2})(\d+)$/,             '($1) $2');
+        else if (v.length >  0) v = '(' + v;
+        this.value = v;
+    });
+})();
+
+// ── Nacionalidade: brasileiro × estrangeiro ───────────────────────────────────
+(function () {
+    var sel          = document.getElementById('selNacionalidade');
+    var blocoMun     = document.getElementById('blocoMunicipioNasc');
+    var blocoUF      = document.getElementById('blocoUFNasc');
+    var blocoEstr    = document.getElementById('blocoEstrangeiro');
+
+    function atualizar() {
+        var est = sel.value === 'estrangeira';
+        blocoMun.style.display  = est ? 'none' : '';
+        blocoUF.style.display   = est ? 'none' : '';
+        blocoEstr.style.display = est ? ''     : 'none';
+    }
+    sel.addEventListener('change', atualizar);
+    atualizar();
+})();
+
+// ── Bloco empresa (Estágio / Contrato PD) ────────────────────────────────────
+(function () {
+    var selV = document.getElementById('selVinculo');
+    var selT = document.getElementById('selTipoVinculo');
+    var bloco = document.getElementById('blocoEmpresa');
+    var txt   = document.getElementById('avisoEmpresaTexto');
+
+    function atualizar() {
+        var v = selV.value, t = selT.value;
+        var show = (v === '6' || t === '3');
+        bloco.style.display = show ? '' : 'none';
+        if (txt) txt.textContent = v === '6'
+            ? 'Informe os dados da empresa / instituição de estágio.'
+            : 'Informe os dados da empresa contratante (Contrato por Prazo Determinado).';
+    }
+    selV.addEventListener('change', atualizar);
+    selT.addEventListener('change', atualizar);
+    atualizar();
+})();
+
+// ── Assinatura digital (canvas) ───────────────────────────────────────────
+(function () {
+    var canvas  = document.getElementById('canvasAssinatura');
+    var ctx     = canvas.getContext('2d');
+    var input   = document.getElementById('inputAssinatura');
+    var aviso   = document.getElementById('avisoAssinatura');
+    var desenhando = false;
+    var vazio   = true;
+
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth   = 2.2;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+
+    /* Coordenada relativa ao canvas, respeitando a escala CSS */
+    function coords(e) {
+        var rect  = canvas.getBoundingClientRect();
+        var scaleX = canvas.width  / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var src = e.touches ? e.touches[0] : e;
+        return {
+            x: (src.clientX - rect.left) * scaleX,
+            y: (src.clientY - rect.top)  * scaleY
+        };
+    }
+
+    function iniciar(e) {
+        e.preventDefault();
+        desenhando = true;
+        var p = coords(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+    }
+    function desenhar(e) {
+        if (!desenhando) return;
+        e.preventDefault();
+        var p = coords(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        vazio = false;
+        aviso.textContent = '';
+    }
+    function parar(e) {
+        if (!desenhando) return;
+        desenhando = false;
+        ctx.closePath();
+        sincronizar();
+    }
+
+    canvas.addEventListener('mousedown',  iniciar);
+    canvas.addEventListener('mousemove',  desenhar);
+    canvas.addEventListener('mouseup',    parar);
+    canvas.addEventListener('mouseleave', parar);
+    canvas.addEventListener('touchstart', iniciar, {passive: false});
+    canvas.addEventListener('touchmove',  desenhar, {passive: false});
+    canvas.addEventListener('touchend',   parar);
+
+    document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        input.value = '';
+        vazio = true;
+        aviso.textContent = '';
+    });
+
+    function sincronizar() {
+        if (!vazio) {
+            input.value = canvas.toDataURL('image/png');
+        }
+    }
+
+    /* Garante que a assinatura seja capturada ao enviar o formulário */
+    canvas.closest('form').addEventListener('submit', function (e) {
+        sincronizar();
+    });
+})();
+</script>
+</body>
+</html>

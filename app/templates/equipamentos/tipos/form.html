@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if tipo else 'Novo' }} Tipo de Equipamento{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-tags"></i> {{ 'Editar Tipo: ' + tipo.nome if tipo else 'Novo Tipo de Equipamento' }}</h1>
+    <a href="{{ url_for('equipamentos.listar_tipos') }}" class="btn btn-outline-secondary btn-sm">Voltar</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="form-section">
+            <div class="form-section-title">Dados do Tipo</div>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label">Nome *</label>
+                    <input type="text" name="nome" class="form-control" required
+                           value="{{ tipo.nome if tipo else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Ícone Bootstrap (classe)</label>
+                    <div class="input-group">
+                        <span class="input-group-text" id="iconPreview">
+                            <i class="{{ tipo.icone if tipo else 'bi-box' }}" id="iconEl"></i>
+                        </span>
+                        <input type="text" name="icone" class="form-control" id="iconInput"
+                               value="{{ tipo.icone if tipo else 'bi-box' }}"
+                               placeholder="Ex: bi-pc-display">
+                    </div>
+                    <div class="form-text">Consulte <a href="https://icons.getbootstrap.com" target="_blank">icons.getbootstrap.com</a></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="descricao" class="form-control" rows="2">{{ tipo.descricao if tipo else '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" name="tem_patrimonio" class="form-check-input" id="temPat"
+                               {% if not tipo or tipo.tem_patrimonio %}checked{% endif %}>
+                        <label class="form-check-label" for="temPat">Possui Nº de Patrimônio</label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Salvar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if tipo %}
+    <div class="col-lg-7">
+        <div class="form-section">
+            <div class="form-section-title">Campos Customizados</div>
+            {% if campos %}
+            <div class="table-responsive mb-3">
+                <table class="table table-sm">
+                    <thead><tr><th>Campo</th><th>Tipo</th><th>Obrig.</th><th></th></tr></thead>
+                    <tbody>
+                        {% for c in campos %}
+                        <tr>
+                            <td class="small fw-semibold">{{ c.nome_campo }}</td>
+                            <td class="small text-muted">{{ c.tipo_dado }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if c.obrigatorio else 'secondary' }}">
+                                    {{ 'Sim' if c.obrigatorio else 'Não' }}
+                                </span>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('equipamentos.excluir_campo_tipo', campo_id=c.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            data-confirm="Remover este campo?">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="form-section-title">Adicionar Novo Campo</div>
+            <form method="POST" action="{{ url_for('equipamentos.novo_campo_tipo', tipo_id=tipo.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" name="nome_campo" class="form-control form-control-sm" required placeholder="Nome do campo *">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="tipo_dado" class="form-select form-select-sm">
+                            <option value="texto">Texto</option>
+                            <option value="numero">Número</option>
+                            <option value="selecao">Seleção</option>
+                            <option value="data">Data</option>
+                            <option value="booleano">Sim/Não</option>
+                            <option value="texto_longo">Texto Longo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-center">
+                        <div class="form-check">
+                            <input type="checkbox" name="obrigatorio" class="form-check-input" id="obr">
+                            <label class="form-check-label small" for="obr">Obrigatório</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Adicionar</button>
+                    </div>
+                    <div class="col-12">
+                        <input type="text" name="opcoes_selecao" class="form-control form-control-sm"
+                               placeholder='Para tipo "Seleção": separe as opções por vírgula. Ex: Opção 1, Opção 2, Opção 3'>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const iconInput = document.getElementById('iconInput');
+if (iconInput) {
+    iconInput.addEventListener('input', function() {
+        document.getElementById('iconEl').className = this.value;
+    });
+}
+</script>
+{% endblock %}

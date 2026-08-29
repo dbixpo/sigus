@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Novo Chamado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-wrench-adjustable"></i> Abrir Novo Chamado</h1>
+</div>
+
+{% if alerta_duplicado %}
+<div class="alert alert-warning alert-permanent">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    <strong>Atenção!</strong> Já existem chamados similares abertos para esta unidade e tipo.
+    Verifique antes de continuar para evitar duplicidade.
+</div>
+{% endif %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if alerta_duplicado %}
+            <input type="hidden" name="confirmar_duplicado" value="1">
+            {% endif %}
+
+            <div class="form-section">
+                <div class="form-section-title">Localização</div>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Unidade *</label>
+                        <select name="unidade_id" id="unidade_id" class="form-select" required>
+                            <option value="">Selecione a unidade...</option>
+                            {% for u in unidades %}
+                            <option value="{{ u.id }}"
+                                {% if form_data and form_data.get('unidade_id')|int == u.id %}selected{% endif %}>
+                                {{ u.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Sala</label>
+                        <select name="sala_id" id="sala_id" class="form-select">
+                            <option value="">Selecione a sala...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Equipamento (se aplicável)</label>
+                        <select name="equipamento_id" id="equipamento_id" class="form-select">
+                            <option value="">Selecione o equipamento...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Detalhes do Chamado</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo de Chamado *</label>
+                        <select name="tipo_chamado" class="form-select" required>
+                            {% for t in tipos %}
+                            <option value="{{ t }}"
+                                {% if form_data and form_data.get('tipo_chamado') == t %}selected{% endif %}>
+                                {{ {'predial':'Predial','equipamento':'Equipamento','tecnologia':'Tecnologia/TI','contratual':'Contratual','outro':'Outro'}[t] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Prioridade *</label>
+                        <select name="prioridade" class="form-select" required>
+                            {% for p in prioridades %}
+                            <option value="{{ p }}"
+                                {% if (form_data and form_data.get('prioridade') == p) or (not form_data and p == 'media') %}selected{% endif %}>
+                                {{ {'baixa':'Baixa','media':'Média','alta':'Alta','urgente':'Urgente'}[p] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Título *</label>
+                        <input type="text" name="titulo" class="form-control" required maxlength="200"
+                               value="{{ form_data.get('titulo', '') if form_data else '' }}"
+                               placeholder="Descreva brevemente o problema...">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Descrição Detalhada *</label>
+                        <textarea name="descricao" class="form-control" rows="4" required
+                                  placeholder="Descreva o problema com o máximo de detalhes possível...">{{ form_data.get('descricao', '') if form_data else '' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Encaminhar para Setor</label>
+                        <select name="setor_id" class="form-select">
+                            <option value="">Selecione o setor...</option>
+                            {% for s in setores %}
+                            <option value="{{ s.id }}">{{ s.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-send me-1"></i>Abrir Chamado
+                </button>
+                <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

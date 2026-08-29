@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if marca else 'Nova' }} Marca{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.listar_marcas') }}">Marcas</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if marca else 'Nova Marca' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-tag"></i> {{ 'Editar Marca' if marca else 'Nova Marca' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Nome da Marca <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="nome" class="form-control" required autofocus
+                               value="{{ marca.nome if marca else '' }}"
+                               placeholder="Ex.: Dell, HP, Philips, Dräger...">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Tipos de Equipamento compatíveis
+                            <small class="text-muted fw-normal">— marque ao menos um</small>
+                        </label>
+                        {% if tipos %}
+                            {% set selecionados = marca.tipos.all() | map(attribute='id') | list if marca else ([pre_tipo_id] if pre_tipo_id else []) %}
+                            <div class="row row-cols-1 row-cols-sm-2 g-2">
+                                {% for t in tipos %}
+                                <div class="col">
+                                    <div class="form-check border rounded px-3 py-2 h-100
+                                                {{ 'bg-primary-subtle border-primary' if t.id in selecionados else '' }}">
+                                        <input class="form-check-input tipo-check" type="checkbox"
+                                               name="tipos[]" value="{{ t.id }}"
+                                               id="tipo_{{ t.id }}"
+                                               {{ 'checked' if t.id in selecionados }}>
+                                        <label class="form-check-label w-100 user-select-none"
+                                               for="tipo_{{ t.id }}">
+                                            <i class="bi {{ t.icone }} me-1 text-muted"></i>{{ t.nome }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0">
+                                Nenhum tipo de equipamento cadastrado.
+                                <a href="{{ url_for('configuracoes.novo_tipo_equipamento') }}">Cadastre um tipo</a> primeiro.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if marca else 'Cadastrar' }}
+                        </button>
+                        <a href="{{ url_for('configuracoes.listar_marcas') }}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Destaca visualmente os checkboxes selecionados
+document.querySelectorAll('.tipo-check').forEach(function (cb) {
+    cb.addEventListener('change', function () {
+        this.closest('.form-check').classList.toggle('bg-primary-subtle', this.checked);
+        this.closest('.form-check').classList.toggle('border-primary', this.checked);
+    });
+});
+</script>
+{% endblock %}

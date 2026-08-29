@@ -1,0 +1,658 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if usuario else 'Novo' }} Usuário{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('usuarios.listar') }}">Usuários</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if usuario else 'Novo Usuário' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-person-plus"></i> {{ 'Editar — ' + usuario.nome if usuario else 'Novo Usuário' }}</h1>
+</div>
+
+<form method="POST" id="formUsuario" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- ABAS -->
+    <ul class="nav nav-tabs mb-3" id="tabsUsuario" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-acesso" type="button">
+                <i class="bi bi-shield-lock me-1"></i>Acesso
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pessoal" type="button">
+                <i class="bi bi-person me-1"></i>Dados Pessoais
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-endereco" type="button">
+                <i class="bi bi-house me-1"></i>Endereço
+            </button>
+        </li>
+        {% if usuario %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-matriculas" type="button">
+                <i class="bi bi-card-list me-1"></i>Matrículas
+                <span class="badge bg-secondary ms-1" id="badgeMatriculas">{{ matriculas|length }}</span>
+            </button>
+        </li>
+        {% endif %}
+    </ul>
+
+    <div class="tab-content" id="tabsUsuarioContent">
+
+        <!-- ─── ABA ACESSO ──────────────────────────────────── -->
+        <div class="tab-pane fade show active" id="tab-acesso">
+            <div class="row g-3">
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-semibold">Nome Completo <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control"
+                           value="{{ usuario.nome if usuario else '' }}"
+                           placeholder="Nome completo do profissional">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Perfil de Acesso <span class="text-danger">*</span></label>
+                    {% if pode_alterar_perfil %}
+                    <select name="perfil" class="form-select">
+                        {% for k, v in perfis.items() %}
+                        <option value="{{ k }}" {% if usuario and usuario.perfil == k %}selected{% elif not usuario and loop.last %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    {# Usuário com perfil fora do escopo de quem edita: só exibe, não altera #}
+                    <input type="hidden" name="perfil" value="{{ usuario.perfil }}">
+                    <input type="text" class="form-control" value="{{ usuario.perfil_label }}" readonly disabled>
+                    <div class="form-text text-muted">Você não tem permissão para alterar este perfil.</div>
+                    {% endif %}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
+                    {% if not usuario %}
+                    <input type="email" name="email" class="form-control"
+                           placeholder="email@saude.sorocaba.sp.gov.br">
+                    {% else %}
+                    <input type="email" class="form-control" value="{{ usuario.email }}" disabled>
+                    {% endif %}
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">
+                        <i class="bi bi-whatsapp text-success me-1"></i>WhatsApp
+                        <span class="text-muted small fw-normal">(opcional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text text-success"><i class="bi bi-whatsapp"></i></span>
+                        <input type="tel" name="whatsapp" id="inputWhatsapp" class="form-control"
+                               value="{{ usuario.whatsapp | br_fone if usuario and usuario.whatsapp else '' }}"
+                               placeholder="(15) 99999-9999" maxlength="15">
+                    </div>
+                </div>
+                <div class="col-12 col-md-6">
+                    {% if not usuario %}
+                    <div class="alert alert-info py-2 px-3 mb-0 small">
+                        <i class="bi bi-key me-1"></i>
+                        A senha inicial será o <strong>CPF do usuário</strong> (apenas os dígitos, sem pontuação).
+                        O usuário poderá alterá-la no primeiro acesso pelo perfil.
+                    </div>
+                    {% else %}
+                    <label class="form-label fw-semibold">Nova Senha</label>
+                    <input type="password" name="nova_senha" class="form-control" minlength="6"
+                           placeholder="Deixe em branco para manter a atual">
+                    {% endif %}
+                </div>
+                {% if usuario and is_admin %}
+                <div class="col-12 col-md-6 d-flex align-items-end">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="ativo" class="form-check-input" id="ativo"
+                               {% if usuario.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Usuário ativo</label>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ─── ABA DADOS PESSOAIS ──────────────────────────── -->
+        <div class="tab-pane fade" id="tab-pessoal">
+            <div class="row g-3">
+
+                <!-- CPF + CNS -->
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">CPF</label>
+                    <input type="text" name="cpf" class="form-control" maxlength="14"
+                           value="{{ usuario.cpf or '' if usuario else '' }}"
+                           placeholder="000.000.000-00" id="campoCPF">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">CNS <span class="text-muted small fw-normal">(Cartão Nac. de Saúde)</span></label>
+                    <input type="text" name="cns" class="form-control" maxlength="20"
+                           value="{{ usuario.cns or '' if usuario else '' }}"
+                           placeholder="000 0000 0000 0000">
+                </div>
+                <div class="col-12 col-md-4 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-info w-100" id="btnLocalizarCNES">
+                        <i class="bi bi-search me-1"></i>Localizar no CNES
+                    </button>
+                </div>
+
+                <!-- Nome + Sexo -->
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-semibold">Nome da Mãe</label>
+                    <input type="text" name="nome_mae" class="form-control"
+                           value="{{ usuario.nome_mae or '' if usuario else '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Sexo</label>
+                    <div class="d-flex gap-3 mt-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sexo" value="M" id="sexoM"
+                                   {% if usuario and usuario.sexo == 'M' %}checked{% endif %}>
+                            <label class="form-check-label" for="sexoM">Masculino</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="sexo" value="F" id="sexoF"
+                                   {% if usuario and usuario.sexo == 'F' %}checked{% endif %}>
+                            <label class="form-check-label" for="sexoF">Feminino</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-semibold">Nome do Pai</label>
+                    <input type="text" name="nome_pai" class="form-control"
+                           value="{{ usuario.nome_pai or '' if usuario else '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Data de Nascimento</label>
+                    <input type="date" name="data_nasc" class="form-control"
+                           value="{{ usuario.data_nasc.isoformat() if usuario and usuario.data_nasc else '' }}">
+                </div>
+
+                <!-- RG -->
+                <div class="col-12"><hr class="my-1"><small class="text-muted text-uppercase fw-semibold">Documento de Identidade</small></div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">RG</label>
+                    <input type="text" name="rg" class="form-control" maxlength="20"
+                           value="{{ usuario.rg or '' if usuario else '' }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label">UF emissor</label>
+                    <input type="text" name="rg_uf" class="form-control" maxlength="2"
+                           value="{{ usuario.rg_uf or '' if usuario else '' }}"
+                           style="text-transform:uppercase" placeholder="SP">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Órgão Emissor</label>
+                    <input type="text" name="rg_orgao" class="form-control" maxlength="50"
+                           value="{{ usuario.rg_orgao or '' if usuario else '' }}"
+                           placeholder="SSP, PM, etc.">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Data de Emissão</label>
+                    <input type="date" name="rg_emissao" class="form-control"
+                           value="{{ usuario.rg_emissao.isoformat() if usuario and usuario.rg_emissao else '' }}">
+                </div>
+
+                <!-- Escolaridade -->
+                <div class="col-12"><hr class="my-1"><small class="text-muted text-uppercase fw-semibold">Escolaridade</small></div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label">Escolaridade</label>
+                    <select name="escolaridade" class="form-select">
+                        <option value="">Selecione...</option>
+                        {% for k, v in escolaridades.items() %}
+                        <option value="{{ k }}" {% if usuario and usuario.escolaridade == k %}selected{% endif %}>{{ k }} – {{ v }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6 d-flex align-items-end">
+                    <div class="w-100">
+                        <label class="form-label">Frequenta Escola?</label>
+                        <div class="d-flex gap-3 mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="frequenta_escola" value="1" id="freqSim"
+                                       {% if usuario and usuario.frequenta_escola == True %}checked{% endif %}>
+                                <label class="form-check-label" for="freqSim">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="frequenta_escola" value="0" id="freqNao"
+                                       {% if usuario and usuario.frequenta_escola == False %}checked{% endif %}>
+                                <label class="form-check-label" for="freqNao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nacionalidade -->
+                <div class="col-12"><hr class="my-1"><small class="text-muted text-uppercase fw-semibold">Nacionalidade</small></div>
+                <div class="col-12">
+                    <div class="d-flex gap-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="nacionalidade" value="brasileira"
+                                   id="nacBR"
+                                   {% if not usuario or usuario.nacionalidade != 'estrangeira' %}checked{% endif %}
+                                   onchange="toggleNacionalidade(this.value)">
+                            <label class="form-check-label" for="nacBR">Brasileira</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="nacionalidade" value="estrangeira"
+                                   id="nacEX"
+                                   {% if usuario and usuario.nacionalidade == 'estrangeira' %}checked{% endif %}
+                                   onchange="toggleNacionalidade(this.value)">
+                            <label class="form-check-label" for="nacEX">Estrangeira</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campos BRASILEIRA -->
+                <div id="camposBrasileira" class="col-12 row g-3 m-0 p-0"
+                     {% if usuario and usuario.nacionalidade == 'estrangeira' %}style="display:none"{% endif %}>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">UF de Nascimento</label>
+                        <input type="text" name="uf_nasc" class="form-control" maxlength="2"
+                               value="{{ usuario.uf_nasc or '' if usuario else '' }}"
+                               style="text-transform:uppercase" placeholder="SP">
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label">Município de Nascimento</label>
+                        <input type="text" name="municipio_nasc" class="form-control"
+                               value="{{ usuario.municipio_nasc or '' if usuario else '' }}">
+                    </div>
+                </div>
+
+                <!-- Campos ESTRANGEIRA -->
+                <div id="camposEstrangeira" class="col-12 row g-3 m-0 p-0"
+                     {% if not usuario or usuario.nacionalidade != 'estrangeira' %}style="display:none"{% endif %}>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label">Data de Entrada no Brasil</label>
+                        <input type="date" name="dt_entrada_pais" class="form-control"
+                               value="{{ usuario.dt_entrada_pais.isoformat() if usuario and usuario.dt_entrada_pais else '' }}">
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <label class="form-label">País de Origem</label>
+                        <input type="text" name="pais_origem" class="form-control"
+                               value="{{ usuario.pais_origem or '' if usuario else '' }}">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ─── ABA ENDEREÇO ───────────────────────────────── -->
+        <div class="tab-pane fade" id="tab-endereco">
+            <div class="row g-3">
+                <div class="col-12 col-md-7">
+                    <label class="form-label fw-semibold">Logradouro</label>
+                    <input type="text" name="end_logradouro" class="form-control"
+                           value="{{ usuario.end_logradouro or '' if usuario else '' }}"
+                           placeholder="Rua, Avenida, Travessa...">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-semibold">Número</label>
+                    <input type="text" name="end_numero" class="form-control"
+                           value="{{ usuario.end_numero or '' if usuario else '' }}">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold">Complemento</label>
+                    <input type="text" name="end_complemento" class="form-control"
+                           value="{{ usuario.end_complemento or '' if usuario else '' }}"
+                           placeholder="Apto, Bloco...">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Bairro</label>
+                    <input type="text" name="end_bairro" class="form-control"
+                           value="{{ usuario.end_bairro or '' if usuario else '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Município</label>
+                    <input type="text" name="end_municipio" class="form-control"
+                           value="{{ usuario.end_municipio or '' if usuario else 'Sorocaba' }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold">UF</label>
+                    <input type="text" name="end_uf" class="form-control" maxlength="2"
+                           value="{{ usuario.end_uf or '' if usuario else 'SP' }}"
+                           style="text-transform:uppercase">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label fw-semibold">CEP</label>
+                    <input type="text" name="end_cep" class="form-control" maxlength="9"
+                           value="{{ usuario.end_cep or '' if usuario else '' }}"
+                           placeholder="00000-000">
+                </div>
+            </div>
+        </div>
+
+        {% if usuario %}
+        <!-- ─── ABA MATRÍCULAS ─────────────────────────────── -->
+        <div class="tab-pane fade" id="tab-matriculas">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Matrículas do Profissional</h6>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaMatricula">
+                    <i class="bi bi-plus-circle me-1"></i>Adicionar Matrícula
+                </button>
+            </div>
+
+            <div class="alert alert-info py-2 small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Cada matrícula representa um vínculo empregatício distinto. Ao vincular o profissional
+                a uma unidade, você escolhe qual matrícula usar e confirma o CBO para aquele vínculo.
+            </div>
+
+            <div id="listaMatriculas">
+                {% if matriculas %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Vínculo</th>
+                                <th>Tipo</th>
+                                <th>CBO</th>
+                                <th>Conselho</th>
+                                <th>Órgão</th>
+                                <th>Situação</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for m in matriculas %}
+                            <tr id="row-mat-{{ m.id }}" class="{{ '' if m.ativo else 'text-muted' }}">
+                                <td class="fw-semibold">{{ m.numero }}</td>
+                                <td class="small">{{ m.vinculo_label }}</td>
+                                <td class="small">{{ m.tipo_vinculo_label }}</td>
+                                <td class="small">{{ m.cbo_label }}</td>
+                                <td class="small">{{ m.reg_conselho or '—' }}</td>
+                                <td class="small text-muted">{{ m.orgao_emissor or '—' }}</td>
+                                <td>
+                                    {% if m.ativo %}
+                                    <span class="badge bg-success">Ativa</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inativa</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="editarMatricula({{ m.id }}, '{{ m.numero }}', '{{ m.vinculo or '' }}', '{{ m.tipo_vinculo or '' }}', '{{ m.cbo or '' }}', '{{ m.reg_conselho or '' }}', '{{ m.orgao_emissor or '' }}', {{ 'true' if m.ativo else 'false' }})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4 text-center text-muted">
+                    <i class="bi bi-card-list fs-2 d-block mb-2"></i>
+                    Nenhuma matrícula cadastrada ainda.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div><!-- /tab-content -->
+
+    {% if usuario %}
+    <!-- ─── Modal Nova / Editar Matrícula ─────────────────── -->
+    <div class="modal fade" id="modalNovaMatricula" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tituloModalMatricula">Nova Matrícula</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="matId" value="">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Número da Matrícula <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="matNumero" required maxlength="50">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Vínculo</label>
+                            <select class="form-select" id="matVinculo">
+                                <option value="">Selecione...</option>
+                                <option value="1">Vínculo Empregatício</option>
+                                <option value="5">Residência</option>
+                                <option value="6">Estágio</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Tipo de Vínculo</label>
+                            <select class="form-select" id="matTipoVinculo">
+                                <option value="">Selecione...</option>
+                                <option value="1">Estatutário</option>
+                                <option value="3">Contrato por Prazo Determinado</option>
+                                <option value="0">Sem Tipo</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">CBO</label>
+                            <select class="form-select" id="matCbo" data-singleselect data-placeholder="Selecione o CBO...">
+                                <option value=""></option>
+                                {% for cod, desc in cbos %}
+                                <option value="{{ cod }}">{{ cod }} – {{ desc }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Nº do Conselho</label>
+                            <input type="text" class="form-control" id="matConselho" maxlength="30" placeholder="CRM, COREN, CRO...">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold">Órgão Emissor</label>
+                            <input type="text" class="form-control" id="matOrgao" maxlength="50" placeholder="CRM-SP, COREN-SP...">
+                        </div>
+                        <div class="col-12 d-flex align-items-center gap-2 mt-1" id="blocoAtivoMatricula" style="display:none!important">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="matAtivo" checked>
+                                <label class="form-check-label" for="matAtivo">Matrícula ativa</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnSalvarMatricula">
+                        <i class="bi bi-check-circle me-1"></i>Salvar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <hr>
+    <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if usuario else 'Criar Usuário' }}
+        </button>
+        <a href="{{ url_for('usuarios.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Máscara de CPF ─────────────────────────────────────────────────────
+(function () {
+    const inp = document.getElementById('campoCPF');
+    if (!inp) return;
+    inp.addEventListener('input', function () {
+        let v = this.value.replace(/\D/g, '');
+        this.value = v.replace(/^(\d{3})(\d)/, '$1.$2')
+                      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                      .replace(/\.(\d{3})(\d)/, '.$1-$2')
+                      .substring(0, 14);
+    });
+    inp.closest('form')?.addEventListener('submit', function () {
+        inp.value = inp.value.replace(/\D/g, '');
+    }, { capture: true });
+})();
+
+// ── Máscara de WhatsApp ────────────────────────────────────────────────
+(function () {
+    const inp = document.getElementById('inputWhatsapp');
+    if (!inp) return;
+
+    function mascarar(v) {
+        const d = v.replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 2)  return d.replace(/^(\d{0,2})/, '($1');
+        if (d.length <= 7)  return d.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+        if (d.length <= 10) return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+
+    inp.addEventListener('input', function () {
+        const pos = this.selectionStart;
+        const antes = this.value.length;
+        this.value = mascarar(this.value);
+        // Reposiciona o cursor proporcionalmente
+        const diff = this.value.length - antes;
+        this.setSelectionRange(pos + diff, pos + diff);
+    });
+
+    // Antes de submeter, limpa a máscara para salvar só dígitos
+    inp.closest('form')?.addEventListener('submit', function () {
+        inp.value = inp.value.replace(/\D/g, '');
+    }, { capture: true });
+})();
+
+// Validação do formulário com suporte a abas
+document.getElementById('formUsuario').addEventListener('submit', function (e) {
+    const erros = [];
+
+    const nome = document.querySelector('[name="nome"]');
+    if (!nome || !nome.value.trim()) {
+        erros.push({ campo: nome, aba: '#tab-acesso', msg: 'Informe o nome completo.' });
+    }
+
+    const email = document.querySelector('[name="email"]:not([disabled])');
+    if (email && !email.value.trim()) {
+        erros.push({ campo: email, aba: '#tab-acesso', msg: 'Informe o e-mail.' });
+    }
+
+    // Senha inicial = CPF — não há campo de senha no cadastro
+
+    if (erros.length > 0) {
+        e.preventDefault();
+        const primeiro = erros[0];
+        // Ativa a aba onde está o erro
+        const tabBtn = document.querySelector(`[data-bs-target="${primeiro.aba}"]`);
+        if (tabBtn) bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+        // Foca o campo após a aba abrir
+        setTimeout(() => {
+            if (primeiro.campo) {
+                primeiro.campo.focus();
+                primeiro.campo.classList.add('is-invalid');
+            }
+            alert(primeiro.msg);
+        }, 150);
+        return;
+    }
+
+    // Remove marcações de inválido ao submeter com sucesso
+    document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+});
+
+function toggleNacionalidade(val) {
+    document.getElementById('camposBrasileira').style.display = val === 'brasileira' ? '' : 'none';
+    document.getElementById('camposEstrangeira').style.display = val === 'estrangeira' ? '' : 'none';
+}
+
+// Botão localizar no CNES
+document.getElementById('btnLocalizarCNES')?.addEventListener('click', function () {
+    const cpf = document.getElementById('campoCPF').value.replace(/\D/g, '');
+    if (!cpf) { alert('Informe o CPF antes de localizar.'); return; }
+    window.open('https://cnes.datasus.gov.br/pages/profissionais/consulta.jsp?search=' + cpf, '_blank');
+});
+
+// Inicializar estado correto ao carregar (edição)
+(function () {
+    const nacChecked = document.querySelector('[name="nacionalidade"]:checked');
+    if (nacChecked) toggleNacionalidade(nacChecked.value);
+})();
+
+{% if usuario %}
+// ─── Matrículas ────────────────────────────────────────
+const USUARIO_ID = {{ usuario.id }};
+
+function editarMatricula(id, numero, vinculo, tipoVinculo, cbo, conselho, orgao, ativo) {
+    document.getElementById('tituloModalMatricula').textContent = 'Editar Matrícula';
+    document.getElementById('matId').value = id;
+    document.getElementById('matNumero').value = numero;
+    document.getElementById('matVinculo').value = vinculo;
+    document.getElementById('matTipoVinculo').value = tipoVinculo;
+    document.getElementById('matConselho').value = conselho;
+    document.getElementById('matOrgao').value = orgao;
+    document.getElementById('matAtivo').checked = ativo;
+    document.getElementById('blocoAtivoMatricula').style.removeProperty('display');
+
+    // Atualiza Tom Select do CBO
+    const tsEl = document.getElementById('matCbo');
+    if (tsEl && tsEl.tomselect) {
+        tsEl.tomselect.setValue(cbo);
+    } else {
+        tsEl.value = cbo;
+    }
+
+    new bootstrap.Modal(document.getElementById('modalNovaMatricula')).show();
+}
+
+document.getElementById('modalNovaMatricula')?.addEventListener('hidden.bs.modal', function () {
+    document.getElementById('tituloModalMatricula').textContent = 'Nova Matrícula';
+    document.getElementById('matId').value = '';
+    document.getElementById('matNumero').value = '';
+    document.getElementById('matVinculo').value = '';
+    document.getElementById('matTipoVinculo').value = '';
+    document.getElementById('matConselho').value = '';
+    document.getElementById('matOrgao').value = '';
+    document.getElementById('matAtivo').checked = true;
+    document.getElementById('blocoAtivoMatricula').style.setProperty('display', 'none', 'important');
+    const tsEl = document.getElementById('matCbo');
+    if (tsEl && tsEl.tomselect) tsEl.tomselect.setValue('');
+});
+
+document.getElementById('btnSalvarMatricula')?.addEventListener('click', async function () {
+    const id = document.getElementById('matId').value;
+    const numero = document.getElementById('matNumero').value.trim();
+    if (!numero) { alert('Informe o número da matrícula.'); return; }
+
+    const tsEl = document.getElementById('matCbo');
+    const cbo = tsEl && tsEl.tomselect ? tsEl.tomselect.getValue() : tsEl.value;
+
+    const payload = {
+        numero,
+        vinculo:      document.getElementById('matVinculo').value,
+        tipo_vinculo: document.getElementById('matTipoVinculo').value,
+        cbo,
+        reg_conselho: document.getElementById('matConselho').value,
+        orgao_emissor: document.getElementById('matOrgao').value,
+        ativo:        document.getElementById('matAtivo').checked,
+    };
+
+    const url = id
+        ? `/usuarios/${USUARIO_ID}/matriculas/${id}`
+        : `/usuarios/${USUARIO_ID}/matriculas`;
+    const method = id ? 'PUT' : 'POST';
+
+    const resp = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value },
+        body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('modalNovaMatricula')).hide();
+        location.reload();
+    } else {
+        alert(data.erro || 'Erro ao salvar matrícula.');
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

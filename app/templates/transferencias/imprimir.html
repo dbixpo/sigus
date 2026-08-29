@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Termo de {{ doc.tipo_label }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+.no-print { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
+.btn-imprimir { padding: 8px 16px; background: #1a6abf; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+@media print { .no-print { display: none !important; } body { padding: 12px; } }
+
+.doc { max-width: 740px; margin: 0 auto; padding: 14px 16px; }
+
+.cabecalho {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 10px;
+}
+.cab-logo img { height: 58px; width: auto; }
+.cab-titulo { flex: 1; text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
+.cab-secretaria { text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap; }
+.cab-secretaria strong { font-size: 13px; display: block; }
+
+.secao { border-top: 1px solid #aaa; margin-top: 8px; padding-top: 6px; }
+.secao-unidade {
+    border: 1px solid #333; padding: 4px 6px; margin-bottom: 12px;
+}
+.secao-unidade .secao-titulo {
+    font-size: 11px; font-weight: bold; text-transform: uppercase;
+    color: #000; letter-spacing: .8px; margin-bottom: 4px;
+    padding-bottom: 3px; border-bottom: 1.5px solid #333;
+}
+.secao-titulo {
+    font-size: 9px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: .6px; margin-bottom: 4px;
+}
+
+.decreto-texto {
+    font-size: 10px; line-height: 1.4; color: #333;
+    margin: 8px 0; text-align: justify;
+}
+
+.campos-grid { display: flex; flex-wrap: wrap; gap: 2px 4px; align-items: stretch; width: 100%; }
+.campo { display: flex; flex-direction: column; min-width: 64px; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 0 2px 0 0; }
+.campo.w-full { flex: 1 1 100%; }
+.campo.w-half { flex: 1 1 45%; }
+.campo.w-third { flex: 1 1 28%; }
+.campos-grid .linha1 { display: flex; flex-wrap: nowrap; flex: 1 1 100%; gap: 0 4px; }
+.campos-grid .linha1 .campo.w-unit { flex: 1 1 50%; }
+.campos-grid .linha1 .campo.w-responsavel { flex: 1 1 38%; }
+.campos-grid .linha1 .campo.w-matricula { flex: 0 0 12%; }
+.campo.w-unit { flex: 1 1 50%; min-width: 0; }
+.campo.w-responsavel { flex: 1 1 38%; min-width: 0; }
+.campo.w-matricula { flex: 0 0 12%; min-width: 0; }
+.campo.w-data { flex: 0 0 120px; }
+.campo.w-endereco { flex: 1 1 auto; min-width: 120px; }
+.c-label { font-size: 7px; font-weight: bold; text-transform: uppercase; color: #444; margin-bottom: 0; line-height: 1.2; }
+.c-valor { min-height: 10px; padding: 0 1px; font-size: 9px; line-height: 1.2; }
+.c-valor.destaque { font-weight: bold; font-size: 10px; }
+
+.bloco-unidade-linha {
+    display: flex; gap: 6px; align-items: stretch; margin-bottom: 0;
+}
+.bloco-unidade-campos { flex: 1; min-width: 0; }
+.bloco-unidade-qr {
+    flex: 0 0 76px; width: 76px; min-height: 76px; display: flex; align-items: center; justify-content: center; align-self: stretch;
+}
+.bloco-unidade-qr a { display: flex; align-items: center; justify-content: center; min-height: 76px; }
+.bloco-unidade-qr div, .bloco-unidade-qr svg { width: 76px; height: 76px; }
+
+.bloco-cancelamento .campos-grid { background: #f8f9fa; padding: 6px; }
+
+.tabela-materiais { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 8px; }
+.tabela-materiais th, .tabela-materiais td { border: 1px solid #666; padding: 4px 6px; text-align: left; }
+.tabela-materiais th { background: #e8ecef; font-weight: 600; font-size: 9px; }
+.tabela-materiais .col-qtd { width: 40px; text-align: center; }
+.tabela-materiais .col-class { width: 36px; text-align: center; }
+.legenda-class { margin-top: 6px; font-size: 8.5px; color: #555; }
+
+.data-sorocaba { text-align: right; font-size: 10px; margin-top: 6px; margin-bottom: 20px; }
+.assinaturas { display: flex; gap: 24px; margin-top: 0; align-items: flex-start; flex-wrap: wrap; }
+.assinatura-bloco { flex: 1; min-width: 200px; text-align: center; }
+.assinatura-bloco .nome { font-size: 10px; font-weight: bold; margin-bottom: 1px; }
+.assinatura-bloco .unidade { font-size: 9px; margin-bottom: 1px; color: #333; }
+.assinatura-bloco .matricula { font-size: 9px; margin-bottom: 1px; color: #333; }
+.assinatura-bloco .data-assinatura { font-size: 9px; margin-bottom: 0; color: #333; }
+.assinatura-bloco .linha-assinatura { border-bottom: 1px solid #333; height: 1px; margin: 0; padding: 0; }
+.assinatura-bloco .titulo { font-size: 8px; font-weight: bold; text-transform: uppercase; color: #333; margin: 1px 0 0 0; }
+
+a { color: #0d6efd; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="no-print"><button type="button" class="btn-imprimir" onclick="window.print()">Imprimir</button></div>
+<script>if (window.self !== window.top) { var b = document.querySelector('.no-print'); if (b) b.style.display = 'none'; }</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura" onerror="this.style.display='none'">
+        </div>
+        <div class="cab-titulo">
+            {{ doc.tipo_titulo_impressao }}
+        </div>
+        <div class="cab-secretaria">Secretaria da<br><strong>SAÚDE</strong></div>
+    </div>
+
+    {# ── Seção: Unidade de Origem ───────────────────────────────── #}
+    <div class="secao secao-unidade">
+        <div class="secao-titulo">Unidade de Origem</div>
+        <div class="bloco-unidade-linha">
+            <div class="bloco-unidade-campos">
+                <div class="campos-grid">
+                    <div class="linha1">
+                        <div class="campo w-unit">
+                            <div class="c-label">Unidade</div>
+                            <div class="c-valor destaque" style="font-size:9px;">{{ doc.unidade_origem.nome }}</div>
+                        </div>
+                        <div class="campo w-responsavel">
+                            <div class="c-label">Responsável</div>
+                            <div class="c-valor" style="font-size:9px;">{{ doc.criador.nome if doc.criador else '—' }}</div>
+                        </div>
+                        <div class="campo w-matricula">
+                            <div class="c-label">Matrícula</div>
+                            <div class="c-valor" style="font-size:9px;">
+                                {% if doc.criador %}
+                                    {% set _m_orig = doc.criador.matriculas.filter_by(ativo=True).first() %}
+                                    {{ _m_orig.numero if _m_orig else (doc.criador.matricula or '—') }}
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="campo w-data">
+                        <div class="c-label">Criado em</div>
+                        <div class="c-valor">{{ doc.criado_em | br_datetime if doc.criado_em else '—' }}</div>
+                    </div>
+                    <div class="campo w-endereco">
+                        <div class="c-label">Endereço</div>
+                        <div class="c-valor">
+                            {% set u = doc.unidade_origem %}
+                            {% if u.link_maps %}<a href="{{ u.link_maps }}" target="_blank" style="color:inherit;text-decoration:underline dotted;">{% endif %}
+                            {{ u.endereco or '' }}{% if u.numero %}, {{ u.numero }}{% endif %}{% if u.complemento %} — {{ u.complemento }}{% endif %}{% if u.bairro %} — {{ u.bairro }}{% endif %}{% if u.cidade %} — {{ u.cidade }}{% if u.uf %}/{{ u.uf }}{% endif %}{% endif %}
+                            {% if u.link_maps %}</a>{% endif %}
+                            {% if not u.endereco and not u.bairro %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">Telefone</div>
+                        <div class="c-valor">{{ doc.unidade_origem.telefone | br_fone if doc.unidade_origem.telefone else '—' }}</div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">E-mail</div>
+                        <div class="c-valor">
+                            {% if doc.unidade_origem.email %}<a href="mailto:{{ doc.unidade_origem.email }}">{{ doc.unidade_origem.email }}</a>{% else %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">Celular Responsável</div>
+                        <div class="c-valor">
+                            {% set _cel = doc.criador.whatsapp or doc.criador.telefone if doc.criador else '' %}
+                            {% if _cel %}
+                            {% set _wd = _cel | replace('(','') | replace(')','') | replace(' ','') | replace('-','') | replace('+','') %}
+                            <a href="https://wa.me/55{{ _wd }}" target="_blank">{{ _cel | br_fone }}</a>
+                            {% else %}—{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if qr_url_origem %}
+            <div class="bloco-unidade-qr">
+                <a href="{{ doc.unidade_origem.link_maps }}" target="_blank" id="qrLinkOrigem">
+                    <div id="qrMapsOrigem" aria-label="QR Code Origem"></div>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# ── Seção: Unidade de Destino ou Cancelamento ───────────────── #}
+    {% if doc.status == 'cancelada' %}
+    <div class="secao bloco-cancelamento">
+        <div class="secao-titulo">Cancelamento</div>
+        <div class="campos-grid">
+            <div class="campo w-third"><div class="c-label">Cancelado por</div><div class="c-valor">{{ doc.aceitador.nome if doc.aceitador else '—' }}</div></div>
+            <div class="campo w-third"><div class="c-label">Unidade</div><div class="c-valor">{{ doc.unidade_origem.nome }}</div></div>
+            <div class="campo w-third"><div class="c-label">Data/Hora</div><div class="c-valor">{{ doc.resolvido_em | br_datetime if doc.resolvido_em else '—' }}</div></div>
+        </div>
+    </div>
+    {% else %}
+    <div class="secao secao-unidade">
+        <div class="secao-titulo">Unidade de Destino</div>
+        <div class="bloco-unidade-linha">
+            <div class="bloco-unidade-campos">
+                <div class="campos-grid">
+                    <div class="linha1">
+                        <div class="campo w-unit">
+                            <div class="c-label">Unidade</div>
+                            <div class="c-valor destaque" style="font-size:9px;">{{ doc.unidade_destino.nome }}</div>
+                        </div>
+                        <div class="campo w-responsavel">
+                            <div class="c-label">Responsável</div>
+                            <div class="c-valor" style="font-size:9px;">{{ doc.aceitador.nome if doc.aceitador else 'A definir no aceite' }}</div>
+                        </div>
+                        <div class="campo w-matricula">
+                            <div class="c-label">Matrícula</div>
+                            <div class="c-valor" style="font-size:9px;">
+                                {% if doc.aceitador %}
+                                    {% set _m_dest = doc.aceitador.matriculas.filter_by(ativo=True).first() %}
+                                    {{ _m_dest.numero if _m_dest else (doc.aceitador.matricula or '—') }}
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="campo w-data">
+                        <div class="c-label">Aceito em</div>
+                        <div class="c-valor">{{ doc.resolvido_em | br_datetime if doc.resolvido_em and doc.status == 'aceita' else 'Aguardando aceite' }}</div>
+                    </div>
+                    <div class="campo w-endereco">
+                        <div class="c-label">Endereço</div>
+                        <div class="c-valor">
+                            {% set u = doc.unidade_destino %}
+                            {% if u.link_maps %}<a href="{{ u.link_maps }}" target="_blank" style="color:inherit;text-decoration:underline dotted;">{% endif %}
+                            {{ u.endereco or '' }}{% if u.numero %}, {{ u.numero }}{% endif %}{% if u.complemento %} — {{ u.complemento }}{% endif %}{% if u.bairro %} — {{ u.bairro }}{% endif %}{% if u.cidade %} — {{ u.cidade }}{% if u.uf %}/{{ u.uf }}{% endif %}{% endif %}
+                            {% if u.link_maps %}</a>{% endif %}
+                            {% if not u.endereco and not u.bairro %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">Telefone</div>
+                        <div class="c-valor">{{ doc.unidade_destino.telefone | br_fone if doc.unidade_destino.telefone else '—' }}</div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">E-mail</div>
+                        <div class="c-valor">
+                            {% if doc.unidade_destino.email %}<a href="mailto:{{ doc.unidade_destino.email }}">{{ doc.unidade_destino.email }}</a>{% else %}—{% endif %}
+                        </div>
+                    </div>
+                    <div class="campo w-third">
+                        <div class="c-label">Celular Responsável</div>
+                        <div class="c-valor">
+                            {% set _cel2 = doc.aceitador.whatsapp or doc.aceitador.telefone if doc.aceitador else '' %}
+                            {% if _cel2 %}
+                            {% set _wd2 = _cel2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') | replace('+','') %}
+                            <a href="https://wa.me/55{{ _wd2 }}" target="_blank">{{ _cel2 | br_fone }}</a>
+                            {% else %}—{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if qr_url_destino %}
+            <div class="bloco-unidade-qr">
+                <a href="{{ doc.unidade_destino.link_maps }}" target="_blank" id="qrLinkDestino">
+                    <div id="qrMapsDestino" aria-label="QR Code Destino"></div>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <p class="decreto-texto">
+        Declara-se através do presente termo que fora realizada a transferência do(s) material(ais) abaixo relacionado(s) da unidade de origem para a unidade de destino, para uso exclusivo da municipalidade. O responsável pela unidade de destino assume inteira responsabilidade pelo seu bom uso e conservação, ficando ciente de que deverá comunicar por escrito à Seção de Patrimônio Mobiliário e Manutenção qualquer alteração do(s) mesmo(s).<br><br>Sendo caracterizado o mau uso ou não localizado, será comunicado à Secretaria da Administração para as demais providências, em acordo com o <strong>Decreto n.º 16.573, de 22 de abril de 2.009.</strong>
+    </p>
+
+    {# ── Materiais ───────────────────────────────────────────────── #}
+    <div class="secao">
+        <div class="secao-titulo">Materiais transferidos</div>
+        <table class="tabela-materiais">
+            <thead>
+                <tr><th class="col-qtd">Qtd</th><th>Descrição</th><th>Nº Patrimônio / Série</th><th class="col-class">Class.</th></tr>
+            </thead>
+            <tbody>
+                {% for item in doc.itens %}
+                <tr>
+                    <td class="col-qtd">{{ item.quantidade }}</td>
+                    <td>{{ item.descricao_exibicao() }}</td>
+                    <td>{{ item.numero_patrimonio_ou_serie() or '—' }}</td>
+                    <td class="col-class">{{ item.classificacao }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="legenda-class"><strong>A</strong> — Inservíveis ao setor, plenas condições de uso. <strong>B</strong> — Inservíveis ao setor, condições de uso com necessidade de reparos.</p>
+        <p class="data-sorocaba">Sorocaba, {{ (now or doc.criado_em) | br_date_extenso }}</p>
+    </div>
+
+    {# ── Assinaturas (simuladas via sistema) ─────────────────────── #}
+    {% if doc.status != 'cancelada' %}
+    <div class="assinaturas">
+        <div class="assinatura-bloco">
+            <div class="nome">{{ doc.criador.nome if doc.criador else '—' }}</div>
+            <div class="unidade">{{ doc.unidade_origem.nome }}</div>
+            <div class="matricula">Matrícula {% if doc.criador %}{% set _m_orig = doc.criador.matriculas.filter_by(ativo=True).first() %}{{ _m_orig.numero if _m_orig else (doc.criador.matricula or '—') }}{% else %}—{% endif %}</div>
+            <div class="data-assinatura">{{ doc.criado_em | br_datetime if doc.criado_em else '—' }}</div>
+            <div class="linha-assinatura"></div>
+            <div class="titulo">Responsável pela Unidade Origem</div>
+        </div>
+        <div class="assinatura-bloco">
+            <div class="nome">{{ doc.aceitador.nome if doc.aceitador else 'A definir no aceite' }}</div>
+            <div class="unidade">{{ doc.unidade_destino.nome }}</div>
+            <div class="matricula">Matrícula {% if doc.aceitador %}{% set _m_dest = doc.aceitador.matriculas.filter_by(ativo=True).first() %}{{ _m_dest.numero if _m_dest else (doc.aceitador.matricula or '—') }}{% else %}—{% endif %}</div>
+            <div class="data-assinatura">{% if doc.status == 'aceita' and doc.resolvido_em %}{{ doc.resolvido_em | br_datetime }}{% elif doc.status == 'recusada' and doc.resolvido_em %}{{ doc.resolvido_em | br_datetime }}{% else %}Aguardando aceite{% endif %}</div>
+            <div class="linha-assinatura"></div>
+            <div class="titulo">Responsável pela Unidade Destino</div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if qr_url_origem or qr_url_destino %}
+<script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+<script>
+(function () {
+    function renderQr(elId, url, size) {
+        size = size || 76;
+        var el = document.getElementById(elId);
+        if (!el || !url || typeof qrcode === 'undefined') return;
+        var qr = qrcode(4, 'L');
+        qr.addData(url);
+        qr.make();
+        el.innerHTML = qr.createSvgTag({ scalable: true, margin: 1 });
+        var svg = el.querySelector('svg');
+        if (svg) svg.style.cssText = 'width:' + size + 'px;height:' + size + 'px;display:block;';
+    }
+    {% if qr_url_origem %}renderQr('qrMapsOrigem', {{ qr_url_origem | tojson }});{% endif %}
+    {% if qr_url_destino %}renderQr('qrMapsDestino', {{ qr_url_destino | tojson }});{% endif %}
+})();
+</script>
+{% endif %}
+</body>
+</html>

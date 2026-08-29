@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <span class="text-muted small">Visão geral da rede</span>
+</div>
+
+{# ── Card de aniversário — só aparece para o próprio usuário no seu dia ── #}
+{% if eh_meu_aniversario %}
+<div class="card mb-4 border-0 shadow-sm overflow-hidden position-relative" id="cardAniversario"
+     style="background: linear-gradient(135deg, #fff8e1 0%, #fde68a 50%, #fbbf24 100%);">
+    {# Confetes decorativos #}
+    <div class="position-absolute top-0 end-0 p-2 opacity-25 user-select-none"
+         style="font-size:1.4rem; letter-spacing:.3rem; line-height:1.6;">
+        🎈🎊🎉🎁🎀
+    </div>
+    <div class="card-body py-3 px-4">
+        <div class="d-flex align-items-center gap-3">
+            <div style="font-size:2.8rem; line-height:1; flex-shrink:0; filter:drop-shadow(0 2px 4px rgba(0,0,0,.15));">
+                🎂
+            </div>
+            <div class="flex-grow-1">
+                <div class="fw-bold mb-1" style="color:#78350f; font-size:1.05rem;">
+                    Feliz Aniversário, {{ current_user.nome.split()[0] }}! 🎉
+                </div>
+                <div class="fst-italic small mb-1" style="color:#92400e;" id="msgAniversario"></div>
+                <div class="small" style="color:#b45309;">
+                    <i class="bi bi-heart-fill me-1"></i>
+                    Com carinho, a equipe da Saúde Digital Sorocaba
+                </div>
+            </div>
+            {% if preview_aniv %}
+            <span class="badge bg-warning text-dark align-self-start flex-shrink-0">preview</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const nome = {{ current_user.nome.split()[0] | tojson }};
+    const msgs = [
+        `Que este novo ciclo seja repleto de saúde, alegria e conquistas, ${nome}! 🌟`,
+        `Parabéns! Que cada dia seja tão especial quanto você é para nossa equipe! 💛`,
+        `Feliz aniversário! Que sua jornada continue cheia de propósito e realizações! 🥳`,
+        `Hoje é um dia para celebrar uma pessoa incrível. Muitas felicidades, ${nome}! 🎊`,
+        `Que a vida te presenteie com tudo o que você merece. Parabéns! 🌺`,
+        `Um novo ciclo começa hoje — que ele seja seu melhor ano até agora! 🚀`,
+        `A Saúde Digital celebra com você esse dia tão especial, ${nome}! 🏥💙`,
+        `Que seus sonhos continuem grandes e sua saúde, sempre perfeita! ✨`,
+        `Você faz a diferença todos os dias. Hoje é a sua vez de brilhar! 🌠`,
+        `Mais um ano de dedicação à saúde pública. Obrigado por tudo, ${nome}! 🎗️`,
+        `Que este aniversário marque o início do seu melhor ano! Parabéns! 🌈`,
+        `Sua dedicação inspira toda a rede. Feliz aniversário! 💪`,
+    ];
+    const el = document.getElementById('msgAniversario');
+    if (el) el.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+})();
+</script>
+{% endif %}
+
+<!-- CARDS DE RESUMO -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-soft"><i class="bi bi-hospital"></i></div>
+            <div>
+                <div class="stat-value">{{ total_unidades }}</div>
+                <div class="stat-label">Unidades Ativas</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-success-soft"><i class="bi bi-pc-display"></i></div>
+            <div>
+                <div class="stat-value">{{ total_equipamentos }}</div>
+                <div class="stat-label">Equipamentos Ativos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-soft"><i class="bi bi-wrench"></i></div>
+            <div>
+                <div class="stat-value">{{ total_em_manutencao }}</div>
+                <div class="stat-label">Em Manutenção</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-soft"><i class="bi bi-x-circle"></i></div>
+            <div>
+                <div class="stat-value">{{ total_inserviveis }}</div>
+                <div class="stat-label">Inservíveis</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-soft"><i class="bi bi-exclamation-triangle"></i></div>
+            <div>
+                <div class="stat-value">{{ chamados_abertos }}</div>
+                <div class="stat-label">Chamados Abertos</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="stat-card">
+            <div class="stat-icon bg-warning-soft"><i class="bi bi-file-earmark-text"></i></div>
+            <div>
+                <div class="stat-value">{{ contratos_vencendo }}</div>
+                <div class="stat-label">Contratos a Vencer</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- CHAMADOS RECENTES -->
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-wrench-adjustable me-2"></i>Chamados em Aberto / Andamento</span>
+                <a href="{{ url_for('chamados.listar') }}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+            </div>
+            <div class="card-body p-0">
+                {% if ultimos_chamados %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Unidade</th>
+                                <th>Título</th>
+                                <th>Prioridade</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in ultimos_chamados %}
+                            <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
+                                <td><span class="fw-mono text-primary small">{{ c.numero }}</span></td>
+                                <td class="small">{{ c.unidade.nome | truncate(20, True) }}</td>
+                                <td class="small">{{ c.titulo | truncate(30, True) }}</td>
+                                <td><span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span></td>
+                                <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <p>Nenhum chamado aberto no momento!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTRATOS CRÍTICOS + UNIDADES -->
+    <div class="col-lg-5">
+        {% if contratos_criticos %}
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-file-earmark-text me-2"></i>Contratos Críticos</span>
+                <a href="{{ url_for('contratos.listar') }}" class="btn btn-sm btn-outline-warning">Ver todos</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for c in contratos_criticos %}
+                    <li class="list-group-item d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="small fw-semibold">{{ c.identificador }}</div>
+                            <div class="text-muted" style="font-size:0.75rem;">{{ c.empresa_display | truncate(30) }}</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span>
+                            <div class="text-muted" style="font-size:0.72rem;">Vence {{ c.data_fim | br_date }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-hospital me-2"></i>Unidades da Rede</span>
+                <a href="{{ url_for('unidades.listar') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for u in unidades_ativas[:8] %}
+                    <li class="list-group-item d-flex align-items-center justify-content-between py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-secondary" style="font-size:0.65rem;">{{ u.tipo }}</span>
+                            <a href="{{ url_for('unidades.detalhe', id=u.id) }}" class="small text-decoration-none fw-semibold">{{ u.nome }}</a>
+                        </div>
+                        <div class="d-flex gap-1">
+                            {% if u.chamados_abertos > 0 %}
+                            <span class="badge bg-danger rounded-pill" title="Chamados abertos">{{ u.chamados_abertos }}</span>
+                            {% endif %}
+                            <span class="badge bg-light text-dark">{{ u.total_equipamentos }} equip.</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

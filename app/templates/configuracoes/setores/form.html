@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if setor else 'Novo' }} Setor{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.setores') }}">Setores</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar: ' + setor.nome if setor else 'Novo Setor' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-people"></i> {{ 'Editar Setor' if setor else 'Novo Setor' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required
+                               value="{{ setor.nome if setor else '' }}"
+                               placeholder="Ex.: SUEQ Predial, Equipe APS">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Divisão</label>
+                        <select name="divisao_id" class="form-select">
+                            <option value="">— Sem divisão —</option>
+                            {% for d in divisoes %}
+                            <option value="{{ d.id }}"
+                                    {% if setor and setor.divisao_id == d.id %}selected{% endif %}>
+                                {{ d.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">O setor herda a visibilidade da divisão.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipos de chamado (opcional)</label>
+                        <div class="form-text mb-2">Se vazio, usa os da divisão. Sobrescreve para filtros específicos.</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for k, v in tipos_chamado_labels.items() %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tipos_chamado" value="{{ k }}"
+                                       id="tc_{{ k }}"
+                                       {% if setor and k in (setor.tipos_chamado or []) %}checked{% endif %}>
+                                <label class="form-check-label" for="tc_{{ k }}">{{ v }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="2"
+                                  placeholder="Descreva brevemente este setor...">{{ setor.descricao or '' if setor else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>{{ 'Salvar Alterações' if setor else 'Cadastrar' }}
+                        </button>
+                        <a href="{{ url_for('configuracoes.setores') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

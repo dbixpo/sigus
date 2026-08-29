@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Relatório de Profissionais{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-people"></i> Relatório de Profissionais</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_profissionais', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_profissionais', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_profissionais', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" class="row g-2 align-items-end mb-2">
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Perfil', 'perfil', perfis, filtro_perfis, 'Todos os perfis') }}</div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Situação</label>
+            <select name="apenas_ativos" class="form-select form-select-sm" data-singleselect data-placeholder="Todos">
+                <option value="1" {{ 'selected' if apenas_ativos == '1' }}>Apenas ativos</option>
+                <option value="0" {{ 'selected' if apenas_ativos == '0' }}>Todos (incl. inativos)</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i></button>
+            <a href="{{ url_for('relatorios.profissionais') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Profissional', 5, 'nome') }}
+        {{ filtro_rapido('WhatsApp',     6, 'whatsapp') }}
+        {{ filtro_rapido('E-mail',       7, 'email') }}
+        {{ filtro_rapido('CBO',          8, 'cbo') }}
+        {{ filtro_rapido('Unidade',      1, 'unidade') }}
+        {{ filtro_rapido('CNES',         0, 'cnes') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsProfissionais">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ total }}</strong></span>
+    <span class="mini-stat">Unidades: <strong data-stat-col="1">—</strong></span>
+    <span class="mini-stat">CBOs: <strong data-stat-col="8">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle" id="tblProfissionais">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-nowrap">CNES</th>
+                        <th>Unidade</th>
+                        <th class="d-none d-xl-table-cell">E-mail da Unidade</th>
+                        <th class="d-none d-lg-table-cell text-nowrap">Telefone</th>
+                        <th class="d-none d-xl-table-cell">Endereço</th>
+                        <th>Profissional</th>
+                        <th><i class="bi bi-whatsapp text-success me-1"></i>Telefone (WhatsApp)</th>
+                        <th class="d-none d-lg-table-cell">E-mail</th>
+                        <th>CBO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td class="small text-muted text-nowrap">{{ r.cnes }}</td>
+                        <td class="small fw-semibold">{{ r.unidade }}</td>
+                        <td class="d-none d-xl-table-cell small text-muted">
+                            {% if r.email_unidade != '—' %}
+                            <a href="mailto:{{ r.email_unidade }}" class="text-decoration-none">{{ r.email_unidade }}</a>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell small text-muted text-nowrap">{{ r.tel_unidade }}</td>
+                        <td class="d-none d-xl-table-cell small text-muted">{{ r.end_unidade }}</td>
+                        <td class="small">
+                            {% if not r.ativo %}<span class="badge bg-danger me-1">Inativo</span>{% endif %}
+                            <span class="fw-semibold">{{ r.nome }}</span>
+                        </td>
+                        <td class="small text-nowrap">
+                            {% if r.whatsapp != '—' %}
+                            {% set _wdig = r.whatsapp | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
+                            <a href="https://wa.me/55{{ _wdig }}" target="_blank" class="text-success text-decoration-none">
+                                <i class="bi bi-whatsapp me-1"></i>{{ r.whatsapp | br_fone }}
+                            </a>
+                            {% else %}<span class="text-muted">—</span>{% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell small text-muted">
+                            {% if r.email != '—' %}
+                            <a href="mailto:{{ r.email }}" class="text-decoration-none">{{ r.email }}</a>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ r.cbo }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-people fs-1 text-muted d-block mb-3"></i>
+            <h6>Nenhum profissional encontrado com estes filtros.</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initFiltrosRapidos('tblProfissionais', 'miniStatsProfissionais');</script>
+{% endblock %}

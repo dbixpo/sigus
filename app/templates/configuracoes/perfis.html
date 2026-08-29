@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% block title %}Perfis de Acesso{% endblock %}
+
+{% block head %}
+<style>
+    /* Cabeçalho de coluna rotacionado */
+    .th-perfil {
+        width: 110px;
+        min-width: 110px;
+        vertical-align: bottom;
+        padding-bottom: 0.5rem;
+        text-align: center;
+    }
+    .th-perfil-inner {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        white-space: nowrap;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #2D3748;
+        height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .th-nivel {
+        font-size: 0.65rem;
+        color: #718096;
+        text-align: center;
+        margin-top: 4px;
+    }
+    .permissao-check {
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    .permissao-check .bi-check-circle-fill { color: #28a745; }
+    .permissao-check .bi-x-circle          { color: #dee2e6; }
+    .grupo-header td {
+        background: #f1f5f9;
+        font-size: 0.73rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #1A6FA8;
+        padding: 0.4rem 0.75rem;
+        border-top: 2px solid #e2e8f0;
+    }
+    .perfil-badge {
+        display: inline-block;
+        padding: 0.2em 0.65em;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    /* Cores distintas por perfil */
+    .pb-administrador      { background:#fee2e2; color:#991b1b; }
+    .pb-gestor_secretaria  { background:#dbeffe; color:#1e40af; }
+    .pb-coordenador        { background:#d1fae5; color:#065f46; }
+    .pb-administrativo     { background:#fef3c7; color:#92400e; }
+    .pb-profissional       { background:#f1f5f9; color:#475569; }
+
+    /* Linha da tabela de cards */
+    .perfil-card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .perfil-card .card-header {
+        font-weight: 700;
+        font-size: 0.9rem;
+    }
+    .perfil-card li {
+        font-size: 0.82rem;
+        padding: 0.2rem 0;
+        border: none;
+    }
+    .perfil-card li i { width: 16px; }
+    @media print {
+        .sigus-sidebar, .sigus-navbar, .breadcrumb, .page-header .btn { display: none !important; }
+        .sigus-main { margin-left: 0 !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Perfis de Acesso</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-shield-lock"></i> Perfis de Acesso</h1>
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-printer me-1"></i>Imprimir
+    </button>
+</div>
+
+<!-- CARDS DE RESUMO DOS PERFIS -->
+<div class="row g-3 mb-4">
+    {% set cores = {
+        'administrador':     ('danger',  'bi-shield-fill-check'),
+        'gestor_secretaria': ('primary', 'bi-briefcase-fill'),
+        'coordenador':       ('success', 'bi-person-badge-fill'),
+        'administrativo':    ('warning', 'bi-person-lines-fill'),
+        'profissional':      ('secondary','bi-person-fill')
+    } %}
+    {% set infos_resumo = {
+        'administrador': 'Usuário responsável pela configuração completa do sistema.',
+        'gestor_secretaria': 'Visão global da Secretaria de Saúde, supervisão de setores, unidades e serviços. Pode atender e fechar chamados.',
+        'coordenador': 'Gestão operacional de um setor, serviço ou unidade de saúde.',
+        'administrativo': 'Atividades administrativas e operacionais de suporte aos gestores.',
+        'profissional': 'Acesso limitado às funções operacionais relacionadas à sua atuação profissional.',
+    } %}
+    {% for chave, label in perfis.items() %}
+    {% set cor = cores.get(chave, ('secondary','bi-person')) %}
+    <div class="col-md-4 col-xl-2">
+        <div class="card text-center h-100 border-0 shadow-sm">
+            <div class="card-body py-3">
+                <div class="mb-2">
+                    <span class="stat-icon bg-{{ cor[0] }}-soft mx-auto" style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                        <i class="bi {{ cor[1] }}"></i>
+                    </span>
+                </div>
+                <div class="fw-bold small">{{ label }}</div>
+                <div class="text-muted mt-1" style="font-size:0.65rem; line-height:1.3;">
+                    {{ infos_resumo.get(chave, '') }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- TABS: MATRIZ | CARDS DETALHADOS -->
+<ul class="nav nav-tabs mb-3" id="perfisTabs">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabMatriz">
+            <i class="bi bi-table me-1"></i>Matriz de Permissões
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCards">
+            <i class="bi bi-person-badge me-1"></i>Detalhamento por Perfil
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+
+    <!-- ── TAB 1: MATRIZ ──────────────────────────────────── -->
+    <div class="tab-pane fade show active" id="tabMatriz">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-table me-2"></i>Matriz completa — quem pode fazer o quê</span>
+                <span class="text-muted small">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>Permitido &nbsp;
+                    <i class="bi bi-x-circle text-muted me-1"></i>Não permitido
+                </span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm mb-0" style="min-width:700px;">
+                    <thead>
+                        <tr>
+                            <th style="min-width:220px;" class="align-bottom">Permissão</th>
+                            {% for chave, label in perfis.items() %}
+                            <th class="th-perfil">
+                                <div class="th-perfil-inner">{{ label }}</div>
+                                <div class="th-nivel">Nível {{ hierarquia[chave] }}</div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grupo in grupos_ordem %}
+                        {% if grupos.get(grupo) %}
+                        <tr class="grupo-header">
+                            <td colspan="{{ perfis | length + 1 }}">
+                                <i class="bi bi-{{ {
+                                    'Unidades':'hospital',
+                                    'Salas':'door-open',
+                                    'Equipamentos':'pc-display',
+                                    'Chamados':'wrench-adjustable',
+                                    'Contratos':'file-earmark-text',
+                                    'Usuários':'people',
+                                    'Relatórios':'bar-chart-line'
+                                }.get(grupo,'tag') }} me-2"></i>{{ grupo }}
+                            </td>
+                        </tr>
+                        {% for chave, perm_label in grupos[grupo] %}
+                        <tr>
+                            <td class="small">{{ perm_label }}</td>
+                            {% for p_chave in perfis %}
+                            <td class="permissao-check">
+                                {% if matriz[chave][p_chave] %}
+                                <i class="bi bi-check-circle-fill" title="Permitido"></i>
+                                {% else %}
+                                <i class="bi bi-x-circle" title="Não permitido"></i>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── TAB 2: CARDS POR PERFIL ───────────────────────── -->
+    <div class="tab-pane fade" id="tabCards">
+        <div class="row g-3">
+
+            {# Descrições e restrições de cada perfil #}
+            {% set infos = {
+                'administrador': {
+                    'desc': 'Usuário responsável pela configuração completa do sistema.',
+                    'restricoes': [],
+                    'cor': 'danger'
+                },
+                'gestor_secretaria': {
+                    'desc': 'Usuário com visão global da Secretaria de Saúde, responsável pela supervisão de setores, unidades e serviços.',
+                    'restricoes': [
+                        'Não cadastra nem edita unidades, salas ou equipamentos',
+                        'Não gerencia usuários do sistema',
+                    ],
+                    'cor': 'primary'
+                },
+                'coordenador': {
+                    'desc': 'Usuário responsável pela gestão operacional de um setor, serviço ou unidade de saúde.',
+                    'restricoes': [
+                        'Acessa apenas as unidades às quais está vinculado',
+                        'Não gerencia usuários do sistema (só vincula à unidade)',
+                        'Não cadastra nem edita contratos',
+                    ],
+                    'cor': 'success'
+                },
+                'administrativo': {
+                    'desc': 'Usuários responsáveis por atividades administrativas e operacionais de suporte aos gestores.',
+                    'restricoes': [
+                        'Não pode vincular nem desvincular coordenadores',
+                        'Não cria salas nem dá baixa em equipamentos',
+                        'Acessa apenas as unidades às quais está vinculado',
+                        'Não emite relatórios',
+                    ],
+                    'cor': 'warning'
+                },
+                'profissional': {
+                    'desc': 'Usuário com acesso limitado às funções operacionais do sistema, relacionadas à sua atuação profissional.',
+                    'restricoes': [
+                        'Não cadastra nem edita nenhum dado estrutural',
+                        'Não cancela chamados de outros usuários',
+                        'Não acessa outras unidades',
+                        'Não emite relatórios',
+                    ],
+                    'cor': 'secondary'
+                },
+            } %}
+
+            {% for chave, label in perfis.items() %}
+            {% set info = infos.get(chave, {}) %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card perfil-card h-100">
+                    <div class="card-header bg-{{ info.get('cor','secondary') }} bg-opacity-10 border-{{ info.get('cor','secondary') }} border-start border-4">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="perfil-badge pb-{{ chave }}">Nível {{ hierarquia[chave] }}</span>
+                            <span class="fw-bold">{{ label }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">{{ info.get('desc', '') }}</p>
+
+                        <div class="fw-semibold small text-success mb-1">
+                            <i class="bi bi-check-circle-fill me-1"></i>Pode fazer:
+                        </div>
+                        <ul class="list-unstyled mb-3">
+                            {% for grupo in grupos_ordem %}
+                            {% for perm_chave, perm_label in grupos.get(grupo, []) %}
+                            {% if matriz[perm_chave][chave] %}
+                            <li class="text-success">
+                                <i class="bi bi-check2"></i> {{ perm_label }}
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+
+                        {% if info.get('restricoes') %}
+                        <div class="fw-semibold small text-danger mb-1">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Restrições importantes:
+                        </div>
+                        <ul class="list-unstyled">
+                            {% for r in info['restricoes'] %}
+                            <li class="text-danger">
+                                <i class="bi bi-dash"></i> {{ r }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

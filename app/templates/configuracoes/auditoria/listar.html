@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Auditoria{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-journal-text me-2"></i>Auditoria do Sistema</h1>
+        <p class="text-muted mb-0 small">
+            Registro de todas as requisições HTTP. Apenas administradores podem visualizar.
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('configuracoes.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<form method="GET" class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Data início</label>
+                <input type="date" name="data_inicio" class="form-control form-control-sm"
+                       value="{{ filtros.data_inicio or '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Data fim</label>
+                <input type="date" name="data_fim" class="form-control form-control-sm"
+                       value="{{ filtros.data_fim or '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Ação</label>
+                <select name="acao" class="form-select form-select-sm">
+                    <option value="">Todas</option>
+                    {% for a in acao_opcoes %}
+                    <option value="{{ a }}" {% if filtros.acao == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Módulo</label>
+                <select name="modulo" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for m in modulo_opcoes %}
+                    <option value="{{ m }}" {% if filtros.modulo == m %}selected{% endif %}>{{ m }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Usuário</label>
+                <select name="usuario_id" class="form-select form-select-sm">
+                    <option value="">Todos</option>
+                    {% for u in usuarios %}
+                    <option value="{{ u.id }}" {% if filtros.usuario_id == u.id %}selected{% endif %}>
+                        {{ u.nome | truncate(25) }}{% if not u.ativo %} (inativo){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small mb-0">Endpoint</label>
+                <input type="text" name="endpoint" class="form-control form-control-sm"
+                       placeholder="Ex: contratos.detalhe" value="{{ filtros.endpoint or '' }}">
+            </div>
+            <div class="col-md-2 col-lg-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a href="{{ url_for('configuracoes.auditoria') }}" class="btn btn-outline-secondary btn-sm"
+                   title="Limpar">×</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>{{ paginacao.total }} registro(s)</span>
+        <form method="GET" class="d-flex align-items-center gap-2">
+            {% for k, v in request.args.items() %}
+            {% if k != 'per_page' and k != 'page' %}
+            <input type="hidden" name="{{ k }}" value="{{ v }}">
+            {% endif %}
+            {% endfor %}
+            <label class="mb-0 small">Por página:</label>
+            <select name="per_page" class="form-select form-select-sm" style="width:70px"
+                    onchange="this.form.submit()">
+                <option value="25" {% if paginacao.per_page == 25 %}selected{% endif %}>25</option>
+                <option value="50" {% if paginacao.per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if paginacao.per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:140px">Data/Hora</th>
+                        <th>Usuário</th>
+                        <th>Ação</th>
+                        <th>Módulo</th>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in registros %}
+                    <tr>
+                        <td class="small text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M:%S') if r.created_at else '—' }}</td>
+                        <td class="small">
+                            {% if r.usuario %}
+                            {{ r.usuario.nome | truncate(25) }}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-secondary">{{ r.acao or '—' }}</span></td>
+                        <td class="small">{{ r.modulo or '—' }}</td>
+                        <td class="small font-monospace" style="font-size:.75rem">{{ r.endpoint or '—' }}</td>
+                        <td><code class="small">{{ r.method or '—' }}</code></td>
+                        <td>
+                            {% if r.response_status %}
+                            <span class="badge {% if r.response_status >= 400 %}bg-danger{% elif r.response_status >= 300 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ r.response_status }}
+                            </span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ r.ip_address or '—' }}</td>
+                    </tr>
+                    {% if r.detalhes %}
+                    <tr class="table-light">
+                        <td colspan="8" class="small py-1">
+                            <strong>Detalhes:</strong> {{ r.detalhes | truncate(150) }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Nenhum registro encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if paginacao.pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+            Página {{ paginacao.page }} de {{ paginacao.pages }}
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
+                    {% if paginacao.has_prev %}
+                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.prev_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, endpoint=filtros.endpoint or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}">←</a>
+                    {% else %}
+                    <span class="page-link">←</span>
+                    {% endif %}
+                </li>
+                <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
+                    {% if paginacao.has_next %}
+                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.next_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, endpoint=filtros.endpoint or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}">→</a>
+                    {% else %}
+                    <span class="page-link">→</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

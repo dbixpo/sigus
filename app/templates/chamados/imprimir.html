@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% if chamado.tipo_chamado == 'predial' -%}
+    {% set _local = chamado.sala.nome if chamado.sala else (chamado.titulo | replace('Predial: ', '')) -%}
+    <title>{{ chamado.numero }} {{ chamado.unidade.nome }} {{ _local }}</title>
+{%- elif chamado.equipamento -%}
+    {% set _e = chamado.equipamento -%}
+    {% set _tipo = _e.tipo_equipamento.nome if _e.tipo_equipamento else 'Equipamento' -%}
+    {% set _pat  = _e.numero_patrimonio or '' -%}
+    <title>{{ chamado.numero }} {{ chamado.unidade.nome }} {{ _tipo }}{% if _pat %} {{ _pat }}{% endif %}</title>
+{%- else -%}
+    <title>{{ chamado.numero }} {{ chamado.unidade.nome }}</title>
+{%- endif %}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+}
+
+/* ── Barra de ações (some na impressão) ───────────────────── */
+.no-print {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    align-items: center; flex-wrap: wrap;
+    background: #f8f9fa; border: 1px solid #dee2e6;
+    border-radius: 8px; padding: 12px 16px;
+}
+.no-print .label-chamado {
+    font-size: 15px; font-weight: bold; margin-right: auto; color: #1a6abf;
+}
+.btn-acao {
+    border: none; padding: 8px 18px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none;
+}
+.btn-imprimir { background: #1a6abf; color: #fff; }
+.btn-voltar   { background: #6c757d; color: #fff; }
+
+/* ── Documento imprimível ─────────────────────────────────── */
+.doc {
+    max-width: 740px; margin: 0 auto;
+    border: 1px solid #000; padding: 14px 16px;
+}
+
+/* Cabeçalho institucional — 3 colunas */
+.cabecalho {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 10px;
+    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 12px;
+}
+.cab-logo img  { height: 58px; width: auto; }
+.cab-titulo {
+    flex: 1; text-align: center;
+    font-size: 13px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
+}
+.cab-titulo .subtitulo { font-size: 10px; font-weight: normal; text-transform: none; color: #444; }
+.cab-secretaria {
+    text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap;
+}
+.cab-secretaria strong { font-size: 13px; display: block; }
+
+/* Número do chamado destaque */
+.chamado-num {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px;
+}
+.chamado-num .num  { font-size: 16px; font-weight: bold; letter-spacing: 1px; color: #000; }
+.chamado-num .badges { display: flex; gap: 10px; }
+.badge-imp {
+    font-size: 11px; font-weight: normal; color: #222; text-transform: uppercase;
+}
+
+/* Seções */
+.secao { border-top: 1px solid #aaa; margin-top: 10px; padding-top: 6px; }
+.secao-titulo {
+    font-size: 9px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: .6px; margin-bottom: 6px;
+}
+
+/* Grid de campos */
+.campos-grid { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: stretch; margin-bottom: 4px; width: 100%; }
+.campo {
+    display: flex; flex-direction: column; min-width: 80px;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 2px 4px 2px 0;
+}
+.campo.w-full  { flex: 1 1 100%; }
+.campo.w-half  { flex: 1 1 45%; }
+.campo.w-third { flex: 1 1 28%; }
+.campo.w-auto  { flex: 2 1 auto; }
+.c-label {
+    font-size: 8.5px; font-weight: bold; text-transform: uppercase;
+    color: #444; margin-bottom: 2px;
+}
+.c-valor {
+    min-height: 16px;
+    padding: 1px 3px 2px; font-size: 11px; line-height: 1.3;
+}
+.c-valor.vazio { color: #999; font-style: italic; }
+.c-valor.destaque { font-weight: bold; font-size: 12px; }
+
+/* Descrição / texto longo */
+.texto-block {
+    border: 1px solid #bbb; border-radius: 3px;
+    padding: 6px 8px; font-size: 11px; line-height: 1.5;
+    white-space: pre-wrap; min-height: 40px; background: #fafafa;
+}
+
+/* Fotos — indicador na 1ª página */
+.fotos-indicador {
+    background: #f0f9ff; border: 1px solid #bae6fd;
+    border-radius: 4px; padding: 6px 10px;
+    font-size: 10px; color: #0369a1; margin-top: 6px;
+    display: flex; align-items: center; gap: 6px;
+}
+
+/* Segunda página de fotos */
+.pagina-fotos {
+    page-break-before: always;
+    max-width: 740px; margin: 0 auto;
+    padding-top: 0;
+}
+.fotos-cab-mini {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 16px;
+    gap: 8px;
+}
+.fotos-cab-mini img  { height: 44px; width: auto; }
+.fotos-cab-mini .ft  { flex:1; text-align:center; font-size:11px; font-weight:bold;
+                        text-transform:uppercase; letter-spacing:.4px; }
+.fotos-cab-mini .ft small { display:block; font-weight:normal; font-size:9px;
+                              text-transform:none; color:#555; margin-top:2px; }
+.fotos-titulo-secao {
+    font-size: 10px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: .6px; margin-bottom: 12px;
+    border-top: 1px solid #aaa; padding-top: 8px;
+}
+.fotos-grid-print {
+    display: grid;
+    gap: 10px;
+}
+/* 1 foto: ocupa a largura toda */
+.fotos-grid-print.fotos-unica {
+    grid-template-columns: 1fr;
+}
+/* 2+ fotos: duas por linha */
+.fotos-grid-print.fotos-multiplas {
+    grid-template-columns: 1fr 1fr;
+}
+.foto-celula { display: flex; flex-direction: column; align-items: center; }
+.foto-celula img {
+    width: 100%; aspect-ratio: 4/3; object-fit: cover;
+    border: 1px solid #bbb; border-radius: 6px;
+    display: block;
+}
+.fotos-unica .foto-celula img {
+    aspect-ratio: 16/9;
+    max-height: 420px;
+}
+.foto-legenda {
+    font-size: 8px; color: #666; text-align: center;
+    margin-top: 3px; max-width: 100%; word-break: break-all;
+}
+
+/* Histórico / Timeline */
+.hist-table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10px; }
+.hist-table th {
+    background: #e8edf2; border: 1px solid #bbb;
+    padding: 4px 6px; text-align: left; font-size: 9px; text-transform: uppercase;
+}
+.hist-table td {
+    border: 1px solid #bbb; padding: 5px 6px; vertical-align: top;
+}
+.hist-table tr:nth-child(even) td { background: #f9fafb; }
+.hist-obs { color: #444; font-size: 9.5px; margin-top: 2px; white-space: pre-wrap; }
+
+/* Assinatura */
+.assinatura-wrap {
+    display: flex; gap: 28px; margin-top: 32px;
+    border-top: 2px solid #000; padding-top: 16px;
+}
+.assinatura-box { flex: 1; text-align: center; }
+.assinatura-linha {
+    border-bottom: 1px solid #000; margin-bottom: 6px;
+    height: 52px;   /* espaço generoso para assinar */
+}
+.assinatura-label { font-size: 9px; line-height: 1.5; }
+.assinatura-label strong { font-size: 10px; display: block; margin-bottom: 1px; }
+
+/* Rodapé */
+.rodape {
+    text-align: center; font-size: 8.5px; color: #888;
+    border-top: 1px solid #ccc; padding-top: 6px; margin-top: 10px;
+}
+
+/* ── Media print ──────────────────────────────────────────── */
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .doc { border: none; }
+    @page { margin: 1cm; }
+}
+</style>
+</head>
+<body>
+
+{# ── Barra de ações (visível apenas na tela, oculta dentro de iframe) ── #}
+<div class="no-print" id="barraAcoes">
+    <span class="label-chamado">
+        &#x1F4CB; Chamado {{ chamado.numero }}
+        {% if chamado.equipamento %} — {{ chamado.equipamento.nome_display }}{% endif %}
+    </span>
+    <button class="btn-acao btn-imprimir" onclick="window.print()">
+        &#x1F5A8; Imprimir / Salvar PDF
+    </button>
+    <a class="btn-acao btn-voltar" href="{{ url_for('chamados.detalhe', id=chamado.id) }}">
+        &#8592; Voltar
+    </a>
+</div>
+<script>
+/* Oculta a barra de ações quando a página é carregada dentro de um iframe */
+if (window.self !== window.top) {
+    var b = document.getElementById('barraAcoes');
+    if (b) b.style.display = 'none';
+}
+</script>
+
+{# ── Documento imprimível ────────────────────────────────────────── #}
+<div class="doc">
+
+    {# Cabeçalho institucional #}
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+                 onerror="this.style.display='none'"
+                 alt="Prefeitura de Sorocaba">
+        </div>
+        <div class="cab-titulo">
+            SISTEMA INTEGRADO DE GESTÃO DE UNIDADE<br>
+            <span class="subtitulo" style="font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px">Abertura de Chamado</span>
+        </div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
+    </div>
+
+    {# Número e badges de status/prioridade #}
+    <div class="chamado-num">
+        <span class="num">{{ chamado.numero }}</span>
+        <div class="badges" style="margin-left:auto; text-align:right;">
+            <span class="badge-imp"><span style="color:#888;font-weight:normal;">Status:</span> {{ chamado.status_label }}</span>
+            <span style="color:#bbb; margin:0 4px;">·</span>
+            <span class="badge-imp"><span style="color:#888;font-weight:normal;">Prioridade:</span> {{ chamado.prioridade_label }}</span>
+        </div>
+    </div>
+
+    {# ── Seção 1: Identificação ─────────────────────────────────── #}
+    {% set u = chamado.unidade %}
+    {% set end_partes = [u.endereco, u.numero, u.complemento, u.bairro, u.cidade] | select | list %}
+    <div class="secao">
+        <div class="secao-titulo">1. Identificação</div>
+
+        {# Layout: campos à esquerda + QR Code à direita ocupando toda a altura #}
+        {% set end_busca = ([u.endereco, u.numero, u.complemento, u.bairro, 'Sorocaba SP'] | select | join(', ')) %}
+        <div style="display:flex; gap:12px; align-items:stretch;">
+
+            <div class="campos-grid" style="flex:1; align-content:flex-start;">
+                <div class="campo w-half">
+                    <div class="c-label">Unidade de Saúde</div>
+                    <div class="c-valor destaque">{{ u.nome }}</div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Data de Abertura</div>
+                    <div class="c-valor">{{ chamado.criado_em | br_datetime }}</div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Responsável pela Abertura</div>
+                    <div class="c-valor">{{ chamado.solicitante.nome }}</div>
+                </div>
+                <div class="campo w-half">
+                    <div class="c-label">Endereço</div>
+                    <div class="c-valor">
+                        {% if end_partes %}
+                        {% if u.link_maps %}
+                        <a href="{{ u.link_maps }}" target="_blank"
+                           style="color:inherit; text-decoration:underline dotted;">
+                            {{ end_partes | join(', ') }}
+                        </a>
+                        {% else %}
+                        {{ end_partes | join(', ') }}
+                        {% endif %}
+                        {% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Telefone</div>
+                    <div class="c-valor">
+                        {{ u.telefone | br_fone }}{% if u.ramal %} | Ramal: {{ u.ramal }}{% endif %}
+                    </div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Grau de Urgência</div>
+                    <div class="c-valor">
+                        {% if chamado.prioridade == 'urgente' %}P1 — Interrupção de atendimento
+                        {% elif chamado.prioridade == 'alta' %}P2 — Atendimento parcialmente prejudicado
+                        {% elif chamado.prioridade == 'media' %}P3 — Pouco urgente
+                        {% else %}{{ chamado.prioridade_label }}{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {# QR Code — URL curta do SIGUS → redireciona para Google Maps #}
+            {% if qr_url %}
+            <a id="qrMapsLink" href="{{ u.link_maps }}" target="_blank" style="
+                flex: 0 0 110px;
+                width: 110px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                align-self: stretch;
+                text-decoration: none;
+            ">
+                <div id="qrMaps" style="width:110px;height:110px;"></div>
+            </a>
+            {% endif %}
+
+        </div>
+    </div>
+
+    {# ── Seção 2: Local (predial) ou Equipamento (bem permanente) ── #}
+    {% if chamado.tipo_chamado == 'predial' %}
+    <div class="secao">
+        <div class="secao-titulo">2. Local do Problema</div>
+        <div class="campos-grid">
+            {% if chamado.sala %}
+            <div class="campo w-half">
+                <div class="c-label">Sala / Setor</div>
+                <div class="c-valor destaque">{{ chamado.sala.nome }}</div>
+            </div>
+            {% if chamado.sala.tipo_sala %}
+            <div class="campo w-third">
+                <div class="c-label">Tipo de Sala</div>
+                <div class="c-valor">{{ chamado.sala.tipo_sala.nome }}</div>
+            </div>
+            {% elif chamado.sala.tipo %}
+            <div class="campo w-third">
+                <div class="c-label">Tipo de Sala</div>
+                <div class="c-valor">{{ chamado.sala.tipo }}</div>
+            </div>
+            {% endif %}
+            {% else %}
+            {# Sem sala cadastrada — extrai local do título (ex: "Predial: Corredor") #}
+            {% set local_txt = chamado.titulo | replace('Predial: ', '') %}
+            <div class="campo w-full">
+                <div class="c-label">Local</div>
+                <div class="c-valor destaque">{{ local_txt if local_txt != 'Chamado Predial' else '—' }}</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% elif chamado.equipamento %}
+    {% set e = chamado.equipamento %}
+    <div class="secao">
+        <div class="secao-titulo">2. Identificação do Equipamento</div>
+        <div class="campos-grid">
+            <div class="campo w-third">
+                <div class="c-label">Tipo de Equipamento</div>
+                <div class="c-valor destaque">{{ e.tipo_equipamento.nome if e.tipo_equipamento else '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Fabricante / Modelo</div>
+                <div class="c-valor">
+                    {{ e.marca.nome if e.marca else '—' }}{% if e.modelo %} / {{ e.modelo.nome }}{% endif %}
+                </div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Nº de Patrimônio</div>
+                <div class="c-valor">{{ e.numero_patrimonio or '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Nº de Série</div>
+                <div class="c-valor">{{ e.numero_serie or '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Sala / Localização</div>
+                <div class="c-valor">{{ e.sala.nome if e.sala else '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Condição</div>
+                <div class="c-valor">{{ e.condicao_label }}</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Seção 3: Problema ──────────────────────────────────────── #}
+    <div class="secao">
+        <div class="secao-titulo">3. Problema / Serviço Solicitado</div>
+        <div class="campos-grid" style="margin-bottom:10px;">
+            {% if chamado.bp_servico %}
+            <div class="campo w-third">
+                <div class="c-label">Serviço Solicitado</div>
+                <div class="c-valor">
+                    {% set servs = {'corretiva':'Manutenção corretiva','preventiva':'Manutenção preventiva','instalacao':'Instalação','desinstalacao':'Desinstalação','treinamento':'Treinamento','calibracao':'Calibração','outro':'Outro'} %}
+                    {{ servs.get(chamado.bp_servico, chamado.bp_servico) }}
+                </div>
+            </div>
+            {% endif %}
+            {% if chamado.bp_problema_em %}
+            <div class="campo w-third">
+                <div class="c-label">Problema Apresentado Em</div>
+                <div class="c-valor">{{ {'bem':'No bem permanente','acessorio':'No acessório'}.get(chamado.bp_problema_em, chamado.bp_problema_em) }}</div>
+            </div>
+            {% endif %}
+            {% if chamado.tipo_chamado == 'equipamento' %}
+            <div class="campo w-third">
+                <div class="c-label">É Rechamado?</div>
+                <div class="c-valor">
+                    {% if chamado.bp_rechamado %}
+                    Sim{% if chamado.bp_data_rechamado %} (anterior: {{ chamado.bp_data_rechamado.strftime('%d/%m/%Y') }}){% endif %}
+                    {% else %}Não{% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="c-label" style="margin-bottom:4px;">Descrição completa e detalhada do problema</div>
+        <div class="texto-block">{{ chamado.descricao }}</div>
+    </div>
+
+    {# ── Seção 4: Setor / Encaminhamento ────────────────────────── #}
+    <div class="secao">
+        <div class="secao-titulo">4. Encaminhamento</div>
+        <div class="campos-grid">
+            <div class="campo w-third">
+                <div class="c-label">Setor de Manutenção</div>
+                <div class="c-valor">{{ chamado.setor.nome if chamado.setor else '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Técnico Responsável</div>
+                <div class="c-valor">{{ chamado.responsavel.nome if chamado.responsavel else '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Status Atual</div>
+                <div class="c-valor">{{ chamado.status_label }}</div>
+            </div>
+            {% if chamado.fechado_em %}
+            <div class="campo w-third">
+                <div class="c-label">Data de Encerramento</div>
+                <div class="c-valor">{{ chamado.fechado_em | br_datetime }}</div>
+            </div>
+            {% endif %}
+        </div>
+        {% if chamado.observacao_conclusao %}
+        <div class="c-label mt-2 mb-1">Observação de {{ 'Conclusão' if chamado.status == 'concluido' else 'Cancelamento' }}</div>
+        <div class="texto-block">{{ chamado.observacao_conclusao }}</div>
+        {% endif %}
+    </div>
+
+    {# ── Seção 5: Fotos — indicador (fotos ficam na 2ª página) ─── #}
+    {% set fotos_list = chamado.fotos.all() %}
+    {% set fotos_img  = fotos_list | rejectattr('is_video') | list %}
+    {% set fotos_vid  = fotos_list | selectattr('is_video')  | list %}
+    {% if fotos_list %}
+    <div class="secao">
+        <div class="secao-titulo">5. Fotos / Evidências</div>
+        <div class="fotos-indicador">
+            <span>&#128247;</span>
+            {% if fotos_img %}
+                <strong>{{ fotos_img|length }} foto(s)</strong> anexada(s) — ver página 2
+            {% endif %}
+            {% if fotos_vid %}
+                {% if fotos_img %}&nbsp;·&nbsp;{% endif %}
+                <strong>{{ fotos_vid|length }} vídeo(s)</strong> — disponíveis no sistema
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {# ── Seção 6: Histórico de Andamentos ───────────────────────── #}
+    {% if historico %}
+    <div class="secao">
+        <div class="secao-titulo">6. Histórico de Andamentos ({{ historico|length }})</div>
+        <table class="hist-table">
+            <thead>
+                <tr>
+                    <th style="width:110px">Data / Hora</th>
+                    <th style="width:120px">Usuário</th>
+                    <th>Ação / Observação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in historico %}
+                <tr>
+                    <td>{{ h.criado_em | br_datetime }}</td>
+                    <td>{{ h.usuario.nome if h.usuario else 'Sistema' }}</td>
+                    <td>
+                        <strong>{{ h.acao }}</strong>
+                        {% if h.observacao %}
+                        <div class="hist-obs">{{ h.observacao }}</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    {# ── Assinaturas ────────────────────────────────────────────── #}
+    <div class="assinatura-wrap">
+        <div class="assinatura-box">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label">
+                <strong>Responsável pela Solicitação</strong>
+                {{ chamado.solicitante.nome }}<br>
+                Data: ____/____/______
+            </div>
+        </div>
+        <div class="assinatura-box">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label">
+                <strong>Técnico Responsável pela Manutenção</strong>
+                {{ chamado.responsavel.nome if chamado.responsavel else '&nbsp;' }}<br>
+                Data: ____/____/______
+            </div>
+        </div>
+        <div class="assinatura-box">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label">
+                <strong>Responsável pela Unidade</strong>
+                {{ chamado.unidade.nome }}<br>
+                Data: ____/____/______
+            </div>
+        </div>
+    </div>
+
+    {# Rodapé #}
+    <div class="rodape">
+        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        Impresso em {{ now | br_datetime }}
+    </div>
+
+</div>{# /doc #}
+
+{# ════════════════════════════════════════════════════════════
+   PÁGINA 2 — Fotos (só aparece se houver imagens)
+════════════════════════════════════════════════════════════ #}
+{% if fotos_img %}
+<div class="pagina-fotos">
+
+    {# Mini-cabeçalho repetido #}
+    <div class="fotos-cab-mini">
+        <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+             onerror="this.style.display='none'"
+             alt="Prefeitura de Sorocaba">
+        <div class="ft">
+            SISTEMA INTEGRADO DE GESTÃO DE UNIDADE
+            <small>Fotos do Chamado {{ chamado.numero }} — {{ chamado.titulo }}</small>
+        </div>
+        <div style="text-align:right; font-size:10px; white-space:nowrap;">
+            <strong>Secretaria da</strong><br>SAÚDE
+        </div>
+    </div>
+
+    <div class="fotos-titulo-secao">
+        Fotos / Evidências ({{ fotos_img|length }} imagem{{ 's' if fotos_img|length > 1 else '' }})
+    </div>
+
+    <div class="fotos-grid-print {% if fotos_img|length == 1 %}fotos-unica{% else %}fotos-multiplas{% endif %}">
+        {% for foto in fotos_img %}
+        <div class="foto-celula">
+            <img src="{{ request.host_url.rstrip('/') }}{{ foto.url }}"
+                 alt="{{ foto.original }}">
+            <div class="foto-legenda">{{ loop.index }}. {{ foto.original | truncate(35, true, '…') }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if fotos_vid %}
+    <div style="margin-top:14px; font-size:9px; color:#888; border-top:1px solid #ddd; padding-top:6px;">
+        + {{ fotos_vid|length }} vídeo(s) anexado(s) — disponíveis para visualização no sistema SIGUS.
+    </div>
+    {% endif %}
+
+    <div class="rodape" style="margin-top:24px;">
+        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        Impresso em {{ now | br_datetime }}
+    </div>
+
+</div>
+{% endif %}
+
+{% if qr_url %}
+<script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+<script>
+(function () {
+    var el = document.getElementById('qrMaps');
+    if (!el || typeof qrcode === 'undefined') return;
+    var url = {{ qr_url | tojson }};
+    if (!url) return;
+    var qr = qrcode(4, 'L');
+    qr.addData(url);
+    qr.make();
+    el.innerHTML = qr.createSvgTag({ scalable: true, margin: 1 });
+    var svg = el.querySelector('svg');
+    if (svg) svg.style.cssText = 'width:110px;height:110px;display:block;';
+})();
+</script>
+{% endif %}
+
+</body>
+</html>

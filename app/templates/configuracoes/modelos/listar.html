@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Modelos{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Modelos</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-cpu"></i> Modelos</h1>
+    <a href="{{ url_for('configuracoes.novo_modelo2') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo Modelo
+    </a>
+</div>
+
+{# Filtros #}
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="GET" class="row g-2 align-items-end">
+            <div class="col-sm-4">
+                <label class="form-label small mb-1">Tipo de Equipamento</label>
+                <select name="tipo_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Todos os tipos</option>
+                    {% for t in tipos %}
+                    <option value="{{ t.id }}" {{ 'selected' if filtro_tipo == t.id }}>{{ t.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-4">
+                <label class="form-label small mb-1">Marca</label>
+                <select name="marca_id" id="sel-filtro-marca" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">Todas as marcas</option>
+                    {% for m in marcas_filtro %}
+                    <option value="{{ m.id }}" {{ 'selected' if filtro_marca == m.id }}>{{ m.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-auto">
+                <a href="{{ url_for('configuracoes.listar_modelos') }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if modelos %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Modelo</th>
+                        <th>Marca</th>
+                        <th>Tipo de Equipamento</th>
+                        <th class="text-center">Equipamentos</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for md in modelos %}
+                    <tr>
+                        <td class="fw-semibold">
+                            <i class="bi bi-cpu me-2 text-secondary"></i>{{ md.nome }}
+                        </td>
+                        <td>
+                            {% if md.marca %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i class="bi bi-tag me-1"></i>{{ md.marca.nome }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if md.tipo_equipamento %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <i class="bi {{ md.tipo_equipamento.icone }} me-1"></i>{{ md.tipo_equipamento.nome }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Sem tipo
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'primary' if md.equipamentos.count() > 0 else 'light text-dark' }}">
+                                {{ md.equipamentos.count() }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_modelo2', id=md.id) }}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if md.equipamentos.count() == 0 %}
+                            <form method="POST" action="{{ url_for('configuracoes.excluir_modelo2', id=md.id) }}"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Excluir o modelo {{ md.nome }}?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-cpu fs-1 text-muted d-block mb-3"></i>
+    <h5>Nenhum modelo encontrado</h5>
+    <p class="text-muted">
+        {% if filtro_tipo or filtro_marca %}
+            Nenhum modelo corresponde ao filtro selecionado.
+        {% else %}
+            Cadastre modelos vinculados a um tipo de equipamento e uma marca.
+        {% endif %}
+    </p>
+    <a href="{{ url_for('configuracoes.novo_modelo2') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-circle me-1"></i>Cadastrar Primeiro Modelo
+    </a>
+</div>
+{% endif %}
+{% endblock %}

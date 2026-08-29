@@ -1,0 +1,639 @@
+/* ============================================================
+   SIGUS — Sistema Integrado de Gestão das Unidades de Saúde
+   Identidade Visual: Saúde Digital Sorocaba
+   ============================================================ */
+
+:root {
+    /* Cores extraídas da identidade Saúde Digital */
+    --sigus-primary:   #1A82B8;   /* azul céu da logo */
+    --sigus-secondary: #19A88B;
+    --sigus-dark:      #0D3B5E;   /* azul petróleo escuro do texto "SAÚDE DIGITAL" */
+    --sigus-accent-red:    #E63030;  /* vermelho do coração */
+    --sigus-accent-yellow: #F5C500;  /* amarelo do coração */
+    --sigus-bg:        #F4F6F9;
+    --sigus-text:      #1E3A50;
+    --sigus-text-muted:#718096;
+    --sigus-sidebar-width: 240px;
+    --sigus-navbar-height: 58px;
+    --sigus-sidebar-collapsed-width: 64px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--sigus-text);
+    background-color: var(--sigus-bg);
+}
+
+/* ── NAVBAR ─────────────────────────────────────────────── */
+.sigus-navbar {
+    background-color: var(--sigus-dark) !important;
+    height: var(--sigus-navbar-height);
+    z-index: 1050;
+    border-bottom: 3px solid var(--sigus-primary);
+}
+
+/* Todos os botões do lado direito da navbar com altura uniforme */
+.sigus-navbar .ms-auto .btn {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Dropdown de notificações — flex só quando aberto (Bootstrap usa show para display) */
+.notif-dropdown-menu.show {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Logo na navbar */
+.navbar-logo {
+    height: 36px;
+    max-width: 180px;
+    object-fit: contain;
+    filter: brightness(0) invert(1); /* garante branco em qualquer fundo */
+}
+
+.sigus-navbar .navbar-brand {
+    font-size: 1rem;
+    color: #fff !important;
+}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+.sigus-wrapper {
+    display: flex;
+    min-height: 100vh;
+    padding-top: var(--sigus-navbar-height);
+}
+
+/* ── SIDEBAR ─────────────────────────────────────────────── */
+.sigus-sidebar {
+    width: var(--sigus-sidebar-width);
+    background-color: var(--sigus-dark);
+    position: fixed;
+    top: var(--sigus-navbar-height);
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.25s ease;
+    z-index: 1040;
+}
+
+/* Área rolável com os itens do menu */
+.sidebar-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0; /* essencial para flex + overflow funcionar */
+}
+
+.sigus-sidebar.collapsed {
+    width: var(--sigus-sidebar-collapsed-width);
+}
+
+.sigus-sidebar.collapsed .sidebar-section,
+.sigus-sidebar.collapsed .nav-link span {
+    display: none;
+}
+
+.sigus-sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.65rem 0;
+}
+
+.sigus-sidebar.collapsed .nav-link i {
+    margin-right: 0 !important;
+    font-size: 1.2rem;
+}
+
+.sidebar-nav .nav-link {
+    color: rgba(255,255,255,0.75);
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    margin: 1px 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.sidebar-nav .nav-link:hover {
+    background-color: rgba(255,255,255,0.08);
+    color: #fff;
+}
+
+.sidebar-nav .nav-link.active {
+    background-color: var(--sigus-primary);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sidebar-nav .nav-link i {
+    font-size: 1rem;
+    width: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* Logo sempre colada no bottom — não rola junto com o menu */
+.sidebar-footer {
+    flex: 0 0 auto;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.45));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar-footer-logo {
+    max-width: 130px;
+    max-height: 34px;
+    object-fit: contain;
+    opacity: 0.55;
+    filter: brightness(0) invert(1);
+    transition: opacity 0.2s;
+}
+
+.sigus-sidebar:hover .sidebar-footer-logo { opacity: 0.85; }
+
+.sigus-sidebar.collapsed .sidebar-footer { display: none; }
+
+.sidebar-section {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    padding: 1rem 1.2rem 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ── MAIN ─────────────────────────────────────────────── */
+.sigus-main {
+    flex: 1;
+    margin-left: var(--sigus-sidebar-width);
+    min-height: calc(100vh - var(--sigus-navbar-height));
+    transition: margin-left 0.25s ease;
+    overflow-x: hidden;
+}
+
+.sigus-sidebar.collapsed ~ .sigus-main,
+.sigus-main.expanded {
+    margin-left: var(--sigus-sidebar-collapsed-width);
+}
+
+/* ── PAGE HEADER ─────────────────────────────────────────── */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.page-header h1 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--sigus-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-header h1 i {
+    color: var(--sigus-primary);
+}
+
+/* ── CARDS ─────────────────────────────────────────────── */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 8px rgba(0,0,0,0.04);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.85rem 1rem;
+}
+
+.stat-card {
+    padding: 1.1rem 1.25rem;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.stat-card .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--sigus-text);
+}
+
+.stat-card .stat-label {
+    font-size: 0.78rem;
+    color: var(--sigus-text-muted);
+    margin-top: 2px;
+}
+
+/* Ícones coloridos dos stat cards */
+.stat-icon.bg-primary-soft { background-color: #dbeeff; color: var(--sigus-primary); }
+.stat-icon.bg-success-soft { background-color: #d4edda; color: #28a745; }
+.stat-icon.bg-warning-soft { background-color: #fff3cd; color: #856404; }
+.stat-icon.bg-danger-soft  { background-color: #f8d7da; color: #dc3545; }
+.stat-icon.bg-info-soft    { background-color: #d1ecf1; color: #0c5460; }
+.stat-icon.bg-secondary-soft { background-color: #e9ecef; color: #6c757d; }
+.stat-icon.bg-teal-soft    { background-color: #d0f0eb; color: #19a88b; }
+.stat-icon.bg-purple-soft  { background-color: #f3e8ff; color: #7c3aed; }
+
+/* ── TABELAS ─────────────────────────────────────────────── */
+.table {
+    font-size: 0.875rem;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--sigus-text-muted);
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: #f1f5f9;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* ── BADGES ─────────────────────────────────────────────── */
+.badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+}
+
+/* ── FORMULÁRIOS ─────────────────────────────────────────── */
+.form-label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--sigus-text);
+    margin-bottom: 0.3rem;
+}
+
+.form-control, .form-select {
+    font-size: 0.875rem;
+    border-color: #cbd5e0;
+    border-radius: 6px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--sigus-primary);
+    box-shadow: 0 0 0 3px rgba(26, 111, 168, 0.15);
+}
+
+.form-section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+.form-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sigus-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* ── BOTÕES ─────────────────────────────────────────────── */
+.btn {
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background-color: var(--sigus-primary);
+    border-color: var(--sigus-primary);
+}
+
+.btn-primary:hover {
+    background-color: #155d8c;
+    border-color: #155d8c;
+}
+
+/* ── BREADCRUMB ─────────────────────────────────────────── */
+.breadcrumb {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+}
+
+.breadcrumb-item a {
+    color: var(--sigus-primary);
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+/* ── LOGIN PAGE ─────────────────────────────────────────── */
+.login-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f2f5;
+    padding: 1rem;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 430px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    overflow: hidden;
+}
+
+.login-card .login-header {
+    background: linear-gradient(135deg, var(--sigus-dark) 0%, #0e4a7a 100%);
+    padding: 2rem 2rem 1.5rem;
+    text-align: center;
+    color: white;
+    /* Tênue borda colorida no topo inspirada nos 3 arcos do coração */
+    border-top: 4px solid transparent;
+    border-image: linear-gradient(90deg,
+        var(--sigus-accent-red) 33%,
+        var(--sigus-accent-yellow) 66%,
+        var(--sigus-primary) 100%
+    ) 1;
+}
+
+.login-card .login-body {
+    background: white;
+    padding: 2rem;
+}
+
+/* ── FILTROS ─────────────────────────────────────────────── */
+.filter-bar {
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+/* ── STATUS PILLS ─────────────────────────────────────────── */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+/* ── TIMELINE (histórico chamado) ─────────────────────────── */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.6rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -1.56rem;
+    top: 0.3rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--sigus-primary);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--sigus-primary);
+}
+
+.timeline-item .timeline-time {
+    font-size: 0.75rem;
+    color: var(--sigus-text-muted);
+}
+
+.timeline-item .timeline-body {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+    border-left: 3px solid var(--sigus-primary);
+}
+
+/* ── MISC ─────────────────────────────────────────────── */
+.text-primary { color: var(--sigus-primary) !important; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--sigus-text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    opacity: 0.3;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+/* ── RESPONSIVIDADE ─────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .sigus-sidebar {
+        width: 0;
+        overflow: hidden;
+        position: fixed;
+        top: var(--sigus-navbar-height);
+        left: 0;
+        height: calc(100vh - var(--sigus-navbar-height));
+        z-index: 1040;
+        transition: width 0.25s ease;
+    }
+
+    .sigus-sidebar.mobile-open {
+        width: var(--sigus-sidebar-width);
+    }
+
+    /* Overlay escuro por baixo do sidebar aberto */
+    .sigus-sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        z-index: 1035;
+    }
+    .sigus-sidebar-overlay.active { display: block; }
+
+    .sigus-main {
+        margin-left: 0 !important;
+        padding: 0.75rem !important;
+    }
+
+    /* Page header empilha verticalmente */
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+    .page-header .d-flex { flex-wrap: wrap; }
+
+    /* Tabelas rolam horizontalmente mas células não ficam muito largas */
+    .table-responsive { -webkit-overflow-scrolling: touch; }
+
+    /* Cards: padding reduzido */
+    .card-body { padding: 0.75rem !important; }
+
+    /* Oculta colunas menos importantes em tela pequena */
+    .col-hide-sm { display: none; }
+
+    /* Formulários fullwidth */
+    .form-row-mobile .col-md-4,
+    .form-row-mobile .col-md-6 { margin-bottom: 0.5rem; }
+
+    /* Botões de ação: empilha */
+    .btn-group-mobile { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+    .btn-group-mobile .btn { width: 100%; }
+}
+
+/* ── MOBILE — botão flutuante para nova ação ─────────────── */
+.fab-mobile {
+    display: none;
+}
+@media (max-width: 767.98px) {
+    .fab-mobile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--sigus-primary);
+        color: #fff;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        z-index: 1060;
+        text-decoration: none;
+        border: none;
+    }
+    .fab-mobile:hover { background: #155d90; color: #fff; }
+
+    /* Tabela responsiva mais compacta */
+    .table th, .table td { font-size: 0.78rem; padding: 0.4rem 0.5rem; }
+
+    /* Cabeçalho de página menor */
+    .page-header h1 { font-size: 1.2rem; }
+
+    /* Stats cards: 2 por linha em vez de 4 */
+    .stat-card { min-width: 0; }
+
+    /* Esconde texto em botões pequenos (mantém só ícone) */
+    .btn-icon-only span { display: none; }
+}
+
+/* ── TOUCH — melhorias gerais ────────────────────────────── */
+@media (hover: none) {
+    /* Linhas clicáveis de tabela: maior área de toque */
+    tr[onclick] td { padding-top: 0.65rem; padding-bottom: 0.65rem; }
+
+    /* Botões maiores para toque */
+    .btn-sm { padding: 0.4rem 0.75rem; font-size: 0.85rem; }
+    .form-select, .form-control { font-size: 1rem; }
+}
+
+/* ── Tabelas com dropdown nas ações: sem corte por overflow ── */
+/*
+   table-responsive usa overflow-x:auto, o que corta dropdowns.
+   A classe .table-dropdown-safe remove o overflow só nessas tabelas,
+   deixando o dropdown transbordar para fora do card normalmente.
+*/
+.table-dropdown-safe {
+    overflow: visible !important;
+}
+.table-dropdown-safe .table {
+    margin-bottom: 0;
+}
+
+/* Scrollbar customizada do menu lateral — identidade Saúde Digital */
+.sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sigus-primary) rgba(255,255,255,0.06);
+}
+.sidebar-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.04);
+    border-radius: 3px;
+    margin: 4px 0;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background: var(--sigus-primary);
+    border-radius: 3px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--sigus-secondary);
+}

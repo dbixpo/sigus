@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block title %}Gestão de Chamados{% endblock %}
+
+{% block head %}
+<style>
+/* ── Totalizadores de status ──────────────────────────────── */
+.totais-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: .5rem;
+    margin-bottom: 1.25rem;
+}
+.total-card {
+    border-radius: 10px; padding: .65rem .85rem;
+    display: flex; flex-direction: column; align-items: flex-start;
+    cursor: pointer; text-decoration: none; transition: opacity .15s, transform .12s;
+    border: 2px solid transparent;
+}
+.total-card:hover { opacity: .85; transform: translateY(-1px); }
+.total-card.ativo  { border-color: #fff !important; box-shadow: 0 0 0 3px rgba(0,0,0,.15); }
+.total-card .tc-num  { font-size: 1.6rem; font-weight: 700; line-height: 1; color: #fff; }
+.total-card .tc-lbl  { font-size: .72rem; color: rgba(255,255,255,.85); margin-top: .2rem; text-transform: uppercase; letter-spacing: .5px; }
+
+/* ── Tabela de chamados ───────────────────────────────────── */
+.gestao-table th { font-size: .75rem; text-transform: uppercase; color: #6b7280;
+                   letter-spacing: .4px; white-space: nowrap; }
+.gestao-table td { vertical-align: middle; }
+
+/* Prioridade lateral */
+.prio-strip {
+    display: inline-block; width: 4px; height: 36px;
+    border-radius: 2px; margin-right: .5rem; vertical-align: middle; flex-shrink: 0;
+}
+
+/* Linha com ação rápida */
+.chamado-row td { padding-top: .5rem; padding-bottom: .5rem; }
+.chamado-row .acoes { display: flex; gap: .3rem; flex-wrap: nowrap; }
+
+/* Chip de urgência inline */
+.prio-chip {
+    font-size: .68rem; font-weight: 600; padding: 2px 7px;
+    border-radius: 10px; text-transform: uppercase; letter-spacing: .3px;
+    display: inline-block; white-space: nowrap;
+}
+
+/* Modal de atualização rápida */
+.modal-atualizar .modal-header { padding: .75rem 1rem; }
+
+/* Info de tipo de chamado */
+.tipo-chip {
+    font-size: .7rem; padding: 1px 6px; border-radius: 6px;
+    background: #f3f4f6; color: #374151; display: inline-block;
+}
+
+/* Empty state */
+.empty-fila {
+    text-align: center; padding: 3rem 1rem; color: #9ca3af;
+}
+.empty-fila i { font-size: 3rem; display: block; margin-bottom: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-kanban me-2"></i>Gestão de Chamados</h1>
+    {% if current_user.pode('abrir_chamado') %}
+    <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo Chamado
+    </a>
+    {% endif %}
+</div>
+
+{# ── Totalizadores ───────────────────────────────────────────── #}
+{% set sc = {'aberto':'#dc3545','em_andamento':'#ffc107','aguardando_peca':'#17a2b8','concluido':'#198754','cancelado':'#6c757d'} %}
+<div class="totais-bar">
+    {% for s, lbl in status_opts.items() %}
+    {% set cor = sc.get(s, '#6c757d') %}
+    <a href="{{ url_for('chamados.gestao', status=s) }}"
+       class="total-card {{ 'ativo' if status_filtro == [s] else '' }}"
+       style="background:{{ cor }};">
+        <div class="tc-num">{{ totais.get(s, 0) }}</div>
+        <div class="tc-lbl">{{ lbl }}</div>
+    </a>
+    {% endfor %}
+</div>
+
+{# ── Filtros ─────────────────────────────────────────────────── #}
+<form method="GET" class="mb-3" id="formFiltro">
+    <div class="row g-2 align-items-end">
+
+        {% if setores|length > 1 %}
+        <div class="col-sm-auto">
+            <label class="form-label form-label-sm">Setor</label>
+            <select name="setor" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Todos os setores</option>
+                {% for s in setores %}
+                <option value="{{ s.id }}" {{ 'selected' if setor_filtro == s.id }}>{{ s.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% elif setores|length == 1 %}
+        <div class="col-sm-auto d-flex align-items-end">
+            <span class="badge bg-primary px-3 py-2" style="font-size:.82rem">
+                <i class="bi bi-tools me-1"></i>{{ setores[0].nome }}
+            </span>
+        </div>
+        {% endif %}
+
+        <div class="col-sm-auto">
+            <label class="form-label form-label-sm">Status</label>
+            <select name="status" class="form-select form-select-sm" multiple size="1"
+                    id="selStatus" style="min-width:160px">
+                {% for s, lbl in status_opts.items() %}
+                <option value="{{ s }}" {{ 'selected' if s in status_filtro }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-sm-auto">
+            <label class="form-label form-label-sm">Tipo</label>
+            <select name="tipo" class="form-select form-select-sm" multiple size="1"
+                    id="selTipo" style="min-width:160px">
+                {% for v, lbl in tipos.items() %}
+                <option value="{{ v }}" {{ 'selected' if v in tipo_filtro }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-sm-auto">
+            <label class="form-label form-label-sm">Prioridade</label>
+            <select name="prioridade" class="form-select form-select-sm" multiple size="1"
+                    id="selPrio" style="min-width:140px">
+                {% for v, lbl in prioridades.items() %}
+                <option value="{{ v }}" {{ 'selected' if v in prio_filtro }}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-sm-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-funnel me-1"></i>Filtrar
+            </button>
+            <a href="{{ url_for('chamados.gestao') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x me-1"></i>Limpar
+            </a>
+        </div>
+    </div>
+</form>
+
+{# ── Fila de Chamados ────────────────────────────────────────── #}
+{% if chamados %}
+<div class="card shadow-sm">
+    <div class="card-header d-flex align-items-center justify-content-between py-2">
+        <span class="small fw-semibold">
+            <i class="bi bi-list-check me-1"></i>
+            {{ chamados|length }} chamado{{ 's' if chamados|length != 1 else '' }}
+        </span>
+        <span class="text-muted small">Ordenado por urgência · mais antigo primeiro</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table gestao-table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:110px">Nº Chamado</th>
+                    <th>Equipamento / Assunto</th>
+                    <th class="d-none d-md-table-cell">Unidade</th>
+                    <th class="d-none d-lg-table-cell">Setor</th>
+                    <th style="width:90px">Status</th>
+                    <th class="d-none d-md-table-cell" style="width:90px">Aberto em</th>
+                    <th style="width:140px">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set pc = {'urgente':'#dc3545','alta':'#fd7e14','media':'#0d6efd','baixa':'#6c757d'} %}
+                {% set pl = {'urgente':'danger','alta':'warning','media':'primary','baixa':'secondary'} %}
+                {% for c in chamados %}
+                <tr class="chamado-row">
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <span class="prio-strip"
+                                  style="background:{{ pc.get(c.prioridade,'#ccc') }}"
+                                  title="{{ c.prioridade_label }}"></span>
+                            <div>
+                                <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                                   class="fw-semibold text-decoration-none">{{ c.numero }}</a>
+                                <div>
+                                    <span class="prio-chip"
+                                          style="background:{{ pc.get(c.prioridade,'#ccc') }}22;color:{{ pc.get(c.prioridade,'#555') }}">
+                                        {{ c.prioridade_label }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="fw-medium" style="font-size:.88rem">{{ c.titulo | truncate(55, true, '…') }}</div>
+                        <div class="d-flex gap-1 mt-1 flex-wrap">
+                            <span class="tipo-chip">{{ c.tipo_label }}</span>
+                            {% if c.equipamento %}
+                            <span class="tipo-chip" style="background:#e0f2fe;color:#0369a1">
+                                <i class="bi bi-tag me-1"></i>{{ c.equipamento.tipo_equipamento.nome if c.equipamento.tipo_equipamento else '' }}
+                            </span>
+                            {% endif %}
+                            {% if c.sala %}
+                            <span class="tipo-chip" style="background:#f0fdf4;color:#15803d">
+                                <i class="bi bi-door-open me-1"></i>{{ c.sala.nome }}
+                            </span>
+                            {% endif %}
+                            {% if c.bp_rechamado %}
+                            <span class="tipo-chip" style="background:#fef3c7;color:#92400e">
+                                <i class="bi bi-arrow-repeat me-1"></i>Rechamado
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <div style="font-size:.83rem">{{ c.unidade.nome | truncate(28, true, '…') }}</div>
+                        {% if c.unidade.telefone %}
+                        <div class="text-muted" style="font-size:.72rem">
+                            <i class="bi bi-telephone me-1"></i>{{ c.unidade.telefone }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-lg-table-cell">
+                        <span class="text-muted" style="font-size:.82rem">
+                            {{ c.setor.nome if c.setor else '—' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span>
+                    </td>
+                    <td class="d-none d-md-table-cell text-muted" style="font-size:.78rem">
+                        {{ c.criado_em | br_date }}
+                    </td>
+                    <td>
+                        <div class="acoes">
+                            <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                               class="btn btn-outline-primary btn-sm" title="Ver detalhes">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if c.status not in ['concluido', 'cancelado'] %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    title="Atualizar status"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalAtualizar"
+                                    data-id="{{ c.id }}"
+                                    data-numero="{{ c.numero }}"
+                                    data-status="{{ c.status }}"
+                                    data-setor="{{ c.setor_id or '' }}">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                            {% endif %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary" title="Imprimir"
+                                    onclick="abrirImpresso('{{ url_for('chamados.imprimir', id=c.id) }}', 'Chamado {{ c.numero }}')">
+                                <i class="bi bi-printer"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-fila">
+    <i class="bi bi-check2-all text-success"></i>
+    <div class="fw-semibold" style="font-size:1.1rem">Nenhum chamado encontrado</div>
+    <div class="small mt-1">Ajuste os filtros ou aguarde novos chamados.</div>
+</div>
+{% endif %}
+
+{# ════════════════════════════════════════════════════════════
+   MODAL — Atualização rápida de status
+════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalAtualizar" tabindex="-1" aria-labelledby="modalAtualizarLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-atualizar">
+        <div class="modal-content">
+            <form method="POST" id="formAtualizar">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAtualizarLabel">
+                        <i class="bi bi-arrow-repeat me-2 text-primary"></i>
+                        Atualizar — <span id="maNumero" class="text-muted fw-normal"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label">Novo Status <span class="text-danger">*</span></label>
+                            <select name="status" id="maStatus" class="form-select" required>
+                                {% for s, lbl in status_opts.items() %}
+                                <option value="{{ s }}">{{ lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Setor</label>
+                            <select name="setor_id" id="maSetor" class="form-select">
+                                <option value="">— Manter atual —</option>
+                                {% for s in setores %}
+                                <option value="{{ s.id }}">{{ s.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observação</label>
+                            <textarea name="observacao" class="form-control" rows="3"
+                                      placeholder="Descreva brevemente a ação tomada..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                            data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-circle me-1"></i>Salvar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    /* ── Tom Select nos filtros múltiplos ──────────────────── */
+    ['selStatus', 'selTipo', 'selPrio'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && window.TomSelect) {
+            new TomSelect(el, { plugins: ['remove_button'], maxOptions: null });
+        }
+    });
+
+    /* ── Modal de atualização rápida ───────────────────────── */
+    const modal = document.getElementById('modalAtualizar');
+    modal?.addEventListener('show.bs.modal', function (e) {
+        const btn    = e.relatedTarget;
+        const id     = btn.dataset.id;
+        const numero = btn.dataset.numero;
+        const status = btn.dataset.status;
+        const setor  = btn.dataset.setor;
+
+        document.getElementById('maNumero').textContent = numero;
+        document.getElementById('maStatus').value       = status;
+        document.getElementById('maSetor').value        = setor || '';
+        document.getElementById('formAtualizar').action =
+            `/chamados/gestao/${id}/atualizar-rapido`;
+    });
+})();
+</script>
+{% endblock %}

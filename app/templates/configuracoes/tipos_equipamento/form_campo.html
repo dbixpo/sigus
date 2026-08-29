@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Editar Campo{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('configuracoes.tipos_equipamento') }}">Tipos de Equipamento</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('configuracoes.editar_tipo_equipamento', id=campo.tipo_equipamento_id) }}">
+                {{ campo.tipo_equipamento.nome }}
+            </a>
+        </li>
+        <li class="breadcrumb-item active">Editar Campo</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-input-cursor-text"></i> Editar Campo: {{ campo.nome_campo }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="form-section">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Nome do Campo *</label>
+                    <input type="text" name="nome_campo" class="form-control" required
+                           value="{{ campo.nome_campo }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tipo de Dado</label>
+                    <select name="tipo_dado" class="form-select" id="tipoDadoSelect">
+                        {% for v, l in [('texto','Texto'),('numero','Número'),('selecao','Seleção (lista)'),
+                                        ('data','Data'),('booleano','Sim/Não'),('texto_longo','Texto Longo')] %}
+                        <option value="{{ v }}" {% if campo.tipo_dado == v %}selected{% endif %}>{{ l }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3" id="opcoesContainer"
+                     style="{{ 'display:none;' if campo.tipo_dado != 'selecao' else '' }}">
+                    <label class="form-label">
+                        Opções da Lista
+                        <span class="text-muted small">(separe por vírgula)</span>
+                    </label>
+                    <input type="text" name="opcoes_selecao" class="form-control"
+                           value="{{ campo.opcoes_selecao | join(', ') if campo.opcoes_selecao else '' }}"
+                           placeholder="Ex: Opção 1, Opção 2, Opção 3">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Ordem de exibição</label>
+                    <input type="number" name="ordem" class="form-control" min="1"
+                           value="{{ campo.ordem }}">
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" name="obrigatorio" class="form-check-input"
+                               id="obr" {% if campo.obrigatorio %}checked{% endif %}>
+                        <label class="form-check-label" for="obr">Campo obrigatório</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="campo_destaque" class="form-check-input"
+                               id="destaque" {% if campo.campo_destaque %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="destaque">
+                            <i class="bi bi-star-fill text-warning me-1"></i>Atributo de destaque
+                        </label>
+                    </div>
+                    <div class="form-text">
+                        O valor deste campo será exibido no <strong>nome do equipamento</strong>.
+                        Ex.: Ar-condicionado <em>18.000 BTU</em>.
+                        Apenas um campo pode ser destaque por tipo.
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>Salvar Campo
+                    </button>
+                    <a href="{{ url_for('configuracoes.editar_tipo_equipamento', id=campo.tipo_equipamento_id) }}"
+                       class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const tipoDadoSelect = document.getElementById('tipoDadoSelect');
+if (tipoDadoSelect) {
+    tipoDadoSelect.addEventListener('change', function () {
+        document.getElementById('opcoesContainer').style.display =
+            this.value === 'selecao' ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

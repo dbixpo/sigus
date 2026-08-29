@@ -1,0 +1,436 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Novo' }} Link Útil{% endblock %}
+
+{% block head %}
+{# Cropper.js #}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
+      crossorigin="anonymous">
+<style>
+/* ── Área de upload ────────────────────────────────────────────── */
+.upload-zone {
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: #fafafa;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--sigus-primary);
+    background: #eff6ff;
+}
+.upload-zone input[type=file] { display: none; }
+
+/* ── Modal de crop ─────────────────────────────────────────────── */
+#cropModal .modal-body { background: #111; }
+#cropperContainer { max-height: 400px; overflow: hidden; }
+#cropperContainer img { max-width: 100%; display: block; }
+
+/* ── Preview redondo ───────────────────────────────────────────── */
+.img-preview-round {
+    width: 80px; height: 80px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.img-preview-placeholder {
+    width: 80px; height: 80px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--sigus-primary), #0e4a7a);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; color: #fff;
+    border: 3px solid #e5e7eb;
+}
+
+/* ── Preview card ──────────────────────────────────────────────── */
+.link-card {
+    display: flex; align-items: center; gap: .75rem;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: .85rem 1rem; box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    color: inherit;
+}
+.link-card-icon {
+    flex: 0 0 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--sigus-primary), #0e4a7a);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+}
+.link-card-img-preview {
+    flex: 0 0 48px; height: 48px; border-radius: 12px; overflow: hidden;
+    background: #f3f4f6;
+}
+.link-card-img-preview img { width: 100%; height: 100%; object-fit: cover; }
+.link-card-body { flex: 1; min-width: 0; }
+.link-card-nome { font-weight: 600; font-size: .9rem; }
+.link-card-desc { font-size: .75rem; color: #6b7280; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('links.admin') }}">Links Úteis</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-link-45deg me-2"></i>{{ 'Editar Link' if item else 'Novo Link / Cabeçalho' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <form method="POST" id="formLink">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {# Campo oculto que recebe o base64 do crop #}
+            <input type="hidden" name="imagem_cropped" id="imagemCropped">
+            <input type="hidden" name="imagem_remover" id="imagemRemover" value="0">
+
+            <div class="form-section">
+                <div class="form-section-title">Categoria</div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo de link</label>
+                    <select name="tipo_link_id" class="form-select">
+                        <option value="">— Sem categoria —</option>
+                        {% for t in tipos %}
+                        <option value="{{ t.id }}"
+                            {% if item and item.tipo_link_id == t.id %}selected{% endif %}>
+                            {{ t.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">
+                        <a href="{{ url_for('links.admin_tipos') }}" target="_blank">
+                            <i class="bi bi-tags me-1"></i>Gerenciar tipos
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" id="inputNome" class="form-control" required
+                           value="{{ item.nome if item else '' }}"
+                           placeholder="Ex: Portal SIS, E-mail Corporativo...">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descrição <span class="text-muted small">(opcional)</span></label>
+                    <input type="text" name="descricao" id="inputDescricao" class="form-control"
+                           value="{{ item.descricao or '' if item else '' }}"
+                           placeholder="Ex: Acesso ao sistema de informação em saúde">
+                </div>
+
+                <div>
+                    <div class="mb-3">
+                        <label class="form-label">URL <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                            <input type="url" name="url" id="inputUrl" class="form-control"
+                                   value="{{ item.url or '' if item else '' }}"
+                                   placeholder="https://...">
+                        </div>
+                    </div>
+
+                    {# ── Imagem ────────────────────────────────────────────────────── #}
+                    <div class="mb-3">
+                        <label class="form-label">Imagem do link</label>
+
+                        {# Preview da imagem atual #}
+                        <div class="d-flex align-items-center gap-3 mb-2" id="previewAtualWrap"
+                             style="{{ 'display:none!important' if not (item and item.imagem_src) else '' }}">
+                            <img id="previewAtual"
+                                 src="{{ item.imagem_src if item and item.imagem_src else '' }}"
+                                 class="img-preview-round" alt="Imagem atual">
+                            <div>
+                                <div class="small text-muted mb-1">Imagem atual</div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="btnRemoverImg">
+                                    <i class="bi bi-trash me-1"></i>Remover
+                                </button>
+                            </div>
+                        </div>
+
+                        {# Zona de upload #}
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="inputArquivo" accept="image/*">
+                            <i class="bi bi-cloud-arrow-up fs-2 text-muted d-block mb-2"></i>
+                            <div class="fw-semibold text-muted">Clique ou arraste uma imagem aqui</div>
+                            <div class="small text-muted mt-1">PNG, JPG, WEBP — será cortada em quadrado</div>
+                        </div>
+
+                        {# Ícone como fallback quando não há imagem #}
+                        <div class="row g-3 mt-1" id="blocoIcone">
+                            <div class="col-md-6">
+                                <label class="form-label small">Ícone Bootstrap Icons
+                                    <span class="text-muted">(se sem imagem)</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" id="previewIcone">
+                                        <i class="bi {{ item.icone if item else 'bi-link-45deg' }}" id="iconePreviewEl"></i>
+                                    </span>
+                                    <input type="text" name="icone" id="inputIcone" class="form-control"
+                                           value="{{ item.icone if item else 'bi-link-45deg' }}"
+                                           placeholder="bi-link-45deg">
+                                </div>
+                                <div class="form-text">
+                                    <a href="https://icons.getbootstrap.com/" target="_blank">Ver ícones</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 mt-2 d-none" id="blocoImgUrl">
+                            <label class="form-label small">Ou URL de imagem externa</label>
+                            <input type="url" name="imagem_url" id="inputImgUrl" class="form-control"
+                                   value="{{ item.imagem_url or '' if item else '' }}"
+                                   placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="nova_aba" id="novaAba"
+                                   {% if not item or item.nova_aba %}checked{% endif %}>
+                            <label class="form-check-label" for="novaAba">Abrir em nova aba</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Visibilidade</div>
+
+                <div class="mb-3">
+                    <label class="form-label">Visível para <span class="text-danger">*</span></label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for val, lbl in perfis %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="perfis_acesso"
+                                   id="perfil_{{ val }}" value="{{ val }}"
+                                   {% if not item and val == 'todos' %}checked
+                                   {% elif item and val in (item.perfis_acesso or []) %}checked{% endif %}>
+                            <label class="form-check-label" for="perfil_{{ val }}">{{ lbl }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                               {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo (visível na página)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if item else 'Adicionar' }}
+                </button>
+                <a href="{{ url_for('links.admin') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    {# Preview ao vivo #}
+    <div class="col-lg-4 d-none d-lg-block">
+        <div class="form-section sticky-top" style="top:80px">
+            <div class="form-section-title">Preview</div>
+            <a href="#" class="link-card text-decoration-none" id="previewCard">
+                <div class="link-card-icon" id="previewIconeDiv">
+                    <i class="bi {{ item.icone if item else 'bi-link-45deg' }}" id="previewIconeCard"></i>
+                </div>
+                <div class="link-card-body">
+                    <div class="link-card-nome" id="previewNome">{{ item.nome if item else 'Nome do link' }}</div>
+                    <div class="link-card-desc" id="previewDesc">{{ item.descricao if item else 'Descrição' }}</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+{# ── Modal de Crop ─────────────────────────────────────────────────── #}
+<div class="modal fade" id="cropModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-crop me-2"></i>Cortar imagem
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-2" style="background:#111;">
+                <div id="cropperContainer">
+                    <img id="cropperImg" src="" alt="crop" style="max-width:100%;display:block;">
+                </div>
+            </div>
+            <div class="modal-footer bg-dark justify-content-between">
+                <div class="text-white small opacity-75">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Arraste para posicionar · Scroll para zoom
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btnConfirmarCrop">
+                        <i class="bi bi-check2 me-1"></i>Usar este recorte
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"
+        crossorigin="anonymous"></script>
+<script>
+(function () {
+    var uploadZone       = document.getElementById('uploadZone');
+    var inputArquivo     = document.getElementById('inputArquivo');
+    var previewAtualWrap = document.getElementById('previewAtualWrap');
+    var previewAtual     = document.getElementById('previewAtual');
+    var btnRemoverImg    = document.getElementById('btnRemoverImg');
+    var imagemCropped    = document.getElementById('imagemCropped');
+    var imagemRemover    = document.getElementById('imagemRemover');
+    var cropModalEl      = document.getElementById('cropModal');
+    var cropperImgEl     = document.getElementById('cropperImg');
+    var btnConfirmar     = document.getElementById('btnConfirmarCrop');
+    var inpNome          = document.getElementById('inputNome');
+    var inpDesc          = document.getElementById('inputDescricao');
+    var inpIcone         = document.getElementById('inputIcone');
+    var iconeEl          = document.getElementById('iconePreviewEl');
+    var prevNome         = document.getElementById('previewNome');
+    var prevDesc         = document.getElementById('previewDesc');
+    var prevIconeDiv     = document.getElementById('previewIconeDiv');
+
+    var cropper    = null;
+    var bsModal    = cropModalEl ? new bootstrap.Modal(cropModalEl) : null;
+    var pendingFile = null;   // guarda o dataURL até o modal abrir
+
+    /* ── Destruir o cropper quando o modal fechar ─────────────── */
+    if (cropModalEl) {
+        cropModalEl.addEventListener('hidden.bs.modal', function () {
+            if (cropper) { cropper.destroy(); cropper = null; }
+            cropperImgEl.src = '';
+        });
+
+        /* Inicializa o cropper quando o modal terminar de abrir */
+        cropModalEl.addEventListener('shown.bs.modal', function () {
+            if (cropper) { cropper.destroy(); cropper = null; }
+            cropper = new Cropper(cropperImgEl, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.85,
+                guides: false,
+                center: true,
+                highlight: false,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        });
+    }
+
+    /* ── Zona de upload: clique e drag-drop ───────────────────── */
+    if (uploadZone) {
+        uploadZone.addEventListener('click', function () { if (inputArquivo) inputArquivo.click(); });
+        uploadZone.addEventListener('dragover', function (e) {
+            e.preventDefault(); this.classList.add('drag-over');
+        });
+        uploadZone.addEventListener('dragleave', function () { this.classList.remove('drag-over'); });
+        uploadZone.addEventListener('drop', function (e) {
+            e.preventDefault(); this.classList.remove('drag-over');
+            var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+            if (f && f.type.startsWith('image/')) lerArquivo(f);
+        });
+    }
+    if (inputArquivo) {
+        inputArquivo.addEventListener('change', function () {
+            if (this.files && this.files[0]) lerArquivo(this.files[0]);
+            this.value = '';
+        });
+    }
+
+    function lerArquivo(file) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            cropperImgEl.src = e.target.result;
+            if (bsModal) bsModal.show();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /* ── Confirmar crop ───────────────────────────────────────── */
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function () {
+            if (!cropper) { alert('Cropper não inicializado. Tente novamente.'); return; }
+            var canvas = cropper.getCroppedCanvas({ width: 200, height: 200 });
+            if (!canvas) return;
+            var dataUrl = canvas.toDataURL('image/png');
+
+            imagemCropped.value = dataUrl;
+            imagemRemover.value = '0';
+
+            /* Mostra preview da imagem escolhida */
+            if (previewAtual)     previewAtual.src         = dataUrl;
+            if (previewAtualWrap) previewAtualWrap.style.display = '';
+
+            /* Atualiza preview do card lateral */
+            setPreviewImagem(dataUrl);
+
+            if (bsModal) bsModal.hide();
+        });
+    }
+
+    /* ── Remover imagem ───────────────────────────────────────── */
+    if (btnRemoverImg) {
+        btnRemoverImg.addEventListener('click', function () {
+            imagemCropped.value = '';
+            imagemRemover.value = '1';
+            if (previewAtualWrap) previewAtualWrap.style.display = 'none';
+            setPreviewIcone();
+        });
+    }
+
+    /* ── Helpers de preview ───────────────────────────────────── */
+    function setPreviewImagem(src) {
+        if (!prevIconeDiv) return;
+        prevIconeDiv.className = 'link-card-img-preview';
+        prevIconeDiv.innerHTML = '<img src="' + src + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:0;">';
+    }
+
+    function setPreviewIcone() {
+        if (!prevIconeDiv) return;
+        var icone = (inpIcone ? inpIcone.value.trim() : '') || 'bi-link-45deg';
+        var temImg = (imagemCropped && imagemCropped.value) ||
+                     (previewAtualWrap && previewAtualWrap.style.display !== 'none');
+        if (!temImg) {
+            prevIconeDiv.className = 'link-card-icon';
+            prevIconeDiv.innerHTML = '<i class="bi ' + icone + '"></i>';
+        }
+        if (iconeEl) iconeEl.className = 'bi ' + icone;
+    }
+
+    if (inpNome)   inpNome.addEventListener('input',  function () { if (prevNome) prevNome.textContent = this.value || 'Nome do link'; });
+    if (inpDesc)   inpDesc.addEventListener('input',  function () { if (prevDesc) prevDesc.textContent = this.value || 'Descrição'; });
+    if (inpIcone)  inpIcone.addEventListener('input', setPreviewIcone);
+
+    /* Inicializa preview */
+    {% if item and item.imagem_src %}
+    setPreviewImagem('{{ item.imagem_src }}');
+    {% else %}
+    setPreviewIcone();
+    {% endif %}
+})();
+</script>
+{% endblock %}

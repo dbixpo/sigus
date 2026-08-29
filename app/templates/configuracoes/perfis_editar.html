@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Editar Perfil — {{ perfil_label }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.perfis') }}">Gestão de Perfis</a></li>
+        <li class="breadcrumb-item active">{{ perfil_label }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-pencil-square"></i> Editar permissões — {{ perfil_label }}</h1>
+    <p class="text-muted mb-0">Defina as permissões de Ver, Editar e Adicionar para cada seção do sistema.</p>
+</div>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+        <div class="card-header">
+            <span class="fw-bold">Seções e permissões</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="min-width:180px;">Seção</th>
+                            <th class="text-center">Ver</th>
+                            <th class="text-center">Editar</th>
+                            <th class="text-center">Adicionar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for secao_key, secao_label, icon in secoes %}
+                        {% set p = perm_map.get(secao_key) %}
+                        <tr>
+                            <td>
+                                <i class="bi bi-{{ icon }} text-muted me-2"></i>
+                                <strong>{{ secao_label }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           name="{{ secao_key }}_ver" value="1"
+                                           {% if p and p.ver %}checked{% endif %}
+                                           id="chk_{{ secao_key }}_ver">
+                                    <label class="form-check-label" for="chk_{{ secao_key }}_ver">
+                                        <span class="visually-hidden">Ver {{ secao_label }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           name="{{ secao_key }}_editar" value="1"
+                                           {% if p and p.editar %}checked{% endif %}
+                                           id="chk_{{ secao_key }}_editar">
+                                    <label class="form-check-label" for="chk_{{ secao_key }}_editar">
+                                        <span class="visually-hidden">Editar {{ secao_label }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           name="{{ secao_key }}_adicionar" value="1"
+                                           {% if p and p.adicionar %}checked{% endif %}
+                                           id="chk_{{ secao_key }}_adicionar">
+                                    <label class="form-check-label" for="chk_{{ secao_key }}_adicionar">
+                                        <span class="visually-hidden">Adicionar {{ secao_label }}</span>
+                                    </label>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <a href="{{ url_for('configuracoes.perfis') }}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Salvar permissões
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}

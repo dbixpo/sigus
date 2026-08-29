@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% block title %}Equipamento #{{ equipamento.id }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('equipamentos.listar') }}">Equipamentos</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('salas.detalhe', id=equipamento.sala_id) }}">{{ equipamento.sala.nome }}</a></li>
+        <li class="breadcrumb-item active">{{ equipamento.nome_display }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>
+        <i class="{{ equipamento.tipo_equipamento.icone }}"></i>
+        {{ equipamento.nome_display }}
+        <small class="text-muted fs-6 fw-normal">
+            {% if equipamento.numero_patrimonio %}
+            <i class="bi bi-tag ms-2 me-1"></i>{{ equipamento.numero_patrimonio }}
+            {% elif equipamento.numero_serie %}
+            <i class="bi bi-upc ms-2 me-1"></i>{{ equipamento.numero_serie }}
+            {% endif %}
+            {% if equipamento.usuario_vinculado_nome %}
+            <i class="bi bi-person-circle ms-2 me-1"></i>{{ equipamento.usuario_vinculado_nome }}
+            {% endif %}
+        </small>
+    </h1>
+    <div class="d-flex flex-wrap gap-2">
+        {% if current_user.pode('editar_equipamento') %}
+        <a href="{{ url_for('equipamentos.editar', id=equipamento.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        {% endif %}
+        {% if current_user.pode('abrir_chamado') %}
+        <a href="{{ url_for('chamados.novo_bem_permanente') }}?equipamento_id={{ equipamento.id }}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-wrench me-1"></i>Abrir Chamado
+        </a>
+        {% endif %}
+        {% if current_user.pode('solicitar_transferencia') and equipamento.status == 'ativo' %}
+        <a href="{{ url_for('transferencias.solicitar', equipamento_id=equipamento.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-arrow-right-circle me-1"></i>Transferir
+        </a>
+        {% endif %}
+        {% if current_user.pode('dar_baixa_equipamento') and equipamento.status != 'baixado' %}
+        <form method="POST" action="{{ url_for('equipamentos.dar_baixa', id=equipamento.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-dark btn-sm"
+                    data-confirm="Confirma dar baixa neste equipamento?">
+                <i class="bi bi-archive me-1"></i>Dar Baixa
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Dados principais -->
+        <div class="card mb-3">
+            <div class="card-header">Dados do Equipamento</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="text-muted small">Nº Patrimônio</div>
+                        <div class="fw-semibold">{{ equipamento.numero_patrimonio or '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Nº de Série</div>
+                        <div class="fw-semibold">{{ equipamento.numero_serie or '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Tipo</div>
+                        <div class="fw-semibold">{{ equipamento.tipo_equipamento.nome }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Marca</div>
+                        <div class="fw-semibold">{{ equipamento.marca.nome if equipamento.marca else '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Modelo</div>
+                        <div class="fw-semibold">{{ equipamento.modelo.nome if equipamento.modelo else '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Data de Aquisição</div>
+                        <div class="fw-semibold">{{ equipamento.data_aquisicao | br_date if equipamento.data_aquisicao else '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Valor Estimado</div>
+                        <div class="fw-semibold">{{ equipamento.valor_estimado | br_currency if equipamento.valor_estimado else '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Tempo de Uso</div>
+                        <div class="fw-semibold">{{ equipamento.tempo_uso_anos ~ ' anos' if equipamento.tempo_uso_anos else '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Localização</div>
+                        <div class="fw-semibold small">
+                            <a href="{{ url_for('unidades.detalhe', id=equipamento.sala.unidade_id) }}">{{ equipamento.sala.unidade.nome }}</a>
+                            › <a href="{{ url_for('salas.detalhe', id=equipamento.sala_id) }}">{{ equipamento.sala.nome }}</a>
+                        </div>
+                    </div>
+                </div>
+                {% if equipamento.observacoes %}
+                <div class="mt-3">
+                    <div class="text-muted small">Observações</div>
+                    <div>{{ equipamento.observacoes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Campos customizados -->
+        {% set campos = equipamento.tipo_equipamento.campos.all() %}
+        {% if campos %}
+        <div class="card mb-3">
+            <div class="card-header">Especificações Técnicas</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for campo in campos %}
+                    <div class="col-md-4">
+                        <div class="text-muted small">{{ campo.nome_campo }}</div>
+                        <div class="fw-semibold">{{ campos_valores.get(campo.id, '—') or '—' }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Abas: Chamados | Histórico | Transferências | Usuários -->
+        <ul class="nav nav-tabs" id="tabHistorico" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-chamados">
+                    <i class="bi bi-wrench me-1"></i>Chamados
+                    {% if chamados_hist %}<span class="badge bg-danger ms-1">{{ chamados_hist | length }}</span>{% endif %}
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ciclo">
+                    <i class="bi bi-clock-history me-1"></i>Ciclo de Vida
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-transf">
+                    <i class="bi bi-arrow-left-right me-1"></i>Transferências
+                </button>
+            </li>
+            <li class="nav-item" id="tab-usuarios-nav">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-usuarios">
+                    <i class="bi bi-people me-1"></i>Usuários
+                    {% if usuarios_vinculados %}<span class="badge bg-primary ms-1">{{ usuarios_vinculados | length }}</span>{% endif %}
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content card border-top-0 rounded-top-0">
+            <!-- Chamados -->
+            <div class="tab-pane fade show active p-0" id="tab-chamados">
+                {% if chamados_hist %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Número</th><th>Título</th><th>Status</th><th>Abertura</th></tr></thead>
+                        <tbody>
+                            {% for c in chamados_hist %}
+                            <tr>
+                                <td><a href="{{ url_for('chamados.detalhe', id=c.id) }}" class="text-primary small">{{ c.numero }}</a></td>
+                                <td class="small">{{ c.titulo | truncate(40) }}</td>
+                                <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                                <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-3"><i class="bi bi-check-circle text-success"></i><p class="small">Sem chamados para este equipamento.</p></div>
+                {% endif %}
+            </div>
+
+            <!-- Ciclo de vida (histórico de movimentações) -->
+            <div class="tab-pane fade p-3" id="tab-ciclo">
+                {% if historico_equip %}
+                <div class="timeline">
+                    {% for h in historico_equip %}
+                    <div class="timeline-item">
+                        <div class="timeline-time">{{ h.criado_em | br_datetime }} — {{ h.usuario.nome if h.usuario else 'Sistema' }}</div>
+                        <div class="timeline-body mt-1">
+                            <strong>{{ h.acao }}</strong>
+                            {% if h.observacao %}<div class="text-muted small mt-1">{{ h.observacao }}</div>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state py-3"><i class="bi bi-clock"></i><p class="small">Nenhuma movimentação registrada.</p></div>
+                {% endif %}
+            </div>
+
+            <!-- Transferências -->
+            <div class="tab-pane fade p-0" id="tab-transf">
+                {% if transferencias_hist %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Tipo</th><th>De</th><th>Para</th><th>Status</th><th>Data</th><th></th></tr></thead>
+                        <tbody>
+                            {% for t in transferencias_hist %}
+                            <tr>
+                                <td class="small">
+                                    {% if t.__tablename__ == 'documentos_transferencia' %}
+                                    <span class="badge bg-secondary">{{ t.tipo_label }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small">{{ t.unidade_origem.nome | truncate(25) }}</td>
+                                <td class="small">{{ t.unidade_destino.nome | truncate(25) }}</td>
+                                <td><span class="badge bg-{{ t.status_badge }}">{{ t.status_label }}</span></td>
+                                <td class="small text-muted">{{ (t.resolvido_em or t.criado_em) | br_date }}</td>
+                                <td>
+                                    {% if t.__tablename__ == 'documentos_transferencia' %}
+                                    <a href="{{ url_for('transferencias.documento_imprimir', id=t.id) }}" class="btn btn-sm btn-outline-secondary" target="_blank"><i class="bi bi-printer"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-3"><i class="bi bi-arrow-left-right"></i><p class="small">Nenhuma transferência registrada.</p></div>
+                {% endif %}
+            </div>
+
+            <!-- Usuários vinculados -->
+            <div class="tab-pane fade" id="tab-usuarios">
+                {% if current_user.pode('editar_equipamento') %}
+                <div class="p-3 border-bottom bg-light">
+                    <form method="POST" action="{{ url_for('equipamentos.vincular_usuario', id=equipamento.id) }}"
+                          class="row g-2 align-items-end">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="col-sm-5">
+                            <label class="form-label small mb-1 fw-semibold">Vincular usuário</label>
+                            <select name="usuario_id" class="form-select form-select-sm"
+                                    {% if not usuarios_disponiveis %}disabled{% endif %}>
+                                <option value="">
+                                    {% if usuarios_disponiveis %}— Selecione —{% else %}Todos os usuários já vinculados{% endif %}
+                                </option>
+                                {% for u in usuarios_disponiveis %}
+                                <option value="{{ u.id }}">{{ u.nome }}
+                                    {% if u.perfil %} ({{ u.perfil | capitalize }}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-5">
+                            <label class="form-label small mb-1 fw-semibold">Observação <span class="text-muted fw-normal">(opcional)</span></label>
+                            <input type="text" name="observacao" class="form-control form-control-sm"
+                                   placeholder="Ex.: Responsável principal, também usa..."
+                                   {% if not usuarios_disponiveis %}disabled{% endif %}>
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100"
+                                    {% if not usuarios_disponiveis %}disabled{% endif %}>
+                                <i class="bi bi-person-plus me-1"></i>Vincular
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% if usuarios_vinculados %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Perfil</th>
+                                <th>Observação</th>
+                                <th>Vinculado em</th>
+                                {% if current_user.pode('editar_equipamento') %}<th></th>{% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ev in usuarios_vinculados %}
+                            <tr>
+                                <td>
+                                    <i class="bi bi-person-circle me-1 text-secondary"></i>
+                                    <a href="{{ url_for('usuarios.editar', id=ev.usuario_id) }}" class="text-decoration-none">
+                                        {{ ev.usuario.nome }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary-subtle text-secondary">
+                                        {{ ev.usuario.perfil | capitalize if ev.usuario.perfil else '—' }}
+                                    </span>
+                                </td>
+                                <td class="text-muted small">{{ ev.observacao or '—' }}</td>
+                                <td class="text-muted small">{{ ev.vinculado_em | br_date }}</td>
+                                {% if current_user.pode('editar_equipamento') %}
+                                <td class="text-end">
+                                    <form method="POST"
+                                          action="{{ url_for('equipamentos.desvincular_usuario', id=equipamento.id, usuario_id=ev.usuario_id) }}"
+                                          onsubmit="return confirm('Desvincular {{ ev.usuario.nome }} deste equipamento?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-person-x"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="bi bi-people"></i>
+                    <p class="small">Nenhum usuário vinculado a este equipamento ainda.</p>
+                    {% if not usuarios_disponiveis and current_user.pode('editar_equipamento') %}
+                    <small class="text-muted">Nenhum usuário disponível nesta unidade.</small>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Status e condição -->
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <span class="badge bg-{{ equipamento.status_badge }} fs-6 px-3 py-2">{{ equipamento.status_label }}</span>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Condição</div>
+                    <span class="badge bg-{{ equipamento.condicao_badge }} fs-6 px-3 py-2">{{ equipamento.condicao_label }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contrato vinculado -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2"></i>Contrato Vinculado</div>
+            <div class="card-body small">
+                {% if contrato_ativo %}
+                <div class="fw-semibold">{{ contrato_ativo.identificador }}</div>
+                <div class="text-muted">{{ contrato_ativo.empresa_display }}</div>
+                <div class="mt-1"><span class="badge bg-{{ contrato_ativo.status_badge }}">{{ contrato_ativo.status_label }}</span></div>
+                <div class="text-muted mt-1">Vence: {{ contrato_ativo.data_fim | br_date }}</div>
+                <a href="{{ url_for('contratos.detalhe', id=contrato_ativo.id) }}" class="btn btn-sm btn-outline-primary mt-2">Ver contrato</a>
+                {% else %}
+                <p class="text-muted mb-0">Nenhum contrato vigente vinculado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Usuários (resumo lateral) -->
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-people me-2"></i>Quem usa</span>
+                <button class="btn btn-link btn-sm p-0 text-primary"
+                        data-bs-toggle="tab" data-bs-target="#tab-usuarios"
+                        onclick="document.getElementById('tab-usuarios-nav').querySelector('button').click()">
+                    <i class="bi bi-arrow-right-circle"></i>
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if usuarios_vinculados %}
+                <ul class="list-group list-group-flush">
+                    {% for ev in usuarios_vinculados %}
+                    <li class="list-group-item px-3 py-2 small">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-person-circle text-secondary"></i>
+                            <div>
+                                <div class="fw-semibold">{{ ev.usuario.nome }}</div>
+                                {% if ev.observacao %}
+                                <div class="text-muted" style="font-size:.78rem">{{ ev.observacao }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-muted small p-3 text-center">Nenhum usuário vinculado.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Info de cadastro -->
+        <div class="card">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex flex-wrap gap-3" style="font-size:.8rem;">
+                    <span class="text-muted"><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ equipamento.criado_em | br_datetime }}</strong></span>
+                    <span class="text-muted"><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ equipamento.atualizado_em | br_datetime }}</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const hash = window.location.hash;
+    if (hash) {
+        const btn = document.querySelector(`button[data-bs-target="${hash}"]`);
+        if (btn) btn.click();
+    }
+})();
+</script>
+{% endblock %}

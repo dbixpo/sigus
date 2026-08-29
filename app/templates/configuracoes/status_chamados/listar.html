@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Status de Chamados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-tags me-2"></i>Status de Chamados</h1>
+        <p class="text-muted mb-0 small">
+            Gerencie os status disponíveis para chamados. Status desativados não aparecem nas opções.
+            Status marcados como <strong>Padrão</strong> são pré-selecionados ao abrir a listagem de chamados.
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('configuracoes.novo_status_chamado') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Status
+        </a>
+        <a href="{{ url_for('configuracoes.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:50px">Ordem</th>
+                    <th>Slug</th>
+                    <th>Nome (Label)</th>
+                    <th>Cor do Badge</th>
+                    <th class="text-center">Padrão listagem</th>
+                    <th class="text-center">Encerra chamado</th>
+                    <th class="text-center">Ativo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in status %}
+                <tr class="{{ 'table-secondary text-muted' if not s.ativo }}">
+                    <td class="text-center">{{ s.ordem }}</td>
+                    <td><code>{{ s.slug }}</code></td>
+                    <td>
+                        <span class="badge bg-{{ s.badge_cor }} me-2">{{ s.label }}</span>
+                    </td>
+                    <td class="small text-muted">{{ s.badge_cor }}</td>
+                    <td class="text-center">
+                        <form method="POST"
+                              action="{{ url_for('configuracoes.toggle_padrao_status_chamado', id=s.id) }}"
+                              class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit"
+                                    class="btn btn-sm {{ 'btn-warning' if s.padrao_listagem else 'btn-outline-secondary' }}"
+                                    title="{{ 'Remover do padrão' if s.padrao_listagem else 'Marcar como padrão' }}">
+                                <i class="bi {{ 'bi-star-fill' if s.padrao_listagem else 'bi-star' }}"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td class="text-center">
+                        {% if s.encerra_chamado %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                            <i class="bi bi-check-circle me-1"></i>Sim
+                        </span>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <form method="POST"
+                              action="{{ url_for('configuracoes.toggle_status_chamado', id=s.id) }}"
+                              class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit"
+                                    class="btn btn-sm {{ 'btn-success' if s.ativo else 'btn-outline-danger' }}"
+                                    title="{{ 'Desativar' if s.ativo else 'Ativar' }}">
+                                <i class="bi {{ 'bi-toggle-on' if s.ativo else 'bi-toggle-off' }}"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuracoes.editar_status_chamado', id=s.id) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="alert alert-info mt-3 small">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Dica:</strong> O slug não pode ser alterado após criação pois é usado como identificador interno.
+    Para desativar um status sem perder histórico, use o botão de ativar/desativar.
+</div>
+{% endblock %}

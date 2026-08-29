@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Situação de Contratos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-text"></i> Situação de Contratos</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">Planilha CONTRATOS ATUAL</h6></li>
+                <li><a class="dropdown-item fw-semibold" href="{{ url_for('relatorios.exportar_contratos_planilha', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-table me-2 text-success"></i>Exportar formato planilha (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos_planilha', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-table me-2 text-success"></i>Formato planilha (.xls)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" class="row g-2 align-items-end mb-2">
+        <div class="col-md-3">
+            {% set status_opts = {'vigente': 'Vigente', 'a_vencer': 'A Vencer', 'vencido': 'Vencido'} %}
+            {{ filtro_multiselect('Status', 'status', status_opts, filtro_status_list, 'Todos') }}
+        </div>
+        <div class="col-auto d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filtrar</button>
+            <a href="{{ url_for('relatorios.contratos') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Nº SEI',   0, 'sei') }}
+        {{ filtro_rapido('Empresa',  1, 'empresa') }}
+        {{ filtro_rapido('Tipo',     2, 'tipo') }}
+        {{ filtro_rapido('Objeto',   3, 'objeto') }}
+        {{ filtro_rapido('Equip.',   4, 'equip') }}
+        {{ filtro_rapido('Status',   9, 'status') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsContratos">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ contratos | length }}</strong></span>
+    <span class="mini-stat">Empresas: <strong data-stat-col="1">—</strong></span>
+    <span class="mini-stat">Tipos: <strong data-stat-col="2">—</strong></span>
+    <span class="mini-stat">Status: <strong data-stat-col="9">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if contratos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="tblContratos">
+                <thead>
+                    <tr>
+                        <th>Nº SEI</th><th>Empresa</th><th>Tipo</th>
+                        <th>Objeto</th><th>Equipamentos cobertos</th>
+                        <th>Início</th><th>Vencimento</th><th>Dias Restantes</th>
+                        <th>Itens</th><th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in contratos %}
+                    <tr onclick="window.location='{{ url_for('contratos.detalhe', id=c.id) }}'" style="cursor:pointer">
+                        <td class="small fw-semibold text-primary">{{ c.identificador }}</td>
+                        <td class="small">{{ c.empresa_display | truncate(30) }}</td>
+                        <td class="small text-muted">{{ c.tipo_contrato or '—' }}</td>
+                        <td class="small text-muted" title="{{ c.objeto or '' }}">{{ (c.objeto or '—') | truncate(40) }}</td>
+                        <td class="small text-muted" title="{{ c.equipamentos_cobertos_display }}">{{ (c.equipamentos_cobertos_display or '—') | truncate(50) }}</td>
+                        <td class="small">{{ c.data_inicio | br_date }}</td>
+                        <td class="small">{{ c.data_fim | br_date }}</td>
+                        <td class="small {% if c.dias_restantes < 0 %}text-danger fw-bold{% elif c.dias_restantes <= 60 %}text-warning fw-bold{% endif %}">
+                            {% if c.dias_restantes < 0 %}Vencido há {{ (-c.dias_restantes) }} dias
+                            {% else %}{{ c.dias_restantes }} dias{% endif %}
+                        </td>
+                        <td><span class="badge bg-primary">{{ c.total_itens }}</span></td>
+                        <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="bi bi-file-earmark-text"></i><h6>Nenhum contrato encontrado.</h6></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initFiltrosRapidos('tblContratos', 'miniStatsContratos');</script>
+{% endblock %}

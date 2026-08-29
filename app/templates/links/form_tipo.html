@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if tipo else 'Novo' }} Tipo de Link{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('links.admin') }}">Links Úteis</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('links.admin_tipos') }}">Tipos</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if tipo else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-tags me-2"></i>{{ 'Editar Tipo' if tipo else 'Novo Tipo de Link' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+
+                <div class="mb-3">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" required
+                           value="{{ tipo.nome if tipo else '' }}"
+                           placeholder="Ex: Sistemas, Portais, Comunicação...">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descrição <span class="text-muted small">(opcional)</span></label>
+                    <input type="text" name="descricao" class="form-control"
+                           value="{{ tipo.descricao or '' if tipo else '' }}"
+                           placeholder="Breve descrição do tipo">
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-7">
+                        <label class="form-label">Ícone Bootstrap Icons</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi {{ tipo.icone if tipo else 'bi-folder' }}" id="iconePreview"></i>
+                            </span>
+                            <input type="text" name="icone" id="inputIcone" class="form-control"
+                                   value="{{ tipo.icone if tipo else 'bi-folder' }}"
+                                   placeholder="bi-folder">
+                        </div>
+                        <div class="form-text">
+                            <a href="https://icons.getbootstrap.com/" target="_blank">Ver ícones disponíveis</a>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Cor</label>
+                        <div class="input-group">
+                            <input type="color" name="cor" id="inputCor" class="form-control form-control-color"
+                                   value="{{ tipo.cor if tipo else '#1a6abf' }}"
+                                   style="max-width:56px;flex:0 0 56px;">
+                            <input type="text" id="inputCorHex" class="form-control"
+                                   value="{{ tipo.cor if tipo else '#1a6abf' }}"
+                                   maxlength="7" placeholder="#1a6abf" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                               {% if not tipo or tipo.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+
+            {# Preview ao vivo #}
+            <div class="form-section mb-4">
+                <div class="form-section-title">Preview</div>
+                <div class="d-flex align-items-center gap-3">
+                    <div id="previewBadge"
+                         style="width:42px;height:42px;border-radius:10px;
+                                background:{{ tipo.cor if tipo else '#1a6abf' }};
+                                display:flex;align-items:center;justify-content:center;
+                                color:#fff;font-size:1.2rem;">
+                        <i class="bi {{ tipo.icone if tipo else 'bi-folder' }}" id="previewIconeEl"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" id="previewNome">{{ tipo.nome if tipo else 'Nome do tipo' }}</div>
+                        <div class="text-muted small" id="previewDesc">{{ tipo.descricao if tipo else 'Descrição' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if tipo else 'Criar' }}
+                </button>
+                <a href="{{ url_for('links.admin_tipos') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const inpIcone   = document.getElementById('inputIcone');
+    const inpCor     = document.getElementById('inputCor');
+    const inpCorHex  = document.getElementById('inputCorHex');
+    const inpNome    = document.querySelector('[name="nome"]');
+    const inpDesc    = document.querySelector('[name="descricao"]');
+    const prevIcone  = document.getElementById('iconePreview');
+    const prevBadge  = document.getElementById('previewBadge');
+    const prevIcEl   = document.getElementById('previewIconeEl');
+    const prevNome   = document.getElementById('previewNome');
+    const prevDesc   = document.getElementById('previewDesc');
+
+    inpIcone?.addEventListener('input', function () {
+        const ic = this.value.trim() || 'bi-folder';
+        if (prevIcone)  prevIcone.className = 'bi ' + ic;
+        if (prevIcEl)   prevIcEl.className  = 'bi ' + ic;
+    });
+
+    inpCor?.addEventListener('input', function () {
+        if (inpCorHex)  inpCorHex.value       = this.value;
+        if (prevBadge)  prevBadge.style.background = this.value;
+    });
+
+    inpNome?.addEventListener('input', function () {
+        if (prevNome) prevNome.textContent = this.value || 'Nome do tipo';
+    });
+    inpDesc?.addEventListener('input', function () {
+        if (prevDesc) prevDesc.textContent = this.value || 'Descrição';
+    });
+})();
+</script>
+{% endblock %}

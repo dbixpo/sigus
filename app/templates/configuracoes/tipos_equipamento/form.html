@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if tipo else 'Novo' }} Tipo de Equipamento{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('configuracoes.tipos_equipamento') }}">Tipos de Equipamento</a>
+        </li>
+        <li class="breadcrumb-item active">
+            {{ 'Editar: ' + tipo.nome if tipo else 'Novo Tipo' }}
+        </li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>
+        {% if tipo %}<i class="{{ tipo.icone }}"></i>{% else %}<i class="bi bi-tags"></i>{% endif %}
+        {{ 'Editar Tipo de Equipamento' if tipo else 'Novo Tipo de Equipamento' }}
+    </h1>
+</div>
+
+<div class="row g-3">
+    <!-- Formulário de dados do tipo -->
+    <div class="col-lg-5">
+        <div class="form-section">
+            <div class="form-section-title">Dados do Tipo</div>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label">Nome *</label>
+                    <input type="text" name="nome" class="form-control" required
+                           value="{{ tipo.nome if tipo else '' }}"
+                           placeholder="Ex: Computador, Maca, Ar-condicionado">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Ícone Bootstrap Icons</label>
+                    <div class="input-group">
+                        <span class="input-group-text" id="iconPreview" style="width:44px; justify-content:center;">
+                            <i class="{{ tipo.icone if tipo else 'bi-box' }}" id="iconEl"></i>
+                        </span>
+                        <input type="text" name="icone" class="form-control" id="iconInput"
+                               value="{{ tipo.icone if tipo else 'bi-box' }}"
+                               placeholder="Ex: bi-pc-display, bi-hospital...">
+                    </div>
+                    <div class="form-text">
+                        Consulte em
+                        <a href="https://icons.getbootstrap.com" target="_blank">
+                            icons.getbootstrap.com
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="descricao" class="form-control" rows="2"
+                              placeholder="Descreva brevemente este tipo...">{{ tipo.descricao if tipo else '' }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" name="tem_patrimonio" class="form-check-input"
+                               id="temPat"
+                               {% if not tipo or tipo.tem_patrimonio %}checked{% endif %}>
+                        <label class="form-check-label" for="temPat">
+                            Possui Nº de Patrimônio
+                        </label>
+                        <div class="form-text">
+                            Desmarque para itens prediais ou consumíveis.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>
+                        {{ 'Salvar Alterações' if tipo else 'Cadastrar Tipo' }}
+                    </button>
+                    <a href="{{ url_for('configuracoes.tipos_equipamento') }}"
+                       class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Campos personalizados (só aparece após criar o tipo) -->
+    {% if tipo %}
+    <div class="col-lg-7">
+        <div class="form-section">
+            <div class="form-section-title">
+                Campos Personalizados
+                <span class="badge bg-primary ms-2">{{ campos | length }}</span>
+            </div>
+
+            <p class="text-muted small mb-3">
+                Defina os campos específicos que aparecerão ao cadastrar um equipamento
+                deste tipo. Exemplos: RAM para computador, BTUs para ar-condicionado.
+            </p>
+
+            {% if campos %}
+            <div class="table-responsive mb-4">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:30px;">#</th>
+                            <th>Nome do Campo</th>
+                            <th>Tipo de Dado</th>
+                            <th title="Obrigatório"><i class="bi bi-asterisk text-danger"></i></th>
+                            <th title="Destaque no nome"><i class="bi bi-star-fill text-warning"></i></th>
+                            <th>Opções</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in campos %}
+                        <tr>
+                            <td class="text-muted small text-center">{{ c.ordem }}</td>
+                            <td class="fw-semibold small">{{ c.nome_campo }}</td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ {'texto':'Texto','numero':'Número','selecao':'Seleção',
+                                        'data':'Data','booleano':'Sim/Não','texto_longo':'Texto Longo'}
+                                       .get(c.tipo_dado, c.tipo_dado) }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <i class="bi bi-{{ 'check-circle-fill text-success' if c.obrigatorio else 'x-circle text-muted' }}"></i>
+                            </td>
+                            <td class="text-center">
+                                {% if c.campo_destaque %}
+                                <i class="bi bi-star-fill text-warning" title="Atributo de destaque — compõe o nome do equipamento"></i>
+                                {% else %}
+                                <i class="bi bi-star text-muted"></i>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">
+                                {% if c.opcoes_selecao %}
+                                {{ c.opcoes_selecao | join(', ') | truncate(40) }}
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ url_for('configuracoes.editar_campo_equipamento', campo_id=c.id) }}"
+                                   class="btn btn-xs btn-outline-primary btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="POST"
+                                      action="{{ url_for('configuracoes.excluir_campo_equipamento', campo_id=c.id) }}"
+                                      class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            data-confirm="Remover o campo '{{ c.nome_campo }}'? Os valores preenchidos em equipamentos serão perdidos.">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Formulário de novo campo -->
+            <div class="card border-dashed">
+                <div class="card-header bg-light">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>
+                    <strong>Adicionar Novo Campo</strong>
+                </div>
+                <div class="card-body">
+                    <form method="POST"
+                          action="{{ url_for('configuracoes.novo_campo_equipamento', tipo_id=tipo.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <label class="form-label">Nome do Campo *</label>
+                                <input type="text" name="nome_campo" class="form-control form-control-sm"
+                                       required placeholder="Ex: Processador, BTUs, Canais ECG">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipo</label>
+                                <select name="tipo_dado" class="form-select form-select-sm" id="tipoDadoSelect">
+                                    <option value="texto">Texto</option>
+                                    <option value="numero">Número</option>
+                                    <option value="selecao">Seleção (lista)</option>
+                                    <option value="data">Data</option>
+                                    <option value="booleano">Sim/Não</option>
+                                    <option value="texto_longo">Texto Longo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Ordem</label>
+                                <input type="number" name="ordem" class="form-control form-control-sm"
+                                       value="{{ (campos | last).ordem + 1 if campos else 1 }}" min="1">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="form-check">
+                                    <input type="checkbox" name="obrigatorio"
+                                           class="form-check-input" id="campoObr">
+                                    <label class="form-check-label small" for="campoObr">
+                                        Obrigatório
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12" id="opcoesContainer" style="display:none;">
+                                <label class="form-label">
+                                    Opções da Lista
+                                    <span class="text-muted small">(separe por vírgula)</span>
+                                </label>
+                                <input type="text" name="opcoes_selecao"
+                                       class="form-control form-control-sm"
+                                       placeholder="Ex: Opção 1, Opção 2, Opção 3">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus-circle me-1"></i>Adicionar Campo
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+const iconInput = document.getElementById('iconInput');
+if (iconInput) {
+    iconInput.addEventListener('input', function () {
+        document.getElementById('iconEl').className = this.value.trim();
+    });
+}
+
+const tipoDadoSelect = document.getElementById('tipoDadoSelect');
+if (tipoDadoSelect) {
+    tipoDadoSelect.addEventListener('change', function () {
+        const opcoesContainer = document.getElementById('opcoesContainer');
+        opcoesContainer.style.display = this.value === 'selecao' ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

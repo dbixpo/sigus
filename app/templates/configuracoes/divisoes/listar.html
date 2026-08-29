@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Divisões{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Divisões</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-diagram-3"></i> Divisões</h1>
+    <a href="{{ url_for('configuracoes.nova_divisao') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Nova Divisão
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    Divisões agrupam setores e definem quais chamados a divisão cuida (por tipo de chamado ou tipo de unidade).
+    Membros da divisão <strong>veem</strong> os chamados; apenas o setor atribuído <strong>trabalha</strong> neles.
+</p>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if divisoes %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipos de chamado</th>
+                        <th>Tipos de unidade</th>
+                        <th>Setores</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in divisoes %}
+                    <tr>
+                        <td class="fw-semibold">{{ d.nome }}</td>
+                        <td class="small">
+                            {% if d.tipos_chamado %}
+                                {% for tc in d.tipos_chamado %}
+                                    <span class="badge bg-secondary me-1">{{ tc }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {% if d.tipos_unidade_ids and tipos_map %}
+                                {% for tid in d.tipos_unidade_ids %}
+                                    {% if tipos_map.get(tid) %}
+                                        <span class="badge bg-info me-1">{{ tipos_map[tid].sigla }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary me-1">ID:{{ tid }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            {% elif d.tipos_unidade_ids %}
+                                {% for tid in d.tipos_unidade_ids %}<span class="badge bg-info me-1">ID:{{ tid }}</span>{% endfor %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">{{ d.setores.count() }} setor(es)</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if d.ativo else 'secondary' }}">
+                                {{ 'Ativo' if d.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_divisao', id=d.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-diagram-3 fs-1 text-muted"></i>
+            <h6>Nenhuma divisão cadastrada</h6>
+            <p class="text-muted small">Cadastre divisões (ex.: SUEQ Predial, Divisão APS) para organizar setores e visibilidade de chamados.</p>
+            <a href="{{ url_for('configuracoes.nova_divisao') }}" class="btn btn-primary mt-2">
+                Cadastrar primeira divisão
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('configuracoes.setores') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-people me-1"></i>Gerenciar Setores
+    </a>
+</div>
+{% endblock %}

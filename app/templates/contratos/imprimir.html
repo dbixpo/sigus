@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumo do Contrato {{ contrato.identificador }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+    line-height: 1.4;
+}
+.no-print {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+.btn-imprimir {
+    padding: 8px 16px;
+    background: #1a6abf;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+}
+.btn-voltar {
+    padding: 8px 16px;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 13px;
+}
+.doc { max-width: 800px; margin: 0 auto; }
+.cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 2.5px solid #000;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+}
+.cab-logo img { height: 58px; width: auto; }
+.cab-titulo {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    line-height: 1.5;
+}
+.cab-titulo .subtitulo { font-size: 11px; font-weight: 600; text-transform: none; color: #333; margin-top: 4px; }
+.cab-secretaria { text-align: right; font-size: 12px; line-height: 1.45; white-space: nowrap; }
+.cab-secretaria strong { font-size: 14px; display: block; }
+
+.contrato-id {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #999;
+}
+.contrato-id .identificador { font-size: 16px; font-weight: bold; letter-spacing: .5px; }
+.contrato-id .status {
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.status-vigente { background: #dcfce7; color: #166534; }
+.status-a_vencer { background: #fef9c3; color: #854d0e; }
+.status-vencido { background: #fee2e2; color: #991b1b; }
+.status-encerrado { background: #e5e7eb; color: #374151; }
+
+.secao { margin-top: 14px; padding-top: 10px; border-top: 1px solid #ccc; }
+.secao-titulo {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #444;
+    letter-spacing: .6px;
+    margin-bottom: 8px;
+}
+.dados-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.dados-grid .item { flex: 1 1 200px; }
+.dados-grid .label { font-weight: 600; color: #444; }
+.dados-grid .valor { margin-left: 4px; }
+
+.tabela-imp {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    margin-top: 6px;
+}
+.tabela-imp th,
+.tabela-imp td {
+    border: 1px solid #999;
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+}
+.tabela-imp th {
+    background: #e8ecef;
+    font-weight: 600;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.tabela-imp tr { break-inside: avoid; }
+
+.obs-texto { font-size: 10px; line-height: 1.45; color: #333; margin-top: 4px; }
+.detalhe-acao { font-size: 10px; color: #444; }
+
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    @page { margin: 1.2cm; }
+    .tabela-imp tr { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="no-print" id="barraAcoes">
+    <button type="button" class="btn-imprimir" onclick="window.print();">
+        &#x1F5A8; Imprimir / Salvar PDF
+    </button>
+    <a href="{{ url_for('contratos.detalhe', id=contrato.id) }}" class="btn-voltar">Voltar</a>
+</div>
+<script>
+if (window.self !== window.top) { var b = document.getElementById('barraAcoes'); if (b) b.style.display = 'none'; }
+</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+        </div>
+        <div class="cab-titulo">
+            RESUMO DO CONTRATO
+        </div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
+    </div>
+
+    <div class="contrato-id">
+        <span class="identificador">{{ contrato.identificador }}</span>
+        <span class="status status-{{ contrato.status }}">{{ contrato.status_label }}</span>
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">Dados do contrato</div>
+        <div class="dados-grid">
+            {% if contrato.cpl %}<div class="item"><span class="label">CPL:</span><span class="valor">{{ contrato.cpl }}</span></div>{% endif %}
+            <div class="item"><span class="label">Nº Processo SEI:</span><span class="valor">{{ contrato.numero_sei or '—' }}</span></div>
+            <div class="item"><span class="label">Empresa:</span><span class="valor">{{ contrato.empresa_display }}</span></div>
+            {% if contrato.modalidade %}<div class="item"><span class="label">Modalidade:</span><span class="valor">{{ contrato.modalidade }}</span></div>{% endif %}
+            <div class="item"><span class="label">Tipo:</span><span class="valor">{{ contrato.tipo_contrato or '—' }}</span></div>
+            <div class="item"><span class="label">Início:</span><span class="valor">{{ contrato.data_inicio | br_date }}</span></div>
+            <div class="item"><span class="label">Vencimento:</span><span class="valor">{{ contrato.data_fim | br_date }}</span></div>
+            {% if contrato.valor_total %}<div class="item"><span class="label">Valor total:</span><span class="valor">{{ contrato.valor_total | br_currency }}</span></div>{% endif %}
+        </div>
+        {% if contrato.objeto %}
+        <div style="margin-top: 10px;">
+            <span class="label">Objeto:</span>
+            <p style="margin: 4px 0 0 0; font-size: 10px; color: #333;">{{ contrato.objeto }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">Equipamentos cobertos (Tipo / Marca / Modelo)</div>
+        {% if itens %}
+        <table class="tabela-imp">
+            <thead>
+                <tr><th>Tipo | Marca | Modelo</th><th>Descrição da cobertura</th></tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>{{ item.cobertura_resumo }}</td>
+                    <td>{{ item.descricao_cobertura or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="font-size: 10px; color: #666;">Nenhum tipo de equipamento vinculado.</p>
+        {% endif %}
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">Histórico de ações</div>
+        {% if acoes %}
+        <table class="tabela-imp">
+            <thead>
+                <tr><th>Data</th><th>Tipo</th><th>Detalhes</th><th>Registrado por</th></tr>
+            </thead>
+            <tbody>
+                {% for a in acoes %}
+                <tr>
+                    <td>{{ a.data_acao | br_date }}</td>
+                    <td>{{ a.tipo_label }}</td>
+                    <td>
+                        <span class="detalhe-acao">
+                            {% if a.periodo_meses %}{{ a.periodo_meses }} {{ 'mês' if a.periodo_meses == 1 else 'meses' }}. {% endif %}
+                            {% if a.nova_data_fim %}Nova data: {{ a.nova_data_fim | br_date }}. {% endif %}
+                            {% if a.valor_adicional %}Valor aditivo: {{ a.valor_adicional | br_currency }}. {% endif %}
+                            {% if a.porcentagem_adicional %}Aditivo: {{ a.porcentagem_adicional }}%. {% endif %}
+                            {% if a.porcentagem_multa %}{{ a.porcentagem_multa }}% multa = {{ a.valor_multa_calculado | br_currency if a.valor_multa_calculado else '—' }}. {% endif %}
+                            {% if a.novo_valor_total %}Novo total: {{ a.novo_valor_total | br_currency }}. {% endif %}
+                            {% if a.tipo == 'termo_encerramento' %}<em>Contrato encerrado.</em> {% endif %}
+                            {% if a.anexo_url %}(Anexo disponível no sistema) {% endif %}
+                        </span>
+                        {% if a.observacao %}
+                        <div class="obs-texto">{{ a.observacao | striptags }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ a.criador.nome if a.criador else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="font-size: 10px; color: #666;">Nenhuma ação registrada.</p>
+        {% endif %}
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">Chamados vinculados ao contrato</div>
+        {% if chamados %}
+        <table class="tabela-imp">
+            <thead>
+                <tr><th>Nº</th><th>Unidade</th><th>Tipo</th><th>Título</th><th>Status</th><th>Aberto em</th></tr>
+            </thead>
+            <tbody>
+                {% for ch in chamados %}
+                <tr>
+                    <td>{{ ch.numero }}</td>
+                    <td>{{ ch.unidade.nome if ch.unidade else '—' }}</td>
+                    <td>{{ ch.tipo_label if ch.tipo_label else ch.tipo_chamado }}</td>
+                    <td>{{ ch.titulo[:60] }}{% if ch.titulo|length > 60 %}…{% endif %}</td>
+                    <td>{{ ch.status_label if ch.status_label else ch.status }}</td>
+                    <td>{{ ch.criado_em | br_datetime if ch.criado_em else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="font-size: 10px; color: #666;">Nenhum chamado vinculado.</p>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

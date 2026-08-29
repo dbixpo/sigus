@@ -1,0 +1,38 @@
+# SIGUS — Arquivos ignorados pelo Git
+
+# Variáveis de ambiente (credenciais)
+.env
+
+# Python (nunca commitar)
+__pycache__/
+*.pyc
+.pytest_cache/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# Logs
+logs/
+*.log
+
+# Backups / dumps de banco (PII)
+database/*.sql
+database/sigus_dump.sql
+
+# Uploads de usuários (fotos, anexos)
+app/static/uploads/
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

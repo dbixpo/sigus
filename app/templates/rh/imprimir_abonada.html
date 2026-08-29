@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ falta.data_falta.strftime('%Y.%m.%d') }} FA {{ usuario.nome | upper }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+
+  /* ── Documento ── */
+  .doc { max-width: 720px; margin: 0 auto; border: 1px solid #000; padding: 14px 16px; }
+
+  /* ── Cabeçalho ── */
+  .cabecalho {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #aaa; margin-bottom: 12px;
+  }
+  .cab-logo img { height: 54px; width: auto; }
+  .cab-secretaria { text-align: right; font-size: 12px; line-height: 1.4; white-space: nowrap; }
+  .cab-secretaria strong { font-size: 14px; display: block; font-weight: bold; }
+
+  /* ── Linha do título: "FALTA ABONADA" (sem borda) + campo "Data da Falta" (com borda) ── */
+  .titulo-linha {
+    display: flex; align-items: stretch; gap: 0;
+    margin-top: 18px; margin-bottom: 14px;
+  }
+  .titulo-abonada {
+    flex: 1; font-size: 20px; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 1px; display: flex; align-items: center; justify-content: center;
+  }
+  .campo-data-titulo {
+    flex: 1 1 30%; max-width: 30%;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 4px 6px 5px 6px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+
+  /* ── Campos genéricos (borda direita + baixo) ── */
+  .linha { display: flex; gap: 0 6px; margin-bottom: 10px; width: 100%; }
+  .campo {
+    display: flex; flex-direction: column; flex: 1 1 auto; min-width: 60px;
+    border-right: 1px solid #000; border-bottom: 1px solid #000;
+    padding: 2px 4px 3px 0;
+  }
+  .campo.w-full      { flex: 0 0 100%; }
+  .campo.w-half      { flex: 1 1 45%; }
+  .campo.w-third     { flex: 1 1 28%; }
+  .campo.w-two-third { flex: 2 1 55%; }
+  .c-label {
+    font-size: 9px; font-weight: bold; text-transform: uppercase;
+    color: #333; letter-spacing: .5px; margin-bottom: 3px;
+  }
+  .c-valor { font-size: 12px; min-height: 20px; padding: 2px 2px; font-weight: bold; text-align: center; }
+
+  /* ── Texto informativo (sem borda) ── */
+  .texto-info {
+    margin: 28px 0 0; font-size: 11px; line-height: 1.75; text-align: justify;
+  }
+  .texto-info p { margin-bottom: 10px; }
+  .texto-info p:last-child { margin-bottom: 0; }
+
+  /* ── Assinaturas ── */
+  .assinaturas { display: flex; gap: 40px; margin-top: 54px; }
+  .assinatura-bloco { flex: 1 1 0; }
+  .assinatura-linha { height: 70px; border-bottom: 1.5px solid #333; margin-bottom: 6px; }
+  .assinatura-label {
+    font-size: 10px; text-align: center; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .4px;
+  }
+  .assinatura-sub { font-size: 9px; text-align: center; color: #555; margin-top: 2px; }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .doc { border: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Documento imprimível -->
+<div class="doc">
+
+    <!-- Cabeçalho: logo esquerda | secretaria direita | linha fina abaixo -->
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}"
+                 alt="Prefeitura de Sorocaba">
+        </div>
+        <div class="cab-secretaria">
+            Secretaria de<strong>RECURSOS HUMANOS</strong>
+        </div>
+    </div>
+
+    <!-- Linha 1: FALTA ABONADA (sem borda) | Data da Falta (com borda) -->
+    <div class="titulo-linha">
+        <div class="titulo-abonada">Falta Abonada</div>
+        <div class="campo-data-titulo">
+            <div class="c-label">Data da Falta</div>
+            <div class="c-valor">{{ falta.data_falta.strftime('%d/%m/%Y') }}</div>
+        </div>
+    </div>
+
+    <!-- Linha 2: Nome Completo | Matrícula -->
+    <div class="linha">
+        <div class="campo w-two-third">
+            <div class="c-label">Nome Completo</div>
+            <div class="c-valor">{{ usuario.nome | upper }}</div>
+        </div>
+        <div class="campo w-third">
+            <div class="c-label">Matrícula</div>
+            <div class="c-valor">
+                {% if matricula %}{{ matricula.numero | upper }}
+                {% else %}{{ usuario.cpf | upper if usuario.cpf else '—' }}{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Linha 3: Função | Secretaria / Unidade -->
+    <div class="linha">
+        <div class="campo w-half">
+            <div class="c-label">Função</div>
+            <div class="c-valor">{{ falta.funcao | upper }}</div>
+        </div>
+        <div class="campo w-half">
+            <div class="c-label">Secretaria / Unidade</div>
+            <div class="c-valor">SES / {{ (unidade.nome if unidade else 'NÃO INFORMADA') | upper }}</div>
+        </div>
+    </div>
+
+    <!-- Texto informativo (sem borda) -->
+    <div class="texto-info">
+        <p>Os servidores estatutários têm direito a 06 faltas abonadas ao ano, não podendo, a qualquer pretexto, exceder 01 falta por mês.</p>
+        <p>As faltas abonadas deverão ser comunicadas e agendadas junto à chefia, com antecedência mínima de 02 dias úteis. Cabe à chefia, observando o interesse público, autorizar ou não o abono da falta.</p>
+        <p>As&nbsp; faltas&nbsp; abonadas&nbsp; não&nbsp; utilizadas&nbsp; durante&nbsp; o&nbsp; ano&nbsp; serão&nbsp; pagas&nbsp; junto&nbsp; ao&nbsp; salário de março do ano seguinte.<strong style="color:#c00;"> Exceto os servidores em cargo de confiança (LEI ORDINÁRIA Nº 12924/2023).</strong></p>
+        <p>Cada&nbsp; falta&nbsp; abonada&nbsp; utilizada&nbsp; além&nbsp; do&nbsp; limite&nbsp; que&nbsp; se&nbsp; tem&nbsp; direito&nbsp; será&nbsp; convertida&nbsp; em falta injustificada e o desconto realizado no holerite de março do ano seguinte.</p>
+        <p><strong>O controle das faltas abonadas utilizadas durante o ano é exclusivo de cada servidor.</strong></p>
+    </div>
+
+    <!-- Assinaturas -->
+    <div class="assinaturas">
+        <div class="assinatura-bloco">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label">Servidor(a)</div>
+        </div>
+        <div class="assinatura-bloco">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label">Chefia Imediata</div>
+        </div>
+    </div>
+
+
+</div>
+</body>
+</html>

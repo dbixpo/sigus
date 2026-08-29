@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+{# Ficha "externa": Estágio (vínculo 6) ou Contrato por Prazo Determinado (tipo 3) #}
+{% set is_externo = ficha.vinculo == '6' or ficha.tipo_vinculo == '3' %}
+<title>Ficha CNES — {{ ficha.tipo_label }} — {{ usuario.nome }}</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+
+  .no-print {
+    display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+    background: #f8f9fa; border-radius: 8px; padding: 12px 16px;
+    border: 1px solid #dee2e6;
+  }
+  .no-print .titulo-acao { font-size: 14px; font-weight: bold; margin-right: auto; }
+  .btn-print  { background:#1A82B8;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px; }
+  .btn-email  { background:#19A88B;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px; }
+  .btn-rede   { background:#6f42c1;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px; }
+  .btn-voltar { background:#6c757d;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:6px; }
+  .toast-copy {
+    display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+    background:#212529; color:#fff; padding:10px 22px; border-radius:8px;
+    font-size:13px; z-index:9999; box-shadow:0 4px 16px rgba(0,0,0,0.25);
+  }
+  .toast-copy.show { display:block; animation: fadeInOut 2.8s forwards; }
+  @keyframes fadeInOut {
+    0%   { opacity:0; transform:translateX(-50%) translateY(8px); }
+    12%  { opacity:1; transform:translateX(-50%) translateY(0); }
+    75%  { opacity:1; }
+    100% { opacity:0; }
+  }
+  .instrucao-email {
+    display:none; background:#fff3cd; border:1px solid #ffc107; border-radius:6px;
+    padding:10px 14px; font-size:12px; margin-top:8px; color:#664d03;
+  }
+
+  .tipo-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-cadastro    { background: #198754; color: #fff; }
+  .badge-alteracao   { background: #e0a800; color: #000; }
+  .badge-descadastro { background: #dc3545; color: #fff; }
+
+  .ficha { max-width: 720px; margin: 0 auto; border: 1px solid #000; padding: 12px 14px; }
+
+  /* Cabeçalho institucional */
+  .cabecalho {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px;
+    gap: 8px;
+  }
+  .cabecalho-logo { flex: 0 0 auto; }
+  .cabecalho-logo img { height: 56px; width: auto; }
+  .cabecalho-titulo {
+    flex: 1; text-align: center; font-size: 13px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.4;
+  }
+  .cabecalho-secretaria {
+    flex: 0 0 auto; text-align: right; font-size: 12px; line-height: 1.3;
+    font-weight: normal; white-space: nowrap;
+  }
+  .cabecalho-secretaria strong { font-size: 14px; display: block; }
+  .linha { display: flex; flex-wrap: wrap; gap: 0 6px; margin-bottom: 6px; align-items: stretch; width: 100%; }
+  .campo {
+    display: flex; flex-direction: column; flex: 1 1 auto; min-width: 60px;
+    border-right: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 2px 4px 2px 0;
+  }
+  .campo.fixo-sm  { flex: 1 1 60px;  max-width: 100px; }
+  .campo.fixo-md  { flex: 1 1 100px; max-width: 180px; }
+  .campo.fixo-lg  { flex: 1 1 140px; max-width: 240px; }
+  .campo.fixo-xl  { flex: 1 1 200px; max-width: 340px; }
+  .campo.grow     { flex: 2 1 200px; }
+  .label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #333; margin-bottom: 2px; }
+  .valor { min-height: 16px; padding: 0 2px 1px; font-size: 11px; }
+  .valor.vazio { color: #aaa; font-style: italic; }
+  .secao { border-top: 1px solid #555; margin-top: 8px; padding-top: 6px; }
+  .secao-titulo { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #555; margin-bottom: 5px; }
+  table.tabela-vinculos { width:100%;border-collapse:collapse;margin-top:8px;font-size:10px; }
+  table.tabela-vinculos th,table.tabela-vinculos td { border:1px solid #000;padding:3px 6px;text-align:left; }
+  table.tabela-vinculos th { background:#eee;font-size:9px;text-transform:uppercase; }
+  .assinatura { margin-top: 24px; border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 10px; }
+  .rodape-obs { margin-top:8px;font-size:9px;color:#555;border-top:1px solid #ccc;padding-top:4px; }
+  .meta-ficha { font-size:9px;color:#666;text-align:right;margin-bottom:6px; }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .ficha { border: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print" id="barraAcoes">
+    <span class="titulo-acao">
+        Ficha CNES —
+        <span class="tipo-badge badge-{{ ficha.tipo }}">{{ ficha.tipo_label }}</span>
+        — {{ usuario.nome }}
+    </span>
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / PDF</button>
+    <button class="btn-email" onclick="enviarEmail('cnes')">✉️ E-mail CNES</button>
+    <button class="btn-rede"  onclick="enviarEmail('rede')">✉️ E-mail Rede</button>
+    <a class="btn-voltar" href="{{ url_for('unidades.detalhe', id=unidade.id) }}">← Unidade</a>
+</div>
+<script>
+/* Oculta a barra de ações quando a página é carregada dentro de um iframe */
+if (window.self !== window.top) {
+    var b = document.getElementById('barraAcoes');
+    if (b) b.style.display = 'none';
+}
+</script>
+<div class="instrucao-email no-print" id="instrucaoEmail">
+    📋 <strong>Texto copiado!</strong>
+    O e-mail foi aberto com destinatário e assunto preenchidos.
+    <strong>Cole o texto copiado no corpo do e-mail</strong> (Ctrl+V ou ⌘V).
+    Se o cliente de e-mail não abrir automaticamente, copie o destinatário e assunto abaixo e envie manualmente.
+    <div id="infosEmail" style="margin-top:6px;font-family:monospace;font-size:11px;"></div>
+</div>
+
+{# Dados para o JS — embutidos como JSON para evitar limite de URL #}
+<script id="dadosEmail" type="application/json">
+{
+  "cnes": {
+    "dest":    {{ dest_cnes | tojson }},
+    "assunto": {{ assunto_cnes | tojson }},
+    "corpo":   {{ corpo_cnes | tojson }}
+  },
+  "rede": {
+    "dest":    {{ dest_rede | tojson }},
+    "assunto": {{ assunto_rede | tojson }},
+    "corpo":   {{ corpo_rede | tojson }}
+  }
+}
+</script>
+
+<div class="ficha">
+
+    <!-- Cabeçalho institucional -->
+    <div class="cabecalho">
+        <div class="cabecalho-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}"
+                 alt="Prefeitura de Sorocaba">
+        </div>
+        <div class="cabecalho-titulo">
+            {% if ficha.tipo == 'descadastro' %}
+            Ficha de Descadastramento de Profissional no CNES
+            {% elif ficha.tipo == 'alteracao' %}
+            Ficha de Alteração de Profissional no CNES
+            {% elif is_externo %}
+            Ficha para Cadastramento de Profissionais<br>
+            <span style="font-size:11px;font-weight:normal;">com Vínculo de PJ no CNES (Servidores Temporários — PJ, Estágio, Contrato PD)</span>
+            {% else %}
+            Ficha para Cadastramento de Profissionais<br>
+            <span style="font-size:11px;font-weight:normal;">com Vínculo CLT ou Estatutário no CNES</span>
+            {% endif %}
+        </div>
+        <div class="cabecalho-secretaria">
+            Secretaria da<strong>SAÚDE</strong>
+        </div>
+    </div>
+
+    <div class="meta-ficha">
+        Gerado em: {{ ficha.gerado_em | br_datetime }} |
+        Por: {{ ficha.gerador.nome if ficha.gerador else 'Sistema' }}
+    </div>
+
+    {% macro val(v) %}{{ v if v else '' }}{% endmacro %}
+    {% macro campo(lbl, v, cls='') %}
+    <div class="campo {{ cls }}">
+        <span class="label">{{ lbl }}</span>
+        <span class="valor {% if not v %}vazio{% endif %}">{% if v %}{{ v }}{% else %}___{% endif %}</span>
+    </div>
+    {% endmacro %}
+
+    <!-- Unidade -->
+    <div class="linha">
+        {{ campo('Unidade de Saúde', unidade.nome, 'grow') }}
+        {{ campo('CNES', unidade.numero_cnes, 'fixo-lg') }}
+    </div>
+
+    <!-- Identificação -->
+    <div class="linha">
+        {{ campo('CPF', usuario.cpf, 'grow') }}
+        {{ campo('CNS', ficha.cns_profissional or usuario.cns, 'grow') }}
+        {{ campo('Matrícula', (matricula.numero if matricula and matricula.numero else usuario.matricula), 'grow') }}
+    </div>
+    <div class="linha">
+        {{ campo('Nome Completo', usuario.nome, 'grow') }}
+        {{ campo('Sexo', ('Masculino' if usuario.sexo == 'M' else 'Feminino') if usuario.sexo else None, 'fixo-md') }}
+    </div>
+    <div class="linha">{{ campo('Nome da Mãe', usuario.nome_mae, 'grow') }}</div>
+    <div class="linha">{{ campo('Nome do Pai', usuario.nome_pai, 'grow') }}</div>
+    <div class="linha">
+        {{ campo('Data de Nascimento', usuario.data_nasc | br_date if usuario.data_nasc else None, 'fixo-md') }}
+        {% if usuario.nacionalidade == 'estrangeira' %}
+        {{ campo('Nacionalidade', 'Estrangeira', 'fixo-md') }}
+        {{ campo('Data de Entrada', usuario.dt_entrada_pais | br_date if usuario.dt_entrada_pais else None, 'fixo-md') }}
+        {{ campo('País de Origem', usuario.pais_origem, 'grow') }}
+        {% else %}
+        {{ campo('Mun. de Nascimento', usuario.municipio_nasc, 'grow') }}
+        {{ campo('UF Nasc.', usuario.uf_nasc, 'fixo-sm') }}
+        {{ campo('Nacionalidade', 'Brasileira', 'fixo-md') }}
+        {% endif %}
+    </div>
+
+    <!-- Informações Complementares (RG + Escolaridade) -->
+    <div class="secao">
+        <div class="secao-titulo">Informações Complementares</div>
+        <div class="linha">
+            {{ campo('RG', usuario.rg, 'fixo-lg') }}
+            {{ campo('UF', usuario.rg_uf, 'fixo-sm') }}
+            {{ campo('Órgão Emissor', usuario.rg_orgao, 'fixo-md') }}
+            {{ campo('Emissão', usuario.rg_emissao | br_date if usuario.rg_emissao else None, 'fixo-md') }}
+        </div>
+        <div class="linha">
+            {{ campo('Escolaridade', usuario.escolaridade_label, 'grow') }}
+            {% if not is_externo %}
+            {{ campo('Frequenta Escola?',
+                ('Sim' if usuario.frequenta_escola == True else ('Não' if usuario.frequenta_escola == False else None)),
+                'fixo-md') }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="secao">
+        <div class="secao-titulo">Endereço</div>
+        <div class="linha">
+            {{ campo('Logradouro', usuario.end_logradouro, 'grow') }}
+            {{ campo('Nº', usuario.end_numero, 'fixo-sm') }}
+        </div>
+        <div class="linha">
+            {{ campo('Bairro', usuario.end_bairro, 'fixo-lg') }}
+            {{ campo('Município', usuario.end_municipio, 'grow') }}
+            {{ campo('UF', usuario.end_uf, 'fixo-sm') }}
+            {{ campo('CEP', usuario.end_cep, 'fixo-md') }}
+        </div>
+        <div class="linha">
+            {{ campo('Telefone / WhatsApp', (usuario.telefone or usuario.whatsapp) | br_fone, 'fixo-lg') }}
+            {{ campo('E-mail', usuario.email, 'grow') }}
+        </div>
+    </div>
+
+    <!-- Dados profissionais -->
+    <div class="secao">
+        <div class="secao-titulo">Dados Profissionais</div>
+        <div class="linha">
+            {{ campo('Categoria / Órgão Emissor (CRM, CRO, COREN...)',
+                (matricula.orgao_emissor if matricula and matricula.orgao_emissor else usuario.orgao_emissor),
+                'fixo-xl') }}
+            {{ campo('Nº de Registro no Conselho de Classe',
+                (matricula.reg_conselho if matricula and matricula.reg_conselho else usuario.reg_conselho),
+                'grow') }}
+        </div>
+
+        {% if ficha.tipo in ('cadastro', 'alteracao') %}
+
+        {% if is_externo %}
+        {# ── Layout externo: CNPJ e Razão Social em destaque, vínculo pré-fixado ── #}
+        <div class="linha">
+            <div class="campo grow" style="background:#f5f5f5;">
+                <span class="label">Vínculo (pré-definido)</span>
+                <span class="valor" style="font-weight:bold;">
+                    {{ ficha.vinculo ~ ' – ' ~ ficha.vinculo_label if ficha.vinculo else '— não informado —' }}
+                </span>
+            </div>
+            <div class="campo grow" style="background:#f5f5f5;">
+                <span class="label">Tipo (pré-definido)</span>
+                <span class="valor" style="font-weight:bold;">
+                    {{ ficha.tipo_vinculo ~ ' – ' ~ ficha.tipo_vinculo_label if ficha.tipo_vinculo else '— não informado —' }}
+                </span>
+            </div>
+            {{ campo('Carga Horária (h/sem)', (ficha.carga_horaria | string) if ficha.carga_horaria else None, 'fixo-sm') }}
+        </div>
+        <div class="linha" style="margin-top:6px;">
+            <div class="campo fixo-xl">
+                <span class="label" style="color:#000;">* CNPJ EMPRESA INTERMEDIADORA</span>
+                <span class="valor" style="font-size:12px;font-weight:bold;">
+                    {{ ficha.cnpj_empresa or '___________________________' }}
+                </span>
+            </div>
+            <div class="campo grow">
+                <span class="label" style="color:#000;">* RAZÃO SOCIAL DA EMPRESA INTERMEDIADORA</span>
+                <span class="valor" style="font-size:12px;font-weight:bold;">
+                    {{ ficha.nome_empresa or '___________________________' }}
+                </span>
+            </div>
+        </div>
+        {% else %}
+        {# ── Layout padrão: CLT / Estatutário ── #}
+        <div class="linha">
+            {{ campo('Vínculo', (ficha.vinculo ~ ' – ' ~ ficha.vinculo_label) if ficha.vinculo else None, 'grow') }}
+            {{ campo('Tipo', (ficha.tipo_vinculo ~ ' – ' ~ ficha.tipo_vinculo_label) if ficha.tipo_vinculo else None, 'grow') }}
+            {{ campo('Carga Horária (h/sem)', (ficha.carga_horaria | string) if ficha.carga_horaria else None, 'fixo-sm') }}
+        </div>
+        {% endif %}
+
+        <div class="linha">
+            {{ campo('Especialidade de Atuação na Unidade (CBO)', ficha.cbo_label, 'grow') }}
+            {{ campo('Data de Entrada na Unidade',
+                ficha.dt_entrada_unidade | br_date if ficha.dt_entrada_unidade else None,
+                'fixo-lg') }}
+        </div>
+        {% if ficha.vinculo == '5' or ficha.especialidade_residencia %}
+        <div class="linha">
+            {{ campo('Especialidade / Residência Médica', ficha.especialidade_residencia, 'grow') }}
+        </div>
+        {% endif %}
+        {% else %}
+        <!-- Descadastro: mostrar motivo -->
+        <div class="linha">
+            {{ campo('Motivo do Descadastro', ficha.observacoes, 'grow') }}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if ficha.tipo == 'cadastro' and not is_externo %}
+    <!-- Tabela de referência — somente para ficha CLT/Estatutário -->
+    <table class="tabela-vinculos" style="margin-top:14px">
+        <thead>
+            <tr><th>Código</th><th>Vínculo</th><th>Tipo de Vínculo</th><th>Descrição do Tipo</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>Vínculo Empregatício</td><td>1</td><td>Estatutário</td></tr>
+            <tr><td>1</td><td>Vínculo Empregatício</td><td>3</td><td>Contrato por Prazo Determinado</td></tr>
+            <tr><td>5</td><td>Residência</td><td>0</td><td>Sem Tipo</td></tr>
+            <tr><td>6</td><td>Estágio</td><td>0</td><td>Sem Tipo</td></tr>
+        </tbody>
+    </table>
+    {% endif %}
+
+
+    <!-- Assinatura digital do profissional -->
+    {% if assinatura_base64 %}
+    <div style="margin-top:18px; border-top:1px solid #ccc; padding-top:10px;">
+        <div style="font-size:9px; font-weight:600; color:#555; margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px;">
+            Assinatura do Profissional
+        </div>
+        <img src="{{ assinatura_base64 }}"
+             alt="Assinatura"
+             style="max-height:70px; max-width:360px; display:block; border-bottom:1px solid #333;">
+        <div style="font-size:8px; color:#555; margin-top:3px;">
+            {{ usuario.nome }}
+        </div>
+    </div>
+    {% else %}
+    <div style="margin-top:18px; border-top:1px solid #ccc; padding-top:10px;">
+        <div style="font-size:9px; font-weight:600; color:#555; margin-bottom:28px; text-transform:uppercase; letter-spacing:.5px;">
+            Assinatura do Profissional
+        </div>
+        <div style="border-bottom:1px solid #333; width:300px; margin-bottom:3px;"></div>
+        <div style="font-size:8px; color:#555;">{{ usuario.nome }}</div>
+    </div>
+    {% endif %}
+
+    <div class="rodape-obs">
+        Destinatários do e-mail: cnes@sorocaba.sp.gov.br | suportesis.sorocaba@sorocaba.sp.gov.br
+    </div>
+</div>
+
+<div class="toast-copy" id="toastCopy"></div>
+
+<script>
+const _dados = JSON.parse(document.getElementById('dadosEmail').textContent);
+
+function enviarEmail(tipo) {
+    const d = _dados[tipo];
+
+    // 1. Copia o corpo para o clipboard
+    navigator.clipboard.writeText(d.corpo).then(function () {
+        mostrarToast('📋 Texto copiado! Cole no corpo do e-mail (Ctrl+V).');
+    }).catch(function () {
+        // Fallback: seleciona textarea invisível
+        const ta = document.createElement('textarea');
+        ta.value = d.corpo;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        mostrarToast('📋 Texto copiado! Cole no corpo do e-mail (Ctrl+V).');
+    });
+
+    // 2. Abre o cliente de e-mail só com dest + assunto (sem corpo — evita limite de URL)
+    const mailtoUrl = 'mailto:' + encodeURIComponent(d.dest)
+        + '?subject=' + encodeURIComponent(d.assunto);
+
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'display:none';
+    frame.src = mailtoUrl;
+    document.body.appendChild(frame);
+    setTimeout(() => document.body.removeChild(frame), 3000);
+
+    // 3. Mostra instrução e infos de fallback
+    const instrucao = document.getElementById('instrucaoEmail');
+    document.getElementById('infosEmail').innerHTML =
+        '<b>Para:</b> ' + d.dest + '<br><b>Assunto:</b> ' + d.assunto;
+    instrucao.style.display = 'block';
+}
+
+function mostrarToast(msg) {
+    const t = document.getElementById('toastCopy');
+    t.textContent = msg;
+    t.classList.remove('show');
+    void t.offsetWidth; // força reflow para reiniciar animação
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

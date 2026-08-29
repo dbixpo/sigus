@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Chamados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-wrench-adjustable"></i> Chamados</h1>
+    {% if current_user.pode('abrir_chamado') %}
+    <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo Chamado
+    </a>
+    {% endif %}
+</div>
+
+{% if filtro_aplicado_automatico %}
+<div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-2" style="font-size:.85rem">
+    <i class="bi bi-funnel-fill flex-shrink-0"></i>
+    <span>
+        Exibindo chamados com status: <strong>{{ filtro_status_list | join(', ') }}</strong>
+        (padrão configurado).
+        <a href="/chamados/?ver_todos=1" class="ms-2 alert-link">Ver todos os status</a>
+    </span>
+</div>
+{% endif %}
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            {{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Status', 'status', status_opts, filtro_status_list, 'Todos') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Tipo', 'tipo', tipos, filtro_tipo_list, 'Todos') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Prioridade', 'prioridade', prioridades, filtro_prioridade_list, 'Todas') }}
+        </div>
+        <div class="col-md-2 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                <i class="bi bi-search me-1"></i>Filtrar
+            </button>
+            <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros">
+                <i class="bi bi-x-circle"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">{{ chamados | length }} chamado(s)</div>
+    <div class="card-body p-0">
+        {% if chamados %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Número</th><th>Título</th><th>Unidade</th><th>Tipo</th>
+                        <th>Prioridade</th><th>Status</th><th>Abertura</th>
+                        <th class="text-muted" title="Última atualização"><i class="bi bi-clock-history"></i></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in chamados %}
+                    <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer">
+                        <td class="small text-primary fw-semibold">{{ c.numero }}</td>
+                        <td class="small">{{ c.titulo | truncate(40) }}</td>
+                        <td class="small">{{ c.unidade.nome | truncate(25) }}</td>
+                        <td class="small text-muted">{{ c.tipo_label }}</td>
+                        <td><span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span></td>
+                        <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                        <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                        <td class="small text-muted text-nowrap"
+                            title="Última atualização: {{ c.atualizado_em | br_datetime }}">
+                            {{ c.atualizado_em | br_date }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                               class="btn btn-sm btn-outline-primary">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <h6>Nenhum chamado encontrado</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

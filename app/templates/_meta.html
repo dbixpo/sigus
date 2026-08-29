@@ -1,0 +1,26 @@
+{#
+  Macro reutilizável de metadados (criado_em / atualizado_em).
+  Uso: {% include '_meta.html' with obj=equipamento %}
+  Ou passe criado e atualizado diretamente via context:
+    {% set _criado = equipamento.criado_em %}
+    {% set _atualizado = equipamento.atualizado_em %}
+    {% include '_meta.html' %}
+#}
+<div class="card mt-3">
+    <div class="card-body py-2 px-3">
+        <div class="d-flex flex-wrap gap-3 align-items-center" style="font-size:.8rem;">
+            {% if _criado is defined and _criado %}
+            <span class="text-muted">
+                <i class="bi bi-calendar-plus me-1"></i>
+                Criado em: <strong>{{ _criado | br_datetime }}</strong>
+            </span>
+            {% endif %}
+            {% if _atualizado is defined and _atualizado %}
+            <span class="text-muted">
+                <i class="bi bi-clock-history me-1"></i>
+                Última atualização: <strong>{{ _atualizado | br_datetime }}</strong>
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</div>

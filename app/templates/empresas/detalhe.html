@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ empresa.razao_social }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('empresas.listar') }}">Empresas</a></li>
+        <li class="breadcrumb-item active">{{ empresa.razao_social }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-building me-2"></i>{{ empresa.razao_social }}</h1>
+    {% if current_user.pode('editar_contrato') %}
+    <a href="{{ url_for('empresas.editar', id=empresa.id) }}" class="btn btn-primary">
+        <i class="bi bi-pencil me-1"></i>Editar
+    </a>
+    {% endif %}
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body text-center py-4">
+                {% if empresa.foto_url %}
+                <img src="{{ empresa.foto_url }}" alt="Logo {{ empresa.razao_social }}"
+                     style="max-width:140px;max-height:140px;object-fit:contain;border-radius:12px;">
+                {% if current_user.pode('editar_contrato') %}
+                <form method="POST" action="{{ url_for('empresas.alterar_logo', id=empresa.id) }}" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="remover">
+                    <button type="submit" class="btn btn-sm btn-link text-danger">Remover logo</button>
+                </form>
+                {% endif %}
+                {% else %}
+                <div style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:linear-gradient(135deg,var(--sigus-primary),#0ea5e9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.5rem;font-weight:700;">
+                    {{ (empresa.razao_social or '?')[0]|upper }}
+                </div>
+                {% if current_user.pode('editar_contrato') %}
+                <form method="POST" action="{{ url_for('empresas.alterar_logo', id=empresa.id) }}" enctype="multipart/form-data" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="file" name="logo" accept="image/*" class="form-control form-control-sm d-inline-block" style="width:auto;">
+                    <button type="submit" class="btn btn-sm btn-primary mt-1">Enviar logo</button>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-building me-1"></i>Dados da Empresa (Administrativo)</div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width:160px;">Razão Social</th>
+                        <td>{{ empresa.razao_social }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">CNPJ</th>
+                        <td>{{ empresa.cnpj[:2] }}.{{ empresa.cnpj[2:5] }}.{{ empresa.cnpj[5:8] }}/{{ empresa.cnpj[8:12] }}-{{ empresa.cnpj[12:] }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Endereço</th>
+                        <td>{{ empresa.endereco_completo or '—' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">E-mail comercial</th>
+                        <td>{% if empresa.email %}<a href="mailto:{{ empresa.email }}">{{ empresa.email }}</a>{% else %}—{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Telefone comercial</th>
+                        <td>{% if empresa.telefone %}<a href="tel:+55{{ empresa.telefone }}">{{ empresa.telefone_formatado }}</a>{% else %}—{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Status</th>
+                        <td><span class="badge bg-{{ 'success' if empresa.ativo else 'secondary' }}">{{ 'Ativa' if empresa.ativo else 'Inativa' }}</span></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-headset me-1"></i>Dados da Empresa (Local)</div>
+            <div class="card-body">
+                <table class="table table-borderless mb-0">
+                    <tr>
+                        <th class="text-muted" style="width:160px;">Apelido Local</th>
+                        <td>{{ empresa.nome_comum or '—' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">E-mail Local</th>
+                        <td>{% if empresa.email_suporte %}<a href="mailto:{{ empresa.email_suporte }}">{{ empresa.email_suporte }}</a>{% else %}—{% endif %}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Telefone Local</th>
+                        <td>{% if empresa.telefone_suporte %}<a href="tel:+55{{ empresa.telefone_suporte }}">{{ empresa.telefone_suporte_formatado }}</a>{% else %}—{% endif %}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-1"></i>Histórico de Contratações</div>
+            <div class="card-body">
+                {% if contratos %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nº SEI</th>
+                                <th>Período</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in contratos %}
+                            <tr>
+                                <td>{{ c.identificador }}</td>
+                                <td class="small">{{ c.data_inicio.strftime('%d/%m/%Y') }} – {{ c.data_fim.strftime('%d/%m/%Y') }}</td>
+                                <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                                <td><a href="{{ url_for('contratos.detalhe', id=c.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>Nenhum contrato vinculado. Ao cadastrar contratos e selecionar esta empresa, eles aparecerão aqui.
+                </p>
+                <a href="{{ url_for('contratos.novo') }}" class="btn btn-sm btn-outline-primary mt-2">Cadastrar contrato</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

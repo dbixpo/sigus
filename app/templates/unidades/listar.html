@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Unidades{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    {% if current_user.pode('ver_todas_unidades') %}
+    <h1><i class="bi bi-hospital"></i> Unidades de Saúde</h1>
+    {% else %}
+    <h1><i class="bi bi-hospital"></i> Selecionar Unidade</h1>
+    {% endif %}
+    {% if current_user.pode('cadastrar_unidade') %}
+    <a href="{{ url_for('unidades.nova') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Nova Unidade
+    </a>
+    {% endif %}
+</div>
+{% if not current_user.pode('ver_todas_unidades') and unidades | length > 1 %}
+<p class="text-muted mb-3">
+    <i class="bi bi-info-circle me-1"></i>
+    Você tem acesso a <strong>{{ unidades | length }}</strong> unidades. Clique em uma para entrar.
+</p>
+{% endif %}
+
+{% if unidades %}
+<div class="row g-3">
+    {% for u in unidades %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between mb-2">
+                    <div>
+                        <span class="badge bg-primary mb-1" title="{{ u.tipo_unidade.nome if u.tipo_unidade else u.tipo }}">
+                            {{ u.tipo_unidade.sigla if u.tipo_unidade else u.tipo }}
+                        </span>
+                        <h6 class="fw-bold mb-0">
+                            <a href="{{ url_for('unidades.detalhe', id=u.id) }}" class="text-decoration-none text-dark">
+                                {{ u.nome }}
+                            </a>
+                        </h6>
+                    </div>
+                    <span class="badge bg-{{ 'success' if u.status == 'ativa' else 'secondary' }}">
+                        {{ u.status | title }}
+                    </span>
+                </div>
+                {% if u.endereco %}
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-geo-alt me-1"></i>{{ u.endereco }}{% if u.numero %}, {{ u.numero }}{% endif %}{% if u.complemento %} — {{ u.complemento }}{% endif %}
+                    {% if u.bairro %} — {{ u.bairro }}{% endif %}
+                </p>
+                {% endif %}
+                <div class="d-flex gap-3 mt-3">
+                    <div class="text-center">
+                        <div class="fw-bold text-primary">{{ u.total_salas }}</div>
+                        <div class="text-muted" style="font-size:0.73rem;">Salas</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-success">{{ u.total_equipamentos }}</div>
+                        <div class="text-muted" style="font-size:0.73rem;">Equipamentos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold {% if u.chamados_abertos > 0 %}text-danger{% else %}text-muted{% endif %}">{{ u.chamados_abertos }}</div>
+                        <div class="text-muted" style="font-size:0.73rem;">Chamados</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent d-flex gap-2">
+                <a href="{{ url_for('unidades.detalhe', id=u.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                    <i class="bi bi-eye me-1"></i>Ver
+                </a>
+                {% if current_user.pode('editar_unidade') %}
+                <a href="{{ url_for('unidades.editar', id=u.id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-hospital"></i>
+    <h5>Nenhuma unidade cadastrada</h5>
+    {% if current_user.pode('cadastrar_unidade') %}
+    <a href="{{ url_for('unidades.nova') }}" class="btn btn-primary mt-2">Cadastrar Primeira Unidade</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

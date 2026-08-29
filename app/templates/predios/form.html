@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if predio else 'Novo' }} Prédio{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('predios.listar') }}" class="btn btn-sm btn-outline-secondary me-2">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1><i class="bi bi-buildings"></i> {{ 'Editar' if predio else 'Novo' }} Prédio</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome do Prédio <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control"
+                               value="{{ predio.nome if predio else '' }}"
+                               placeholder="Ex.: Palácio da Saúde, Centro de Especialidades"
+                               required>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Endereço</label>
+                            <input type="text" name="endereco" class="form-control"
+                                   value="{{ predio.endereco or '' if predio else '' }}"
+                                   placeholder="Rua, Avenida...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Número</label>
+                            <input type="text" name="numero" class="form-control"
+                                   value="{{ predio.numero or '' if predio else '' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" name="complemento" class="form-control"
+                                   value="{{ predio.complemento or '' if predio else '' }}"
+                                   placeholder="Sala, apto...">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" name="bairro" class="form-control"
+                                   value="{{ predio.bairro or '' if predio else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" name="cidade" class="form-control"
+                                   value="{{ predio.cidade or 'Sorocaba' if predio else 'Sorocaba' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">CEP</label>
+                            <input type="text" name="cep" class="form-control"
+                                   value="{{ predio.cep or '' if predio else '' }}"
+                                   placeholder="00000-000" maxlength="9">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Telefone</label>
+                            <input type="text" name="telefone" class="form-control"
+                                   value="{{ predio.telefone or '' if predio else '' }}"
+                                   placeholder="(00) 00000-0000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-pin-map me-1 text-danger"></i>Link do Google Maps
+                                <span class="text-muted small">(opcional)</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text text-danger"><i class="bi bi-geo-alt-fill"></i></span>
+                                <input type="url" name="link_maps" class="form-control"
+                                       value="{{ predio.link_maps or '' if predio else '' }}"
+                                       placeholder="https://maps.app.goo.gl/...">
+                                {% if predio and predio.link_maps %}
+                                <a href="{{ predio.link_maps }}" target="_blank" class="btn btn-outline-danger">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-person-hard-hat me-1 text-warning"></i>
+                                Responsável Predial
+                            </label>
+                            <select name="responsavel_predial_id" class="form-select">
+                                <option value="">— Nenhum definido —</option>
+                                {% for u in usuarios %}
+                                <option value="{{ u.id }}"
+                                    {% if predio and predio.responsavel_predial_id == u.id %}selected{% endif %}>
+                                    {{ u.nome }} ({{ u.perfil_label }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">
+                                Quem recebe os chamados <strong>prediais</strong> deste prédio
+                                (elétrico, hidráulico, estrutural...).
+                                Cada unidade/setor dentro do prédio cuida dos seus próprios equipamentos.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="3">{{ predio.observacoes or '' if predio else '' }}</textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('predios.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Salvar Prédio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

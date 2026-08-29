@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}Gerenciar Links Úteis{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Links Úteis</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-grid-3x3-gap-fill me-2"></i>Gerenciar Links Úteis</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('links.admin_tipos') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-tags me-1"></i>Tipos
+        </a>
+        <a href="{{ url_for('links.index') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+            <i class="bi bi-eye me-1"></i>Ver página
+        </a>
+        <a href="{{ url_for('links.novo') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Novo link
+        </a>
+    </div>
+</div>
+
+{% if itens %}
+<div class="alert alert-info alert-sm py-2 px-3 mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-grip-vertical fs-5"></i>
+    <span>Arraste as linhas para reorganizar a ordem de exibição.</span>
+    <span id="statusSalvo" class="ms-auto text-success small d-none">
+        <i class="bi bi-check-circle me-1"></i>Ordem salva
+    </span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:36px"></th>
+                    <th>Link</th>
+                    <th class="d-none d-md-table-cell">Categoria</th>
+                    <th class="d-none d-md-table-cell">URL</th>
+                    <th class="d-none d-lg-table-cell">Visível para</th>
+                    <th class="d-none d-md-table-cell">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="sortableBody">
+                {% for item in itens %}
+                <tr data-id="{{ item.id }}" class="sortable-row" style="cursor:grab">
+                    <td class="text-muted ps-3">
+                        <i class="bi bi-grip-vertical fs-5"></i>
+                    </td>
+                    <td>
+                        {% set _src = item.imagem_src %}
+                        {% if _src %}
+                        <img src="{{ _src }}" alt=""
+                             style="width:32px;height:32px;border-radius:8px;object-fit:cover;
+                                    margin-right:.4rem;vertical-align:middle;
+                                    box-shadow:0 0 0 2px #e5e7eb;">
+                        {% else %}
+                        <span class="mini-icon"
+                              style="{% if item.tipo_link %}background:{{ item.tipo_link.cor }}{% endif %}">
+                            <i class="bi {{ item.icone or 'bi-link-45deg' }}"></i>
+                        </span>
+                        {% endif %}
+                        <span class="fw-semibold">{{ item.nome }}</span>
+                        {% if item.descricao %}
+                        <div class="text-muted small ms-1">{{ item.descricao }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {% if item.tipo_link %}
+                        <span class="badge rounded-pill" style="background:{{ item.tipo_link.cor }}">
+                            <i class="bi {{ item.tipo_link.icone }} me-1"></i>{{ item.tipo_link.nome }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {% if item.url %}
+                        <a href="{{ item.url }}" target="_blank"
+                           class="text-truncate d-inline-block" style="max-width:200px;">
+                            {{ item.url }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-lg-table-cell">
+                        {% set pa = item.perfis_acesso or [] %}
+                        {% if 'todos' in pa %}
+                        <span class="badge bg-primary">Todos</span>
+                        {% else %}
+                        {% for v, l in perfis %}{% if v in pa %}
+                        <span class="badge bg-secondary me-1">{{ l }}</span>
+                        {% endif %}{% endfor %}
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {% if item.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{{ url_for('links.editar', id=item.id) }}"
+                               class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('links.excluir', id=item.id) }}"
+                                  onsubmit="return confirm('Excluir \'{{ item.nome }}\' ?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state py-5">
+    <i class="bi bi-grid-3x3-gap fs-1 text-muted d-block mb-3"></i>
+    <h6>Nenhum link cadastrado.</h6>
+    <a href="{{ url_for('links.novo') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-circle me-1"></i>Adicionar primeiro link
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block head %}
+<style>
+.mini-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--sigus-primary), #0e4a7a);
+    color: #fff; font-size: .85rem; margin-right: .4rem;
+    vertical-align: middle;
+}
+.sortable-row.dragging  { opacity:.45; box-shadow:0 4px 20px rgba(0,0,0,.18); }
+.sortable-row.drag-over { border-top:2px dashed var(--sigus-primary); }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const tbody   = document.getElementById('sortableBody');
+    if (!tbody) return;
+    const statusEl = document.getElementById('statusSalvo');
+    let dragSrc    = null;
+
+    tbody.querySelectorAll('.sortable-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', e => {
+            dragSrc = row; row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            salvar();
+        });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            if (dragSrc && row !== dragSrc) row.classList.add('drag-over');
+        });
+        row.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!dragSrc || dragSrc === row) return;
+            tbody.insertBefore(dragSrc, row);
+            row.classList.remove('drag-over');
+        });
+    });
+
+    function salvar() {
+        const ids = [...tbody.querySelectorAll('.sortable-row')].map(r => parseInt(r.dataset.id));
+        fetch('{{ url_for("links.reordenar") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
+            body: JSON.stringify({ ids })
+        }).then(r => {
+            if (r.ok && statusEl) {
+                statusEl.classList.remove('d-none');
+                setTimeout(() => statusEl.classList.add('d-none'), 2000);
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

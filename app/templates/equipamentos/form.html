@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if equipamento else 'Novo' }} Equipamento{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        {% if unidade %}
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id) }}">{{ unidade.nome }}</a></li>
+        {% elif sala %}
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=sala.unidade_id) }}">{{ sala.unidade.nome }}</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('salas.detalhe', id=sala.id) }}">{{ sala.nome }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{{ 'Editar Equipamento' if equipamento else 'Novo Equipamento' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-pc-display"></i> {{ 'Editar Equipamento' if equipamento else 'Novo Equipamento' }}</h1>
+</div>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+                <div class="row g-3">
+
+                    {# Seletor de sala — só aparece quando cadastro vem da unidade #}
+                    {% if unidade and salas is defined %}
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Sala <span class="text-danger">*</span>
+                        </label>
+                        <select name="sala_id" class="form-select" required>
+                            <option value="">— Selecione a sala —</option>
+                            {% for s in salas %}
+                            <option value="{{ s.id }}">
+                                <i class="{{ s.tipo_icone }}"></i> {{ s.nome }}
+                                {% if s.tipo_label %} — {{ s.tipo_label }}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Selecione a sala onde o equipamento está localizado.
+                            <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" target="_blank" class="ms-1">
+                                <i class="bi bi-plus-circle me-1"></i>Criar nova sala
+                            </a>
+                        </div>
+                    </div>
+                    {% elif sala %}
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 small mb-0">
+                            <i class="bi bi-door-open me-1"></i>
+                            Sala: <strong>{{ sala.nome }}</strong>
+                            {% if sala.tipo_label %} — {{ sala.tipo_label }}{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo de Equipamento *</label>
+                        <select name="tipo_equipamento_id" id="tipo_equipamento_id" class="form-select" required
+                                {% if equipamento %}disabled{% endif %}>
+                            <option value="">Selecione o tipo...</option>
+                            {% for t in tipos %}
+                            <option value="{{ t.id }}"
+                                {% if equipamento and equipamento.tipo_equipamento_id == t.id %}selected{% endif %}>
+                                {{ t.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% if equipamento %}
+                        <input type="hidden" name="tipo_equipamento_id" value="{{ equipamento.tipo_equipamento_id }}">
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nº de Patrimônio</label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-semibold text-primary">PMS-</span>
+                            <input type="text" name="numero_patrimonio" id="numero_patrimonio"
+                                   class="form-control"
+                                   value="{{ equipamento.numero_patrimonio | replace('PMS-', '') if equipamento and equipamento.numero_patrimonio else '' }}"
+                                   placeholder="00000"
+                                   inputmode="numeric">
+                        </div>
+                        <div class="form-text text-muted">Digite apenas os números — o prefixo <strong>PMS-</strong> é adicionado automaticamente.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nº de Série</label>
+                        <input type="text" name="numero_serie" class="form-control"
+                               value="{{ equipamento.numero_serie if equipamento else '' }}">
+                    </div>
+
+                    {# ── Marca encadeada com o Tipo ── #}
+                    <div class="col-md-6">
+                        <label class="form-label">Marca</label>
+                        <select name="marca_id" id="marca_id" class="form-select"
+                                {% if not equipamento %}disabled{% endif %}>
+                            <option value="">
+                                {% if equipamento %}Selecione a marca...{% else %}Selecione o tipo primeiro{% endif %}
+                            </option>
+                            {# Em edição, pré-carrega as marcas do tipo atual #}
+                            {% if equipamento and equipamento.tipo_equipamento %}
+                            {% for m in equipamento.tipo_equipamento.marcas.order_by('nome').all() %}
+                            <option value="{{ m.id }}" {% if equipamento.marca_id == m.id %}selected{% endif %}>{{ m.nome }}</option>
+                            {% endfor %}
+                            {% endif %}
+                        </select>
+                        <div id="aviso-marca-sem-tipo" class="form-text text-warning d-none">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Nenhuma marca cadastrada para este tipo.
+                            <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar marca</a>
+                        </div>
+                    </div>
+
+                    {# ── Modelo encadeado com a Marca ── #}
+                    <div class="col-md-6">
+                        <label class="form-label">Modelo</label>
+                        <select name="modelo_id" id="modelo_id" class="form-select"
+                                {% if not equipamento or not equipamento.marca_id %}disabled{% endif %}>
+                            <option value="">
+                                {% if equipamento and equipamento.marca_id %}Selecione o modelo...{% else %}Selecione a marca primeiro{% endif %}
+                            </option>
+                        </select>
+                        <div id="aviso-modelo-sem-marca" class="form-text text-warning d-none">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Nenhum modelo para esta marca.
+                            <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar modelo</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campos customizados (preenchidos via JS ou existentes) -->
+            <div class="form-section">
+                {% if equipamento %}
+                <div class="form-section-title">Informações Específicas do Tipo</div>
+                <div class="row g-3">
+                    {% for campo in equipamento.tipo_equipamento.campos.all() %}
+                    <div class="col-md-6">
+                        <label class="form-label">{{ campo.nome_campo }}{% if campo.obrigatorio %} *{% endif %}</label>
+                        {% set val = campos_valores.get(campo.id, '') %}
+                        {% if campo.tipo_dado == 'selecao' and campo.opcoes_selecao %}
+                        <select name="campo_{{ campo.id }}" class="form-select" {% if campo.obrigatorio %}required{% endif %}>
+                            <option value="">Selecione...</option>
+                            {% for op in campo.opcoes_selecao %}
+                            <option value="{{ op }}" {% if val == op %}selected{% endif %}>{{ op }}</option>
+                            {% endfor %}
+                        </select>
+                        {% elif campo.tipo_dado == 'texto_longo' %}
+                        <textarea name="campo_{{ campo.id }}" class="form-control" rows="2">{{ val }}</textarea>
+                        {% else %}
+                        <input type="{{ 'number' if campo.tipo_dado == 'numero' else ('date' if campo.tipo_dado == 'data' else 'text') }}"
+                               name="campo_{{ campo.id }}" class="form-control"
+                               value="{{ val }}"
+                               {% if campo.obrigatorio %}required{% endif %}>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div id="campos-customizados" class="row g-3">
+                    <p class="text-muted small mt-2">Selecione um tipo de equipamento para ver os campos específicos.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="form-section">
+                <div class="form-section-title">Estado e Condição</div>
+                <div class="mb-3">
+                    <label class="form-label">Status *</label>
+                    <select name="status" class="form-select" required>
+                        {% for s in status_opts %}
+                        <option value="{{ s }}" {% if equipamento and equipamento.status == s %}selected{% elif s == 'ativo' and not equipamento %}selected{% endif %}>
+                            {{ {'ativo':'Ativo','em_manutencao':'Em Manutenção','baixado':'Baixado'}[s] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Condição *</label>
+                    <select name="condicao" class="form-select" required>
+                        {% for c in condicao_opts %}
+                        <option value="{{ c }}" {% if equipamento and equipamento.condicao == c %}selected{% elif c == 'boa' and not equipamento %}selected{% endif %}>
+                            {{ {'excelente':'Excelente','boa':'Boa','regular':'Regular','ruim':'Ruim','inservivel':'Inservível'}[c] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title">Informações Adicionais</div>
+                <div class="mb-3">
+                    <label class="form-label">Data de Aquisição</label>
+                    <input type="date" name="data_aquisicao" class="form-control"
+                           value="{{ equipamento.data_aquisicao | br_date if equipamento and equipamento.data_aquisicao else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Valor Estimado (R$)</label>
+                    <input type="number" name="valor_estimado" class="form-control" step="0.01"
+                           value="{{ equipamento.valor_estimado if equipamento else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tempo de Uso (anos estimado)</label>
+                    <input type="number" name="tempo_uso_anos" class="form-control" step="0.5" min="0"
+                           value="{{ equipamento.tempo_uso_anos if equipamento else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Observações</label>
+                    <textarea name="observacoes" class="form-control" rows="3">{{ equipamento.observacoes if equipamento else '' }}</textarea>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if equipamento else 'Cadastrar Equipamento' }}
+                </button>
+                {% if unidade %}
+                <a href="{{ url_for('unidades.detalhe', id=unidade.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+                {% elif sala %}
+                <a href="{{ url_for('salas.detalhe', id=sala.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+                {% else %}
+                <a href="{{ url_for('equipamentos.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const selTipo   = document.getElementById('tipo_equipamento_id');
+    const selMarca  = document.getElementById('marca_id');
+    const selModelo = document.getElementById('modelo_id');
+    const avisoMarca  = document.getElementById('aviso-marca-sem-tipo');
+    const avisoModelo = document.getElementById('aviso-modelo-sem-marca');
+
+    // URLs das APIs
+    const urlMarcasPorTipo = "{{ url_for('equipamentos.api_marcas_por_tipo', tipo_id=0) }}".replace('/0', '/');
+    const urlModelosPorMarca = "{{ url_for('equipamentos.api_modelos', marca_id=0) }}".replace('/0', '/');
+    const urlCampos = "{{ url_for('equipamentos.api_campos', tipo_id=0) }}".replace('/0', '/');
+    const containerCampos = document.getElementById('campos-customizados');
+
+    function setSelect(sel, itens, placeholderVazio, placeholderComDados) {
+        sel.innerHTML = '';
+        const opt0 = new Option(itens.length ? placeholderComDados : placeholderVazio, '');
+        sel.appendChild(opt0);
+        itens.forEach(i => sel.appendChild(new Option(i.nome, i.id)));
+        sel.disabled = itens.length === 0;
+    }
+
+    function carregarMarcas(tipoId, marcaPresel) {
+        if (!tipoId) {
+            setSelect(selMarca, [], 'Selecione o tipo primeiro', '');
+            setSelect(selModelo, [], 'Selecione a marca primeiro', '');
+            if (avisoMarca)  avisoMarca.classList.add('d-none');
+            if (avisoModelo) avisoModelo.classList.add('d-none');
+            return;
+        }
+        fetch(urlMarcasPorTipo + tipoId)
+            .then(r => r.json())
+            .then(marcas => {
+                setSelect(selMarca, marcas, 'Selecione a marca...', 'Selecione a marca...');
+                if (marcas.length === 0) {
+                    avisoMarca && avisoMarca.classList.remove('d-none');
+                } else {
+                    avisoMarca && avisoMarca.classList.add('d-none');
+                    if (marcaPresel) {
+                        selMarca.value = marcaPresel;
+                        if (selMarca.value) carregarModelos(marcaPresel, null);
+                    }
+                }
+                setSelect(selModelo, [], 'Selecione a marca primeiro', '');
+            });
+    }
+
+    function carregarModelos(marcaId, modeloPresel) {
+        if (!marcaId) {
+            setSelect(selModelo, [], 'Selecione a marca primeiro', '');
+            if (avisoModelo) avisoModelo.classList.add('d-none');
+            return;
+        }
+        const tipoId = selTipo ? selTipo.value : '';
+        const url = urlModelosPorMarca + marcaId + (tipoId ? '?tipo_id=' + tipoId : '');
+        fetch(url)
+            .then(r => r.json())
+            .then(modelos => {
+                setSelect(selModelo, modelos, 'Selecione o modelo...', 'Selecione o modelo...');
+                if (modelos.length === 0) {
+                    avisoModelo && avisoModelo.classList.remove('d-none');
+                } else {
+                    avisoModelo && avisoModelo.classList.add('d-none');
+                    if (modeloPresel) selModelo.value = modeloPresel;
+                }
+            });
+    }
+
+    // ── Campos customizados ao mudar o tipo ──
+    function carregarCampos(tipoId) {
+        if (!containerCampos || !tipoId) return;
+        fetch(urlCampos + tipoId)
+            .then(r => r.json())
+            .then(campos => {
+                if (campos.length === 0) {
+                    containerCampos.innerHTML = '<p class="text-muted small mt-2">Nenhum campo específico para este tipo.</p>';
+                    return;
+                }
+                containerCampos.innerHTML = campos.map(c => {
+                    let input = '';
+                    if (c.tipo_dado === 'selecao' && c.opcoes_selecao) {
+                        const opts = c.opcoes_selecao.map(o => `<option value="${o}">${o}</option>`).join('');
+                        input = `<select name="campo_${c.id}" class="form-select"${c.obrigatorio ? ' required' : ''}><option value="">Selecione...</option>${opts}</select>`;
+                    } else if (c.tipo_dado === 'texto_longo') {
+                        input = `<textarea name="campo_${c.id}" class="form-control" rows="2"${c.obrigatorio ? ' required' : ''}></textarea>`;
+                    } else {
+                        const t = c.tipo_dado === 'numero' ? 'number' : (c.tipo_dado === 'data' ? 'date' : 'text');
+                        input = `<input type="${t}" name="campo_${c.id}" class="form-control"${c.obrigatorio ? ' required' : ''}>`;
+                    }
+                    return `<div class="col-md-6"><label class="form-label">${c.nome_campo}${c.obrigatorio ? ' <span class="text-danger">*</span>' : ''}</label>${input}</div>`;
+                }).join('');
+            });
+    }
+
+    // ── Eventos ──
+    if (selTipo && !selTipo.disabled) {
+        selTipo.addEventListener('change', function () {
+            carregarMarcas(this.value, null);
+            carregarCampos(this.value);
+        });
+    }
+
+    // Guarda flag para ignorar o change que o browser pode disparar na inicialização
+    let _inicializando = true;
+    selMarca.addEventListener('change', function () {
+        if (_inicializando) return;
+        carregarModelos(this.value, null);
+    });
+
+    // ── Inicialização em modo edição ──
+    {% if equipamento and equipamento.tipo_equipamento_id %}
+    // Marca e modelo vêm pré-renderizados pelo Jinja — só carrega os modelos via API
+    carregarModelos('{{ equipamento.marca_id or "" }}', '{{ equipamento.modelo_id or "" }}');
+    {% endif %}
+
+    // Libera o listener após a inicialização (próximo tick)
+    setTimeout(function () { _inicializando = false; }, 0);
+})();
+
+// ── Prefixo PMS- no patrimônio ──
+(function () {
+    const inp = document.getElementById('numero_patrimonio');
+    if (!inp) return;
+
+    // Antes de enviar o form, junta prefixo + valor (só se houver algo digitado)
+    inp.closest('form').addEventListener('submit', function () {
+        const val = inp.value.trim();
+        if (val && !val.startsWith('PMS-')) {
+            inp.value = 'PMS-' + val;
+        }
+    });
+
+    // Impede que o usuário cole ou digite o prefixo manualmente (remove se vier duplicado)
+    inp.addEventListener('input', function () {
+        if (this.value.startsWith('PMS-')) {
+            this.value = this.value.replace(/^PMS-/i, '');
+        }
+    });
+})();
+</script>
+{% endblock %}

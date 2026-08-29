@@ -1,0 +1,672 @@
+{% extends 'base.html' %}
+{% block title %}Transferências{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <h1><i class="bi bi-arrow-left-right"></i> Transferências de Equipamentos</h1>
+    <div class="d-flex gap-2 align-items-center">
+        {% if aba == 'lojinha' %}
+        <a href="{{ url_for('transferencias.lojinha_adicionar') }}" class="btn btn-success btn-sm" title="Cadastrar equipamento para doação">
+            <i class="bi bi-gift me-1"></i>Cadastrar Equipamento para Doação
+        </a>
+        {% elif current_user.pode('ver_transferencias') and current_user.perfil in ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo'] %}
+        <a href="{{ url_for('transferencias.documento_novo') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Novo Termo
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if unidades or (aba == 'lojinha' and unidades_lojinha) %}
+<div class="mb-3">
+    <form method="get" class="d-inline-flex flex-wrap align-items-center gap-2">
+        {% set _unidades_dropdown = unidades_lojinha if aba == 'lojinha' else unidades %}
+        {% if _unidades_dropdown %}
+        <label class="form-label mb-0">Unidade:</label>
+        <select name="unidade_id" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+            <option value="">— Todas —</option>
+            {% for u in _unidades_dropdown %}
+            <option value="{{ u.id }}" {% if unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
+        {% if aba == 'lojinha' %}
+        <label class="form-label mb-0 ms-2">Classificação:</label>
+        <select name="lojinha_classificacao" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+            <option value="" {% if not lojinha_classificacao %}selected{% endif %}>Todas</option>
+            <option value="A" {% if lojinha_classificacao == 'A' %}selected{% endif %}>A</option>
+            <option value="B" {% if lojinha_classificacao == 'B' %}selected{% endif %}>B</option>
+        </select>
+        {% endif %}
+        <input type="hidden" name="aba" value="{{ aba }}">
+        {% if aba == 'concluidas' %}<input type="hidden" name="status_concluida" value="{{ status_concluida or '' }}">{% endif %}
+    </form>
+</div>
+{% endif %}
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'pendentes' %}active{% endif %}"
+           href="{{ url_for('transferencias.listar', aba='pendentes', unidade_id=unidade_id) }}">
+            <i class="bi bi-inbox me-1"></i>Pendentes de aceite
+            {% if pendentes %}<span class="badge bg-warning text-dark ms-1">{{ pendentes | length }}</span>{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'enviadas' %}active{% endif %}"
+           href="{{ url_for('transferencias.listar', aba='enviadas', unidade_id=unidade_id) }}">
+            <i class="bi bi-send me-1"></i>Enviadas
+            {% if enviadas %}<span class="badge bg-info ms-1">{{ enviadas | length }}</span>{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'concluidas' %}active{% endif %}"
+           href="{{ url_for('transferencias.listar', aba='concluidas', unidade_id=unidade_id, status_concluida=status_concluida) }}">
+            <i class="bi bi-check2-all me-1"></i>Concluídas
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if aba == 'lojinha' %}active{% endif %}"
+           href="{{ url_for('transferencias.listar', aba='lojinha', unidade_id=unidade_id, lojinha_classificacao=lojinha_classificacao) }}">
+            <i class="bi bi-shop me-1"></i>Lojinha Interna
+            {% if lojinha_itens %}<span class="badge bg-success ms-1">{{ lojinha_itens | length }}</span>{% endif %}
+        </a>
+    </li>
+</ul>
+
+{% if aba == 'pendentes' %}
+<div class="card border-warning">
+    <div class="card-header bg-warning bg-opacity-10 text-warning-emphasis fw-bold">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        Pendentes de aceite ({{ pendentes | length }})
+    </div>
+    <div class="card-body p-0">
+        {% if pendentes %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>De</th>
+                        <th>Para</th>
+                        <th>Criado por</th>
+                        <th>Itens</th>
+                        <th>Data</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in pendentes %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ doc.tipo_label }}</span></td>
+                        <td class="small">{{ doc.unidade_origem.nome }}</td>
+                        <td class="small fw-semibold text-primary">{{ doc.unidade_destino.nome }}</td>
+                        <td class="small">{{ doc.criador.nome if doc.criador else '—' }}</td>
+                        <td class="small">{{ doc.itens.count() }} item(ns)</td>
+                        <td class="small text-muted">{{ doc.criado_em | br_date }}</td>
+                        <td class="text-end">
+                            {% if current_user.pode('aceitar_transferencia') and ids_unidades_user and doc.unidade_destino_id in ids_unidades_user %}
+                            <a href="{{ url_for('transferencias.documento_aceitar', id=doc.id) }}"
+                               class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle me-1"></i>Resolver
+                            </a>
+                            {% endif %}
+                            {% if doc.criador and doc.criador.id == current_user.id or current_user.pode('ver_todas_unidades') %}
+                            <form method="POST" action="{{ url_for('transferencias.documento_cancelar', id=doc.id) }}" class="d-inline" id="form-cancelar-{{ doc.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-cancelar-doc"
+                                        data-bs-toggle="modal" data-bs-target="#modalCancelarDocumento"
+                                        data-form-id="form-cancelar-{{ doc.id }}"
+                                        data-tipo="{{ doc.tipo_label }}"
+                                        title="Cancelar documento">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="#" class="btn btn-sm btn-outline-secondary"
+                               onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
+                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-inbox text-muted fs-1"></i>
+            <p class="text-muted mb-0">Nenhum documento pendente de aceite.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% elif aba == 'enviadas' %}
+<div class="card">
+    <div class="card-header">Enviadas (aguardando aceite)</div>
+    <div class="card-body p-0">
+        {% if enviadas %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>De</th>
+                        <th>Para</th>
+                        <th>Criado por</th>
+                        <th>Itens</th>
+                        <th>Data</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in enviadas %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ doc.tipo_label }}</span></td>
+                        <td class="small">{{ doc.unidade_origem.nome }}</td>
+                        <td class="small">{{ doc.unidade_destino.nome }}</td>
+                        <td class="small">{{ doc.criador.nome if doc.criador else '—' }}</td>
+                        <td class="small">{{ doc.itens.count() }} item(ns)</td>
+                        <td class="small text-muted">{{ doc.criado_em | br_date }}</td>
+                        <td class="text-end">
+                            {% if doc.criador and doc.criador.id == current_user.id or current_user.pode('ver_todas_unidades') %}
+                            <form method="POST" action="{{ url_for('transferencias.documento_cancelar', id=doc.id) }}" class="d-inline" id="form-cancelar-{{ doc.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-cancelar-doc"
+                                        data-bs-toggle="modal" data-bs-target="#modalCancelarDocumento"
+                                        data-form-id="form-cancelar-{{ doc.id }}"
+                                        data-tipo="{{ doc.tipo_label }}"
+                                        title="Cancelar documento"><i class="bi bi-x"></i></button>
+                            </form>
+                            {% endif %}
+                            <a href="#" class="btn btn-sm btn-outline-secondary"
+                               onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
+                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-send text-muted fs-1"></i>
+            <p class="text-muted mb-0">Nenhum documento enviado aguardando aceite.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% elif aba == 'concluidas' %}
+<div class="card">
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span><i class="bi bi-clock-history me-2"></i>Concluídas</span>
+        <form method="get" class="d-inline-flex align-items-center gap-1">
+            <input type="hidden" name="aba" value="concluidas">
+            <input type="hidden" name="unidade_id" value="{{ unidade_id or '' }}">
+            <label class="form-label mb-0 small">Status:</label>
+            <select name="status_concluida" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()">
+                <option value="" {% if not status_concluida %}selected{% endif %}>Todos</option>
+                <option value="aceita" {% if status_concluida == 'aceita' %}selected{% endif %}>Aceita</option>
+                <option value="recusada" {% if status_concluida == 'recusada' %}selected{% endif %}>Recusada</option>
+                <option value="cancelada" {% if status_concluida == 'cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        {% if historico %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>De</th>
+                        <th>Para</th>
+                        <th>Item</th>
+                        <th>Patrimônio</th>
+                        <th>Status</th>
+                        <th>Criado / Resolvido</th>
+                        <th class="text-end">Imprimir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in historico %}
+                    {% for item in doc.itens %}
+                    <tr>
+                        {% if loop.first %}
+                        <td rowspan="{{ doc.itens.count() }}"><span class="badge bg-secondary">{{ doc.tipo_label }}</span></td>
+                        <td rowspan="{{ doc.itens.count() }}" class="small text-muted">{{ doc.unidade_origem.nome | truncate(25) }}</td>
+                        <td rowspan="{{ doc.itens.count() }}" class="small">{{ doc.unidade_destino.nome | truncate(25) }}</td>
+                        {% endif %}
+                        <td class="small">{{ item.descricao_exibicao() }}</td>
+                        <td class="small text-muted">{{ item.numero_patrimonio_ou_serie() or '—' }}</td>
+                        {% if loop.first %}
+                        <td rowspan="{{ doc.itens.count() }}"><span class="badge bg-{{ doc.status_badge }}">{{ doc.status_label }}</span></td>
+                        <td rowspan="{{ doc.itens.count() }}" class="small text-muted">{{ doc.resolvido_em | br_date if doc.resolvido_em else doc.criado_em | br_date }}</td>
+                        <td rowspan="{{ doc.itens.count() }}" class="text-end">
+                            <a href="#" class="btn btn-sm btn-outline-secondary"
+                               onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
+                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ doc.tipo_label }}</span></td>
+                        <td class="small text-muted">{{ doc.unidade_origem.nome | truncate(25) }}</td>
+                        <td class="small">{{ doc.unidade_destino.nome | truncate(25) }}</td>
+                        <td class="small">—</td>
+                        <td class="small text-muted">—</td>
+                        <td><span class="badge bg-{{ doc.status_badge }}">{{ doc.status_label }}</span></td>
+                        <td class="small text-muted">{{ doc.resolvido_em | br_date if doc.resolvido_em else doc.criado_em | br_date }}</td>
+                        <td class="text-end">
+                            <a href="#" class="btn btn-sm btn-outline-secondary"
+                               onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
+                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-arrow-left-right text-muted fs-1"></i>
+            <p class="text-muted mb-0">Nenhum documento concluído.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% elif aba == 'lojinha' %}
+<div class="card border-success">
+    <div class="card-header bg-success bg-opacity-10 text-success-emphasis d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-shop me-2"></i>Lojinha Interna — Equipamentos à disposição</span>
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-success" id="btnVerCarrinhoLojinha" title="Ver itens escolhidos" style="display:none;">
+                <i class="bi bi-cart3 me-1"></i><span id="cartCountLojinha">0</span> item(ns)
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if lojinha_itens %}
+        <div class="p-3 border-bottom">
+            <label class="form-label small mb-1 fw-semibold"><i class="bi bi-search me-1"></i>Buscar na descrição</label>
+            <input type="text" id="buscaLojinhaDescricao" class="form-control form-control-sm" placeholder="Ex: tec us, mouse, monitor..."
+                   style="max-width: 280px;">
+        </div>
+        <div class="table-responsive">
+            {% for unidade_loj, itens in lojinha_por_unidade %}
+            <div class="lojinha-grupo-unidade" data-unidade-nome="{{ unidade_loj.nome | lower }}">
+                <div class="px-3 py-2 bg-light border-bottom border-start border-end small">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <span class="fw-semibold"><i class="bi bi-hospital me-1 text-primary"></i>{{ unidade_loj.nome }}</span>
+                        <span class="badge bg-light text-success">{{ itens | length }} item(ns)</span>
+                        {% if unidade_loj.telefone %}
+                        <a href="tel:{{ unidade_loj.telefone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}" class="text-decoration-none text-muted" title="Ligar"><i class="bi bi-telephone me-0"></i> {{ unidade_loj.telefone | br_fone }}</a>
+                        {% endif %}
+                        {% if unidade_loj.email %}
+                        <a href="mailto:{{ unidade_loj.email }}" class="text-decoration-none text-muted" title="Enviar e-mail"><i class="bi bi-envelope me-0"></i> {{ unidade_loj.email }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <table class="table table-hover table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Qtd</th>
+                            <th>Descrição</th>
+                            <th>Nº Patrimônio / Série</th>
+                            <th>Classificação</th>
+                            <th>Disponibilizado por</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr class="lojinha-row" data-descricao="{{ item.descricao_exibicao() | lower }}">
+                            <td>{{ item.quantidade }}</td>
+                            <td>{{ item.descricao_exibicao() }}</td>
+                            <td class="small text-muted">{{ item.numero_patrimonio_ou_serie() or '—' }}</td>
+                            <td><span class="badge bg-secondary">{{ item.classificacao }}</span></td>
+                            <td class="small">
+                                {% if item.criador %}
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if item.criador.foto_url %}
+                                    <img src="{{ item.criador.foto_url }}" alt="" class="rounded-circle" style="width:28px;height:28px;object-fit:cover;border:1px solid #dee2e6;">
+                                    {% else %}
+                                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-primary text-white" style="width:28px;height:28px;font-size:.75rem;font-weight:700;">{{ item.criador.inicial }}</span>
+                                    {% endif %}
+                                    <div>
+                                        <span>{{ item.criador.nome }}</span>
+                                        <span class="text-muted d-block" style="font-size:.75rem;">{{ item.criado_em | br_datetime if item.criado_em else '—' }}</span>
+                                    </div>
+                                </div>
+                                {% else %}
+                                — <span class="text-muted d-block" style="font-size:.75rem;">{{ item.criado_em | br_datetime if item.criado_em else '—' }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if ids_unidades_user and item.unidade_id in ids_unidades_user %}
+                                {# Item da minha unidade atual — posso retirar da vitrine #}
+                                <form method="POST" action="{{ url_for('transferencias.lojinha_remover', id=item.id) }}" class="d-inline" id="form-retirar-{{ item.id }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-retirar-lojinha"
+                                            data-bs-toggle="modal" data-bs-target="#modalRetirarLojinha"
+                                            data-form-id="form-retirar-{{ item.id }}"
+                                            data-descricao="{{ item.descricao_exibicao() | e }}"
+                                            title="Retirar da vitrine"><i class="bi bi-trash"></i></button>
+                                </form>
+                                {% else %}
+                                {# Item de outra unidade — posso solicitar pra minha unidade #}
+                                <button type="button" class="btn btn-sm btn-outline-success btn-add-carrinho-lojinha"
+                                        data-item-id="{{ item.id }}"
+                                        data-qtd-max="{{ item.quantidade }}"
+                                        data-descricao="{{ item.descricao_exibicao() | e }}"
+                                        data-classificacao="{{ item.classificacao }}"
+                                        data-unidade-id="{{ item.unidade_id }}"
+                                        data-unidade-nome="{{ item.unidade.nome | e }}"
+                                        data-equipamento-id="{{ item.equipamento_id or '' }}"
+                                        data-numero-patrimonio="{{ (item.numero_patrimonio or '') | e }}"
+                                        data-numero-serie="{{ (item.numero_serie or '') | e }}"
+                                        title="Adicionar ao carrinho">
+                                    <i class="bi bi-cart-plus"></i>
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="bi bi-shop text-muted fs-1"></i>
+            <p class="text-muted mb-0">Nenhum item à disposição no momento.</p>
+            <p class="small text-muted mt-1">Cadastre equipamentos que sua unidade não precisa mais — outras unidades poderão ver!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal adicionar ao carrinho -->
+<div class="modal fade" id="modalAddCarrinhoLojinha" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cart-plus me-2"></i>Adicionar ao carrinho</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2" id="modalAddCarrinhoDescricao"></p>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <label class="form-label small">Quantidade</label>
+                        <input type="number" id="modalAddCarrinhoQtd" class="form-control" min="1" value="1">
+                        <small class="text-muted" id="modalAddCarrinhoQtdMax"></small>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmAddCarrinho">
+                    <i class="bi bi-cart-plus me-1"></i>Adicionar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ver carrinho e finalizar -->
+<div class="modal fade" id="modalCarrinhoLojinha" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cart3 me-2"></i>Itens escolhidos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="carrinhoLojinhaLista" class="mb-3"></div>
+                <p class="text-muted small mb-0" id="carrinhoLojinhaVazio">Nenhum item no carrinho.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <form method="POST" action="{{ url_for('transferencias.lojinha_finalizar') }}" id="formFinalizarLojinha" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="cart_json" id="cartJsonFinalizar" value="">
+                    <button type="submit" class="btn btn-success" id="btnFinalizarCompraLojinha" style="display:none;">
+                        <i class="bi bi-check-lg me-1"></i>Finalizar "compra"
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal confirmar retirada da Lojinha -->
+<div class="modal fade" id="modalRetirarLojinha" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-trash text-danger me-2"></i>Retirar da Lojinha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Deseja retirar <strong id="modalRetirarDescricao">este item</strong> da vitrine? Ele não aparecerá mais para outras unidades.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarRetirarLojinha">
+                    <i class="bi bi-trash me-1"></i>Sim, retirar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal confirmar cancelamento de documento -->
+<div class="modal fade" id="modalCancelarDocumento" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Cancelar documento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Deseja cancelar este termo de <strong id="modalCancelarTipo">transferência</strong>? O documento será marcado como cancelado.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarCancelarDoc">
+                    <i class="bi bi-x-circle me-1"></i>Sim, cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if aba == 'pendentes' or aba == 'enviadas' %}
+<script>
+(function() {
+    var formACancelar = null;
+    var modalEl = document.getElementById('modalCancelarDocumento');
+    if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function(e) {
+            var btn = e.relatedTarget;
+            if (btn && btn.classList.contains('btn-cancelar-doc')) {
+                document.getElementById('modalCancelarTipo').textContent = btn.dataset.tipo || 'transferência';
+                formACancelar = document.getElementById(btn.dataset.formId);
+            }
+        });
+        document.getElementById('btnConfirmarCancelarDoc').addEventListener('click', function() {
+            if (formACancelar) formACancelar.submit();
+            bootstrap.Modal.getInstance(modalEl).hide();
+        });
+    }
+})();
+</script>
+{% endif %}
+{% if aba == 'lojinha' %}
+<script>
+(function() {
+    var CART_KEY = 'lojinha_cart';
+    var unidadeDestinoId = {{ (ids_unidades_user[0] if ids_unidades_user and ids_unidades_user|length > 0 else None) | tojson }};
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        var div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+    }
+    function getCart() {
+        try {
+            var raw = sessionStorage.getItem(CART_KEY);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) { return []; }
+    }
+    function setCart(arr) {
+        sessionStorage.setItem(CART_KEY, JSON.stringify(arr));
+        updateCartUI();
+    }
+    function addToCart(item) {
+        var cart = getCart();
+        var idx = cart.findIndex(function(x) { return x.item_id === item.item_id; });
+        if (idx >= 0) {
+            cart[idx].quantidade = Math.min(parseInt(cart[idx].quantidade) + parseInt(item.quantidade), parseInt(cart[idx].qtd_max));
+        } else {
+            cart.push(item);
+        }
+        setCart(cart);
+    }
+    function removeFromCart(itemId) {
+        setCart(getCart().filter(function(x) { return x.item_id !== itemId; }));
+    }
+    function updateCartUI() {
+        var cart = getCart();
+        var total = cart.reduce(function(s, x) { return s + parseInt(x.quantidade); }, 0);
+        var btnVer = document.getElementById('btnVerCarrinhoLojinha');
+        var spanCount = document.getElementById('cartCountLojinha');
+        if (btnVer && spanCount) {
+            if (total > 0) {
+                btnVer.style.display = '';
+                spanCount.textContent = total;
+            } else {
+                btnVer.style.display = 'none';
+            }
+        }
+    }
+
+    document.querySelectorAll('.btn-add-carrinho-lojinha').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var item = {
+                item_id: parseInt(this.dataset.itemId),
+                qtd_max: parseInt(this.dataset.qtdMax) || 1,
+                descricao: this.dataset.descricao || '',
+                classificacao: this.dataset.classificacao || 'A',
+                unidade_id: parseInt(this.dataset.unidadeId),
+                unidade_nome: this.dataset.unidadeNome || '',
+                equipamento_id: this.dataset.equipamentoId ? parseInt(this.dataset.equipamentoId) : null,
+                numero_patrimonio: this.dataset.numeroPatrimonio || '',
+                numero_serie: this.dataset.numeroSerie || ''
+            };
+            document.getElementById('modalAddCarrinhoDescricao').textContent = item.descricao;
+            document.getElementById('modalAddCarrinhoQtd').max = item.qtd_max;
+            document.getElementById('modalAddCarrinhoQtd').value = Math.min(1, item.qtd_max || 1);
+            document.getElementById('modalAddCarrinhoQtdMax').textContent = 'Máx: ' + item.qtd_max;
+            document.getElementById('modalAddCarrinhoQtd').setAttribute('data-item', JSON.stringify(item));
+            new bootstrap.Modal(document.getElementById('modalAddCarrinhoLojinha')).show();
+        });
+    });
+
+    document.getElementById('btnConfirmAddCarrinho').addEventListener('click', function() {
+        var input = document.getElementById('modalAddCarrinhoQtd');
+        var item = JSON.parse(input.dataset.item || '{}');
+        var qtd = Math.min(Math.max(1, parseInt(input.value) || 1), item.qtd_max);
+        item.quantidade = qtd;
+        addToCart(item);
+        bootstrap.Modal.getInstance(document.getElementById('modalAddCarrinhoLojinha')).hide();
+    });
+
+    function renderCarrinhoModal() {
+        var cart = getCart();
+        var lista = document.getElementById('carrinhoLojinhaLista');
+        var vazio = document.getElementById('carrinhoLojinhaVazio');
+        var btnFinal = document.getElementById('btnFinalizarCompraLojinha');
+        if (cart.length === 0) {
+            lista.innerHTML = '';
+            vazio.style.display = '';
+            btnFinal.style.display = 'none';
+        } else {
+            vazio.style.display = 'none';
+            lista.innerHTML = '<table class="table table-sm"><thead><tr><th>Unidade</th><th>Qtd</th><th>Descrição</th><th>Class.</th><th></th></tr></thead><tbody>' +
+                cart.map(function(x) {
+                    return '<tr><td>' + escapeHtml(x.unidade_nome || '—') + '</td><td>' + x.quantidade + '</td><td>' + escapeHtml(x.descricao || '—') + '</td><td><span class="badge bg-secondary">' + escapeHtml(x.classificacao || 'A') + '</span></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-remove-cart" data-item-id="' + x.item_id + '"><i class="bi bi-trash"></i></button></td></tr>';
+                }).join('') + '</tbody></table>';
+            if (!unidadeDestinoId) {
+                lista.innerHTML += '<p class="text-warning small mb-0 mt-2">Selecione uma unidade na barra superior para finalizar a compra.</p>';
+            }
+            btnFinal.style.display = unidadeDestinoId ? '' : 'none';
+            lista.querySelectorAll('.btn-remove-cart').forEach(function(b) {
+                b.addEventListener('click', function() {
+                    removeFromCart(parseInt(this.dataset.itemId));
+                    renderCarrinhoModal();
+                });
+            });
+        }
+    }
+
+    document.getElementById('btnVerCarrinhoLojinha').addEventListener('click', function() {
+        renderCarrinhoModal();
+        new bootstrap.Modal(document.getElementById('modalCarrinhoLojinha')).show();
+    });
+
+    document.getElementById('formFinalizarLojinha').addEventListener('submit', function(e) {
+        var cart = getCart();
+        if (cart.length === 0) { e.preventDefault(); alert('Carrinho vazio.'); return; }
+        if (!unidadeDestinoId) { e.preventDefault(); alert('Selecione uma unidade para finalizar.'); return; }
+        document.getElementById('cartJsonFinalizar').value = JSON.stringify(cart);
+        sessionStorage.removeItem(CART_KEY);
+    });
+
+    updateCartUI();
+
+    var formARetirar = null;
+    var modalEl = document.getElementById('modalRetirarLojinha');
+    if (modalEl) {
+        modalEl.addEventListener('show.bs.modal', function(e) {
+            var btn = e.relatedTarget;
+            if (btn && btn.classList.contains('btn-retirar-lojinha')) {
+                document.getElementById('modalRetirarDescricao').textContent = btn.dataset.descricao || 'este item';
+                formARetirar = document.getElementById(btn.dataset.formId);
+            }
+        });
+        document.getElementById('btnConfirmarRetirarLojinha').addEventListener('click', function() {
+            if (formARetirar) formARetirar.submit();
+            bootstrap.Modal.getInstance(modalEl).hide();
+        });
+    }
+    var buscaInput = document.getElementById('buscaLojinhaDescricao');
+    var rows = document.querySelectorAll('.lojinha-row');
+    var grupos = document.querySelectorAll('.lojinha-grupo-unidade');
+    if (buscaInput && rows.length) {
+        buscaInput.addEventListener('input', function() {
+            var termos = this.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            rows.forEach(function(tr) {
+                var desc = (tr.dataset.descricao || '');
+                var ok = !termos.length || termos.every(function(t) { return desc.indexOf(t) >= 0; });
+                tr.style.display = ok ? '' : 'none';
+            });
+            grupos.forEach(function(grupo) {
+                var itens = grupo.querySelectorAll('.lojinha-row');
+                var algumVisivel = Array.prototype.some.call(itens, function(tr) { return tr.style.display !== 'none'; });
+                grupo.style.display = algumVisivel ? '' : 'none';
+            });
+        });
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

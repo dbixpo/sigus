@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if marca else 'Nova' }} Marca{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.marcas') }}">Marcas</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if marca else 'Nova Marca' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-tag"></i> {{ 'Editar Marca' if marca else 'Nova Marca' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Nome da Marca <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="nome" class="form-control" required autofocus
+                               value="{{ marca.nome if marca else '' }}"
+                               placeholder="Ex.: Dell, HP, Philips, Dräger...">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Tipos de Equipamento compatíveis
+                            <small class="text-muted fw-normal">— selecione ao menos um</small>
+                        </label>
+                        {% if tipos %}
+                            {% set tipos_selecionados = marca.tipos.all() | map(attribute='id') | list if marca else ([pre_tipo_id] if pre_tipo_id else []) %}
+                            <div class="row row-cols-1 row-cols-sm-2 g-2">
+                                {% for tipo in tipos %}
+                                <div class="col">
+                                    <div class="form-check border rounded px-3 py-2 h-100
+                                                {% if tipo.id in tipos_selecionados %}bg-primary-subtle border-primary{% endif %}">
+                                        <input class="form-check-input" type="checkbox"
+                                               name="tipos[]" value="{{ tipo.id }}"
+                                               id="tipo_{{ tipo.id }}"
+                                               {% if tipo.id in tipos_selecionados %}checked{% endif %}>
+                                        <label class="form-check-label w-100 user-select-none"
+                                               for="tipo_{{ tipo.id }}">
+                                            <i class="bi {{ tipo.icone }} me-1 text-muted"></i>
+                                            {{ tipo.nome }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0">
+                                Nenhum tipo de equipamento cadastrado ainda.
+                                <a href="{{ url_for('configuracoes.novo_tipo_equipamento') }}">Cadastre um tipo</a> primeiro.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if marca else 'Cadastrar' }}
+                        </button>
+                        {% if marca %}
+                            <a href="{{ url_for('configuracoes.detalhe_marca', id=marca.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+                        {% else %}
+                            <a href="{{ url_for('configuracoes.marcas') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

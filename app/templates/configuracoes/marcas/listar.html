@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}Marcas e Modelos{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Marcas e Modelos</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-tag"></i> Marcas e Modelos</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('configuracoes.novo_modelo') }}" class="btn btn-outline-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Modelo
+        </a>
+        <a href="{{ url_for('configuracoes.nova_marca') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Nova Marca
+        </a>
+    </div>
+</div>
+
+{# ── Árvore: Tipo → Marcas → Modelos ── #}
+{% if tipos %}
+<div class="accordion" id="accordionTipos">
+    {% for tipo in tipos %}
+    {% set marcas_tipo = tipo.marcas.order_by('nome').all() %}
+    {% set total_modelos_tipo = namespace(n=0) %}
+    {% for m in marcas_tipo %}
+        {% set total_modelos_tipo.n = total_modelos_tipo.n + m.modelos.filter_by(tipo_equipamento_id=tipo.id).count() %}
+    {% endfor %}
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button {% if loop.index > 1 %}collapsed{% endif %}"
+                    type="button" data-bs-toggle="collapse"
+                    data-bs-target="#tipo-{{ tipo.id }}">
+                <i class="bi {{ tipo.icone }} me-2 text-primary"></i>
+                <strong>{{ tipo.nome }}</strong>
+                <span class="ms-3 text-muted small">
+                    {{ marcas_tipo | length }} marca{{ 's' if marcas_tipo | length != 1 }} ·
+                    {{ total_modelos_tipo.n }} modelo{{ 's' if total_modelos_tipo.n != 1 }}
+                </span>
+            </button>
+        </h2>
+        <div id="tipo-{{ tipo.id }}" class="accordion-collapse collapse {% if loop.index == 1 %}show{% endif %}">
+            <div class="accordion-body p-0">
+
+                {# Barra de ações rápidas #}
+                <div class="d-flex gap-2 px-3 py-2 bg-light border-bottom">
+                    <a href="{{ url_for('configuracoes.nova_marca') }}?tipo_id={{ tipo.id }}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-plus me-1"></i>Nova Marca para {{ tipo.nome }}
+                    </a>
+                    <a href="{{ url_for('configuracoes.novo_modelo') }}?tipo_id={{ tipo.id }}"
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-plus me-1"></i>Novo Modelo
+                    </a>
+                </div>
+
+                {% if marcas_tipo %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:35%">Marca</th>
+                                <th>Modelos neste tipo</th>
+                                <th class="text-center">Equipamentos</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in marcas_tipo %}
+                            {% set mods = m.modelos.filter_by(tipo_equipamento_id=tipo.id).order_by('nome').all() %}
+                            <tr class="align-top">
+                                <td class="fw-semibold pt-3">
+                                    <i class="bi bi-tag me-1 text-primary"></i>{{ m.nome }}
+                                </td>
+                                <td>
+                                    {% if mods %}
+                                    <div class="d-flex flex-wrap gap-1 py-2">
+                                        {% for md in mods %}
+                                        <span class="badge bg-light text-dark border d-flex align-items-center gap-1">
+                                            {{ md.nome }}
+                                            <a href="{{ url_for('configuracoes.editar_modelo', id=md.id) }}"
+                                               class="text-secondary ms-1" title="Editar">
+                                                <i class="bi bi-pencil" style="font-size:.65rem"></i>
+                                            </a>
+                                            {% if md.equipamentos.count() == 0 %}
+                                            <form method="POST" action="{{ url_for('configuracoes.excluir_modelo', id=md.id) }}"
+                                                  class="d-inline m-0"
+                                                  onsubmit="return confirm('Excluir modelo {{ md.nome }}?')">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-link p-0 text-danger" title="Excluir"
+                                                        style="font-size:.65rem;line-height:1">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </span>
+                                        {% endfor %}
+                                        <a href="{{ url_for('configuracoes.novo_modelo') }}?tipo_id={{ tipo.id }}&marca_id={{ m.id }}"
+                                           class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none"
+                                           title="Novo modelo para esta marca">
+                                            <i class="bi bi-plus"></i> modelo
+                                        </a>
+                                    </div>
+                                    {% else %}
+                                    <div class="py-2 text-muted small">
+                                        Nenhum modelo.
+                                        <a href="{{ url_for('configuracoes.novo_modelo') }}?tipo_id={{ tipo.id }}&marca_id={{ m.id }}">
+                                            Adicionar
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center pt-3">
+                                    <span class="badge bg-{{ 'primary' if m.equipamentos.count() > 0 else 'light text-dark' }}">
+                                        {{ m.equipamentos.count() }}
+                                    </span>
+                                </td>
+                                <td class="pt-3 text-end">
+                                    <a href="{{ url_for('configuracoes.editar_marca', id=m.id) }}"
+                                       class="btn btn-sm btn-outline-secondary" title="Editar marca">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-muted small p-3">
+                    Nenhuma marca vinculada a este tipo ainda.
+                    <a href="{{ url_for('configuracoes.nova_marca') }}?tipo_id={{ tipo.id }}">Cadastrar marca</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{# Marcas sem tipo vinculado #}
+{% set marcas_sem_tipo = marcas | selectattr('tipos.all', 'equalto', []) | list %}
+{% if marcas_sem_tipo %}
+<div class="card mt-3 border-warning">
+    <div class="card-header bg-warning-subtle text-warning-emphasis">
+        <i class="bi bi-exclamation-triangle me-2"></i>Marcas sem tipo vinculado
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <tbody>
+                {% for m in marcas_sem_tipo %}
+                <tr>
+                    <td>{{ m.nome }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('configuracoes.editar_marca', id=m.id) }}"
+                           class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil me-1"></i>Vincular tipo
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <i class="bi bi-tag"></i>
+    <h5>Nenhum tipo de equipamento cadastrado</h5>
+    <a href="{{ url_for('configuracoes.novo_tipo_equipamento') }}" class="btn btn-primary mt-2">
+        Cadastrar Tipo de Equipamento
+    </a>
+</div>
+{% endif %}
+{% endblock %}

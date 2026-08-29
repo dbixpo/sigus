@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if sala else 'Nova' }} Sala{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id) }}">{{ unidade.nome }}</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar Sala' if sala else 'Nova Sala' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-door-open"></i> {{ 'Editar Sala' if sala else 'Nova Sala' }} — {{ unidade.nome }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome da Sala <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required
+                               value="{{ sala.nome if sala else '' }}"
+                               placeholder="Ex.: Consultório 1, Sala de Enfermagem A...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de Sala</label>
+                        {% if tipos %}
+                        <select name="tipo_sala_id" class="form-select" id="tipo-sala-select">
+                            <option value="">— Selecione o tipo —</option>
+                            {% for t in tipos %}
+                            <option value="{{ t.id }}"
+                                    data-icone="{{ t.icone }}"
+                                    {% if sala and sala.tipo_sala_id == t.id %}selected
+                                    {% elif sala and not sala.tipo_sala_id and sala.tipo == t.nome %}selected
+                                    {% endif %}>
+                                {{ t.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Não encontrou o tipo?
+                            <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" target="_blank">
+                                Cadastrar novo tipo de sala
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning py-2 small">
+                            Nenhum tipo de sala cadastrado.
+                            <a href="{{ url_for('configuracoes.novo_tipo_sala') }}">Cadastrar agora</a>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Responsável <span class="text-muted small">(opcional)</span></label>
+                        <input type="text" name="responsavel" class="form-control"
+                               value="{{ sala.responsavel if sala else '' }}"
+                               placeholder="Nome do responsável pela sala...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Ramal
+                            <span class="text-muted small">(opcional)</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+                            <input type="text" name="ramal" class="form-control"
+                                   value="{{ sala.ramal or '' if sala else '' }}"
+                                   placeholder="Ex.: 214">
+                        </div>
+                        <div class="form-text">
+                            Ramal telefônico desta sala (pode ser deixado em branco).
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="3">{{ sala.observacoes if sala else '' }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if sala else 'Cadastrar Sala' }}
+                        </button>
+                        <a href="{{ url_for('unidades.detalhe', id=unidade.id) }}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

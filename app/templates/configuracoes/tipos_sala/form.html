@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if tipo else 'Novo' }} Tipo de Sala{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.tipos_sala') }}">Tipos de Sala</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if tipo else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-door-open"></i> {{ 'Editar' if tipo else 'Novo' }} Tipo de Sala</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required
+                               value="{{ tipo.nome if tipo else '' }}"
+                               placeholder="Ex.: Consultório, Sala de Enfermagem...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Ícone
+                            <a href="https://icons.getbootstrap.com/" target="_blank"
+                               class="ms-1 small text-muted">(Bootstrap Icons)</a>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text" id="icone-preview">
+                                <i id="icone-preview-icon"
+                                   class="{{ tipo.icone if tipo else 'bi-door-open' }} fs-5"></i>
+                            </span>
+                            <input type="text" name="icone" id="icone-input" class="form-control"
+                                   value="{{ tipo.icone if tipo else 'bi-door-open' }}"
+                                   placeholder="bi-door-open">
+                        </div>
+                        <div class="form-text">
+                            Digite o nome da classe Bootstrap Icons. Ex.:
+                            <code>bi-door-open</code>, <code>bi-person-heart</code>,
+                            <code>bi-capsule</code>, <code>bi-archive</code>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="2"
+                                  placeholder="Descreva brevemente este tipo de sala...">{{ tipo.descricao or '' if tipo else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                                   {% if not tipo or tipo.ativo %}checked{% endif %}>
+                            <label class="form-check-label" for="ativo">Tipo ativo</label>
+                        </div>
+                        <div class="form-text">Tipos inativos não aparecem no formulário de nova sala.</div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="alert alert-light border mb-4 py-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <i id="preview-icon" class="{{ tipo.icone if tipo else 'bi-door-open' }} fs-3 text-primary"></i>
+                            <div>
+                                <div class="fw-semibold" id="preview-nome">
+                                    {{ tipo.nome if tipo else 'Nome do tipo' }}
+                                </div>
+                                <div class="text-muted small">Pré-visualização</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if tipo %}
+        <div class="card mt-3">
+            <div class="card-header text-muted small">
+                <i class="bi bi-door-open me-1"></i>
+                Salas usando este tipo
+                <span class="badge bg-primary ms-1">{{ tipo.salas.count() }}</span>
+            </div>
+            {% set salas_uso = tipo.salas.filter_by(ativo=True).limit(8).all() %}
+            {% if salas_uso %}
+            <ul class="list-group list-group-flush">
+                {% for s in salas_uso %}
+                <li class="list-group-item py-1 small">
+                    <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="text-decoration-none">
+                        {{ s.nome }}
+                    </a>
+                    <span class="text-muted">— {{ s.unidade.nome | truncate(30) }}</span>
+                </li>
+                {% endfor %}
+                {% if tipo.salas.filter_by(ativo=True).count() > 8 %}
+                <li class="list-group-item py-1 small text-muted">
+                    ... e mais {{ tipo.salas.filter_by(ativo=True).count() - 8 }} sala(s)
+                </li>
+                {% endif %}
+            </ul>
+            {% else %}
+            <div class="card-body py-2 text-muted small">Nenhuma sala usa este tipo ainda.</div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const iconeInput   = document.getElementById('icone-input');
+    const previewIcon  = document.getElementById('preview-icon');
+    const iconePreview = document.getElementById('icone-preview-icon');
+    const nomeInput    = document.querySelector('input[name="nome"]');
+    const previewNome  = document.getElementById('preview-nome');
+
+    iconeInput.addEventListener('input', function () {
+        const cls = this.value.trim() || 'bi-door-open';
+        previewIcon.className  = cls + ' fs-3 text-primary';
+        iconePreview.className = cls + ' fs-5';
+    });
+
+    nomeInput.addEventListener('input', function () {
+        previewNome.textContent = this.value.trim() || 'Nome do tipo';
+    });
+</script>
+{% endblock %}

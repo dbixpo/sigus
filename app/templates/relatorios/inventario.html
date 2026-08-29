@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Inventário de Equipamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-pc-display"></i> Inventário de Equipamentos</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" class="row g-2 align-items-end mb-2" id="filtroForm">
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_labels, filtro_status_list, 'Todos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Condição', 'condicao', condicao_labels, filtro_condicao_list, 'Todas') }}</div>
+        <div class="col-md-3 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
+            <a href="{{ url_for('relatorios.inventario') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Patrimônio',         0, 'patrimonio') }}
+        {{ filtro_rapido('Tipo de Equipamento',1, 'tipo_equip') }}
+        {{ filtro_rapido('Marca',              2, 'marca') }}
+        {{ filtro_rapido('Modelo',             3, 'modelo') }}
+        {{ filtro_rapido('Nº Série',           4, 'serie') }}
+        {{ filtro_rapido('Sala',               6, 'sala') }}
+        {{ filtro_rapido('Contrato',           9, 'contrato') }}
+    </div>
+</div>
+
+{# ── Mini-cards ── #}
+<div class="mini-stats mb-2" id="miniStatsInv">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ total }}</strong></span>
+    <span class="mini-stat">Tipos: <strong data-stat-col="1">{{ por_status.values() | sum }}</strong></span>
+    <span class="mini-stat">Marcas: <strong data-stat-col="2">—</strong></span>
+    <span class="mini-stat">Unidades: <strong data-stat-col="5">—</strong></span>
+    <span class="mini-stat">Status: <strong data-stat-col="7">—</strong></span>
+    <span class="mini-stat">Condição: <strong data-stat-col="8">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if equipamentos %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="tblInventario">
+                <thead>
+                    <tr>
+                        <th>Patrimônio</th><th>Tipo de Equipamento</th><th>Marca</th><th>Modelo</th>
+                        <th>Nº Série</th><th>Unidade</th><th>Sala</th>
+                        <th>Status</th><th>Condição</th><th>Contrato</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in equipamentos %}
+                    <tr>
+                        <td class="small">{{ e.numero_patrimonio or '—' }}</td>
+                        <td class="small fw-semibold">{{ e.tipo_equipamento.nome if e.tipo_equipamento else '—' }}</td>
+                        <td class="small">{{ e.marca.nome if e.marca else '—' }}</td>
+                        <td class="small">{{ e.modelo.nome if e.modelo else '—' }}</td>
+                        <td class="small text-muted">{{ e.numero_serie or '—' }}</td>
+                        <td class="small">{{ e.sala.unidade.nome | truncate(22) }}</td>
+                        <td class="small text-muted">{{ e.sala.nome }}</td>
+                        <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
+                        <td><span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao_label }}</span></td>
+                        <td>
+                            {% set c = e.contrato_vigente %}
+                            {% if c %}<span class="badge bg-success" style="font-size:.68rem">{{ c.identificador | truncate(15) }}</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="bi bi-pc-display"></i><h6>Nenhum item encontrado com estes filtros.</h6></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initFiltrosRapidos('tblInventario', 'miniStatsInv');
+</script>
+{% endblock %}

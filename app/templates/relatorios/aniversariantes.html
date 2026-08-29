@@ -1,0 +1,250 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Aniversariantes do Mês{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-balloon-heart-fill"></i> Aniversariantes do Mês</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_aniversariantes', formato='xlsx') }}?{{ qs }}">XLSX</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_aniversariantes', formato='xls') }}?{{ qs }}">XLS</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_aniversariantes', formato='csv') }}?{{ qs }}">CSV</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{# ── Filtros ── #}
+<div class="filter-bar mb-2">
+    <form method="get" class="row g-2 align-items-end mb-2">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Mês</label>
+            <select name="mes" class="form-select form-select-sm" data-singleselect data-placeholder="Todos os meses">
+                <option value="0" {% if mes_sel == 0 %}selected{% endif %}>— Todos os meses —</option>
+                {% for num, nome_mes in meses.items() %}
+                <option value="{{ num }}" {% if num == mes_sel %}selected{% endif %}>{{ nome_mes }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            {{ filtro_multiselect('Unidade', 'unidade', unidades_opcoes, unidade_ids, 'Todas as Unidades') }}
+        </div>
+        <div class="col-auto d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+            <a href="{{ url_for('relatorios.aniversariantes') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Nome',     1, 'nome') }}
+        {{ filtro_rapido('Unidade', 2, 'unidade') }}
+        {{ filtro_rapido('CBO',     3, 'cbo') }}
+        {{ filtro_rapido('E-mail',  4, 'email') }}
+        {{ filtro_rapido('WhatsApp',5, 'wa') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsAniv">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ dados | length }}</strong></span>
+    <span class="mini-stat">Unidades: <strong data-stat-col="2">—</strong></span>
+    <span class="mini-stat">CBOs: <strong data-stat-col="3">—</strong></span>
+</div>
+
+{# ── Tabela ── #}
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">
+            <i class="bi bi-calendar-heart me-1"></i>
+            {% if mes_sel == 0 %}Todos os aniversariantes{% else %}Aniversariantes de {{ meses[mes_sel] }}{% endif %}
+        </span>
+        <span class="badge bg-primary">{{ dados | length }} profissional{{ 'is' if dados | length != 1 else '' }}</span>
+    </div>
+    {% if dados %}
+    <div class="table-responsive">
+        <table class="table table-hover table-sm mb-0 align-middle" id="tblAniv">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:70px" class="text-center">Data</th>
+                    <th>Nome</th>
+                    <th>Unidade</th>
+                    <th>CBO</th>
+                    <th>E-mail</th>
+                    <th>WhatsApp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set dia_hoje = hoje.day %}
+                {% set mes_hoje = hoje.month %}
+                {% for r in dados %}
+                {% set aniv_hoje = (r.dia == dia_hoje and r.mes == mes_hoje) %}
+                <tr class="aniv-row {% if aniv_hoje %}table-warning fw-semibold{% endif %}"
+                    style="cursor:pointer;"
+                    data-nome="{{ r.nome }}"
+                    data-data="{{ '%02d/%02d' % (r.dia, r.mes) }}"
+                    data-unidade="{{ r.unidade }}"
+                    data-cbos="{{ r.cbos | join(' · ') if r.cbos else '—' }}"
+                    data-email="{{ r.email }}"
+                    data-wa="{{ r.wa | br_fone }}"
+                    data-wa-link="{{ r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}"
+                    data-foto="{{ r.foto_url or '' }}"
+                    data-inicial="{{ r.inicial }}"
+                    data-aniv="{{ '1' if aniv_hoje else '0' }}">
+                    <td class="text-center">
+                        <span class="badge {% if aniv_hoje %}bg-warning text-dark{% else %}bg-light text-secondary border{% endif %} fs-6 px-2 py-1">
+                            {{ '%02d/%02d' % (r.dia, r.mes) }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if r.foto_url %}
+                            <img src="{{ r.foto_url }}" alt="{{ r.inicial }}"
+                                 style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid #dee2e6;flex-shrink:0;">
+                            {% else %}
+                            <span style="width:32px;height:32px;border-radius:50%;background:var(--sigus-primary);
+                                         display:inline-flex;align-items:center;justify-content:center;
+                                         font-weight:700;font-size:.85rem;color:#fff;flex-shrink:0;">
+                                {{ r.inicial }}
+                            </span>
+                            {% endif %}
+                            <span>
+                                {% if aniv_hoje %}
+                                <i class="bi bi-balloon-heart-fill text-warning me-1"></i>
+                                {% endif %}
+                                {{ r.nome }}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="small text-muted">{{ r.unidade }}</td>
+                    <td class="small text-muted">
+                        {% if r.cbos %}{% for cbo in r.cbos %}<div>{{ cbo }}</div>{% endfor %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if r.email %}
+                        <a href="mailto:{{ r.email }}" class="text-decoration-none small" onclick="event.stopPropagation()">{{ r.email }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if r.wa %}
+                        <a href="https://wa.me/{{ r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}"
+                           target="_blank" class="text-decoration-none small" onclick="event.stopPropagation()">
+                            <i class="bi bi-whatsapp text-success me-1"></i>{{ r.wa | br_fone }}
+                        </a>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
+        Nenhum aniversariante
+        {% if mes_sel %}em <strong>{{ meses[mes_sel] }}</strong>{% endif %}
+        {% if unidade_ids %}nas unidades selecionadas{% endif %}.
+    </div>
+    {% endif %}
+</div>
+
+{# ── Modal de perfil rápido ── #}
+<div class="modal fade" id="modalAniv" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:340px;">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body p-0">
+                <div class="text-end p-2">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="text-center px-4 pb-4">
+                    <div id="anivFotoWrap" class="mb-3 mx-auto"
+                         style="width:110px;height:110px;border-radius:50%;overflow:hidden;
+                                border:3px solid #dee2e6;display:flex;align-items:center;
+                                justify-content:center;font-size:2.8rem;font-weight:700;color:#fff;">
+                    </div>
+                    <div id="anivAnivBadge" class="mb-1" style="display:none;">
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-balloon-heart-fill me-1"></i>Aniversário hoje!
+                        </span>
+                    </div>
+                    <h5 class="fw-bold mb-0" id="anivNome"></h5>
+                    <div class="text-muted small mb-3" id="anivUnidade"></div>
+                    <div class="d-flex flex-column gap-2 text-start" style="font-size:.85rem;">
+                        <div><i class="bi bi-calendar2-heart me-2 text-primary"></i><span id="anivData"></span></div>
+                        <div id="anivCboWrap"><i class="bi bi-briefcase me-2 text-secondary"></i><span id="anivCbo"></span></div>
+                        <div id="anivEmailWrap"><i class="bi bi-envelope me-2 text-secondary"></i>
+                            <a id="anivEmail" href="#" class="text-decoration-none text-dark"></a>
+                        </div>
+                        <div id="anivWaWrap"><i class="bi bi-whatsapp me-2 text-success"></i>
+                            <a id="anivWa" href="#" target="_blank" class="text-decoration-none text-dark"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+initFiltrosRapidos('tblAniv', 'miniStatsAniv');
+
+document.querySelectorAll('.aniv-row').forEach(function (tr) {
+    tr.addEventListener('click', function () {
+        var d     = tr.dataset;
+        var modal = document.getElementById('modalAniv');
+        var wrap  = document.getElementById('anivFotoWrap');
+
+        wrap.innerHTML = '';
+        if (d.foto) {
+            var img = document.createElement('img');
+            img.src = d.foto;
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            wrap.appendChild(img);
+            wrap.style.background = '#dee2e6';
+        } else {
+            wrap.textContent = d.inicial;
+            wrap.style.background = 'var(--sigus-primary, #0d6efd)';
+        }
+
+        document.getElementById('anivAnivBadge').style.display = d.aniv === '1' ? '' : 'none';
+        document.getElementById('anivNome').textContent    = d.nome;
+        document.getElementById('anivUnidade').textContent = d.unidade;
+        document.getElementById('anivData').textContent    = d.data;
+
+        var cboWrap = document.getElementById('anivCboWrap');
+        if (d.cbos && d.cbos !== '—') {
+            document.getElementById('anivCbo').textContent = d.cbos;
+            cboWrap.style.display = '';
+        } else { cboWrap.style.display = 'none'; }
+
+        var emailWrap = document.getElementById('anivEmailWrap');
+        var emailEl   = document.getElementById('anivEmail');
+        if (d.email) {
+            emailEl.textContent = d.email;
+            emailEl.href = 'mailto:' + d.email;
+            emailWrap.style.display = '';
+        } else { emailWrap.style.display = 'none'; }
+
+        var waWrap = document.getElementById('anivWaWrap');
+        var waEl   = document.getElementById('anivWa');
+        if (d.waLink) {
+            waEl.textContent = d.wa;
+            waEl.href = 'https://wa.me/' + d.waLink;
+            waWrap.style.display = '';
+        } else { waWrap.style.display = 'none'; }
+
+        bootstrap.Modal.getOrCreateInstance(modal).show();
+    });
+});
+</script>
+{% endblock %}

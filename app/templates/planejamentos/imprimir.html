@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planejamento — {{ planejamentos_dados[0].plano.titulo if planejamentos_dados else 'Impressão' }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; line-height: 1.4; }
+.doc { max-width: 900px; margin: 0 auto; }
+.cabecalho {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-bottom: 2.5px solid #000; padding-bottom: 14px; margin-bottom: 22px;
+}
+.cab-logo img { height: 58px; width: auto; }
+.cab-titulo {
+    flex: 1; text-align: center;
+    font-size: 14px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
+}
+.cab-titulo .subtitulo { font-size: 11px; font-weight: 600; text-transform: none; color: #333; margin-top: 4px; }
+.cab-secretaria { text-align: right; font-size: 12px; line-height: 1.45; white-space: nowrap; }
+.cab-secretaria strong { font-size: 14px; display: block; }
+
+.tabela-planilha { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tabela-planilha th, .tabela-planilha td {
+    border: 1px solid #999;
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+.tabela-planilha th {
+    background: #e8ecef;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.tabela-planilha .nivel-1 { background: #fff; }
+.tabela-planilha .nivel-2 { background: #f8f9fa; }
+.tabela-planilha .nivel-1 .col-desc { padding-left: 10px; }
+.tabela-planilha .nivel-2 .col-desc { padding-left: 28px; }
+
+.col-num { width: 4%; text-align: center; }
+.col-desc { width: 42%; }
+.col-resp { width: 24%; }
+.col-status { width: 14%; }
+.col-prazo { width: 14%; }
+.col-criacao { width: 12%; }
+
+.resp-cell { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.resp-item { display: flex; align-items: center; gap: 4px; }
+.resp-avatar { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
+.resp-inicial {
+    width: 22px; height: 22px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 9px; font-weight: 700;
+    background: #1a82b8; color: #fff;
+}
+.resp-nome { font-size: 10px; }
+.status-badge { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+.status-pendente { background: #eab308; color: #422006; }
+.status-andamento { background: #2563eb; color: #fff; }
+.status-feito { background: #16a34a; color: #fff; }
+.status-cancelado { background: #64748b; color: #fff; }
+.badge-prio { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+.badge-prio.bg-danger { background: #dc3545; color: #fff; }
+.badge-prio.bg-warning { background: #ffc107; color: #212529; }
+.badge-prio.bg-info { background: #0dcaf0; color: #212529; }
+.badge-prio.bg-success { background: #198754; color: #fff; }
+
+.obs-texto { font-size: 10px; line-height: 1.45; }
+.obs-meta { font-size: 9px; color: #555; margin-bottom: 4px; }
+.obs-anexos { font-size: 9px; color: #64748b; margin-top: 4px; }
+
+.projeto-meta-inline { font-size: 10px; color: #444; }
+.progress-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.progress-bar-bg {
+    width: 120px; height: 12px; background: #e8ecef; border-radius: 4px; overflow: hidden;
+    display: flex; flex-direction: row; border: 1px solid #cbd5e1;
+}
+.progress-bar-bg .seg { height: 100%; }
+.progress-bar-bg .seg-verde { background: #16a34a; }
+.progress-bar-bg .seg-em-andamento {
+    background: repeating-linear-gradient(-45deg, #93c5fd 0, #93c5fd 4px, #60a5fa 4px, #60a5fa 8px);
+}
+.progress-bar-bg .seg-pendente {
+    background: repeating-linear-gradient(-45deg, #fde68a 0, #fde68a 4px, #fbbf24 4px, #fbbf24 8px);
+}
+.plano-anexos-imp { font-size: 9px; color: #555; margin-bottom: 10px; }
+.plano-anexos-imp .tit { font-weight: 600; margin-bottom: 4px; }
+.plano-anexos-imp .item { margin-left: 12px; }
+
+.rodape { text-align: center; font-size: 9px; color: #888; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; }
+
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    @page { margin: 1.2cm; }
+    .tabela-planilha { break-inside: auto; }
+    .tabela-planilha tr { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="no-print" id="barraAcoes" style="display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <button type="button" onclick="window.print();" style="padding:8px 16px;background:#1a6abf;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        &#x1F5A8; Imprimir / Salvar PDF
+    </button>
+</div>
+<script>
+if (window.self !== window.top) { var b = document.getElementById('barraAcoes'); if (b) b.style.display = 'none'; }
+</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+        </div>
+        <div class="cab-titulo">
+            PLANEJAMENTOS E PROJETOS<br>
+            <span class="subtitulo">{% if planejamentos_dados %}{{ planejamentos_dados[0].plano.unidade.nome }}{% else %}—{% endif %}</span>
+        </div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
+    </div>
+
+    {% for d in planejamentos_dados %}
+    {% set p = d.plano %}
+    <div class="projeto-header" style="margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #ddd;">
+        <div style="font-size: 15px; font-weight: bold; color: #1a6abf; margin-bottom: 8px;">{{ p.titulo }}</div>
+        {% if p.anexos.count() %}
+        <div class="plano-anexos-imp">
+            <div class="tit">Anexos do plano:</div>
+            {% for a in p.anexos %}
+            <div class="item">• {{ a.original }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="projeto-meta-inline" style="font-size: 11px; color: #555;">
+            <span class="badge-prio {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span>
+            <span class="progress-wrap" style="margin-left: 12px;">
+                <span class="progress-bar-bg">
+                    <span class="seg seg-verde" style="width: {{ d.progresso_pct }}%;"></span>
+                    <span class="seg seg-em-andamento" style="width: {{ d.em_andamento_pct }}%;"></span>
+                    <span class="seg seg-pendente" style="width: {{ d.pendentes_pct }}%;"></span>
+                </span>
+                <span style="font-weight: 700; color: #16a34a;">{{ d.progresso_pct }}%</span>
+            </span>
+            <span style="margin-left: 12px;">{{ d.acoes_flat|length }} {{ 'ação' if d.acoes_flat|length == 1 else 'ações' }}</span>
+            <span style="margin-left: 12px;">{{ p.unidade.nome }}</span>
+        </div>
+    </div>
+    <table class="tabela-planilha" style="margin-bottom: 24px;">
+        <thead>
+            <tr>
+                <th class="col-num">#</th>
+                <th class="col-desc">Tarefa / Observação</th>
+                <th class="col-resp">Responsável</th>
+                <th class="col-status">Status</th>
+                <th class="col-prazo">Prazo</th>
+                <th class="col-criacao">Data da Criação</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acao in d.acoes_flat %}
+            <tr class="nivel-1">
+                <td class="col-num">{{ loop.index }}</td>
+                <td class="col-desc">{{ acao.titulo }}</td>
+                <td class="col-resp">
+                    <div class="resp-cell">
+                    {% if acao.responsaveis or acao.empresas %}
+                    {% for r in acao.responsaveis %}
+                    <div class="resp-item">
+                        {% if r.foto_url %}
+                        <img src="{{ r.foto_url }}" alt="" class="resp-avatar">
+                        {% else %}
+                        <span class="resp-inicial">{{ r.inicial }}</span>
+                        {% endif %}
+                        <span class="resp-nome">{{ ((r.nome or '').split() + ['?'])[0] }}</span>
+                    </div>
+                    {% endfor %}
+                    {% for e in acao.empresas %}
+                    <div class="resp-item">
+                        {% if e.foto_url %}
+                        <img src="{{ e.foto_url }}" alt="" class="resp-avatar">
+                        {% else %}
+                        <span class="resp-inicial resp-empresa">Emp</span>
+                        {% endif %}
+                        <span class="resp-nome">{{ e.nome_comum or e.razao_social }}</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}<span style="color:#94a3b8;">—</span>{% endif %}
+                    </div>
+                </td>
+                <td class="col-status"><span class="status-badge {{ acao.status_badge_cls }}">{{ acao.status_label }}</span></td>
+                <td class="col-prazo">
+                    {% if acao.prazo %}
+                    {{ acao.prazo.strftime('%d/%m/%Y') }}{% if acao.prazo_dias_texto %}<br><small style="color:#64748b;">{{ acao.prazo_dias_texto }}</small>{% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td class="col-criacao">{{ acao.criado_em | br_datetime if acao.criado_em else '—' }}</td>
+            </tr>
+            {% for obs in acao.observacoes %}
+            <tr class="nivel-2">
+                <td class="col-num"></td>
+                <td class="col-desc">
+                    <div class="obs-texto">{{ obs.texto | safe }}</div>
+                    {% if obs.anexos %}
+                    <div class="obs-anexos">
+                        <strong>Anexos:</strong>
+                        {% for a in obs.anexos %}
+                        <span style="margin-right:8px;">{{ a.original }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </td>
+                <td class="col-resp">
+                    {% if obs.usuario %}
+                    <div class="resp-item">
+                        {% if obs.usuario.foto_url %}
+                        <img src="{{ obs.usuario.foto_url }}" alt="" class="resp-avatar">
+                        {% else %}
+                        <span class="resp-inicial">{{ obs.usuario.inicial }}</span>
+                        {% endif %}
+                        <span class="resp-nome">{{ ((obs.usuario.nome or '').split() + ['?'])[0] }}</span>
+                    </div>
+                    {% else %}<span style="color:#94a3b8;">Sistema</span>{% endif %}
+                </td>
+                <td class="col-status">—</td>
+                <td class="col-prazo">—</td>
+                <td class="col-criacao">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+            {% if not d.acoes_flat %}
+            <tr class="nivel-1">
+                <td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">Nenhuma ação</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    {% endfor %}
+
+    {% if not planejamentos_dados %}
+    <p style="color:#94a3b8;">Nenhum planejamento encontrado.</p>
+    {% endif %}
+
+    <div class="rodape">
+        SIGUS — Sistema de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba · Impresso em {{ now | br_datetime }}
+    </div>
+</div>
+</body>
+</html>

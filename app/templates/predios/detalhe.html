@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}{{ predio.nome }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('predios.listar') }}">Prédios</a></li>
+        <li class="breadcrumb-item active">{{ predio.nome }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-buildings me-2"></i>{{ predio.nome }}</h1>
+    <div class="d-flex flex-wrap gap-2">
+        {% if current_user.pode('abrir_chamado') %}
+        <a href="{{ url_for('chamados.novo') }}?predio_id={{ predio.id }}&tipo=predial"
+           class="btn btn-warning btn-sm">
+            <i class="bi bi-cone-striped me-1"></i>Chamado Predial
+        </a>
+        {% endif %}
+        {% if current_user.pode('cadastrar_unidade') %}
+        <a href="{{ url_for('predios.editar', id=predio.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
+    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ predio.criado_em | br_datetime }}</strong></span>
+    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ predio.atualizado_em | br_datetime }}</strong></span>
+</div>
+
+<div class="row g-3">
+    <!-- Info do prédio -->
+    <div class="col-12 col-md-4 col-lg-3">
+        <div class="card mb-3">
+            <div class="card-header">Informações</div>
+            <div class="card-body small">
+                {% if predio.endereco %}
+                <div class="mb-2">
+                    <div class="text-muted">Endereço</div>
+                    <div>{{ predio.endereco_completo }}</div>
+                </div>
+                {% endif %}
+                {% if predio.cep %}
+                <div class="mb-2">
+                    <div class="text-muted">CEP</div>
+                    <div>{{ predio.cep }}</div>
+                </div>
+                {% endif %}
+                {% if predio.telefone %}
+                <div class="mb-2">
+                    <div class="text-muted">Telefone</div>
+                    <div>{{ predio.telefone }}</div>
+                </div>
+                {% endif %}
+                {% if predio.responsavel_predial %}
+                <div class="mb-2">
+                    <div class="text-muted">
+                        <i class="bi bi-person-hard-hat me-1 text-warning"></i>Responsável Predial
+                    </div>
+                    <div class="fw-semibold">{{ predio.responsavel_predial.nome }}</div>
+                    <div class="text-muted">{{ predio.responsavel_predial.perfil_label }}</div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning p-2 small mb-0">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Sem responsável predial definido.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Chamados prediais abertos -->
+        {% set abertos = chamados_prediais | selectattr('status', 'equalto', 'aberto') | list %}
+        {% if abertos %}
+        <div class="card border-warning">
+            <div class="card-header text-warning-emphasis bg-warning bg-opacity-10">
+                <i class="bi bi-cone-striped me-1"></i>
+                Chamados prediais abertos ({{ abertos | length }})
+            </div>
+            <div class="list-group list-group-flush">
+                {% for c in abertos[:5] %}
+                <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                   class="list-group-item list-group-item-action py-2 small">
+                    <div class="fw-semibold">{% if c.tipo_chamado == 'predial' and c.sala_id %}Predial: Sala/Setor{% else %}{{ c.titulo | truncate(35) }}{% endif %}</div>
+                    <div class="text-muted">{{ c.unidade.nome | truncate(30) }} · {{ c.criado_em | br_date }}</div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Unidades/setores do prédio -->
+    <div class="col-12 col-md-8 col-lg-9">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-hospital me-2"></i>Unidades / Setores neste Prédio
+                    <span class="badge bg-primary ms-1">{{ unidades | length }}</span>
+                </span>
+                {% if current_user.pode('cadastrar_unidade') %}
+                <a href="{{ url_for('unidades.nova') }}?predio_id={{ predio.id }}"
+                   class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i>Vincular Unidade
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if unidades %}
+                <div class="row g-0">
+                    {% for u in unidades %}
+                    <div class="col-12 border-bottom">
+                        <div class="d-flex align-items-center p-3 gap-3">
+                            <div class="stat-icon bg-primary-soft flex-shrink-0">
+                                <i class="bi bi-hospital"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">{{ u.nome }}</div>
+                                <div class="text-muted small">
+                                    {% if u.tipo_unidade %}{{ u.tipo_unidade.sigla }}{% else %}{{ u.tipo }}{% endif %}
+                                    · {{ u.total_salas }} sala(s)/setor(es) · {{ u.total_equipamentos }} equip.
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 flex-shrink-0">
+                                {% if u.chamados_abertos > 0 %}
+                                <span class="badge bg-danger" title="Chamados abertos">
+                                    <i class="bi bi-wrench me-1"></i>{{ u.chamados_abertos }}
+                                </span>
+                                {% endif %}
+                                <a href="{{ url_for('unidades.detalhe', id=u.id) }}"
+                                   class="btn btn-sm btn-outline-primary">Ver</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="bi bi-hospital"></i>
+                    <p class="small">Nenhuma unidade vinculada a este prédio ainda.</p>
+                    {% if current_user.pode('cadastrar_unidade') %}
+                    <a href="{{ url_for('unidades.nova') }}?predio_id={{ predio.id }}"
+                       class="btn btn-primary btn-sm">Vincular primeira unidade</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Histórico de chamados prediais -->
+        {% if chamados_prediais %}
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-1"></i>Histórico de Chamados Prediais
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Título</th>
+                            <th>Solicitante</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in chamados_prediais %}
+                        <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
+                            <td class="small text-primary fw-semibold">{{ c.numero }}</td>
+                            <td class="small">{% if c.tipo_chamado == 'predial' and c.sala_id %}Predial: Sala/Setor{% else %}{{ c.titulo | truncate(40) }}{% endif %}</td>
+                            <td class="small text-muted">{{ c.unidade.nome | truncate(25) }}</td>
+                            <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                            <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% block title %}Novo Chamado — Predial{% endblock %}
+
+{% block head %}
+<style>
+.pr-form { max-width: 800px; margin: 0 auto; }
+
+/* Steps */
+.pr-steps { display: flex; gap: 0; margin-bottom: 1.5rem; }
+.pr-step {
+    flex: 1; text-align: center; padding: .5rem .3rem;
+    font-size: .78rem; color: #9ca3af;
+    border-bottom: 3px solid #e5e7eb;
+    transition: color .2s, border-color .2s;
+}
+.pr-step.active { color: #d97706; border-color: #d97706; font-weight: 600; }
+.pr-step.done   { color: #16a34a; border-color: #16a34a; }
+.pr-step .sn {
+    display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+    background: #e5e7eb; color: #6b7280; font-size: .7rem; line-height: 20px;
+    margin-right: .3rem;
+}
+.pr-step.active .sn { background: #d97706; color: #fff; }
+.pr-step.done   .sn { background: #16a34a; color: #fff; }
+
+/* Info card da unidade */
+.unidade-info-card {
+    background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+    padding: .75rem 1rem; font-size: .84rem; display: none; flex-wrap: wrap; gap: .6rem 1.4rem;
+}
+.unidade-info-card.visible { display: flex; }
+.unidade-info-card .inf { display: flex; align-items: center; gap: .4rem; }
+.unidade-info-card .inf i { color: #d97706; }
+
+/* Seleção de salas */
+.salas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: .5rem;
+    margin-top: .5rem;
+}
+.sala-card {
+    border: 2px solid #e5e7eb; border-radius: 10px;
+    padding: .65rem .75rem; cursor: pointer;
+    transition: border-color .15s, background .15s;
+    user-select: none;
+}
+.sala-card:hover  { border-color: #d97706; background: #fffbeb; }
+.sala-card.selected { border-color: #d97706; background: #fffbeb; font-weight: 600; }
+.sala-card i  { color: #d97706; margin-right: .3rem; }
+.sala-card .sala-nome { font-size: .88rem; }
+.sala-card .sala-tipo { font-size: .72rem; color: #9ca3af; margin-top: .1rem; }
+.sala-card .sala-chamados {
+    font-size: .68rem; color: #dc2626; font-weight: 600;
+    margin-top: .15rem; display: none;
+}
+.sala-card.tem-chamado .sala-chamados { display: block; }
+
+/* Upload fotos */
+.upload-zona {
+    border: 2px dashed #d1d5db; border-radius: 12px;
+    padding: 1.2rem; text-align: center; cursor: pointer;
+    background: #fafafa; transition: border-color .2s, background .2s;
+}
+.upload-zona:hover, .upload-zona.drag-over {
+    border-color: #d97706; background: #fffbeb;
+}
+.upload-zona input[type=file] { display: none; }
+.fotos-preview-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(90px,1fr));
+    gap: .5rem; margin-top: .6rem;
+}
+.foto-item {
+    position: relative; border-radius: 8px; overflow: hidden;
+    aspect-ratio: 1; background: #f3f4f6; border: 1px solid #e5e7eb;
+}
+.foto-item img, .foto-item video { width:100%; height:100%; object-fit:cover; display:block; }
+.foto-item .rm-btn {
+    position:absolute; top:3px; right:3px; background:rgba(0,0,0,.5); color:#fff;
+    border:none; border-radius:50%; width:20px; height:20px; font-size:.7rem;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.foto-item .vid-badge {
+    position:absolute; bottom:3px; left:3px; background:rgba(0,0,0,.5); color:#fff;
+    font-size:.6rem; padding:1px 4px; border-radius:3px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pr-form">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('chamados.listar') }}">Chamados</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('chamados.escolha_tipo') }}">Novo Chamado</a></li>
+            <li class="breadcrumb-item active">Predial</li>
+        </ol>
+    </nav>
+
+    <div class="page-header mb-3">
+        <h1><i class="bi bi-building-gear me-2"></i>Chamado — Predial</h1>
+    </div>
+
+    <div class="pr-steps" id="prSteps">
+        <div class="pr-step active" data-step="1"><span class="sn">1</span>Unidade</div>
+        <div class="pr-step"       data-step="2"><span class="sn">2</span>Local</div>
+        <div class="pr-step"       data-step="3"><span class="sn">3</span>Problema e Fotos</div>
+        <div class="pr-step"       data-step="4"><span class="sn">4</span>Confirmação</div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="formPR" novalidate>
+        <input type="hidden" name="csrf_token"  value="{{ csrf_token() }}">
+        <input type="hidden" name="sala_id"     id="hiddenSalaId">
+        <input type="hidden" name="local_livre" id="hiddenLocalLivre">
+
+        {# ═══════════════════════════════════════════
+           PASSO 1 — Unidade
+        ═══════════════════════════════════════════ #}
+        <div class="form-section pr-passo" id="passo1">
+            <div class="form-section-title">
+                <i class="bi bi-hospital me-2"></i>1. Unidade de Saúde
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Unidade <span class="text-danger">*</span></label>
+                    <select name="unidade_id" id="selUnidade" class="form-select" required>
+                        <option value="">Selecione a unidade...</option>
+                        {% for u in unidades %}
+                        <option value="{{ u.id }}"
+                            {{ 'selected' if form_data.get('unidade_id')|string == u.id|string }}>
+                            {{ u.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Grau de urgência <span class="text-danger">*</span></label>
+                    <select name="prioridade" id="selPrioridade" class="form-select" required>
+                        <option value="">Selecione...</option>
+                        <option value="urgente">P1 — Interrupção de atendimento</option>
+                        <option value="alta">P2 — Atendimento parcialmente prejudicado</option>
+                        <option value="media" selected>P3 — Pouco urgente</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="unidade-info-card mt-3" id="uInfoCard">
+                <div class="inf"><i class="bi bi-geo-alt-fill"></i><span id="uiEnd">—</span></div>
+                <div class="inf"><i class="bi bi-telephone-fill"></i><span id="uiTel">—</span></div>
+                <div class="inf" id="uiRamalWrap" style="display:none">
+                    <i class="bi bi-telephone-forward-fill"></i>Ramal: <span id="uiRamal">—</span>
+                </div>
+                <a id="uiMaps" href="#" target="_blank" class="inf text-decoration-none" style="display:none">
+                    <i class="bi bi-map-fill"></i>Ver no mapa
+                </a>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <div class="text-muted small">
+                    <i class="bi bi-person-check me-1"></i>
+                    Responsável: <strong>{{ current_user.nome }}</strong>
+                </div>
+                <button type="button" class="btn btn-warning" id="btnPasso1"
+                        onclick="irPasso(2)" disabled>
+                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════
+           PASSO 2 — Local (sala)
+        ═══════════════════════════════════════════ #}
+        <div class="form-section pr-passo" id="passo2" style="display:none">
+            <div class="form-section-title">
+                <i class="bi bi-door-open me-2"></i>2. Local do Problema
+            </div>
+
+            <p class="text-muted small mb-3">
+                Selecione a sala ou ambiente onde o problema foi identificado.
+                É possível abrir múltiplos chamados para a mesma sala.
+            </p>
+
+            <div id="salasGridWrap">
+                <div class="text-muted small">
+                    <i class="bi bi-hourglass-split me-1"></i>Carregando salas...
+                </div>
+            </div>
+
+            <div class="mt-3 pt-3 border-top">
+                <label class="form-label text-muted small">
+                    Ou informe o local manualmente (área comum, fachada, telhado, etc.):
+                </label>
+                <input type="text" id="inputLocalLivre" class="form-control"
+                       placeholder="Ex: Corredor principal, Banheiro masculino, Fachada externa..."
+                       value="{{ form_data.get('local_livre', '') }}">
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(1)">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="button" class="btn btn-warning" id="btnPasso2"
+                        onclick="irPasso(3)" disabled>
+                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════
+           PASSO 3 — Problema + Fotos
+        ═══════════════════════════════════════════ #}
+        <div class="form-section pr-passo" id="passo3" style="display:none">
+            <div class="form-section-title">
+                <i class="bi bi-exclamation-circle me-2"></i>3. Descrição do Problema e Fotos
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    Descrição do problema <span class="text-danger">*</span>
+                </label>
+                <textarea name="descricao" id="txtDescricao" class="form-control" rows="5" required
+                          placeholder="Descreva com detalhes: o que está danificado, há quanto tempo, dimensão do problema, riscos à segurança...">{{ form_data.get('descricao', '') }}</textarea>
+            </div>
+
+            {% if setores %}
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Setor de manutenção</label>
+                    <select name="setor_id" class="form-select">
+                        <option value="">— Automático —</option>
+                        {% for s in setores %}
+                        <option value="{{ s.id }}"
+                            {{ 'selected' if form_data.get('setor_id')|string == s.id|string }}>
+                            {{ s.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+
+            <label class="form-label">
+                Fotos / Vídeos
+                <span class="text-muted small fw-normal">(recomendado — até 10 arquivos, 50 MB cada)</span>
+            </label>
+            <div class="upload-zona" id="uploadZona">
+                <i class="bi bi-camera fs-2 text-muted d-block mb-1"></i>
+                <div class="fw-semibold text-muted small">Clique ou arraste fotos aqui</div>
+                <div class="text-muted" style="font-size:.75rem">
+                    JPG, PNG, MP4... máx. 10 arquivos
+                </div>
+            </div>
+            <div class="fotos-preview-grid" id="fotosGrid"></div>
+            <div class="text-muted small mt-1" id="fotoCount"></div>
+
+            <div class="mt-3 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(2)">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="button" class="btn btn-warning" onclick="irPasso(4)">
+                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══════════════════════════════════════════
+           PASSO 4 — Confirmação
+        ═══════════════════════════════════════════ #}
+        <div class="form-section pr-passo" id="passo4" style="display:none">
+            <div class="form-section-title">
+                <i class="bi bi-clipboard-check me-2"></i>4. Confirmar e Abrir Chamado
+            </div>
+
+            <div class="alert alert-light border mb-3" id="resumoPredial" style="font-size:.88rem"></div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(3)">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-circle me-1"></i>Abrir Chamado
+                </button>
+            </div>
+        </div>
+
+        {# Input de arquivo fora dos passos — sempre no DOM para o browser enviar #}
+        <input type="file" id="inputFotos" name="fotos" multiple accept="image/*,video/*"
+               style="display:none; position:absolute;">
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    let passoAtual  = 1;
+    let salaSel     = null;   // { id, nome, tipo, chamados_abertos }
+
+    const selUnidade    = document.getElementById('selUnidade');
+    const selPrioridade = document.getElementById('selPrioridade');
+    const hiddenSalaId  = document.getElementById('hiddenSalaId');
+    const hiddenLocal   = document.getElementById('hiddenLocalLivre');
+    const inputLocal    = document.getElementById('inputLocalLivre');
+
+    /* ── Steps ────────────────────────────────────────────────── */
+    function atualizarSteps(p) {
+        document.querySelectorAll('.pr-step').forEach(el => {
+            const n = parseInt(el.dataset.step);
+            el.classList.remove('active', 'done');
+            if (n === p) el.classList.add('active');
+            else if (n < p) el.classList.add('done');
+        });
+    }
+
+    window.irPasso = function (p) {
+        if (p === 2 && !selUnidade.value) {
+            selUnidade.classList.add('is-invalid'); return;
+        }
+        if (p === 3) {
+            const temLocal = hiddenSalaId.value || inputLocal.value.trim();
+            if (!temLocal) {
+                alert('Selecione uma sala ou informe o local manualmente.'); return;
+            }
+            hiddenLocal.value = inputLocal.value.trim();
+        }
+        if (p === 4) {
+            const desc = document.getElementById('txtDescricao').value.trim();
+            if (!desc) { alert('Descreva o problema antes de continuar.'); return; }
+        }
+
+        passoAtual = p;
+        document.querySelectorAll('.pr-passo').forEach(el => el.style.display = 'none');
+        document.getElementById('passo' + p).style.display = '';
+        atualizarSteps(p);
+
+        if (p === 2 && selUnidade.value) carregarSalas(selUnidade.value);
+        if (p === 4) montarResumo();
+    };
+
+    /* ── Passo 1: info da unidade ─────────────────────────────── */
+    selUnidade.addEventListener('change', function () {
+        this.classList.remove('is-invalid');
+        document.getElementById('btnPasso1').disabled = !this.value;
+        if (this.value) carregarInfoUnidade(this.value);
+        else document.getElementById('uInfoCard').classList.remove('visible');
+    });
+
+    function carregarInfoUnidade(uid) {
+        fetch(`/chamados/api/unidade-info/${uid}`)
+            .then(r => r.json())
+            .then(d => {
+                const card = document.getElementById('uInfoCard');
+                card.classList.add('visible');
+                setText('uiEnd',  d.endereco || '—');
+                setText('uiTel',  d.telefone || '—');
+                setText('uiRamal', d.ramal   || '—');
+                document.getElementById('uiRamalWrap').style.display = d.ramal ? '' : 'none';
+                const m = document.getElementById('uiMaps');
+                if (d.link_maps) { m.href = d.link_maps; m.style.display = ''; }
+                else m.style.display = 'none';
+            });
+    }
+
+    /* ── Passo 2: salas ───────────────────────────────────────── */
+    function carregarSalas(uid) {
+        const wrap = document.getElementById('salasGridWrap');
+        wrap.innerHTML = '<div class="text-muted small"><i class="bi bi-hourglass-split me-1"></i>Carregando salas...</div>';
+
+        fetch(`/chamados/api/salas/${uid}`)
+            .then(r => r.json())
+            .then(data => {
+                const salas = data.salas || [];
+                if (!salas.length) {
+                    wrap.innerHTML = '<div class="text-muted small">Nenhuma sala cadastrada nesta unidade.</div>';
+                    // Permite avançar apenas com local livre
+                    document.getElementById('btnPasso2').disabled = false;
+                    return;
+                }
+                const grid = document.createElement('div');
+                grid.className = 'salas-grid';
+
+                salas.forEach(s => {
+                    const card = document.createElement('div');
+                    card.className = 'sala-card' + (s.chamados_abertos ? ' tem-chamado' : '');
+                    card.dataset.id = s.id;
+                    card.innerHTML = `
+                        <div><i class="bi bi-door-open"></i><span class="sala-nome">${s.nome}</span></div>
+                        ${s.tipo ? `<div class="sala-tipo">${s.tipo}</div>` : ''}
+                        ${s.chamados_abertos ? `<div class="sala-chamados"><i class="bi bi-exclamation-triangle me-1"></i>${s.chamados_abertos} chamado(s) aberto(s)</div>` : ''}`;
+
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.sala-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        hiddenSalaId.value = s.id;
+                        salaSel = s;
+                        inputLocal.value = '';
+                        document.getElementById('btnPasso2').disabled = false;
+                    });
+                    grid.appendChild(card);
+                });
+
+                wrap.innerHTML = '';
+                wrap.appendChild(grid);
+                // Permite avançar também apenas com local livre
+                document.getElementById('btnPasso2').disabled = false;
+            });
+    }
+
+    // Ao digitar local livre, deseleciona sala
+    inputLocal.addEventListener('input', function () {
+        if (this.value.trim()) {
+            document.querySelectorAll('.sala-card').forEach(c => c.classList.remove('selected'));
+            hiddenSalaId.value = '';
+            salaSel = null;
+        }
+        document.getElementById('btnPasso2').disabled = !this.value.trim() && !hiddenSalaId.value;
+    });
+
+    /* ── Passo 3: validação da descrição ─────────────────────── */
+    document.getElementById('txtDescricao')?.addEventListener('input', function () {
+        // Habilita o "Próximo" do passo 3 ao digitar
+    });
+
+    /* ── Upload de fotos ─────────────────────────────────────── */
+    const zona    = document.getElementById('uploadZona');
+    const inputF  = document.getElementById('inputFotos');
+    const grid    = document.getElementById('fotosGrid');
+    const countEl = document.getElementById('fotoCount');
+    const MAX     = 10;
+    let arquivos  = [];
+
+    zona?.addEventListener('click', () => inputF.click());
+    zona?.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over'); });
+    zona?.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
+    zona?.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+    inputF?.addEventListener('change', e => { addFiles(e.target.files); });
+
+    function addFiles(list) {
+        for (const f of list) {
+            if (arquivos.length >= MAX) break;
+            if (!arquivos.find(x => x.name === f.name && x.size === f.size)) arquivos.push(f);
+        }
+        renderFotos(); syncInput();
+    }
+
+    function renderFotos() {
+        if (!grid) return;
+        grid.innerHTML = '';
+        arquivos.forEach((f, i) => {
+            const item = document.createElement('div');
+            item.className = 'foto-item';
+            if (f.type.startsWith('video/')) {
+                const v = document.createElement('video');
+                v.src = URL.createObjectURL(f); v.muted = true;
+                item.appendChild(v);
+                const b = document.createElement('span'); b.className = 'vid-badge'; b.textContent = 'vídeo';
+                item.appendChild(b);
+            } else {
+                const img = document.createElement('img'); img.src = URL.createObjectURL(f);
+                item.appendChild(img);
+            }
+            const rm = document.createElement('button');
+            rm.type = 'button'; rm.className = 'rm-btn'; rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.addEventListener('click', () => { arquivos.splice(i, 1); renderFotos(); syncInput(); });
+            item.appendChild(rm);
+            grid.appendChild(item);
+        });
+        if (countEl) countEl.textContent = arquivos.length ? `${arquivos.length} arquivo(s)` : '';
+    }
+
+    function syncInput() {
+        if (!inputF) return;
+        const dt = new DataTransfer();
+        arquivos.forEach(f => dt.items.add(f));
+        inputF.files = dt.files;
+    }
+
+    /* ── Passo 4: resumo ─────────────────────────────────────── */
+    function montarResumo() {
+        const unNome  = selUnidade.options[selUnidade.selectedIndex]?.text || '—';
+        const prio    = selPrioridade.options[selPrioridade.selectedIndex]?.text || '—';
+        const local   = salaSel ? salaSel.nome : (inputLocal.value.trim() || '—');
+        const desc    = document.getElementById('txtDescricao').value.trim();
+        const nFotos  = inputF?.files?.length || 0;
+
+        document.getElementById('resumoPredial').innerHTML = `
+            <table class="table table-sm table-borderless mb-0">
+              <tr><td class="text-muted pe-3" style="width:35%">Unidade</td>  <td><strong>${unNome}</strong></td></tr>
+              <tr><td class="text-muted pe-3">Urgência</td>  <td><strong>${prio}</strong></td></tr>
+              <tr><td class="text-muted pe-3">Local</td>     <td><strong>${local}</strong></td></tr>
+              <tr><td class="text-muted pe-3">Descrição</td> <td>${desc}</td></tr>
+              <tr><td class="text-muted pe-3">Fotos</td>     <td>${nFotos > 0 ? nFotos + ' arquivo(s)' : 'Nenhuma'}</td></tr>
+            </table>`;
+    }
+
+    /* ── Utilitários ─────────────────────────────────────────── */
+    function setText(id, txt) {
+        const el = document.getElementById(id); if (el) el.textContent = txt;
+    }
+
+    // Inicializa se unidade já estiver selecionada
+    if (selUnidade.value) {
+        carregarInfoUnidade(selUnidade.value);
+        document.getElementById('btnPasso1').disabled = false;
+    }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Tipos de Link{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('links.admin') }}">Links Úteis</a></li>
+        <li class="breadcrumb-item active">Tipos de Link</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-tags me-2"></i>Tipos de Link</h1>
+    <a href="{{ url_for('links.novo_tipo') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+    </a>
+</div>
+
+{% if tipos %}
+<div class="alert alert-info alert-sm py-2 px-3 mb-3 d-flex align-items-center gap-2">
+    <i class="bi bi-grip-vertical fs-5"></i>
+    <span>Arraste as linhas para reorganizar a ordem de exibição.</span>
+    <span id="statusSalvo" class="ms-auto text-success small d-none">
+        <i class="bi bi-check-circle me-1"></i>Ordem salva
+    </span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:36px"></th>
+                    <th>Tipo</th>
+                    <th class="d-none d-md-table-cell">Ícone / Cor</th>
+                    <th class="d-none d-md-table-cell">Qtd. de links</th>
+                    <th class="d-none d-md-table-cell">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="sortableBody">
+                {% for t in tipos %}
+                <tr data-id="{{ t.id }}" class="sortable-row" style="cursor:grab">
+                    <td class="text-muted ps-3">
+                        <i class="bi bi-grip-vertical fs-5"></i>
+                    </td>
+                    <td>
+                        <span class="d-inline-flex align-items-center gap-2">
+                            <span style="width:30px;height:30px;border-radius:8px;
+                                         background:{{ t.cor }};
+                                         display:inline-flex;align-items:center;justify-content:center;
+                                         color:#fff;font-size:.9rem;">
+                                <i class="bi {{ t.icone }}"></i>
+                            </span>
+                            <span class="fw-semibold">{{ t.nome }}</span>
+                        </span>
+                        {% if t.descricao %}
+                        <div class="text-muted small">{{ t.descricao }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <code class="small">{{ t.icone }}</code>
+                        <span class="ms-2 badge rounded-pill" style="background:{{ t.cor }}">{{ t.cor }}</span>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        <span class="badge bg-secondary">{{ t.links.count() }}</span>
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {% if t.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{{ url_for('links.editar_tipo', id=t.id) }}"
+                               class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST"
+                                  action="{{ url_for('links.excluir_tipo', id=t.id) }}"
+                                  onsubmit="return confirm('Excluir tipo \'{{ t.nome }}\' ? Os links perderão a categoria.')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state py-5">
+    <i class="bi bi-tags fs-1 text-muted d-block mb-3"></i>
+    <h6>Nenhum tipo cadastrado.</h6>
+    <a href="{{ url_for('links.novo_tipo') }}" class="btn btn-primary mt-2">
+        <i class="bi bi-plus-circle me-1"></i>Criar primeiro tipo
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const tbody    = document.getElementById('sortableBody');
+    if (!tbody) return;
+    const statusEl = document.getElementById('statusSalvo');
+    let dragSrc    = null;
+
+    tbody.querySelectorAll('.sortable-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', e => {
+            dragSrc = row; row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            salvar();
+        });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            if (dragSrc && row !== dragSrc) row.classList.add('drag-over');
+        });
+        row.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!dragSrc || dragSrc === row) return;
+            tbody.insertBefore(dragSrc, row);
+            row.classList.remove('drag-over');
+        });
+    });
+
+    function salvar() {
+        const ids = [...tbody.querySelectorAll('.sortable-row')].map(r => parseInt(r.dataset.id));
+        fetch('{{ url_for("links.reordenar_tipos") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token() }}' },
+            body: JSON.stringify({ ids })
+        }).then(r => {
+            if (r.ok && statusEl) {
+                statusEl.classList.remove('d-none');
+                setTimeout(() => statusEl.classList.add('d-none'), 2000);
+            }
+        });
+    }
+})();
+</script>
+<style>
+.sortable-row.dragging  { opacity:.45; box-shadow:0 4px 20px rgba(0,0,0,.18); }
+.sortable-row.drag-over { border-top:2px dashed var(--sigus-primary); }
+</style>
+{% endblock %}

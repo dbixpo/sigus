@@ -1,0 +1,929 @@
+{% extends 'base.html' %}
+{% block title %}Planejamentos e Projetos{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trix@2.1.0/dist/trix.css">
+<style>
+.trix-editor-wrapper { border: 1px solid #ced4da; border-radius: 6px; background: #fff; }
+.trix-editor-wrapper trix-editor { min-height: 120px; border: none; }
+.trix-editor-wrapper trix-toolbar .trix-button-group { border: none; }
+.trix-editor-wrapper trix-toolbar .trix-button { border: none; }
+.projeto-card { border: 1px solid #d0d5dd; margin-bottom: 1rem; overflow: hidden; background: #fff; border-radius: 2px; }
+.projeto-header {
+    display: grid; align-items: center; gap: 0 0.75rem; padding: 1rem 1.25rem;
+    grid-template-columns: 28px minmax(350px, 1fr) 160px 120px 125px 130px 78px 160px 1fr 100px;
+    cursor: pointer; transition: background .15s;
+}
+.projeto-header:hover { background: #f8fafc; }
+.projeto-header .btn-toggle { color: #64748b; padding: .25rem; transition: transform .2s; }
+.projeto-card:has(.collapse.show) .btn-toggle { transform: rotate(90deg); }
+.projeto-titulo { font-weight: 600; font-size: 1.05rem; min-width: 0; }
+.projeto-header .col-status { display: flex; flex-wrap: wrap; gap: 0.25rem 0.4rem; align-items: center; justify-content: center; }
+.ultima-atualizacao { font-size: 0.7rem; line-height: 1.35; }
+.ultima-atualizacao-nome { font-size: 0.65rem; color: #94a3b8; }
+.projeto-header .col-buttons { justify-self: end; width: 100%; }
+.projeto-header .col-buttons .d-flex { justify-content: flex-end; }
+.projeto-header .col-buttons .btn { margin-left: 0.5rem !important; }
+.projeto-header .col-buttons .btn:first-child { margin-left: 0 !important; }
+.sortable-row { cursor: grab; }
+.sortable-row:active { cursor: grabbing; }
+.sortable-row.dragging { opacity: 0.6; }
+.sortable-row.drag-over { border-top: 2px dashed var(--sigus-primary); }
+.drag-handle { color: #94a3b8; cursor: grab; }
+.drag-handle:hover { color: var(--sigus-primary); }
+.prazo-hoje { color: #c2410c; font-weight: 600; }
+.prazo-vencido { color: #dc2626; font-weight: 600; }
+.acao-expand-btn { padding: .2rem .4rem; font-size: .75rem; }
+.obs-timeline { max-height: 200px; overflow-y: auto; }
+.acao-detail-row td { background: #fafbfc; vertical-align: top; }
+.acao-detail-inner { background: #fafbfc; }
+.acao-detail-row .acao-detail-inner { max-width: 100%; }
+.obs-tabelinha { width: 100%; border-collapse: collapse; font-size: .85rem; margin-bottom: .75rem; }
+.obs-tabelinha th, .obs-tabelinha td { border: 1px solid #d0d5dd; padding: .5rem .65rem; text-align: left; vertical-align: top; }
+.obs-tabelinha th { background: #f1f5f9; font-weight: 600; font-size: .7rem; text-transform: uppercase; color: #475569; }
+.obs-tabelinha .obs-col-texto { max-width: 50%; }
+.obs-tabelinha .obs-col-anexo { max-width: 20%; }
+.obs-tabelinha .obs-col-resp { width: 140px; }
+.obs-tabelinha .obs-col-data { width: 120px; }
+.obs-tabelinha a[href] { color: var(--sigus-primary); }
+.projeto-progresso { width: 160px; flex-shrink: 0; }
+.projeto-progresso .progress {
+    height: 26px;
+    background: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #cbd5e1;
+}
+.projeto-progresso .progress-bar {
+    transition: width .3s ease;
+}
+.projeto-progresso .progress-bar.bg-success { background-color: #16a34a !important; }
+.projeto-progresso .progress-bar.barra-em-andamento {
+    background: repeating-linear-gradient(-45deg, #93c5fd 0, #93c5fd 6px, #60a5fa 6px, #60a5fa 12px) !important;
+}
+.projeto-progresso .progress-bar.barra-pendente {
+    background: repeating-linear-gradient(-45deg, #fde68a 0, #fde68a 6px, #fbbf24 6px, #fbbf24 12px) !important;
+}
+.projeto-progresso .progress-num {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+    font-weight: 600;
+    color: #1e293b;
+    pointer-events: none;
+}
+.projeto-body { padding: 1rem 1.25rem 1.25rem; border-top: 1px solid #f1f5f9; background: #fafbfc; }
+.btn-add-acao { color: var(--sigus-primary); border: 1px dashed var(--sigus-primary); background: transparent; }
+.btn-add-acao:hover { background: rgba(26, 130, 184, .08); color: var(--sigus-primary); border-color: var(--sigus-primary); }
+.panorama-tabela { width: 100%; border-collapse: collapse; font-size: .9rem; background: #fff; }
+.panorama-tabela th, .panorama-tabela td { border: 1px solid #d0d5dd; }
+.panorama-tabela th { text-align: left; padding: .65rem 1rem; font-size: .7rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .04em; background: #f1f5f9; }
+.panorama-tabela td { padding: .75rem 1rem; }
+.panorama-tabela tbody tr:hover { background: #f8fafc; }
+.panorama-tabela tbody tr.acao-detail-row:hover { background: #f8fafc; }
+.panorama-tabela tbody tr:last-child td { border-bottom: none; }
+.acao-titulo-cell { cursor: pointer; padding-left: 1.25rem !important; }
+.acao-titulo-cell:hover { background: #f8fafc; }
+.acao-titulo-inner { display: inline-flex; align-items: center; gap: .35rem; }
+.acao-titulo-inner .btn-toggle-inline { color: #64748b; display: inline-flex; transition: transform .2s ease; }
+.sortable-row .acao-chevron { transition: transform .2s ease; }
+.sortable-row.obs-expanded .acao-chevron,
+.sortable-row:has(+ tr.acao-detail-row .acao-detail-collapse.show) .acao-chevron { transform: rotate(90deg); }
+.status-badge { display: inline-block; padding: .3rem .65rem; border-radius: 8px; font-size: .78rem; font-weight: 600; }
+.status-pendente { background: #eab308; color: #422006; }
+.status-andamento { background: #2563eb; color: #fff; }
+.status-feito { background: #16a34a; color: #fff; }
+.status-cancelado { background: #64748b; color: #fff; }
+/* Select de status colorido */
+.status-select.status-pendente { background-color: #eab308 !important; color: #422006 !important; border-color: #eab308; }
+.status-select.status-andamento { background-color: #2563eb !important; color: #fff !important; border-color: #2563eb; }
+.status-select.status-feito { background-color: #16a34a !important; color: #fff !important; border-color: #16a34a; }
+.status-select.status-cancelado { background-color: #64748b !important; color: #fff !important; border-color: #64748b; }
+.status-select option { background: #fff; color: #1e293b; }
+/* Linhas com tonalidade suave da cor do status */
+.sortable-row.row-status-pendente,
+.sortable-row.row-status-pendente + .acao-detail-row .acao-detail-inner { background: rgba(234, 179, 8, .15); }
+.sortable-row.row-status-pendente:hover { background: rgba(234, 179, 8, .22) !important; }
+.sortable-row.row-status-andamento,
+.sortable-row.row-status-andamento + .acao-detail-row .acao-detail-inner { background: rgba(37, 99, 235, .1); }
+.sortable-row.row-status-andamento:hover { background: rgba(37, 99, 235, .16) !important; }
+.sortable-row.row-status-feito,
+.sortable-row.row-status-feito + .acao-detail-row .acao-detail-inner { background: rgba(22, 163, 74, .1); }
+.sortable-row.row-status-feito:hover { background: rgba(22, 163, 74, .16) !important; }
+.sortable-row.row-status-cancelado,
+.sortable-row.row-status-cancelado + .acao-detail-row .acao-detail-inner { background: rgba(100, 116, 139, .12); }
+.sortable-row.row-status-cancelado:hover { background: rgba(100, 116, 139, .18) !important; }
+.resp-item { display: inline-flex; align-items: center; gap: .4rem; margin-right: .5rem; margin-bottom: .2rem; }
+.resp-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.resp-inicial { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-width: 28px; border-radius: 50%; font-size: .7rem; font-weight: 700; background: linear-gradient(135deg, var(--sigus-primary), #0ea5e9); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.resp-nome { font-size: .85rem; font-weight: 500; color: #334155; white-space: nowrap; }
+.resp-empresa { background: #6366f1 !important; font-size: .75rem; }
+.obs-upload { border: 2px dashed #d1d5db; border-radius: 8px; padding: .5rem; text-align: center; cursor: pointer; background: #f9fafb; font-size: .8rem; }
+.obs-upload:hover { border-color: var(--sigus-primary); background: #eff6ff; }
+.obs-anexo { display: inline-flex; align-items: center; gap: .3rem; margin: .2rem; padding: .2rem .5rem; background: #f1f5f9; border-radius: 6px; font-size: .75rem; }
+.obs-anexo a { color: var(--sigus-primary); }
+.plano-anexos-secao { margin-bottom: 1rem; padding: .75rem 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+.plano-anexos-secao h6 { margin-bottom: .5rem; }
+.plano-anexo-item { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .5rem; background: #fff; border-radius: 6px; margin: .2rem .3rem .2rem 0; font-size: .85rem; border: 1px solid #e2e8f0; }
+.plano-anexo-item a { color: var(--sigus-primary); }
+.abas-planos { display: flex; gap: 0.25rem; margin-bottom: 1rem; border-bottom: 1px solid #e2e8f0; }
+.abas-planos a {
+    padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 500; color: #64748b; text-decoration: none;
+    border-radius: 6px 6px 0 0; transition: color .15s, background .15s;
+}
+.abas-planos a:hover { color: var(--sigus-primary); background: #f1f5f9; }
+.abas-planos a.active { color: var(--sigus-primary); background: #fff; border: 1px solid #e2e8f0; border-bottom-color: #fff; margin-bottom: -1px; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/trix@2.1.0/dist/trix.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex flex-wrap align-items-center gap-2">
+    <h1 class="mb-0"><i class="bi bi-clipboard2-check me-2"></i>Planejamentos e Projetos</h1>
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <a href="#" class="btn btn-outline-secondary" onclick="abrirImpresso('{{ url_for('planejamentos.imprimir', unidade_id=unidade_id, aba=aba) if unidade_id else url_for('planejamentos.imprimir', aba=aba) }}', '{{ 'Planos em Aberto' if aba == 'abertos' else 'Planos Concluídos' if aba == 'concluidos' else 'Planos Cancelados' }}'); return false;">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </a>
+        {% if pode_criar %}
+        <a href="{{ url_for('planejamentos.criar') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Planejamento
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row align-items-center mb-3">
+    <div class="col-auto">
+        <label class="form-label mb-0 small text-muted">Unidade</label>
+        <select id="selUnidade" class="form-select form-select-sm" style="min-width:220px;"
+                {% if unidades|length <= 1 %}disabled{% endif %}>
+            <option value="">Todas as unidades</option>
+            {% for u in unidades %}
+            <option value="{{ u.id }}" {{ 'selected' if unidade_id == u.id else '' }}>{{ u.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<nav class="abas-planos">
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='abertos') }}" class="{{ 'active' if aba == 'abertos' else '' }}">Planos em Aberto ({{ contagem_por_aba.get('abertos', 0) }})</a>
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='concluidos') }}" class="{{ 'active' if aba == 'concluidos' else '' }}">Planos Concluídos ({{ contagem_por_aba.get('concluidos', 0) }})</a>
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='cancelados') }}" class="{{ 'active' if aba == 'cancelados' else '' }}">Planos Cancelados ({{ contagem_por_aba.get('cancelados', 0) }})</a>
+</nav>
+
+{% if ids_com_minhas_acoes %}
+<div class="alert alert-info py-2 mb-3 d-flex align-items-center">
+    <i class="bi bi-person-check-fill me-2 fs-5"></i>
+    <div>
+        <strong>Minhas ações em aberto:</strong>
+        {% for d in planejamentos_dados %}
+        {% if d.plano.id in ids_com_minhas_acoes %}
+        <a href="{{ url_for('planejamentos.listar', expand=d.plano.id, unidade_id=d.plano.unidade_id, aba='abertos') }}" class="alert-link">{{ d.plano.titulo }}</a>{% if not loop.last %}, {% endif %}
+        {% endif %}
+        {% endfor %}
+        — você tem ações não concluídas em {{ ids_com_minhas_acoes|length }} planejamento(s).
+    </div>
+</div>
+{% endif %}
+
+<p class="text-muted small mb-3">
+    Clique no projeto para expandir as ações; clique na tarefa para expandir as observações. Visual de planilha com níveis.
+</p>
+
+{% if planejamentos_dados %}
+<div class="projeto-lista">
+    {% for d in planejamentos_dados %}
+    {% set p = d.plano %}
+    {% set expanded = expand_id == p.id %}
+    <div class="projeto-card">
+        <div class="projeto-header">
+            <button type="button" class="btn btn-link btn-toggle p-0 text-decoration-none" aria-label="Expandir"
+                    data-bs-toggle="collapse" data-bs-target="#projeto-{{ p.id }}" aria-expanded="{{ 'true' if expanded else 'false' }}">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <div class="projeto-titulo">{{ p.titulo }}</div>
+            <div class="projeto-progresso">
+                <div class="progress">
+                    <div class="progress-bar bg-success" style="width: {{ d.progresso_pct }}%;" title="Concluídas"></div>
+                    <div class="progress-bar barra-em-andamento" style="width: {{ d.em_andamento_pct }}%;" title="Em andamento"></div>
+                    <div class="progress-bar barra-pendente" style="width: {{ d.pendentes_pct }}%;" title="Pendentes"></div>
+                    <span class="progress-num">{{ d.progresso_pct }}%</span>
+                </div>
+            </div>
+            <div id="status-resumo-{{ p.id }}" class="col-status small">
+                {% if d.status_resumo.atrasadas %}<span class="badge bg-danger" title="Atrasadas">Atraso {{ d.status_resumo.atrasadas }}</span>{% endif %}
+                {% if d.status_resumo.em_andamento %}<span class="badge" style="background:#2563eb;color:#fff;" title="Em andamento">Em and. {{ d.status_resumo.em_andamento }}</span>{% endif %}
+                {% if d.status_resumo.pendentes %}<span class="badge" style="background:#eab308;color:#422006;" title="Pendentes">Pend {{ d.status_resumo.pendentes }}</span>{% endif %}
+                {% if d.status_resumo.concluidas %}<span class="badge bg-success" title="Concluídas">Ok {{ d.status_resumo.concluidas }}</span>{% endif %}
+                {% if d.status_resumo.canceladas %}<span class="badge bg-secondary" title="Canceladas">Canc {{ d.status_resumo.canceladas }}</span>{% endif %}
+                {% if p.id in ids_com_minhas_acoes %}<span class="badge badge-minhas-acoes bg-warning text-dark"><i class="bi bi-person-fill"></i> {{ contagem_acoes_usuario.get(p.id, 0) }}</span>{% endif %}
+            </div>
+            <span class="badge {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span>
+            <span class="text-muted small"><i class="bi bi-building me-1"></i>{{ p.unidade.nome }}</span>
+            <span class="text-muted small">{{ d.acoes_flat|length }} {{ 'ação' if d.acoes_flat|length == 1 else 'ações' }}</span>
+            {% set _atual = p.atualizado_em or p.criado_em %}
+            {% set _quem = p.ultimo_editor if p.atualizado_por else p.criador %}
+            <div class="ultima-atualizacao text-muted">
+                {% if _atual or _quem %}
+                {% if _atual %}<div class="ultima-atualizacao-data">{{ _atual | br_datetime }}</div>{% endif %}
+                {% if _quem %}<div class="ultima-atualizacao-nome">{{ _quem.nome }}</div>{% endif %}
+                {% else %}<span>—</span>{% endif %}
+            </div>
+            <div class="col-buttons d-flex align-items-center" onclick="event.stopPropagation();">
+                {% if pode_editar_gut %}
+                <a href="{{ url_for('planejamentos.editar', id=p.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                {% endif %}
+                <a href="#" class="btn btn-sm btn-outline-secondary" onclick="event.preventDefault(); abrirImpresso('{{ url_for('planejamentos.imprimir_projeto', plano_id=p.id) }}', '{{ p.titulo | e }}'); return false;" title="Imprimir projeto"><i class="bi bi-printer"></i></a>
+            </div>
+        </div>
+        <div class="collapse {{ 'show' if expanded else '' }}" id="projeto-{{ p.id }}">
+            <div class="projeto-body">
+                {% if p.anexos.count() %}
+                <div class="plano-anexos-secao mb-3">
+                    <h6 class="text-muted small mb-2"><i class="bi bi-paperclip me-1"></i>Anexos do plano</h6>
+                    <div class="d-flex flex-wrap align-items-center gap-1">
+                        {% for a in p.anexos %}
+                        <div class="plano-anexo-item">
+                            {% if a.eh_imagem %}
+                            <i class="bi bi-image text-success"></i>
+                            {% else %}
+                            <i class="bi bi-file-earmark-pdf text-danger"></i>
+                            {% endif %}
+                            <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.original }}</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    {% if pode_criar_acao %}
+                    <button type="button" class="btn btn-add-acao btn-sm" data-bs-toggle="modal" data-bs-target="#modal-acao-{{ p.id }}" onclick="event.stopPropagation();">
+                        <i class="bi bi-plus-lg me-1"></i>Adicionar ação
+                    </button>
+                    {% else %}
+                    <span></span>
+                    {% endif %}
+                </div>
+                <table class="panorama-tabela">
+                    <thead>
+                        <tr>
+                            {% if pode_criar_acao %}<th style="width:32px;"></th>{% endif %}
+                            <th>Tarefa</th>
+                            <th>Responsável</th>
+                            <th>Status</th>
+                            <th>Prazo</th>
+                            <th>Criação</th>
+                            <th>Prioridade</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-acoes-{{ p.id }}" data-plano-id="{{ p.id }}">
+                        {% for acao in d.acoes_flat %}
+                        <tr class="sortable-row row-{{ acao.status_badge_cls }}" data-id="{{ acao.id }}" data-plano-id="{{ p.id }}">
+                            {% if pode_criar_acao %}
+                            <td class="drag-handle text-center" title="Arrastar para reordenar" onclick="event.stopPropagation();"><i class="bi bi-grip-vertical"></i></td>
+                            {% endif %}
+                            <td class="acao-titulo-cell" data-bs-toggle="collapse" data-bs-target="#acao-detail-{{ acao.id }}" aria-expanded="false" title="Clique para expandir observações">
+                                <span class="acao-titulo-inner">
+                                    <span class="btn-toggle-inline"><i class="bi bi-chevron-right acao-chevron"></i></span>
+                                    {{ acao.titulo }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                <span id="resp-display-{{ acao.id }}">
+                                {% if acao.responsaveis or acao.empresas %}
+                                <div class="d-flex flex-wrap align-items-center gap-1">
+                                {% for r in acao.responsaveis %}
+                                <div class="resp-item" title="{{ r.nome }}">
+                                    {% if r.foto_url %}
+                                    <img src="{{ r.foto_url }}" alt="" class="resp-avatar">
+                                    {% else %}
+                                    <span class="resp-inicial">{{ (r.nome or '?')[0]|upper if r.nome else '?' }}</span>
+                                    {% endif %}
+                                    <span class="resp-nome">{{ ((r.nome or '').split() + ['?'])[0] }}</span>
+                                </div>
+                                {% endfor %}
+                                {% for e in acao.empresas %}
+                                <div class="resp-item" title="{{ e.razao_social }}">
+                                    {% if e.foto_url %}
+                                    <img src="{{ e.foto_url }}" alt="" class="resp-avatar">
+                                    {% else %}
+                                    <span class="resp-inicial resp-empresa"><i class="bi bi-building"></i></span>
+                                    {% endif %}
+                                    <span class="resp-nome">{{ (e.nome_comum or e.razao_social)[:20] }}{% if (e.nome_comum or e.razao_social)|length > 20 %}…{% endif %}</span>
+                                </div>
+                                {% endfor %}
+                                </div>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                                </span>
+                                {% if pode_criar_acao %}
+                                <button type="button" class="btn btn-link btn-sm p-0 text-muted" data-bs-toggle="modal" data-bs-target="#modal-resp-{{ acao.id }}" onclick="event.stopPropagation();" title="Editar responsável(eis)">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                {% if pode_alterar_status %}
+                                <select class="form-select form-select-sm status-select {{ acao.status_badge_cls }}" data-id="{{ acao.id }}" style="width:auto; min-width:110px;">
+                                    {% for sk, sl in status_opts.items() %}
+                                    <option value="{{ sk }}" {{ 'selected' if acao.status == sk else '' }}>{{ sl }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% else %}
+                                <span class="status-badge {{ acao.status_badge_cls }}">{{ acao.status_label }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if acao.prazo %}
+                                <span class="{% if acao.prazo_dias_texto and 'Vence hoje' in acao.prazo_dias_texto %}prazo-hoje{% elif acao.prazo_dias_texto and 'Venceu há' in acao.prazo_dias_texto %}prazo-vencido{% endif %}">
+                                    {{ acao.prazo.strftime('%d/%m/%Y') }}{% if acao.prazo_dias_texto %} <small class="text-muted">({{ acao.prazo_dias_texto }})</small>{% endif %}
+                                </span>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td><span class="text-muted small" title="Data da criação">{{ acao.criado_em | br_datetime if acao.criado_em else '—' }}</span></td>
+                            <td><span class="badge {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span></td>
+                        </tr>
+                        <tr class="acao-detail-row">
+                            <td colspan="{{ 7 if pode_criar_acao else 6 }}" class="p-0 border-0">
+                                <div class="collapse acao-detail-collapse" id="acao-detail-{{ acao.id }}">
+                                    <div class="acao-detail-inner p-3">
+                                    <h6 class="text-muted small mb-2"><i class="bi bi-chat-left-text me-1"></i>Observações</h6>
+                                    <div class="obs-timeline mb-2" id="obs-list-{{ acao.id }}" style="max-height: 220px; overflow-y: auto;">
+                                        {% if acao.observacoes %}
+                                        <table class="obs-tabelinha">
+                                            <thead>
+                                                <tr>
+                                                    <th class="obs-col-texto">Observação</th>
+                                                    <th class="obs-col-anexo">Anexo</th>
+                                                    <th class="obs-col-resp">Responsável</th>
+                                                    <th class="obs-col-data">Data da criação</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for obs in acao.observacoes %}
+                                                <tr>
+                                                    <td class="obs-col-texto"><div class="obs-texto">{{ obs.texto | safe }}</div></td>
+                                                    <td class="obs-col-anexo">
+                                                        {% if obs.anexos %}
+                                                        <div class="d-flex flex-wrap gap-1">
+                                                        {% for a in obs.anexos %}
+                                                        <a href="{{ a.url }}" target="_blank" rel="noopener" class="obs-anexo">
+                                                            {% if a.eh_imagem %}<i class="bi bi-image text-success"></i>{% else %}<i class="bi bi-file-earmark-pdf text-danger"></i>{% endif %}
+                                                            {{ a.original }}
+                                                        </a>
+                                                        {% endfor %}
+                                                        </div>
+                                                        {% else %}—{% endif %}
+                                                    </td>
+                                                    <td class="obs-col-resp">
+                                                        {% if obs.usuario %}
+                                                        <div class="resp-item">
+                                                            {% if obs.usuario.foto_url %}
+                                                            <img src="{{ obs.usuario.foto_url }}" alt="" class="resp-avatar">
+                                                            {% else %}
+                                                            <span class="resp-inicial">{{ obs.usuario.inicial }}</span>
+                                                            {% endif %}
+                                                            <span class="resp-nome">{{ ((obs.usuario.nome or '').split() + ['?'])[0] }}</span>
+                                                        </div>
+                                                        {% else %}<span class="text-muted">Sistema</span>{% endif %}
+                                                    </td>
+                                                    <td class="obs-col-data text-muted small">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {% else %}
+                                        <p class="text-muted small mb-2">Nenhuma observação.</p>
+                                        {% endif %}
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-add-obs-{{ acao.id }}" onclick="event.stopPropagation();">
+                                        <i class="bi bi-plus-lg me-1"></i>Adicionar observação
+                                    </button>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not d.acoes_flat %}
+                        <tr><td colspan="{{ 7 if pode_criar_acao else 6 }}" class="text-muted text-center py-5">Nenhuma ação{% if pode_criar_acao %}. Clique em "Adicionar ação" para começar.{% endif %}</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% for acao in d.acoes_flat %}
+    <div class="modal fade" id="modal-add-obs-{{ acao.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar observação — {{ acao.titulo[:50] }}{% if acao.titulo|length > 50 %}…{% endif %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form class="form-add-obs" data-acao-id="{{ acao.id }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Observação</label>
+                            <div class="trix-editor-wrapper">
+                                <input type="hidden" name="texto" id="obs-trix-{{ acao.id }}">
+                                <trix-editor input="obs-trix-{{ acao.id }}" placeholder="Descreva o que aconteceu..."></trix-editor>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small text-muted">Anexos (opcional)</label>
+                            <div class="obs-upload" onclick="this.querySelector('input').click()">
+                                <input type="file" name="anexos" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf" style="display:none">
+                                <i class="bi bi-cloud-arrow-up me-1"></i>Arraste ou clique para anexar (PDF, imagens)
+                            </div>
+                            <div class="obs-anexos-preview mt-1 small text-muted"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Registrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal-resp-{{ acao.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-md">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Vincular responsável(eis) — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <form class="form-edit-resp" data-acao-id="{{ acao.id }}" data-plano-id="{{ p.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body py-3">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Tipo de vínculo</label>
+                            <select class="form-select form-select-sm tipo-vinculo-select" data-acao-id="{{ acao.id }}">
+                                <option value="profissional">Profissional da unidade</option>
+                                <option value="empresa">Empresa contratada</option>
+                                <option value="ambos">Profissional e Empresa</option>
+                            </select>
+                        </div>
+                        <div id="resp-prof-{{ acao.id }}" class="resp-tipo-container mb-3">
+                            <label class="form-label small fw-semibold">Profissionais</label>
+                            <select name="responsaveis" class="form-select js-resp-prof-select" multiple data-acao-id="{{ acao.id }}">
+                                {% for u in d.usuarios %}
+                                <option value="{{ u.id }}" {{ 'selected' if u in acao.responsaveis else '' }}>{{ u.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div id="resp-emp-{{ acao.id }}" class="resp-tipo-container d-none mb-3">
+                            <label class="form-label small fw-semibold">Empresas</label>
+                            <select name="empresas" class="form-select js-resp-emp-select" multiple data-acao-id="{{ acao.id }}">
+                                {% for e in d.empresas %}
+                                <option value="{{ e.id }}" {{ 'selected' if e in acao.empresas else '' }}>{{ e.nome_comum or e.razao_social }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="submit" class="btn btn-primary btn-sm">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if pode_criar_acao %}
+    <div class="modal fade" id="modal-acao-{{ p.id }}" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">Adicionar ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('planejamentos.criar_acao', plano_id=p.id) }}" class="form-criar-acao" data-plano-id="{{ p.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Título da ação</label>
+                            <input type="text" name="titulo" class="form-control" required placeholder="Ex.: Finalizar materiais de lançamento">
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select name="status" class="form-select">
+                                    {% for sk, sl in status_opts.items() %}<option value="{{ sk }}">{{ sl }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Prazo</label>
+                                <input type="date" name="prazo" class="form-control">
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label fw-semibold">Tipo de vínculo</label>
+                            <select class="form-select form-select-sm js-tipo-vinculo-criar" data-plano-id="{{ p.id }}">
+                                <option value="profissional">Profissional da unidade</option>
+                                <option value="empresa">Empresa contratada</option>
+                                <option value="ambos">Profissional e Empresa</option>
+                            </select>
+                        </div>
+                        <div id="resp-prof-plano-{{ p.id }}" class="resp-criar-container mt-2">
+                            <label class="form-label small fw-semibold">Profissionais</label>
+                            <select name="responsaveis" class="form-select js-resp-prof-criar" multiple data-plano-id="{{ p.id }}" style="min-width:100%;">
+                                {% for u in d.usuarios %}<option value="{{ u.id }}">{{ u.nome }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div id="resp-emp-plano-{{ p.id }}" class="resp-criar-container d-none mt-2">
+                            <label class="form-label small fw-semibold">Empresas</label>
+                            <select name="empresas" class="form-select js-resp-emp-criar" multiple data-plano-id="{{ p.id }}" style="min-width:100%;">
+                                {% for e in d.empresas %}<option value="{{ e.id }}">{{ e.nome_comum or e.razao_social }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5 text-muted">
+    <i class="bi bi-clipboard2 fs-1 d-block mb-3 opacity-50"></i>
+    {% if tem_planos_geral %}
+    <h5>{% if aba == 'abertos' %}Nenhum plano em aberto{% elif aba == 'concluidos' %}Nenhum plano concluído{% else %}Nenhum plano cancelado{% endif %}</h5>
+    <p class="mb-0">Não há planejamentos nesta categoria para a unidade selecionada.</p>
+    {% else %}
+    <h5>Nenhum planejamento criado</h5>
+    <p class="mb-3">Crie o primeiro planejamento para sua unidade.</p>
+    {% if pode_criar %}
+    <a href="{{ url_for('planejamentos.criar') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Novo Planejamento</a>
+    {% endif %}
+    {% endif %}
+</div>
+{% endif %}
+
+{% if unidades|length > 1 %}
+<script>
+(function () {
+    var sel = document.getElementById('selUnidade');
+    if (sel) sel.addEventListener('change', function () {
+        var v = this.value, url = '{{ url_for("planejamentos.listar") }}', params = [];
+        if (v) params.push('unidade_id=' + v);
+        params.push('aba={{ aba }}');
+        window.location = url + (params.length ? '?' + params.join('&') : '');
+    });
+})();
+</script>
+{% endif %}
+{% if pode_criar_acao %}
+<script>
+(function () {
+    // Toggle containers no modal de criar ação
+    function toggleCriarResp(planoId, v) {
+        var profDiv = document.getElementById('resp-prof-plano-' + planoId);
+        var empDiv = document.getElementById('resp-emp-plano-' + planoId);
+        if (v === 'profissional') {
+            if (profDiv) profDiv.classList.remove('d-none');
+            if (empDiv) empDiv.classList.add('d-none');
+        } else if (v === 'empresa') {
+            if (profDiv) profDiv.classList.add('d-none');
+            if (empDiv) empDiv.classList.remove('d-none');
+        } else {
+            if (profDiv) profDiv.classList.remove('d-none');
+            if (empDiv) empDiv.classList.remove('d-none');
+        }
+    }
+    document.querySelectorAll('.js-tipo-vinculo-criar').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+            toggleCriarResp(this.dataset.planoId, this.value);
+        });
+    });
+    var criarTsCache = {};
+    document.querySelectorAll('[id^="modal-acao-"]').forEach(function (modal) {
+        var m = modal.id.match(/modal-acao-(\d+)/);
+        if (!m) return;
+        var planoId = m[1];
+        modal.addEventListener('show.bs.modal', function () {
+            var profSel = modal.querySelector('select.js-resp-prof-criar');
+            var empSel = modal.querySelector('select.js-resp-emp-criar');
+            if (profSel && !profSel.tomselect && window.TomSelect) {
+                criarTsCache['prof-' + planoId] = new TomSelect(profSel, { plugins: ['remove_button'], maxOptions: null });
+            }
+            if (empSel && !empSel.tomselect && window.TomSelect) {
+                criarTsCache['emp-' + planoId] = new TomSelect(empSel, { plugins: ['remove_button'], maxOptions: null });
+            }
+            var tipoSel = modal.querySelector('.js-tipo-vinculo-criar');
+            if (tipoSel) toggleCriarResp(planoId, tipoSel.value);
+        });
+    });
+    document.querySelectorAll('.form-criar-acao').forEach(function (form) {
+        form.addEventListener('submit', function () {
+            var tipoSel = form.querySelector('.js-tipo-vinculo-criar');
+            var v = tipoSel ? tipoSel.value : 'profissional';
+            var profSel = form.querySelector('select[name="responsaveis"]');
+            var empSel = form.querySelector('select[name="empresas"]');
+            function clearSelect(el) {
+                if (!el) return;
+                if (el.tomselect) el.tomselect.clear();
+                else { for (var i = 0; i < el.options.length; i++) el.options[i].selected = false; }
+            }
+            if (v === 'empresa') clearSelect(profSel);
+            if (v === 'profissional') clearSelect(empSel);
+        });
+    });
+    var respTsCache = {};
+    function initRespSelects(acaoId) {
+        var form = document.querySelector('.form-edit-resp[data-acao-id="' + acaoId + '"]');
+        if (!form || !window.TomSelect) return;
+        var profSel = form.querySelector('select[name=responsaveis]');
+        var empSel = form.querySelector('select[name=empresas]');
+        if (profSel && !profSel.tomselect) {
+            respTsCache['prof-' + acaoId] = new TomSelect(profSel, { plugins: ['remove_button'], maxOptions: null });
+        }
+        if (empSel && !empSel.tomselect) {
+            respTsCache['emp-' + acaoId] = new TomSelect(empSel, { plugins: ['remove_button'], maxOptions: null });
+        }
+    }
+    function toggleRespContainers(acaoId, v) {
+        var profDiv = document.getElementById('resp-prof-' + acaoId);
+        var empDiv = document.getElementById('resp-emp-' + acaoId);
+        if (v === 'profissional') {
+            if (profDiv) profDiv.classList.remove('d-none');
+            if (empDiv) empDiv.classList.add('d-none');
+        } else if (v === 'empresa') {
+            if (profDiv) profDiv.classList.add('d-none');
+            if (empDiv) empDiv.classList.remove('d-none');
+        } else {
+            if (profDiv) profDiv.classList.remove('d-none');
+            if (empDiv) empDiv.classList.remove('d-none');
+        }
+    }
+    document.querySelectorAll('.tipo-vinculo-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+            toggleRespContainers(this.dataset.acaoId, this.value);
+        });
+    });
+    document.querySelectorAll('.form-edit-resp').forEach(function (form) {
+        var acaoId = form.dataset.acaoId;
+        var modalEl = form.closest('.modal');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', function () {
+                var tipoSel = form.querySelector('.tipo-vinculo-select');
+                var profHas = form.querySelector('select[name=responsaveis]')?.querySelectorAll('option[selected]')?.length > 0;
+                var empHas = form.querySelector('select[name=empresas]')?.querySelectorAll('option[selected]')?.length > 0;
+                if (tipoSel) {
+                    if (profHas && empHas) tipoSel.value = 'ambos';
+                    else if (empHas) tipoSel.value = 'empresa';
+                    else tipoSel.value = 'profissional';
+                }
+                initRespSelects(acaoId);
+                if (tipoSel) toggleRespContainers(acaoId, tipoSel.value);
+            });
+        }
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var acaoId = form.dataset.acaoId;
+            var fd = new FormData();
+            fd.append('csrf_token', document.querySelector('meta[name=csrf-token]')?.content || '');
+            var tipoSel = form.querySelector('.tipo-vinculo-select');
+            var v = tipoSel ? tipoSel.value : 'profissional';
+            var profTs = respTsCache['prof-' + acaoId];
+            var empTs = respTsCache['emp-' + acaoId];
+            if ((v === 'profissional' || v === 'ambos') && profTs) {
+                (profTs.getValue() || []).forEach(function (id) { fd.append('responsaveis', id); });
+            }
+            if ((v === 'empresa' || v === 'ambos') && empTs) {
+                (empTs.getValue() || []).forEach(function (id) { fd.append('empresas', id); });
+            }
+            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + acaoId + '/responsaveis', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.ok && data.html !== undefined) {
+                        var disp = document.getElementById('resp-display-' + acaoId);
+                        if (disp) disp.innerHTML = data.html;
+                        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+                    } else if (data.ok) {
+                        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+                        location.reload();
+                    }
+                });
+        });
+    });
+})();
+</script>
+{% endif %}
+{% if pode_alterar_status %}
+<input type="hidden" id="csrfPlanos" value="{{ csrf_token() }}">
+<script>
+(function () {
+    document.querySelectorAll('.status-select').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+            var fd = new FormData();
+            fd.append('csrf_token', document.getElementById('csrfPlanos').value);
+            fd.append('status', this.value);
+            var selEl = this;
+            var planoId = selEl.closest('tbody')?.dataset?.planoId;
+            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + this.dataset.id + '/status', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.ok) {
+                        var statusToBadge = { backlog: 'status-pendente', em_andamento: 'status-andamento', concluido: 'status-feito', cancelado: 'status-cancelado' };
+                        var badgeCls = statusToBadge[selEl.value] || 'status-pendente';
+                        var badge = selEl.closest('td')?.querySelector('.status-badge');
+                        if (badge) {
+                            badge.textContent = selEl.options[selEl.selectedIndex]?.text || '';
+                            badge.className = 'status-badge ' + badgeCls;
+                        }
+                        selEl.classList.remove('status-pendente', 'status-andamento', 'status-feito', 'status-cancelado');
+                        selEl.classList.add(badgeCls);
+                        var row = selEl.closest('tr.sortable-row');
+                        if (row) {
+                            row.classList.remove('row-status-pendente', 'row-status-andamento', 'row-status-feito', 'row-status-cancelado');
+                            row.classList.add('row-' + badgeCls);
+                        }
+                        if (planoId && data.status_resumo && data.progresso_pct !== undefined) {
+                            var badgesWrap = document.getElementById('status-resumo-' + planoId);
+                            if (badgesWrap) {
+                                var r = data.status_resumo;
+                                var minhasAcoes = badgesWrap.querySelector('.badge-minhas-acoes');
+                                var minhasHtml = minhasAcoes ? minhasAcoes.outerHTML : '';
+                                badgesWrap.innerHTML = 
+                                    (r.atrasadas ? '<span class="badge bg-danger" title="Atrasadas">Atraso ' + r.atrasadas + '</span>' : '') +
+                                    (r.em_andamento ? '<span class="badge" style="background:#2563eb;color:#fff;" title="Em andamento">Em and. ' + r.em_andamento + '</span>' : '') +
+                                    (r.pendentes ? '<span class="badge" style="background:#eab308;color:#422006;" title="Pendentes">Pend ' + r.pendentes + '</span>' : '') +
+                                    (r.concluidas ? '<span class="badge bg-success" title="Concluídas">Ok ' + r.concluidas + '</span>' : '') +
+                                    (r.canceladas ? '<span class="badge bg-secondary" title="Canceladas">Canc ' + r.canceladas + '</span>' : '') +
+                                    minhasHtml;
+                            }
+                            var card = document.getElementById('projeto-' + planoId)?.closest('.projeto-card');
+                            if (card) {
+                                var prog = card.querySelector('.projeto-progresso .progress');
+                                var bars = prog ? prog.querySelectorAll('.progress-bar') : [];
+                                var progPct = card.querySelector('.projeto-progresso .progress-num');
+                                if (bars[0]) bars[0].style.width = (data.progresso_pct || 0) + '%';
+                                if (bars[1]) bars[1].style.width = (data.em_andamento_pct || 0) + '%';
+                                if (bars[2]) bars[2].style.width = (data.pendentes_pct || 0) + '%';
+                                if (progPct) progPct.textContent = (data.progresso_pct || 0) + '%';
+                            }
+                        }
+                    }
+                });
+        });
+    });
+})();
+</script>
+{% endif %}
+
+<script>
+(function () {
+    document.addEventListener('trix-file-accept', function (e) { e.preventDefault(); });
+    document.querySelectorAll('.acao-detail-collapse').forEach(function (el) {
+        el.addEventListener('show.bs.collapse', function () {
+            var row = this.closest('tr').previousElementSibling;
+            if (row && row.classList.contains('sortable-row')) row.classList.add('obs-expanded');
+        });
+        el.addEventListener('hide.bs.collapse', function () {
+            var row = this.closest('tr').previousElementSibling;
+            if (row && row.classList.contains('sortable-row')) row.classList.remove('obs-expanded');
+        });
+    });
+    var csrf = document.querySelector('meta[name=csrf-token]')?.content || document.getElementById('csrfPlanos')?.value || '';
+    document.querySelectorAll('.form-add-obs').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var acaoId = this.dataset.acaoId;
+            var input = this.querySelector('input[name=texto]');
+            var texto = input ? (input.value || '').trim() : '';
+            if (!texto || texto === '<div><br></div>' || texto === '<br>') return;
+            var fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fd.append('texto', texto);
+            var fileInput = form.querySelector('input[name=anexos]');
+            if (fileInput && fileInput.files.length) {
+                for (var i = 0; i < fileInput.files.length; i++) fd.append('anexos', fileInput.files[i]);
+            }
+            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + acaoId + '/observacao', { method: 'POST', body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.ok) {
+                        var list = document.getElementById('obs-list-' + acaoId);
+                        if (!list) return;
+                        var vazia = list.querySelector('p.text-muted.small');
+                        var tbody = list.querySelector('tbody');
+                        var respHtml = '';
+                        if (data.autor_foto_url) {
+                            respHtml = '<div class="resp-item"><img src="' + escapeHtml(data.autor_foto_url) + '" alt="" class="resp-avatar"><span class="resp-nome">' + escapeHtml(data.autor_primeiro || '') + '</span></div>';
+                        } else {
+                            respHtml = '<div class="resp-item"><span class="resp-inicial">' + escapeHtml(String(data.autor_inicial || '?').charAt(0)) + '</span><span class="resp-nome">' + escapeHtml(data.autor_primeiro || '') + '</span></div>';
+                        }
+                        var anexosHtml = '';
+                        if (data.anexos && data.anexos.length) {
+                            data.anexos.forEach(function (a) {
+                                var icon = a.eh_imagem ? '<i class="bi bi-image text-success"></i>' : '<i class="bi bi-file-earmark-pdf text-danger"></i>';
+                                anexosHtml += '<a href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" class="obs-anexo">' + icon + ' ' + escapeHtml(a.original) + '</a>';
+                            });
+                            anexosHtml = '<div class="d-flex flex-wrap gap-1">' + anexosHtml + '</div>';
+                        } else anexosHtml = '—';
+                        var tr = document.createElement('tr');
+                        tr.innerHTML = '<td class="obs-col-texto"><div class="obs-texto">' + data.texto + '</div></td><td class="obs-col-anexo">' + anexosHtml + '</td><td class="obs-col-resp">' + respHtml + '</td><td class="obs-col-data text-muted small">' + escapeHtml(data.criado_em || '') + '</td>';
+                        tr.querySelectorAll('.obs-texto a').forEach(function (a) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); });
+                        if (vazia) {
+                            vazia.remove();
+                            var table = document.createElement('table');
+                            table.className = 'obs-tabelinha';
+                            table.innerHTML = '<thead><tr><th class="obs-col-texto">Observação</th><th class="obs-col-anexo">Anexo</th><th class="obs-col-resp">Responsável</th><th class="obs-col-data">Data da criação</th></tr></thead><tbody></tbody>';
+                            table.querySelector('tbody').appendChild(tr);
+                            list.appendChild(table);
+                        } else if (tbody) {
+                            tbody.appendChild(tr);
+                        }
+                        if (input) input.value = '';
+                        var trixEl = form.querySelector('trix-editor');
+                        if (trixEl && trixEl.editor) trixEl.editor.loadHTML('');
+                        if (fileInput) fileInput.value = '';
+                        var preview = form.querySelector('.obs-anexos-preview');
+                        if (preview) preview.textContent = '';
+                        var modalEl = form.closest('.modal');
+                        if (modalEl && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modalEl)?.hide();
+                    }
+                });
+        });
+    });
+    document.querySelectorAll('input[name=anexos]').forEach(function (input) {
+        input.addEventListener('change', function () {
+            var preview = this.closest('.form-add-obs')?.querySelector('.obs-anexos-preview');
+            if (preview) preview.textContent = this.files.length ? this.files.length + ' arquivo(s) selecionado(s)' : '';
+        });
+    });
+    function escapeHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    }
+})();
+</script>
+
+{% if pode_criar_acao %}
+<script>
+(function () {
+    document.querySelectorAll('[id^="tbody-acoes-"]').forEach(function (tbody) {
+        var planoId = tbody.dataset.planoId;
+        var rows = tbody.querySelectorAll('.sortable-row');
+        var dragSrc = null;
+        rows.forEach(function (row) {
+            row.setAttribute('draggable', 'true');
+            row.addEventListener('dragstart', function (e) {
+                dragSrc = row;
+                row.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            row.addEventListener('dragend', function () {
+                row.classList.remove('dragging');
+                rows.forEach(function (r) { r.classList.remove('drag-over'); });
+                salvarOrdem(tbody, planoId);
+            });
+            row.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                rows.forEach(function (r) { r.classList.remove('drag-over'); });
+                if (dragSrc && row !== dragSrc) row.classList.add('drag-over');
+            });
+            row.addEventListener('drop', function (e) {
+                e.preventDefault();
+                if (!dragSrc || dragSrc === row) return;
+                var detailRow = dragSrc.nextElementSibling;
+                if (detailRow && detailRow.classList.contains('acao-detail-row')) {
+                    tbody.insertBefore(detailRow, row);
+                    tbody.insertBefore(dragSrc, detailRow);
+                } else {
+                    tbody.insertBefore(dragSrc, row);
+                }
+                row.classList.remove('drag-over');
+            });
+        });
+    });
+    function salvarOrdem(tbody, planoId) {
+        var ids = [].slice.call(tbody.querySelectorAll('.sortable-row')).map(function (r) { return parseInt(r.dataset.id); });
+        fetch((window.APP_BASE || '') + '/planejamentos/' + planoId + '/acoes/reordenar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (document.querySelector('meta[name=csrf-token]') || {}).content || '' },
+            body: JSON.stringify({ ids: ids })
+        });
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

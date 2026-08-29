@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if unidade else 'Nova' }} Unidade{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if unidade else 'Nova Unidade' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-hospital"></i> {{ 'Editar Unidade' if unidade else 'Nova Unidade' }}</h1>
+</div>
+
+<form method="POST" id="formUnidade">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+
+        <!-- COLUNA PRINCIPAL -->
+        <div class="col-lg-8">
+
+            <!-- IDENTIFICAÇÃO -->
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nome da Unidade / Setor <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required
+                               value="{{ unidade.nome if unidade else '' }}"
+                               placeholder="Ex: USF Brigadeiro Tobias, Saúde Digital">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">
+                            Nº CNES
+                            <span class="text-muted small">(opcional)</span>
+                        </label>
+                        <input type="text" name="numero_cnes" class="form-control" maxlength="20"
+                               value="{{ unidade.numero_cnes or '' if unidade else '' }}"
+                               placeholder="0000000">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                        <select name="tipo_unidade_id" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            {% for t in tipos %}
+                            <option value="{{ t.id }}"
+                                {% if unidade and unidade.tipo_unidade_id == t.id %}selected
+                                {% elif unidade and unidade.tipo == t.sigla and not unidade.tipo_unidade_id %}selected
+                                {% endif %}>
+                                {{ t.sigla }} — {{ t.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Prédio (opcional) -->
+                    {% if predios %}
+                    <div class="col-12">
+                        <label class="form-label">
+                            <i class="bi bi-buildings me-1 text-primary"></i>
+                            Prédio / Endereço compartilhado
+                            <span class="text-muted small">(opcional)</span>
+                        </label>
+                        <select name="predio_id" class="form-select">
+                            <option value="">— Esta unidade tem endereço próprio —</option>
+                            {% for p in predios %}
+                            <option value="{{ p.id }}"
+                                {% if unidade and unidade.predio_id == p.id %}selected
+                                {% elif not unidade and predio_id_pre == p.id %}selected
+                                {% endif %}>
+                                {{ p.nome }}{% if p.endereco %} — {{ p.endereco }}{% if p.numero %}, {{ p.numero }}{% endif %}{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Selecione se esta unidade/setor funciona dentro de um prédio compartilhado
+                            (ex.: Palácio da Saúde). Os chamados <strong>prediais</strong> irão automaticamente
+                            para o responsável do prédio.
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if unidade %}
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="ativa" {% if unidade.status == 'ativa' %}selected{% endif %}>Ativa</option>
+                            <option value="inativa" {% if unidade.status == 'inativa' %}selected{% endif %}>Inativa</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ENDEREÇO -->
+            <div class="form-section" id="secao-endereco">
+                <div class="form-section-title">Endereço</div>
+                <div class="alert alert-info py-2 small d-none" id="aviso-endereco-predio">
+                    <i class="bi bi-buildings me-1"></i>
+                    Endereço preenchido automaticamente do prédio selecionado.
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Logradouro</label>
+                        <input type="text" name="endereco" id="inp-endereco" class="form-control"
+                               value="{{ unidade.endereco if unidade else '' }}"
+                               placeholder="Rua, Avenida...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Número</label>
+                        <input type="text" name="numero" id="inp-numero" class="form-control"
+                               value="{{ unidade.numero if unidade else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" name="complemento" id="inp-complemento" class="form-control"
+                               value="{{ unidade.complemento if unidade else '' }}"
+                               placeholder="Sala, apto...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">CEP</label>
+                        <input type="text" name="cep" id="inp-cep" class="form-control" maxlength="9"
+                               value="{{ unidade.cep if unidade else '' }}" placeholder="00000-000">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Bairro</label>
+                        <input type="text" name="bairro" id="inp-bairro" class="form-control"
+                               value="{{ unidade.bairro if unidade else '' }}">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Cidade</label>
+                        <input type="text" name="cidade" id="inp-cidade" class="form-control"
+                               value="{{ unidade.cidade if unidade else 'Sorocaba' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">UF</label>
+                        <input type="text" name="uf" id="inp-uf" class="form-control" maxlength="2"
+                               value="{{ unidade.uf if unidade else 'SP' }}" style="text-transform:uppercase;">
+                    </div>
+
+                    <!-- Link Google Maps -->
+                    <div class="col-12">
+                        <label class="form-label">
+                            <i class="bi bi-pin-map me-1 text-danger"></i>Link do Google Maps
+                            <span class="text-muted small">(opcional)</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text text-danger"><i class="bi bi-geo-alt-fill"></i></span>
+                            <input type="url" name="link_maps" id="inp-link-maps" class="form-control"
+                                   value="{{ unidade.link_maps or '' if unidade else '' }}"
+                                   placeholder="https://maps.app.goo.gl/...">
+                            <a href="#" target="_blank" id="btn-abrir-maps"
+                               class="btn btn-outline-danger {% if not (unidade and unidade.link_maps) %}d-none{% endif %}">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
+                            </a>
+                        </div>
+                        <div class="form-text">
+                            Cole aqui o link compartilhado do Google Maps para facilitar a localização.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUNA LATERAL -->
+        <div class="col-lg-4">
+            <div class="form-section">
+                <div class="form-section-title">Contato</div>
+
+                <div class="mb-3">
+                    <label class="form-label" id="lbl-telefone">Telefone</label>
+                    <input type="text" name="telefone" id="inp-telefone" class="form-control"
+                           value="{{ unidade.telefone if unidade else '' }}" placeholder="(00) 00000-0000">
+                    <div class="form-text text-muted small d-none" id="hint-telefone-predio">
+                        <i class="bi bi-buildings me-1"></i>Preenchido com o telefone do prédio.
+                    </div>
+                </div>
+
+                <div class="mb-3" id="wrap-ramal">
+                    <label class="form-label">
+                        Ramal
+                        <span class="text-muted small">(opcional)</span>
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+                        <input type="text" name="ramal" id="inp-ramal" class="form-control"
+                               value="{{ unidade.ramal or '' if unidade else '' }}"
+                               placeholder="Ex.: 212">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ unidade.email if unidade else '' }}">
+                </div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title">Observações</div>
+                <textarea name="observacoes" class="form-control" rows="4">{{ unidade.observacoes if unidade else '' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if unidade else 'Cadastrar Unidade' }}
+        </button>
+        <a href="{{ url_for('unidades.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    /* ── prédio → endereço + telefone + maps ─────────── */
+    const prediosData = {{ predios_data | tojson }};
+    const selPredio   = document.querySelector('select[name="predio_id"]');
+
+    // Referências aos campos
+    const inpTelefone   = document.getElementById('inp-telefone');
+    const hintTelefone  = document.getElementById('hint-telefone-predio');
+    const lblTelefone   = document.getElementById('lbl-telefone');
+    const inpEndereco   = document.getElementById('inp-endereco');
+    const inpNumero     = document.getElementById('inp-numero');
+    const inpComplemento = document.getElementById('inp-complemento');
+    const inpCep        = document.getElementById('inp-cep');
+    const inpBairro     = document.getElementById('inp-bairro');
+    const inpCidade     = document.getElementById('inp-cidade');
+    const inpUf         = document.getElementById('inp-uf');
+    const inpLinkMaps   = document.getElementById('inp-link-maps');
+    const btnAbrirMaps  = document.getElementById('btn-abrir-maps');
+    const avisoEndereco = document.getElementById('aviso-endereco-predio');
+
+    // Guarda valores originais (modo edição) para restaurar ao desmarcar prédio
+    const original = {
+        telefone:  inpTelefone  ? inpTelefone.value  : '',
+        endereco:    inpEndereco    ? inpEndereco.value     : '',
+        numero:      inpNumero      ? inpNumero.value       : '',
+        complemento: inpComplemento ? inpComplemento.value  : '',
+        cep:       inpCep       ? inpCep.value        : '',
+        bairro:    inpBairro    ? inpBairro.value     : '',
+        cidade:    inpCidade    ? inpCidade.value     : '',
+        uf:        inpUf        ? inpUf.value         : '',
+        link_maps: inpLinkMaps  ? inpLinkMaps.value   : '',
+    };
+
+    function setField(el, val, lock) {
+        if (!el) return;
+        el.value = val;
+        el.readOnly = lock;
+        if (lock) el.classList.add('bg-light');
+        else      el.classList.remove('bg-light');
+    }
+
+    function atualizarBotaoMaps(url) {
+        if (!btnAbrirMaps) return;
+        if (url) {
+            btnAbrirMaps.href = url;
+            btnAbrirMaps.classList.remove('d-none');
+        } else {
+            btnAbrirMaps.href = '#';
+            btnAbrirMaps.classList.add('d-none');
+        }
+    }
+
+    function aplicarPredio(pid) {
+        if (pid && prediosData[pid]) {
+            const p = prediosData[pid];
+            const temEndereco = !!(p.endereco || p.numero || p.bairro || p.cidade || p.cep);
+
+            // Telefone
+            setField(inpTelefone, p.telefone, !!p.telefone);
+            if (p.telefone) {
+                if (lblTelefone) lblTelefone.textContent = 'Telefone (do Prédio)';
+                hintTelefone && hintTelefone.classList.remove('d-none');
+            } else {
+                if (lblTelefone) lblTelefone.textContent = 'Telefone';
+                hintTelefone && hintTelefone.classList.add('d-none');
+            }
+
+            // Endereço (complemento fica sempre editável — ex.: Mezanino, Sala 05)
+            setField(inpEndereco, p.endereco, temEndereco);
+            setField(inpNumero,   p.numero,   temEndereco);
+            setField(inpCep,      p.cep,      temEndereco);
+            setField(inpBairro,   p.bairro,   temEndereco);
+            setField(inpCidade,   p.cidade,   temEndereco);
+            setField(inpUf,       p.uf,       temEndereco);
+            setField(inpLinkMaps, p.link_maps, !!p.link_maps);
+            atualizarBotaoMaps(p.link_maps);
+
+            if (temEndereco && avisoEndereco) avisoEndereco.classList.remove('d-none');
+            else if (avisoEndereco)           avisoEndereco.classList.add('d-none');
+
+        } else {
+            // Restaura valores originais e desbloqueia
+            setField(inpTelefone, original.telefone, false);
+            setField(inpEndereco, original.endereco, false);
+            setField(inpComplemento, original.complemento, false);
+            setField(inpNumero,   original.numero,    false);
+            setField(inpCep,      original.cep,       false);
+            setField(inpBairro,   original.bairro,    false);
+            setField(inpCidade,   original.cidade,    false);
+            setField(inpUf,       original.uf,        false);
+            setField(inpLinkMaps, original.link_maps, false);
+            if (lblTelefone) lblTelefone.textContent = 'Telefone';
+            hintTelefone  && hintTelefone.classList.add('d-none');
+            avisoEndereco && avisoEndereco.classList.add('d-none');
+            atualizarBotaoMaps(original.link_maps);
+        }
+    }
+
+    if (selPredio) {
+        selPredio.addEventListener('change', function () {
+            aplicarPredio(this.value ? parseInt(this.value) : null);
+        });
+        // Ao carregar em modo edição com prédio já selecionado: aplica sem guardar como original
+        const pidAtual = selPredio.value ? parseInt(selPredio.value) : null;
+        if (pidAtual) {
+            // Limpa os "originais" pois vieram do prédio
+            Object.keys(original).forEach(k => original[k] = '');
+            aplicarPredio(pidAtual);
+        }
+    }
+
+    // Atualiza botão Maps ao digitar manualmente (quando não há prédio)
+    if (inpLinkMaps) {
+        inpLinkMaps.addEventListener('input', function () {
+            if (!selPredio || !selPredio.value) atualizarBotaoMaps(this.value.trim());
+        });
+    }
+})();
+</script>
+{% endblock %}

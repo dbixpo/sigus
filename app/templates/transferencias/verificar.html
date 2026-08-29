@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificação — Termo de {{ doc.tipo_label }}</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; font-size: 14px; padding: 24px; max-width: 420px; margin: 0 auto; }
+h1 { font-size: 16px; margin-bottom: 16px; color: #333; }
+.valido { color: #198754; font-weight: bold; margin-bottom: 12px; }
+.bloco { border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; border-radius: 6px; }
+.bloco strong { display: block; font-size: 11px; text-transform: uppercase; color: #666; margin-bottom: 4px; }
+.bloco .nome { font-weight: 600; }
+.bloco .data { color: #555; font-size: 13px; }
+.status { margin-top: 12px; padding: 8px; border-radius: 4px; font-weight: 600; }
+.status.aceita { background: #d1e7dd; color: #0f5132; }
+.status.pendente { background: #fff3cd; color: #664d03; }
+.status.recusada, .status.cancelada { background: #f8d7da; color: #842029; }
+</style>
+</head>
+<body>
+<h1>Validação do documento</h1>
+{% if doc.status == 'aceita' %}
+<p class="valido">✓ Documento validado — ambas as partes confirmaram no sistema.</p>
+{% elif doc.status == 'pendente' %}
+<p class="status pendente">Documento aguardando aceite da unidade destino.</p>
+{% elif doc.status == 'recusada' %}
+<p class="status recusada">Documento recusado pela unidade destino.</p>
+{% elif doc.status == 'cancelada' %}
+<p class="status cancelada">Documento cancelado.</p>
+{% endif %}
+
+<div class="bloco">
+    <strong>Responsável Unidade Origem</strong>
+    <span class="nome">{{ doc.criador.nome if doc.criador else '—' }}</span>
+    <span class="data">{{ doc.criado_em | br_datetime if doc.criado_em else '—' }}</span>
+</div>
+
+<div class="bloco">
+    <strong>Responsável Unidade Destino</strong>
+    <span class="nome">{{ doc.aceitador.nome if doc.aceitador else 'A definir no aceite' }}</span>
+    <span class="data">{% if doc.status == 'aceita' and doc.resolvido_em %}{{ doc.resolvido_em | br_datetime }}{% elif doc.status == 'recusada' or doc.status == 'cancelada' %}{{ doc.resolvido_em | br_datetime if doc.resolvido_em else '—' }}{% else %}Aguardando aceite{% endif %}</span>
+</div>
+
+{% if doc.status == 'aceita' %}
+<div class="status aceita">Status: Aceito — {{ doc.unidade_origem.nome }} → {{ doc.unidade_destino.nome }}</div>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if planejamento else 'Novo' }} Planejamento{% endblock %}
+
+{% block head %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+.ql-container { min-height: 120px; font-size: .95rem; }
+.upload-zona {
+    border: 2px dashed #d1d5db; border-radius: 12px;
+    padding: 1rem; text-align: center; cursor: pointer;
+    background: #f9fafb; transition: border-color .2s, background .2s;
+}
+.upload-zona:hover, .upload-zona.drag-over {
+    border-color: #1A82B8; background: #eff6ff;
+}
+.upload-zona input[type=file] { display: none; }
+.anexos-lista { margin-top: .5rem; }
+.anexo-item {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .35rem .5rem; background: #f1f5f9; border-radius: 6px;
+    margin-bottom: .3rem; font-size: .85rem;
+}
+.anexo-item a { color: #1A82B8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('planejamentos.listar') }}">Planejamentos</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if planejamento else 'Novo' }} Planejamento</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-clipboard2-plus me-2"></i>{{ 'Editar' if planejamento else 'Novo' }} Planejamento</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('planejamentos.editar', id=planejamento.id) if planejamento else url_for('planejamentos.criar') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+                <input type="text" name="titulo" class="form-control" required
+                       value="{{ planejamento.titulo if planejamento else '' }}"
+                       placeholder="Ex.: Demandas Saúde Digital 2026">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Descrição</label>
+                <div id="editorDescricao" style="background:#fff; border:1px solid #ced4da; border-radius:6px;"></div>
+                <input type="hidden" name="descricao" id="inputDescricao">
+            </div>
+            {% if not planejamento %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Unidade <span class="text-danger">*</span></label>
+                <select name="unidade_id" class="form-select" required>
+                    {% for u in unidades %}
+                    <option value="{{ u.id }}">{{ u.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="mb-4">
+                <label class="form-label fw-semibold">GUT — Priorização</label>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Gravidade</label>
+                        <select name="gravidade" id="selGravidade" class="form-select">
+                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.gravidade == 1) else '' }}>Muito baixo (impacto insignificante)</option>
+                            <option value="2" {{ 'selected' if planejamento and planejamento.gravidade == 2 else '' }}>Baixo</option>
+                            <option value="3" {{ 'selected' if planejamento and planejamento.gravidade == 3 else '' }}>Médio</option>
+                            <option value="4" {{ 'selected' if planejamento and planejamento.gravidade == 4 else '' }}>Alto (impacto relevante)</option>
+                            <option value="5" {{ 'selected' if planejamento and planejamento.gravidade == 5 else '' }}>Crítico (impacto severo)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Urgência</label>
+                        <select name="urgencia" id="selUrgencia" class="form-select">
+                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.urgencia == 1) else '' }}>Pode esperar</option>
+                            <option value="2" {{ 'selected' if planejamento and planejamento.urgencia == 2 else '' }}>Pouco urgente</option>
+                            <option value="3" {{ 'selected' if planejamento and planejamento.urgencia == 3 else '' }}>Urgente</option>
+                            <option value="4" {{ 'selected' if planejamento and planejamento.urgencia == 4 else '' }}>Muito urgente</option>
+                            <option value="5" {{ 'selected' if planejamento and planejamento.urgencia == 5 else '' }}>Imediato</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Tendência</label>
+                        <select name="tendencia" id="selTendencia" class="form-select">
+                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.tendencia == 1) else '' }}>Estável (não piora)</option>
+                            <option value="2" {{ 'selected' if planejamento and planejamento.tendencia == 2 else '' }}>Leve piora</option>
+                            <option value="3" {{ 'selected' if planejamento and planejamento.tendencia == 3 else '' }}>Piora moderada</option>
+                            <option value="4" {{ 'selected' if planejamento and planejamento.tendencia == 4 else '' }}>Piora rápida</option>
+                            <option value="5" {{ 'selected' if planejamento and planejamento.tendencia == 5 else '' }}>Piora iminente</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-center">
+                        <span class="badge fs-6 px-3 py-2" id="gutResultado">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Anexos</label>
+                <div class="upload-zona" id="uploadZona">
+                    <input type="file" name="anexos" id="inputAnexos" multiple
+                           accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf">
+                    <i class="bi bi-cloud-arrow-up fs-3 text-muted d-block mb-1"></i>
+                    <span class="text-muted small">Arraste arquivos aqui ou clique para selecionar</span>
+                    <div class="form-text mt-1">PDF ou fotos (JPG, PNG, etc.). Até 20 MB por arquivo.</div>
+                </div>
+                {% if planejamento and planejamento.anexos.count() %}
+                <div class="anexos-lista mt-2">
+                    <div class="small fw-semibold text-muted mb-1">Anexos atuais:</div>
+                    {% for a in planejamento.anexos %}
+                    <div class="anexo-item">
+                        {% if a.eh_imagem %}
+                        <i class="bi bi-image text-success"></i>
+                        {% else %}
+                        <i class="bi bi-file-earmark-pdf text-danger"></i>
+                        {% endif %}
+                        <a href="{{ a.url }}" target="_blank">{{ a.original }}</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2 me-1"></i>{{ 'Salvar' if planejamento else 'Criar' }}
+                </button>
+                <a href="{{ url_for('planejamentos.listar', expand=planejamento.id, unidade_id=planejamento.unidade_id) if planejamento else url_for('planejamentos.listar') }}"
+                   class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function () {
+    var conteudoInicial = {{ (planejamento.descricao if planejamento and planejamento.descricao else '') | tojson }};
+    var editorEl = document.getElementById('editorDescricao');
+    var inputEl = document.getElementById('inputDescricao');
+    if (editorEl && inputEl && typeof Quill !== 'undefined') {
+        var Link = Quill.import('formats/link');
+        var LinkCustom = Link.extend({
+            create: function (value) {
+                var node = Link.create.call(this, value);
+                node.setAttribute('target', '_blank');
+                node.setAttribute('rel', 'noopener noreferrer');
+                return node;
+            }
+        });
+        Quill.register(LinkCustom, true);
+        var quill = new Quill(editorEl, {
+            theme: 'snow',
+            placeholder: 'Descreva o objetivo do planejamento...',
+            modules: {
+                toolbar: [
+                    [{ 'header': [2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+        if (conteudoInicial) quill.root.innerHTML = conteudoInicial;
+        quill.root.querySelectorAll('a').forEach(function (a) {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+        });
+        var form = editorEl.closest('form');
+        if (form) {
+            form.addEventListener('submit', function () {
+                quill.root.querySelectorAll('a').forEach(function (a) {
+                    a.setAttribute('target', '_blank');
+                    a.setAttribute('rel', 'noopener noreferrer');
+                });
+                inputEl.value = quill.root.innerHTML;
+            });
+        }
+    }
+})();
+</script>
+<script>
+(function () {
+    var niveis = [
+        { min: 81, max: 125, texto: 'Prioridade crítica', cls: 'bg-danger' },
+        { min: 51, max: 80, texto: 'Alta prioridade', cls: 'bg-warning text-dark' },
+        { min: 21, max: 50, texto: 'Prioridade moderada', cls: 'bg-info text-dark' },
+        { min: 1, max: 20, texto: 'Baixa prioridade', cls: 'bg-success' }
+    ];
+    function atualizarGUT() {
+        var g = parseInt(document.getElementById('selGravidade')?.value || 1, 10);
+        var u = parseInt(document.getElementById('selUrgencia')?.value || 1, 10);
+        var t = parseInt(document.getElementById('selTendencia')?.value || 1, 10);
+        var score = g * u * t;
+        var el = document.getElementById('gutResultado');
+        if (!el) return;
+        var item = niveis.find(function (n) { return score >= n.min && score <= n.max; }) || niveis[niveis.length - 1];
+        el.textContent = item.texto;
+        el.className = 'badge fs-6 px-3 py-2 ' + item.cls;
+    }
+    ['selGravidade', 'selUrgencia', 'selTendencia'].forEach(function (id) {
+        var sel = document.getElementById(id);
+        if (sel) sel.addEventListener('change', atualizarGUT);
+    });
+    atualizarGUT();
+})();
+</script>
+<script>
+(function () {
+    var zona = document.getElementById('uploadZona');
+    var inp  = document.getElementById('inputAnexos');
+    if (zona && inp) {
+        zona.addEventListener('click', function () { inp.click(); });
+        zona.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            zona.classList.add('drag-over');
+        });
+        zona.addEventListener('dragleave', function () { zona.classList.remove('drag-over'); });
+        zona.addEventListener('drop', function (e) {
+            e.preventDefault();
+            zona.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                inp.files = e.dataTransfer.files;
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

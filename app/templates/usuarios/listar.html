@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-people"></i>
+        {% if is_admin %}Usuários do Sistema{% else %}Usuários da(s) Unidade(s){% endif %}
+    </h1>
+    {% if pode_cadastrar %}
+    <a href="{{ url_for('usuarios.novo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo Usuário
+    </a>
+    {% endif %}
+</div>
+
+{% if not is_admin %}
+<div class="alert alert-info py-2 mb-3">
+    <i class="bi bi-info-circle me-2"></i>
+    Exibindo apenas os usuários vinculados às suas unidades.
+    {% if pode_cadastrar %}
+    Você pode cadastrar novos usuários com perfil <strong>Administrativo</strong> ou <strong>Profissional</strong>.
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th class="d-none d-md-table-cell">E-mail</th>
+                        <th class="d-none d-md-table-cell">
+                            <i class="bi bi-whatsapp text-success me-1"></i>Telefone (WhatsApp)
+                        </th>
+                        <th>Perfil</th>
+                        <th class="d-none d-lg-table-cell">Matrícula(s) | CBO</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    {% set mats = u.matriculas.all() %}
+                    <tr>
+                        <td class="fw-semibold small">{{ u.nome }}</td>
+
+                        <td class="small text-muted d-none d-md-table-cell">
+                            {% if u.email %}
+                            <a href="mailto:{{ u.email }}" class="text-decoration-none text-muted">
+                                {{ u.email }}
+                            </a>
+                            {% else %}—{% endif %}
+                        </td>
+
+                        <td class="small d-none d-md-table-cell">
+                            {% set _fone = u.whatsapp or u.telefone %}
+                            {% if _fone %}
+                            {% set wnum = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
+                            <a href="https://wa.me/55{{ wnum }}" target="_blank"
+                               class="text-success text-decoration-none d-flex align-items-center gap-1">
+                                <i class="bi bi-whatsapp"></i>
+                                <span>{{ _fone | br_fone }}</span>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge bg-secondary">{{ u.perfil_label }}</span>
+                        </td>
+
+                        <td class="small d-none d-lg-table-cell">
+                            {% if mats %}
+                            <div class="d-flex flex-column gap-1">
+                                {% for m in mats %}
+                                <span class="{{ 'text-muted' if not m.ativo else '' }}">
+                                    <span class="fw-semibold">{{ m.numero }}</span>
+                                    {% if m.cbo %}
+                                    <span class="text-muted mx-1">|</span>
+                                    <span class="{{ 'text-decoration-line-through text-muted' if not m.ativo else '' }}">
+                                        {{ m.cbo_label }}
+                                    </span>
+                                    {% endif %}
+                                    {% if not m.ativo %}
+                                    <span class="badge bg-light text-secondary ms-1" style="font-size:.7rem">inativa</span>
+                                    {% endif %}
+                                </span>
+                                {% endfor %}
+                            </div>
+                            {% elif u.cbo %}
+                            <span class="text-muted fst-italic">Sem matrícula</span>
+                            <span class="text-muted mx-1">|</span>
+                            <span>{{ u.cbo_label }}</span>
+                            {% else %}
+                            <span class="text-muted fst-italic">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="badge bg-{{ 'success' if u.ativo else 'danger' }}">
+                                {{ 'Ativo' if u.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <a href="{{ url_for('usuarios.editar', id=u.id) }}"
+                               class="btn btn-sm btn-outline-secondary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

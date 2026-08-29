@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Fichas CNES — {{ usuario.nome }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('usuarios.listar') }}">Usuários</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('usuarios.editar', id=usuario.id) }}">{{ usuario.nome }}</a></li>
+        <li class="breadcrumb-item active">Fichas CNES</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-person me-2"></i>Fichas CNES — {{ usuario.nome }}</h1>
+</div>
+
+{% if fichas %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle small">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Unidade</th>
+                        <th>CNES Unidade</th>
+                        <th>CBO</th>
+                        <th>Vínculo</th>
+                        <th>CH/sem</th>
+                        <th>Data de Entrada</th>
+                        <th>Gerado em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in fichas %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-{{ f.tipo_badge }}">{{ f.tipo_label }}</span>
+                        </td>
+                        <td class="fw-semibold">
+                            <a href="{{ url_for('unidades.detalhe', id=f.unidade_id) }}" class="text-decoration-none">
+                                {{ f.unidade.nome }}
+                            </a>
+                        </td>
+                        <td class="text-muted">{{ f.unidade.numero_cnes or '—' }}</td>
+                        <td class="text-muted">
+                            {% if f.cbo %}
+                            <span title="{{ f.cbo_label }}">{{ f.cbo }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="text-muted">{{ f.vinculo_label if f.vinculo else '—' }}</td>
+                        <td class="text-muted">{{ (f.carga_horaria | string + 'h') if f.carga_horaria else '—' }}</td>
+                        <td class="text-muted">{{ f.dt_entrada_unidade | br_date if f.dt_entrada_unidade else '—' }}</td>
+                        <td class="text-muted">{{ f.gerado_em | br_datetime }}</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary" title="Abrir ficha"
+                                        onclick="abrirImpresso('{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=f.id) }}', 'Ficha CNES')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <a href="{{ links_email[f.id] }}"
+                                   class="btn btn-sm btn-outline-success" title="Enviar por e-mail">
+                                    <i class="bi bi-envelope"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center text-muted py-4">
+        <i class="bi bi-file-earmark-person fs-2 d-block mb-2"></i>
+        Nenhuma ficha CNES gerada para este profissional ainda.<br>
+        <small>As fichas são geradas automaticamente ao vincular ou desvincular o profissional de uma unidade.</small>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

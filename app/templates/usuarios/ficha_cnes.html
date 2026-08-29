@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha CNES — {{ usuario.nome }}</title>
+<style>
+  /* ── Reset básico ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+  }
+
+  /* ── Área de ação (não imprime) ── */
+  .no-print {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .btn-print {
+    background: #1A82B8; color: #fff; border: none;
+    padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+  }
+  .btn-email {
+    background: #19A88B; color: #fff; border: none;
+    padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-voltar {
+    background: #6c757d; color: #fff; border: none;
+    padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  /* ── Ficha ── */
+  .ficha {
+    max-width: 720px;
+    margin: 0 auto;
+    border: 1px solid #000;
+    padding: 12px 14px;
+  }
+
+  h2.titulo {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .linha {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 5px;
+    align-items: flex-end;
+  }
+
+  .campo {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 60px;
+  }
+  .campo.fixo-sm  { flex: 0 0 80px; }
+  .campo.fixo-md  { flex: 0 0 140px; }
+  .campo.fixo-lg  { flex: 0 0 200px; }
+  .campo.fixo-xl  { flex: 0 0 300px; }
+  .campo.grow     { flex: 1 1 200px; }
+
+  .label {
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #333;
+    margin-bottom: 2px;
+  }
+  .valor {
+    border-bottom: 1px solid #000;
+    min-height: 16px;
+    padding: 0 2px 1px;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .valor.vazio { color: #ccc; }
+
+  .secao {
+    border-top: 1px solid #555;
+    margin-top: 8px;
+    padding-top: 6px;
+  }
+  .secao-titulo {
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 5px;
+  }
+
+  /* ── Tabela de vínculos ── */
+  table.tabela-vinculos {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 10px;
+  }
+  table.tabela-vinculos th,
+  table.tabela-vinculos td {
+    border: 1px solid #000;
+    padding: 3px 6px;
+    text-align: left;
+  }
+  table.tabela-vinculos th { background: #eee; font-size: 9px; text-transform: uppercase; }
+
+  /* ── Assinatura ── */
+  .assinatura {
+    margin-top: 24px;
+    border-top: 1px solid #000;
+    padding-top: 4px;
+    text-align: center;
+    font-size: 10px;
+  }
+
+  /* ── Rodapé ── */
+  .rodape-obs {
+    margin-top: 8px;
+    font-size: 9px;
+    color: #555;
+    border-top: 1px solid #ccc;
+    padding-top: 4px;
+  }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .ficha { border: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Botões de ação (não imprimem) -->
+<div class="no-print">
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    {% for u in unidades %}
+    <a class="btn-email" href="{{ links_email[u.id] }}">
+       ✉️ E-mail CNES — {{ u.nome }}{% if u.numero_cnes %} ({{ u.numero_cnes }}){% endif %}
+    </a>
+    {% endfor %}
+    {% if not unidades %}
+    <span style="color:#888;font-size:12px;padding:8px 0;display:inline-block;">
+        (Vincule o profissional a uma unidade para enviar o e-mail CNES)
+    </span>
+    {% endif %}
+    <a class="btn-voltar" href="{{ url_for('usuarios.editar', id=usuario.id) }}">← Voltar</a>
+</div>
+
+<!-- FICHA -->
+<div class="ficha">
+    <h2 class="titulo">Ficha para Cadastramento de Profissionais no CNES</h2>
+
+    {% macro val(v) %}{{ v if v else '—' }}{% endmacro %}
+    {% macro campo(lbl, v, cls='') %}
+    <div class="campo {{ cls }}">
+        <span class="label">{{ lbl }}</span>
+        <span class="valor {% if not v %}vazio{% endif %}">{{ val(v) }}</span>
+    </div>
+    {% endmacro %}
+
+    <!-- Unidades vinculadas -->
+    {% if unidades %}
+    {% for u in unidades %}
+    <div class="linha">
+        {{ campo('Unidade de Saúde', u.nome, 'grow') }}
+        {{ campo('CNES', u.numero_cnes, 'fixo-md') }}
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="linha">
+        {{ campo('Unidade de Saúde', '', 'grow') }}
+        {{ campo('CNES', '', 'fixo-md') }}
+    </div>
+    {% endif %}
+
+    <!-- Identificação pessoal -->
+    <div class="linha">
+        {{ campo('CPF', usuario.cpf, 'fixo-lg') }}
+        {{ campo('CNS', usuario.cns, 'fixo-lg') }}
+        {{ campo('Sexo', ('Masculino' if usuario.sexo == 'M' else 'Feminino') if usuario.sexo else None, 'fixo-md') }}
+    </div>
+    <div class="linha">
+        {{ campo('Nome Completo', usuario.nome, 'grow') }}
+    </div>
+    <div class="linha">
+        {{ campo('Nome da Mãe', usuario.nome_mae, 'grow') }}
+    </div>
+    <div class="linha">
+        {{ campo('Nome do Pai', usuario.nome_pai, 'grow') }}
+    </div>
+    <div class="linha">
+        {{ campo('Data de Nascimento', usuario.data_nasc | br_date if usuario.data_nasc else None, 'fixo-md') }}
+        {% if usuario.nacionalidade == 'estrangeira' %}
+        {{ campo('Nacionalidade', 'Estrangeira', 'fixo-md') }}
+        {{ campo('Data de Entrada', usuario.dt_entrada_pais | br_date if usuario.dt_entrada_pais else None, 'fixo-md') }}
+        {{ campo('País de Origem', usuario.pais_origem, 'grow') }}
+        {% else %}
+        {{ campo('Mun. de Nascimento', usuario.municipio_nasc, 'grow') }}
+        {{ campo('UF Nasc.', usuario.uf_nasc, 'fixo-sm') }}
+        {{ campo('Nacionalidade', 'Brasileira', 'fixo-md') }}
+        {% endif %}
+    </div>
+
+    <!-- RG -->
+    <div class="secao">
+        <div class="secao-titulo">Documento de Identidade</div>
+        <div class="linha">
+            {{ campo('RG', usuario.rg, 'fixo-lg') }}
+            {{ campo('UF', usuario.rg_uf, 'fixo-sm') }}
+            {{ campo('Órgão Emissor', usuario.rg_orgao, 'fixo-md') }}
+            {{ campo('Emissão', usuario.rg_emissao | br_date if usuario.rg_emissao else None, 'fixo-md') }}
+        </div>
+    </div>
+
+    <!-- Escolaridade / Escola -->
+    <div class="secao">
+        <div class="secao-titulo">Escolaridade</div>
+        <div class="linha">
+            {{ campo('Escolaridade', usuario.escolaridade_label, 'grow') }}
+            {{ campo('Frequenta Escola?',
+                ('Sim' if usuario.frequenta_escola == True else ('Não' if usuario.frequenta_escola == False else None)),
+                'fixo-md') }}
+        </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="secao">
+        <div class="secao-titulo">Endereço</div>
+        <div class="linha">
+            {{ campo('Logradouro', usuario.end_logradouro, 'grow') }}
+            {{ campo('Nº', usuario.end_numero, 'fixo-sm') }}
+        </div>
+        <div class="linha">
+            {{ campo('Bairro', usuario.end_bairro, 'fixo-lg') }}
+            {{ campo('Município', usuario.end_municipio, 'grow') }}
+            {{ campo('UF', usuario.end_uf, 'fixo-sm') }}
+            {{ campo('CEP', usuario.end_cep, 'fixo-md') }}
+        </div>
+        <div class="linha">
+            {{ campo('Telefone', usuario.telefone or usuario.whatsapp, 'fixo-lg') }}
+        </div>
+    </div>
+
+    <!-- Dados profissionais -->
+    <div class="secao">
+        <div class="secao-titulo">Dados Profissionais</div>
+        <div class="linha">
+            {{ campo('Nº de Registro no Conselho de Classe', usuario.reg_conselho, 'grow') }}
+            {{ campo('Órgão Emissor (CRM, CRO, COREN...)', usuario.orgao_emissor, 'fixo-lg') }}
+        </div>
+        <div class="linha">
+            {{ campo('Vínculo', (usuario.vinculo ~ ' – ' ~ usuario.vinculo_label) if usuario.vinculo else None, 'fixo-xl') }}
+            {{ campo('Tipo', (usuario.tipo_vinculo ~ ' – ' ~ usuario.tipo_vinculo_label) if usuario.tipo_vinculo else None, 'fixo-xl') }}
+            {{ campo('Carga Horária Semanal (h)', (usuario.carga_horaria | string) if usuario.carga_horaria else None, 'fixo-sm') }}
+        </div>
+        <div class="linha">
+            {{ campo('Especialidade de Atuação na Unidade (CBO)', usuario.cbo_label, 'grow') }}
+        </div>
+        {% if usuario.vinculo == '5' or usuario.especialidade_residencia %}
+        <div class="linha">
+            {{ campo('Especialidade / Residência Médica', usuario.especialidade_residencia, 'grow') }}
+        </div>
+        {% endif %}
+        <div class="linha">
+            {{ campo('Data de Entrada na Unidade',
+                usuario.dt_entrada_unidade | br_date if usuario.dt_entrada_unidade else None,
+                'fixo-lg') }}
+            {{ campo('Matrícula', usuario.matricula, 'fixo-md') }}
+        </div>
+    </div>
+
+    <!-- Tabela de referência de vínculos -->
+    <table class="tabela-vinculos" style="margin-top:14px">
+        <thead>
+            <tr>
+                <th>Código</th><th>Vínculo</th>
+                <th>Tipo de Vínculo</th><th>Descrição do Tipo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>Vínculo Empregatício</td><td>1</td><td>Estatutário</td></tr>
+            <tr><td>1</td><td>Vínculo Empregatício</td><td>3</td><td>Contrato por Prazo Determinado</td></tr>
+            <tr><td>5</td><td>Residência</td><td>0</td><td>Sem Tipo</td></tr>
+            <tr><td>6</td><td>Estágio</td><td>0</td><td>Sem Tipo</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Assinatura -->
+    <div class="assinatura">
+        <p>________________________________________</p>
+        <p>Assinatura do Profissional</p>
+    </div>
+
+    <div class="rodape-obs">
+        * Campos com * são de preenchimento obrigatório no CNES. &nbsp;|&nbsp;
+        ** Especialidade/Residência é obrigatória para residente (vínculo 5).
+    </div>
+</div>
+
+</body>
+</html>

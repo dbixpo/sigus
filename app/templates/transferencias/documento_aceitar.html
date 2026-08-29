@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Resolver Termo de {{ doc.tipo_label }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('transferencias.listar') }}" class="btn btn-sm btn-outline-secondary me-2">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1><i class="bi bi-arrow-left-right"></i> Resolver Termo de {{ doc.tipo_label }}</h1>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-md-5">
+        <div class="card mb-3">
+            <div class="card-header">Materiais no documento</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Qtd</th>
+                                <th>Descrição</th>
+                                <th>Patr./Série</th>
+                                <th>Class.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in doc.itens %}
+                            <tr>
+                                <td>{{ item.quantidade }}</td>
+                                <td>{{ item.descricao_exibicao() }}</td>
+                                <td class="small text-muted">{{ item.numero_patrimonio_ou_serie() or '—' }}</td>
+                                <td><span class="badge bg-secondary">{{ item.classificacao }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Detalhes</div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted small">Tipo</th><td><span class="badge bg-secondary">{{ doc.tipo_label }}</span></td></tr>
+                    <tr><th class="text-muted small">Origem</th><td class="small">{{ doc.unidade_origem.nome }}</td></tr>
+                    <tr><th class="text-muted small">Destino</th><td class="small fw-semibold text-primary">{{ doc.unidade_destino.nome }}</td></tr>
+                    <tr><th class="text-muted small">Criado por</th><td class="small">{{ doc.criador.nome if doc.criador else '—' }}</td></tr>
+                    <tr><th class="text-muted small">Data</th><td class="small">{{ doc.criado_em | br_datetime if doc.criado_em else '—' }}</td></tr>
+                    {% if doc.observacao %}
+                    <tr><th class="text-muted small">Observação</th><td class="small">{{ doc.observacao }}</td></tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-7">
+        <div class="card border-success mb-3">
+            <div class="card-header bg-success bg-opacity-10 text-success-emphasis fw-bold">
+                <i class="bi bi-check-circle me-2"></i>Aceitar
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="aceitar">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Alocar em qual sala? <span class="text-danger">*</span>
+                        </label>
+                        <select name="sala_destino_id" class="form-select" required>
+                            <option value="">— Selecione a sala —</option>
+                            {% for s in salas_destino %}
+                            <option value="{{ s.id }}">{{ s.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Os equipamentos serão movidos para esta sala.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observação (opcional)</label>
+                        <textarea name="observacao_aceite" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check-circle me-1"></i>Aceitar e Alocar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-danger">
+            <div class="card-header bg-danger bg-opacity-10 text-danger-emphasis fw-bold">
+                <i class="bi bi-x-circle me-2"></i>Recusar
+            </div>
+            <div class="card-body">
+                <form method="POST"
+                      onsubmit="return confirm('Confirmar recusa?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="recusar">
+                    <div class="mb-3">
+                        <label class="form-label">Motivo da recusa</label>
+                        <textarea name="observacao_aceite" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="bi bi-x-circle me-1"></i>Recusar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if status else 'Novo' }} Status de Chamado{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>
+        <i class="bi bi-tags me-2"></i>
+        {{ 'Editar' if status else 'Novo' }} Status de Chamado
+    </h1>
+</div>
+
+<div class="row justify-content-center">
+<div class="col-md-7">
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            {% if not status %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Slug (identificador interno) <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="slug" class="form-control font-monospace"
+                       required maxlength="30"
+                       placeholder="ex: aguardando_aprovacao"
+                       pattern="[a-z0-9_]+"
+                       title="Apenas letras minúsculas, números e underline">
+                <div class="form-text">
+                    Identificador único, sem espaços. Use underline (_) para separar palavras.
+                    <strong>Não poderá ser alterado depois.</strong>
+                </div>
+            </div>
+            {% else %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Slug</label>
+                <input type="text" class="form-control font-monospace bg-light"
+                       value="{{ status.slug }}" disabled>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">
+                    Nome do Status <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="label" class="form-control"
+                       required maxlength="80"
+                       value="{{ status.label if status else '' }}"
+                       placeholder="ex: Aguardando Aprovação">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cor do Badge</label>
+                <div class="d-flex flex-wrap gap-2 mb-2" id="corBtns">
+                    {% for slug_cor, nome_cor in badge_cores %}
+                    <button type="button"
+                            class="btn btn-sm btn-{{ slug_cor }} cor-btn
+                                   {{ 'active ring-sel' if (status and status.badge_cor == slug_cor) or (not status and slug_cor == 'secondary') }}"
+                            data-cor="{{ slug_cor }}">
+                        {{ nome_cor }}
+                    </button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="badge_cor" id="hiddenBadgeCor"
+                       value="{{ status.badge_cor if status else 'secondary' }}">
+                <div class="mt-2">
+                    Prévia: <span class="badge" id="previewBadge"
+                                  style="background-color: inherit">
+                        <span id="previewTexto">{{ status.label if status else 'Status' }}</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Ordem de exibição</label>
+                <input type="number" name="ordem" class="form-control" style="max-width:120px"
+                       min="0" max="999"
+                       value="{{ status.ordem if status else proximo_ordem }}">
+                <div class="form-text">Menor número aparece primeiro.</div>
+            </div>
+
+            <div class="mb-3 border rounded p-3 bg-light">
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="padrao_listagem" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="chkPadrao" name="padrao_listagem" value="1"
+                           {{ 'checked' if status and status.padrao_listagem }}>
+                    <label class="form-check-label" for="chkPadrao">
+                        <strong>Padrão de listagem</strong>
+                        <span class="text-muted fw-normal">— pré-selecionar ao abrir a lista de chamados</span>
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="encerra_chamado" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="chkEncerra" name="encerra_chamado" value="1"
+                           {{ 'checked' if status and status.encerra_chamado }}>
+                    <label class="form-check-label" for="chkEncerra">
+                        <strong>Encerra o chamado</strong>
+                        <span class="text-muted fw-normal">— define data de fechamento e bloqueia novos andamentos</span>
+                    </label>
+                </div>
+                {% if status %}
+                <div class="form-check form-switch">
+                    <input type="hidden" name="ativo" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           id="chkAtivo" name="ativo" value="1"
+                           {{ 'checked' if status.ativo }}>
+                    <label class="form-check-label" for="chkAtivo">
+                        <strong>Ativo</strong>
+                        <span class="text-muted fw-normal">— desativar oculta das opções sem apagar histórico</span>
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ url_for('configuracoes.status_chamados') }}"
+                   class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const hidden  = document.getElementById('hiddenBadgeCor');
+    const preview = document.getElementById('previewBadge');
+    const previewTexto = document.getElementById('previewTexto');
+    const labelInput   = document.querySelector('input[name=label]');
+
+    document.querySelectorAll('.cor-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.cor-btn').forEach(b => b.classList.remove('ring-sel'));
+            btn.classList.add('ring-sel');
+            const cor = btn.dataset.cor;
+            hidden.value = cor;
+            preview.className = 'badge bg-' + cor;
+        });
+    });
+
+    labelInput?.addEventListener('input', () => {
+        previewTexto.textContent = labelInput.value || 'Status';
+    });
+})();
+</script>
+<style>
+.ring-sel { outline: 3px solid #000; outline-offset: 2px; }
+</style>
+{% endblock %}

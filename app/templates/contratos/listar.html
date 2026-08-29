@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Contratos{% endblock %}
+
+{% block content %}
+<style>
+.th-sort a:hover { opacity: 0.8; }
+.th-sort a { transition: opacity 0.15s; }
+</style>
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-text"></i> Contratos</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.pode('cadastrar_contrato') %}
+        <a href="{{ url_for('contratos.novo') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Contrato
+        </a>
+        {% endif %}
+        {% if current_user.pode('emitir_relatorios') %}
+        <a href="{{ url_for('relatorios.contratos') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-bar-chart-line me-1"></i>Relatórios
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <input type="hidden" name="sort" value="{{ sort_col }}">
+        <input type="hidden" name="order" value="{{ sort_order }}">
+        <div class="col-md-3">
+            <label class="form-label mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="vigente" {% if filtro_status == 'vigente' %}selected{% endif %}>Vigente</option>
+                <option value="a_vencer" {% if filtro_status == 'a_vencer' %}selected{% endif %}>A Vencer</option>
+                <option value="vencido" {% if filtro_status == 'vencido' %}selected{% endif %}>Vencido</option>
+                <option value="encerrado" {% if filtro_status == 'encerrado' %}selected{% endif %}>Encerrado</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1">Mandado Judicial</label>
+            <select name="mandado_judicial" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                <option value="1" {% if filtro_mandado_judicial == '1' %}selected{% endif %}>Sim</option>
+                <option value="0" {% if filtro_mandado_judicial == '0' %}selected{% endif %}>Não</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('contratos.listar') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if contratos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        {% macro th_sort(key, label) %}
+                        <th class="th-sort">
+                            <a href="{{ url_for('contratos.listar', status=filtro_status, mandado_judicial=filtro_mandado_judicial, sort=key, order=('desc' if sort_col == key and sort_order == 'asc' else 'asc')) }}" class="text-decoration-none text-dark d-flex align-items-center gap-1">
+                                {{ label }}
+                                {% if sort_col == key %}
+                                <i class="bi bi-chevron-{{ 'up' if sort_order == 'asc' else 'down' }} small"></i>
+                                {% else %}
+                                <i class="bi bi-chevron-expand text-muted small opacity-50"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        {% endmacro %}
+                        {{ th_sort('identificador', 'CPL / Nº SEI') }}
+                        <th>MJ</th>
+                        {{ th_sort('empresa', 'Empresa') }}
+                        {{ th_sort('tipo', 'Tipo') }}
+                        {{ th_sort('objeto', 'Objeto') }}
+                        <th>Equipamentos cobertos</th>
+                        {{ th_sort('inicio', 'Início') }}
+                        {{ th_sort('vencimento', 'Vencimento') }}
+                        {{ th_sort('dias', 'Dias Restantes') }}
+                        <th>Itens</th>
+                        {{ th_sort('status', 'Status') }}
+                        {{ th_sort('atualizado', 'Atualizado') }}
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in contratos %}
+                    <tr onclick="window.location='{{ url_for('contratos.detalhe', id=c.id) }}'" style="cursor:pointer;">
+                        <td class="small fw-semibold text-primary">{{ c.identificador }}</td>
+                        <td class="small">
+                            {% if c.mandado_judicial %}
+                            <span class="badge bg-warning text-dark" title="Mandado Judicial">Sim</span>
+                            {% else %}
+                            <span class="badge bg-light text-muted">Não</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ c.empresa_display | truncate(30) }}</td>
+                        <td class="small text-muted">{{ c.tipo_contrato or '—' }}</td>
+                        <td class="small text-muted" title="{{ c.objeto or '' }}">{{ (c.objeto or '—') | truncate(40) }}</td>
+                        <td class="small text-muted" title="{{ c.equipamentos_cobertos_display }}">{{ (c.equipamentos_cobertos_display or '—') | truncate(50) }}</td>
+                        <td class="small">{{ c.data_inicio | br_date }}</td>
+                        <td class="small">{{ c.data_fim | br_date }}</td>
+                        <td class="small {% if c.dias_restantes < 0 %}text-danger fw-bold{% elif c.dias_restantes <= 60 %}text-warning fw-bold{% else %}text-success{% endif %}">
+                            {% if c.dias_restantes < 0 %}
+                                Vencido há {{ (-c.dias_restantes) }} dias
+                            {% else %}
+                                {{ c.dias_restantes }} dias
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-primary">{{ c.total_itens }}</span></td>
+                        <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                        <td class="small text-muted text-nowrap"
+                            title="Última atualização: {{ c.atualizado_em | br_datetime }}">
+                            {{ c.atualizado_em | br_date }}
+                        </td>
+                        <td><a href="{{ url_for('contratos.detalhe', id=c.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="bi bi-file-earmark-text"></i><h6>Nenhum contrato cadastrado.</h6></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

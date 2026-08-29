@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ titulo_impresso | default('Planejamentos — Resumo') }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; line-height: 1.4; }
+.doc { max-width: 900px; margin: 0 auto; }
+.cabecalho {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    border-bottom: 2.5px solid #000; padding-bottom: 14px; margin-bottom: 22px;
+}
+.cab-logo img { height: 58px; width: auto; }
+.cab-titulo {
+    flex: 1; text-align: center;
+    font-size: 14px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
+}
+.cab-titulo .subtitulo { font-size: 11px; font-weight: 600; color: #333; margin-top: 4px; display: block; }
+.cab-titulo .cab-aba { font-size: 10px; font-weight: 600; color: #555; margin-top: 10px; text-transform: none; }
+.cab-secretaria { text-align: right; font-size: 12px; line-height: 1.45; white-space: nowrap; }
+.cab-secretaria strong { font-size: 14px; display: block; }
+
+.tabela-planilha { width: 100%; border-collapse: collapse; font-size: 11px; }
+.tabela-planilha th, .tabela-planilha td {
+    border: 1px solid #999;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: middle;
+}
+.tabela-planilha th {
+    background: #e8ecef;
+    font-weight: 600;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.tabela-planilha tbody tr:nth-child(even) { background: #fafbfc; }
+.progress-wrap { display: inline-flex; align-items: center; gap: 6px; }
+.progress-bar-bg {
+    width: 90px; height: 12px; background: #e8ecef; border-radius: 4px; overflow: hidden;
+    display: flex; flex-direction: row; border: 1px solid #cbd5e1;
+}
+.progress-bar-bg .seg { height: 100%; }
+.progress-bar-bg .seg-verde { background: #16a34a; }
+.progress-bar-bg .seg-em-andamento {
+    background: repeating-linear-gradient(-45deg, #93c5fd 0, #93c5fd 4px, #60a5fa 4px, #60a5fa 8px);
+}
+.progress-bar-bg .seg-pendente {
+    background: repeating-linear-gradient(-45deg, #fde68a 0, #fde68a 4px, #fbbf24 4px, #fbbf24 8px);
+}
+.progress-num { font-weight: 700; color: #198754; font-size: 11px; min-width: 24px; }
+.badge-prio { padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 600; }
+.badge-prio.bg-danger { background: #dc3545; color: #fff; }
+.badge-prio.bg-warning { background: #ffc107; color: #212529; }
+.badge-prio.bg-info { background: #0dcaf0; color: #212529; }
+.badge-prio.bg-success { background: #198754; color: #fff; }
+
+.rodape { text-align: center; font-size: 9px; color: #888; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; }
+
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    @page { margin: 1.2cm; }
+    .tabela-planilha tr { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="no-print" id="barraAcoes" style="display:flex;gap:12px;align-items:center;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:8px;">
+    <button type="button" onclick="window.print();" style="padding:8px 16px;background:#1a6abf;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+        &#x1F5A8; Imprimir / Salvar PDF
+    </button>
+</div>
+<script>
+if (window.self !== window.top) { var b = document.getElementById('barraAcoes'); if (b) b.style.display = 'none'; }
+</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+        </div>
+        <div class="cab-titulo">
+            PLANEJAMENTOS E PROJETOS<br>
+            <span class="subtitulo">{{ (unidade_filtro.nome if unidade_filtro else 'Todas as unidades') | upper }}</span>
+            {% if titulo_impresso %}<div class="cab-aba">{{ titulo_impresso }}</div>{% endif %}
+        </div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
+    </div>
+
+    <p style="margin-bottom:14px;color:#555;font-size:10px;">Impresso em {{ now | br_datetime }}</p>
+
+    <table class="tabela-planilha">
+        <thead>
+            <tr>
+                <th style="width:4%">#</th>
+                <th style="width:36%">Projeto</th>
+                <th style="width:14%">Unidade</th>
+                <th style="width:12%">Prioridade</th>
+                <th style="width:14%">Progresso</th>
+                <th style="width:8%">Ações</th>
+                <th style="width:12%">Última atualização</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for d in planejamentos_dados %}
+        {% set p = d.plano %}
+        {% set _atual = p.atualizado_em or p.criado_em %}
+        {% set _quem = p.ultimo_editor if p.atualizado_por else p.criador %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td style="font-weight:600;">{{ p.titulo }}</td>
+                <td>{{ p.unidade.nome }}</td>
+                <td><span class="badge-prio {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span></td>
+                <td>
+                    <span class="progress-wrap">
+                        <span class="progress-bar-bg">
+                            <span class="seg seg-verde" style="width: {{ d.progresso_pct }}%;"></span>
+                            <span class="seg seg-em-andamento" style="width: {{ d.em_andamento_pct }}%;"></span>
+                            <span class="seg seg-pendente" style="width: {{ d.pendentes_pct }}%;"></span>
+                        </span>
+                        <span class="progress-num">{{ d.progresso_pct }}%</span>
+                    </span>
+                </td>
+                <td>{{ d.acoes_flat|length }}</td>
+                <td>{{ _atual | br_datetime if _atual else '—' }}{% if _quem %}<br><small style="color:#64748b;">{{ _quem.nome }}</small>{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if not planejamentos_dados %}
+    <p style="color:#888;font-size:12px;margin-top:16px;">Nenhum planejamento encontrado.</p>
+    {% endif %}
+
+    <div class="rodape">
+        SIGUS — Sistema de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba · Impresso em {{ now | br_datetime }}
+    </div>
+</div>
+</body>
+</html>

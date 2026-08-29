@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Novo' }} Registro — Controle de Empenho{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('contratos.listar') }}">Contratos</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('contrato_financeiro.listar') }}">Controle de Empenho</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Novo' }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-currency-dollar me-2"></i>{{ 'Editar' if item else 'Novo' }} Registro (FINANCEIRO - DAG)</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form method="POST" id="formEmpenho">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Contrato *</label>
+                        <select name="contrato_id" id="contrato_id" class="form-select" required>
+                            <option value="">— Selecionar contrato (CPL ou Nº SEI) —</option>
+                            {% for c in contratos %}
+                            <option value="{{ c.id }}" {% if (item and item.contrato_id == c.id) or (not item and contrato_id_pre == c.id) %}selected{% endif %}
+                                    data-identificador="{{ c.identificador }}" data-empresa="{{ c.empresa_display }}">
+                                {{ c.identificador }} — {{ c.empresa_display | truncate(50) }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">CPL ou Nº do Processo SEI do contrato</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tipo *</label>
+                        <select name="tipo" class="form-select" required>
+                            <option value="">— Selecionar —</option>
+                            {% for t in tipo_opcoes %}
+                            <option value="{{ t }}" {% if item and item.tipo == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Processo</label>
+                        <input type="text" name="processo" id="processo" class="form-control" value="{{ (item.processo or (item.contrato.identificador if item and item.contrato else '')) if item else '' }}"
+                               placeholder="Preenchido ao selecionar o contrato">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Motivo</label>
+                        <select name="motivo" class="form-select">
+                            <option value="">— Selecionar —</option>
+                            {% for m in motivo_opcoes %}
+                            <option value="{{ m }}" {% if item and item.motivo == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Prestador</label>
+                        <input type="text" name="prestador" id="prestador" class="form-control" value="{{ (item.prestador or (item.contrato.empresa_display if item and item.contrato else '')) if item else '' }}"
+                               placeholder="Preenchido ao selecionar o contrato">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Referência</label>
+                        <input type="text" name="referencia" class="form-control" value="{{ item.referencia if item else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Objeto</label>
+                        <textarea name="objeto" class="form-control" rows="2">{{ item.objeto if item else '' }}</textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Total (R$)</label>
+                        <input type="number" name="valor_total" class="form-control" step="0.01" value="{{ item.valor_total if item and item.valor_total else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Fontes / Rubricas</div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Especializada</label>
+                        <input type="text" name="especializada" class="form-control" value="{{ item.especializada if item else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Vigilância</label>
+                        <input type="text" name="vigilancia" class="form-control" value="{{ item.vigilancia if item else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Atenção Básica</label>
+                        <input type="text" name="atencao_basica" class="form-control" value="{{ item.atencao_basica if item else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Outros</label>
+                        <input type="text" name="outros" class="form-control" value="{{ item.outros if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tabela SUS</label>
+                        <input type="text" name="tabela_sus" class="form-control" value="{{ item.tabela_sus if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Complemento</label>
+                        <input type="text" name="complemento" class="form-control" value="{{ item.complemento if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Reservas</label>
+                        <input type="text" name="reservas" class="form-control" value="{{ item.reservas if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Emenda Municipal</label>
+                        <input type="text" name="emenda_municipal" class="form-control" value="{{ item.emenda_municipal if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Emenda Estadual</label>
+                        <input type="text" name="emenda_estadual" class="form-control" value="{{ item.emenda_estadual if item else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Emenda Federal</label>
+                        <input type="text" name="emenda_federal" class="form-control" value="{{ item.emenda_federal if item else '' }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Datas e Tramitação</div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Data Necessária</label>
+                        <input type="date" name="data_necessaria" class="form-control"
+                               value="{{ item.data_necessaria.strftime('%Y-%m-%d') if item and item.data_necessaria else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Envio p/ Divisão</label>
+                        <input type="date" name="data_envio_divisao" class="form-control"
+                               value="{{ item.data_envio_divisao.strftime('%Y-%m-%d') if item and item.data_envio_divisao else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Envio p/ FMS</label>
+                        <input type="date" name="data_envio_fms" class="form-control"
+                               value="{{ item.data_envio_fms.strftime('%Y-%m-%d') if item and item.data_envio_fms else '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data Devolução p/ Setor</label>
+                        <input type="date" name="data_devolucao_setor" class="form-control"
+                               value="{{ item.data_devolucao_setor.strftime('%Y-%m-%d') if item and item.data_devolucao_setor else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observação</label>
+                        <textarea name="observacao" class="form-control" rows="2">{{ item.observacao if item else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if item else 'Cadastrar' }}
+                </button>
+                <a href="{{ url_for('contrato_financeiro.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+                {% if item and current_user.pode('editar_contrato') %}
+                <form method="POST" action="{{ url_for('contrato_financeiro.excluir', id=item.id) }}" class="ms-auto"
+                      onsubmit="return confirm('Excluir este registro?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger">Excluir</button>
+                </form>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var sel = document.getElementById('contrato_id');
+    var proc = document.getElementById('processo');
+    var prest = document.getElementById('prestador');
+    if (sel && proc && prest) {
+        sel.addEventListener('change', function(){
+            var opt = sel.options[sel.selectedIndex];
+            if (opt.value) {
+                proc.value = opt.getAttribute('data-identificador') || '';
+                prest.value = opt.getAttribute('data-empresa') || '';
+            } else {
+                proc.value = '';
+                prest.value = '';
+            }
+        });
+        if (sel.value) sel.dispatchEvent(new Event('change'));
+    }
+})();
+</script>
+{% endblock %}

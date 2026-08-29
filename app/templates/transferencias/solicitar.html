@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Solicitar Transferência{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="{{ url_for('equipamentos.detalhe', id=equipamento.id) }}" class="btn btn-sm btn-outline-secondary me-2">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1><i class="bi bi-arrow-right-circle"></i> Solicitar Transferência</h1>
+</div>
+
+<div class="row g-3">
+    <!-- Info do equipamento -->
+    <div class="col-12 col-md-4">
+        <div class="card h-100">
+            <div class="card-header">Equipamento</div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="{{ equipamento.tipo_equipamento.icone }} text-primary" style="font-size:2.5rem"></i>
+                </div>
+                <table class="table table-sm table-borderless mb-0">
+                    <tr><th class="text-muted small">Tipo</th><td class="small">{{ equipamento.tipo_equipamento.nome }}</td></tr>
+                    {% if equipamento.numero_patrimonio %}
+                    <tr><th class="text-muted small">Patrimônio</th><td class="small">{{ equipamento.numero_patrimonio }}</td></tr>
+                    {% endif %}
+                    {% if equipamento.marca %}
+                    <tr><th class="text-muted small">Marca</th><td class="small">{{ equipamento.marca.nome }}</td></tr>
+                    {% endif %}
+                    {% if equipamento.modelo %}
+                    <tr><th class="text-muted small">Modelo</th><td class="small">{{ equipamento.modelo.nome }}</td></tr>
+                    {% endif %}
+                    <tr><th class="text-muted small">Sala atual</th><td class="small">{{ equipamento.sala.nome }}</td></tr>
+                    <tr><th class="text-muted small">Unidade</th><td class="small">{{ equipamento.sala.unidade.nome }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário -->
+    <div class="col-12 col-md-8">
+        <div class="card">
+            <div class="card-header">Dados da Transferência</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Unidade de destino <span class="text-danger">*</span></label>
+                        <select name="unidade_destino_id" class="form-select" required>
+                            <option value="">— Selecione a unidade —</option>
+                            {% for u in unidades_destino %}
+                            <option value="{{ u.id }}">{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">O coordenador desta unidade precisará aceitar e alocar o equipamento em uma sala.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Observação (opcional)</label>
+                        <textarea name="observacao" class="form-control" rows="3"
+                                  placeholder="Motivo da transferência, estado do equipamento, instruções..."></textarea>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('equipamentos.detalhe', id=equipamento.id) }}"
+                           class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i>Solicitar Transferência
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3 small">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <strong>Fluxo:</strong> você solicita → o coordenador da unidade destino recebe a notificação →
+            ele aceita e aloca o equipamento em uma sala, ou recusa.
+        </div>
+    </div>
+</div>
+{% endblock %}

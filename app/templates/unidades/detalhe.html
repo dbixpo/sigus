@@ -1,0 +1,1549 @@
+{% extends 'base.html' %}
+{% block title %}{{ unidade.nome }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item active">{{ unidade.nome }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1 class="flex-wrap">
+        <i class="bi bi-hospital"></i> {{ unidade.nome }}
+        <span class="badge bg-{{ 'success' if unidade.status == 'ativa' else 'secondary' }} ms-2 fs-6">{{ unidade.status | title }}</span>
+        <span class="badge bg-primary fs-6"
+              title="{{ unidade.tipo_unidade.nome if unidade.tipo_unidade else unidade.tipo }}">
+            {{ unidade.tipo_unidade.sigla if unidade.tipo_unidade else unidade.tipo }}
+        </span>
+        {% if unidade.numero_cnes %}
+        <span class="badge bg-info text-dark fs-6" title="Número CNES">CNES {{ unidade.numero_cnes }}</span>
+        {% endif %}
+        {% if unidade.predio %}
+        <a href="{{ url_for('predios.detalhe', id=unidade.predio_id) }}"
+           class="badge bg-secondary fs-6 text-decoration-none" title="Ver prédio">
+            <i class="bi bi-buildings me-1"></i>{{ unidade.predio.nome }}
+        </a>
+        {% endif %}
+    </h1>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.pode('cadastrar_sala') %}
+        <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Nova Sala/Setor
+        </a>
+        {% endif %}
+        {% if current_user.pode('editar_unidade') %}
+        <a href="{{ url_for('unidades.editar', id=unidade.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
+    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ unidade.criado_em | br_datetime }}</strong></span>
+    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ unidade.atualizado_em | br_datetime }}</strong></span>
+</div>
+
+<!-- STATS -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-primary-soft"><i class="bi bi-door-open"></i></div>
+            <div><div class="stat-value">{{ unidade.total_salas }}</div><div class="stat-label">Salas Ativas</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-success-soft"><i class="bi bi-pc-display"></i></div>
+            <div><div class="stat-value">{{ unidade.total_equipamentos }}</div><div class="stat-label">Equipamentos</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-danger-soft"><i class="bi bi-wrench"></i></div>
+            <div><div class="stat-value">{{ unidade.chamados_abertos }}</div><div class="stat-label">Chamados Abertos</div></div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="stat-card">
+            <div class="stat-icon bg-info-soft"><i class="bi bi-people"></i></div>
+            <div><div class="stat-value">{{ vinculos | length }}</div><div class="stat-label">Profissionais Ativos</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ABAS PRINCIPAIS -->
+<ul class="nav nav-tabs mb-3" id="tabsUnidade" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-chamados" type="button">
+            <i class="bi bi-wrench-adjustable me-1"></i>Chamados
+            <span class="badge bg-secondary ms-1">{{ unidade.chamados_abertos }}</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-equipamentos" type="button">
+            <i class="bi bi-pc-display me-1"></i>Equipamentos
+            <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas" type="button">
+            <i class="bi bi-door-open me-1"></i>Salas/Setores
+            <span class="badge bg-secondary ms-1">{{ salas | length }}</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-profissionais" type="button">
+            <i class="bi bi-people me-1"></i>Profissionais
+            <span class="badge bg-primary ms-1">{{ vinculos | length }}</span>
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fichas" type="button">
+            <i class="bi bi-file-earmark-person me-1"></i>Fichas CNES
+            <span class="badge bg-secondary ms-1">{{ fichas | length }}</span>
+        </button>
+    </li>
+    {% if current_user.pode('vincular_profissionais') %}
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-solicitacoes" type="button">
+            <i class="bi bi-person-plus me-1"></i>Solicitações
+            {% set _nsol = solicitacoes_pendentes | length %}
+            {% if _nsol > 0 %}
+            <span class="badge bg-danger ms-1">{{ _nsol }}</span>
+            {% endif %}
+        </button>
+    </li>
+    {% endif %}
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-info" type="button">
+            <i class="bi bi-info-circle me-1"></i>Informações
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="tabsUnidadeContent">
+
+    <!-- ══════════════════════════════════════════════
+         ABA PROFISSIONAIS
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-profissionais">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="bi bi-people me-2"></i>Equipe da Unidade</span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="btn-group btn-group-sm" role="group" id="filtroVinculo">
+                        <button type="button" class="btn btn-primary active" data-filtro="ativo">Ativos</button>
+                        <button type="button" class="btn btn-outline-secondary" data-filtro="inativo">Inativos</button>
+                        <button type="button" class="btn btn-outline-secondary" data-filtro="todos">Todos</button>
+                    </div>
+                    {% if current_user.pode('vincular_profissionais') %}
+                    <button type="button" class="btn btn-primary btn-sm"
+                            data-bs-toggle="modal" data-bs-target="#modalVincular">
+                        <i class="bi bi-person-plus me-1"></i>Vincular
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if todos_vinculos %}
+                <div class="table-responsive table-dropdown-safe">
+                    <table class="table table-hover mb-0 align-middle small" id="tabelaProfissionais">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Profissional</th>
+                                <th class="d-none d-md-table-cell">Matrícula</th>
+                                <th class="d-none d-md-table-cell"><i class="bi bi-whatsapp text-success me-1"></i>Telefone</th>
+                                <th class="d-none d-lg-table-cell">E-mail</th>
+                                <th>CBO</th>
+                                <th class="d-none d-md-table-cell">Perfil</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in todos_vinculos %}
+                            {% set uf = ultima_ficha_por_usuario.get(v.usuario_id) %}
+                            {% set cbo_cod = (uf.cbo if uf else None) or v.usuario.cbo %}
+                            {% set cbo_txt = (uf.cbo_label if uf else None) or v.usuario.cbo_label %}
+                            {% set ch = (uf.carga_horaria if uf else None) or v.usuario.carga_horaria %}
+                            <tr data-status="{{ 'ativo' if v.ativo else 'inativo' }}"
+                                data-uid="{{ v.usuario_id }}"
+                                data-nome="{{ v.usuario.nome }}"
+                                data-cns="{{ v.usuario.cns or '' }}"
+                                data-cbo="{{ cbo_cod or '' }}"
+                                data-vinculo="{{ (uf.vinculo if uf else None) or v.usuario.vinculo or '' }}"
+                                data-tipo="{{ (uf.tipo_vinculo if uf else None) or v.usuario.tipo_vinculo or '' }}"
+                                data-ch="{{ ch or '' }}"
+                                data-action-desv="{{ url_for('unidades.desvincular_usuario', id=unidade.id, usuario_id=v.usuario_id) }}"
+                                data-action-ficha="{{ url_for('unidades.gerar_ficha', id=unidade.id, usuario_id=v.usuario_id) }}">
+                                <td>
+                                    <div class="fw-semibold">{{ v.usuario.nome }}</div>
+                                </td>
+                                <td class="d-none d-md-table-cell">
+                                    {% if v.matricula %}
+                                    <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle">
+                                        {{ v.matricula.numero }}
+                                    </span>
+                                    {% if not v.matricula.ativo %}
+                                    <span class="badge bg-secondary ms-1" title="Matrícula inativa">inativa</span>
+                                    {% endif %}
+                                    {% else %}
+                                    <span class="text-muted small">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="d-none d-md-table-cell small text-nowrap">
+                                    {% set _fone = v.usuario.whatsapp or v.usuario.telefone %}
+                                    {% if _fone %}
+                                    {% set _wdig = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
+                                    <a href="https://wa.me/55{{ _wdig }}" target="_blank"
+                                       class="text-success text-decoration-none">
+                                        <i class="bi bi-whatsapp me-1"></i>{{ _fone | br_fone }}
+                                    </a>
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td class="d-none d-lg-table-cell text-muted small">
+                                    {% if v.usuario.email %}
+                                    <a href="mailto:{{ v.usuario.email }}" class="text-decoration-none">{{ v.usuario.email }}</a>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if cbo_cod %}
+                                    <span class="badge bg-light text-dark border" title="{{ cbo_txt }}">{{ cbo_cod }}</span>
+                                    {% if cbo_txt and cbo_txt != cbo_cod %}
+                                    <span class="d-none d-xl-inline text-muted small ms-1">{{ (cbo_txt | replace(cbo_cod + ' – ', '') | replace(cbo_cod + ' - ', '')) | trim }}</span>
+                                    {% endif %}
+                                    {% else %}<span class="text-muted">—</span>{% endif %}
+                                </td>
+                                <td class="d-none d-md-table-cell text-muted">{{ v.usuario.perfil_label }}</td>
+                                <td>
+                                    {% if v.ativo %}
+                                    <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical me-1"></i>Mais opções
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            {# Editar perfil do profissional — apenas quem pode gerenciar usuários #}
+                                            {% if current_user.pode('gerenciar_usuarios') %}
+                                            <li>
+                                                <a class="dropdown-item" href="{{ url_for('usuarios.editar', id=v.usuario_id) }}">
+                                                    <i class="bi bi-shield-lock me-2 text-primary"></i>Editar perfil
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            {% endif %}
+                                            {# Visualizar última ficha #}
+                                            {% if uf %}
+                                            <li>
+                                                <a class="dropdown-item" href="#" data-ficha-url="{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=uf.id) }}" data-ficha-titulo="Ficha CNES — {{ v.usuario.nome | e }}"
+                                                   onclick="event.preventDefault(); abrirImpresso(this.dataset.fichaUrl, this.dataset.fichaTitulo); return false;">
+                                                    <i class="bi bi-file-earmark-person me-2 text-info"></i>Visualizar Última Ficha
+                                                </a>
+                                            </li>
+                                            {% endif %}
+                                            {# Gerar nova ficha #}
+                                            {% if current_user.pode('vincular_profissionais') %}
+                                            <li>
+                                                <button class="dropdown-item btn-gerar-ficha"
+                                                        type="button"
+                                                        data-uid="{{ v.usuario_id }}"
+                                                        data-nome="{{ v.usuario.nome }}">
+                                                    <i class="bi bi-file-earmark-plus me-2 text-success"></i>Gerar Nova Ficha CNES
+                                                </button>
+                                            </li>
+                                            {# Alterar CBO no vínculo #}
+                                            {% if v.ativo %}
+                                            <li>
+                                                <button class="dropdown-item btn-alterar-cbo"
+                                                        type="button"
+                                                        data-uid="{{ v.usuario_id }}"
+                                                        data-nome="{{ v.usuario.nome }}"
+                                                        data-cbo="{{ cbo_cod or '' }}"
+                                                        data-ch="{{ ch or '' }}"
+                                                        data-vinculo="{{ (uf.vinculo if uf else None) or v.usuario.vinculo or '' }}"
+                                                        data-tipo="{{ (uf.tipo_vinculo if uf else None) or v.usuario.tipo_vinculo or '' }}"
+                                                        data-cns="{{ v.usuario.cns or '' }}"
+                                                        data-action="{{ url_for('unidades.editar_cbo_vinculo', id=unidade.id, usuario_id=v.usuario_id) }}">
+                                                    <i class="bi bi-pencil-square me-2 text-warning"></i>Alterar CBO no Vínculo
+                                                </button>
+                                            </li>
+                                            {% endif %}
+                                            {% endif %}
+                                            {# Matrículas do profissional — ativar/desativar #}
+                                            {% if current_user.pode('vincular_profissionais') %}
+                                            {% set mats = v.usuario.matriculas.all() %}
+                                            {% if mats %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><span class="dropdown-header small">Matrículas</span></li>
+                                            {% for m in mats %}
+                                            <li>
+                                                <form method="POST"
+                                                      action="{{ url_for('unidades.toggle_matricula', id=unidade.id, matricula_id=m.id) }}"
+                                                      class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="dropdown-item d-flex align-items-center gap-2">
+                                                        {% if m.ativo %}
+                                                        <i class="bi bi-toggle-on text-success" style="font-size:1rem;"></i>
+                                                        {% else %}
+                                                        <i class="bi bi-toggle-off text-secondary" style="font-size:1rem;"></i>
+                                                        {% endif %}
+                                                        <span class="small">
+                                                            {{ m.numero }}
+                                                            <span class="text-muted">— {{ m.cbo_label | replace(m.cbo ~ ' – ', '') if m.cbo else '—' }}</span>
+                                                        </span>
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            {% endfor %}
+                                            {% endif %}
+                                            {% endif %}
+                                            {# Desvincular — só para ativos #}
+                                            {% if v.ativo and current_user.pode('vincular_profissionais') %}
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger btn-desvincular"
+                                                        type="button"
+                                                        data-uid="{{ v.usuario_id }}"
+                                                        data-nome="{{ v.usuario.nome }}"
+                                                        data-action="{{ url_for('unidades.desvincular_usuario', id=unidade.id, usuario_id=v.usuario_id) }}">
+                                                    <i class="bi bi-person-dash me-2"></i>Desvincular
+                                                </button>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="bi bi-people"></i><p>Nenhum profissional vinculado.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA EQUIPAMENTOS
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-equipamentos">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="bi bi-pc-display me-2"></i>Equipamentos da Unidade</span>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-success" id="btnExportarEquipamentos" title="Exportar CSV">
+                        <i class="bi bi-download me-1"></i>Exportar CSV
+                    </button>
+                    {% if current_user.pode('cadastrar_equipamento') %}
+                    <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
+                       class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle me-1"></i>Novo Equipamento
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if total_equipamentos_unidade > 0 %}
+
+                {# Filtro rápido por tipo/status #}
+                <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                    <input type="text" id="filtroEquip" class="form-control form-control-sm"
+                           style="max-width:220px" placeholder="Buscar patrimônio, tipo, marca...">
+                    <select id="filtroSalaEquip" class="form-select form-select-sm" style="max-width:200px">
+                        <option value="">Todas as salas</option>
+                        {% for sala in salas %}
+                        {% if equipamentos_por_sala[sala.id] %}
+                        <option value="{{ sala.id }}">{{ sala.nome }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="table-responsive table-dropdown-safe">
+                    <table class="table table-hover table-sm mb-0 align-middle small" id="tabelaEquipamentos">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Patrimônio / Série</th>
+                                <th class="d-none d-md-table-cell">Marca / Modelo</th>
+                                <th class="d-none d-lg-table-cell">Usuário Vinculado</th>
+                                <th class="d-none d-md-table-cell">Sala</th>
+                                <th>Status</th>
+                                <th>Condição</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sala in salas %}
+                            {% for e in equipamentos_por_sala[sala.id] %}
+                            <tr data-sala="{{ sala.id }}"
+                                data-texto="{{ e.tipo_equipamento.nome | lower }} {{ e.numero_patrimonio or '' | lower }} {{ e.numero_serie or '' | lower }} {{ e.marca.nome if e.marca else '' | lower }}"
+                                data-export="{{ e.tipo_equipamento.nome }}|{{ e.numero_patrimonio or e.numero_serie or '' }}|{{ e.marca.nome if e.marca else '' }}|{{ e.modelo.nome if e.modelo else '' }}|{{ e.usuario_vinculado_nome or '' }}|{{ sala.nome }}|{{ e.status_label }}|{{ e.condicao_label }}">
+                                <td>
+                                    <i class="{{ e.tipo_equipamento.icone }} me-1 text-primary"></i>
+                                    <span class="fw-semibold">{{ e.tipo_equipamento.nome }}</span>
+                                </td>
+                                <td class="small text-muted text-nowrap">
+                                    {% if e.numero_patrimonio %}
+                                    <i class="bi bi-tag me-1"></i>{{ e.numero_patrimonio }}
+                                    {% elif e.numero_serie %}
+                                    <i class="bi bi-upc me-1"></i>{{ e.numero_serie }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="d-none d-md-table-cell text-muted small">
+                                    {{ e.marca.nome if e.marca else '—' }}
+                                    {% if e.modelo %}<span class="text-muted"> / {{ e.modelo.nome }}</span>{% endif %}
+                                </td>
+                                <td class="d-none d-lg-table-cell small text-muted">
+                                    {% if e.usuario_vinculado_nome %}
+                                    <i class="bi bi-person-circle me-1"></i>{{ e.usuario_vinculado_nome }}
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td class="d-none d-md-table-cell text-muted small">
+                                    <a href="{{ url_for('salas.detalhe', id=sala.id) }}"
+                                       class="text-decoration-none text-muted">
+                                        <i class="bi bi-door-open me-1"></i>{{ sala.nome }}
+                                    </a>
+                                </td>
+                                <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
+                                <td><span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao_label }}</span></td>
+                                <td>
+                                    <a href="{{ url_for('equipamentos.detalhe', id=e.id) }}"
+                                       class="btn btn-xs btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-pc-display"></i>
+                    <h6>Nenhum equipamento cadastrado nesta unidade</h6>
+                    {% if current_user.pode('cadastrar_equipamento') %}
+                    {% if salas %}
+                    <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
+                       class="btn btn-primary mt-2">
+                        <i class="bi bi-plus-circle me-1"></i>Cadastrar Equipamento
+                    </a>
+                    {% else %}
+                    <p class="text-muted small mt-2">
+                        Crie pelo menos uma <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}">sala</a>
+                        antes de cadastrar equipamentos.
+                    </p>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA SALAS
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-salas">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-door-open me-2"></i>Salas/Setores</span>
+                {% if current_user.pode('cadastrar_sala') %}
+                <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i>
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if salas %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Sala/Setor</th><th>Tipo</th><th>Ramal</th><th>Equipamentos</th><th></th></tr></thead>
+                        <tbody>
+                            {% for s in salas %}
+                            <tr>
+                                <td><a href="{{ url_for('salas.detalhe', id=s.id) }}" class="fw-semibold text-decoration-none">{{ s.nome }}</a></td>
+                                <td><span class="text-muted small">{{ s.tipo_label }}</span></td>
+                                <td>
+                                    {% if s.ramal %}
+                                    <span class="small"><i class="bi bi-telephone-plus me-1 text-secondary"></i>{{ s.ramal }}</span>
+                                    {% else %}
+                                    <span class="text-muted small">—</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ s.total_equipamentos }}</span></td>
+                                <td>
+                                    <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="btn btn-xs btn-outline-primary btn-sm">Ver</a>
+                                    {% if current_user.pode('editar_sala') %}
+                                    <a href="{{ url_for('salas.editar', id=s.id) }}" class="btn btn-xs btn-outline-secondary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="bi bi-door-open"></i><p>Nenhuma sala cadastrada.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA CHAMADOS
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade show active" id="tab-chamados">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-wrench-adjustable me-2"></i>Chamados Recentes</span>
+                <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-plus"></i> Abrir Chamado
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if chamados_recentes %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Número</th><th>Título</th><th>Tipo</th><th>Status</th><th>Data</th></tr></thead>
+                        <tbody>
+                            {% for c in chamados_recentes %}
+                            <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
+                                <td class="small text-primary">{{ c.numero }}</td>
+                                <td class="small">{{ c.titulo | truncate(35) }}</td>
+                                <td class="small">{{ c.tipo_label }}</td>
+                                <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                                <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state"><i class="bi bi-check-circle-fill text-success"></i><p>Nenhum chamado aberto.</p></div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA FICHAS CNES
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-fichas">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-file-earmark-person me-2"></i>Fichas CNES Geradas</span>
+                <span class="badge bg-secondary">{{ fichas | length }}</span>
+            </div>
+            {% if fichas %}
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 small align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Profissional</th>
+                                <th>Tipo</th>
+                                <th>CBO</th>
+                                <th>Vínculo</th>
+                                <th>CH/sem</th>
+                                <th>Gerado em</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for f in fichas %}
+                            <tr>
+                                <td class="fw-semibold">{{ f.usuario.nome }}</td>
+                                <td><span class="badge bg-{{ f.tipo_badge }}">{{ f.tipo_label }}</span></td>
+                                <td class="text-muted">{{ f.cbo or '—' }}</td>
+                                <td class="text-muted">{{ f.vinculo_label if f.vinculo else '—' }}</td>
+                                <td class="text-muted">{{ (f.carga_horaria | string + 'h') if f.carga_horaria else '—' }}</td>
+                                <td class="text-muted">{{ f.gerado_em | br_datetime }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-xs btn-sm btn-outline-primary btn-abrir-ficha"
+                                            data-url="{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=f.id) }}"
+                                            data-titulo="Ficha CNES — {{ f.usuario.nome | e }}">
+                                        <i class="bi bi-eye me-1"></i>Abrir
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-info-circle me-1"></i>Nenhuma ficha gerada ainda. Ao vincular um profissional a ficha é criada automaticamente.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA SOLICITAÇÕES DE VÍNCULO
+    ══════════════════════════════════════════════ -->
+    {% if current_user.pode('vincular_profissionais') %}
+    <div class="tab-pane fade" id="tab-solicitacoes">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="bi bi-person-plus me-2"></i>Solicitações de Vínculo Profissional</span>
+                <a href="{{ url_for('solicitacoes.formulario') }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-link-45deg me-1"></i>Copiar link público
+                    <span class="badge bg-primary ms-1" style="font-size:.65rem;">compartilhar</span>
+                </a>
+            </div>
+            <div class="card-body p-0">
+
+                {# Botão copiar link #}
+                <div class="alert alert-info m-3 py-2 px-3 small d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle"></i>
+                    Envie o link abaixo para o profissional preencher os dados:
+                    <code id="linkSolicitacao">{{ request.host_url }}solicitar-vinculo-profissional/</code>
+                    <button type="button" class="btn btn-xs btn-sm btn-outline-primary ms-auto"
+                            onclick="navigator.clipboard.writeText(document.getElementById('linkSolicitacao').textContent); this.textContent='Copiado!'; setTimeout(()=>this.textContent='Copiar',2000)">
+                        Copiar
+                    </button>
+                </div>
+
+                {% set _sol_pend  = solicitacoes_pendentes %}
+                {% set _sol_hist  = solicitacoes_historico %}
+
+                {% if _sol_pend %}
+                <div class="px-3 pt-2 pb-1">
+                    <div class="fw-semibold small text-danger mb-2">
+                        <i class="bi bi-hourglass-split me-1"></i>Pendentes de aprovação ({{ _sol_pend | length }})
+                    </div>
+                </div>
+                <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>E-mail</th>
+                            <th>CBO</th>
+                            <th>Vínculo</th>
+                            <th>Enviado em</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in _sol_pend %}
+                    <tr>
+                        <td class="fw-semibold">{{ s.nome }}</td>
+                        <td class="small text-muted">{{ s.email }}</td>
+                        <td class="small">{{ s.cbo_label }}</td>
+                        <td class="small">
+                            {{ s.vinculo_label }}
+                            {% if s.tipo_vinculo %}<br><span class="text-muted">{{ s.tipo_vinculo_label }}</span>{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ s.criado_em | br_datetime }}</td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <button type="button" class="btn btn-xs btn-sm btn-outline-secondary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalVerSol{{ s.id }}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <form method="POST"
+                                      action="{{ url_for('solicitacoes.aprovar', id=s.id) }}"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Aprovar solicitação de {{ s.nome }}?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-xs btn-sm btn-success">
+                                        <i class="bi bi-check-lg me-1"></i>Aprovar
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-xs btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalRejeitarSol{{ s.id }}">
+                                    <i class="bi bi-x-lg me-1"></i>Rejeitar
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4 small">
+                    <i class="bi bi-person-check d-block fs-3 mb-2 opacity-40"></i>
+                    Nenhuma solicitação pendente.
+                </div>
+                {% endif %}
+
+                {% if _sol_hist %}
+                <div class="px-3 pt-3 pb-1 border-top">
+                    <div class="fw-semibold small text-muted mb-2">
+                        <i class="bi bi-clock-history me-1"></i>Histórico (últimas {{ _sol_hist | length }})
+                    </div>
+                </div>
+                <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Status</th>
+                            <th>Aprovado/Rejeitado por</th>
+                            <th>Em</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for s in _sol_hist %}
+                    <tr>
+                        <td class="small fw-semibold">{{ s.nome }}</td>
+                        <td><span class="badge bg-{{ s.status_badge }}">{{ s.status_label }}</span></td>
+                        <td class="small text-muted">{{ s.aprovador.nome if s.aprovador else '—' }}</td>
+                        <td class="small text-muted">{{ s.aprovado_em | br_datetime if s.aprovado_em else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════
+         ABA INFORMAÇÕES
+    ══════════════════════════════════════════════ -->
+    <div class="tab-pane fade" id="tab-info">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <!-- Localização -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-geo-alt me-2"></i>Localização</span>
+                        {% if unidade.link_maps %}
+                        <a href="{{ unidade.link_maps }}" target="_blank"
+                           class="btn btn-xs btn-sm btn-outline-danger">
+                            <i class="bi bi-pin-map-fill me-1"></i>Maps
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="card-body small">
+                        {% if unidade.endereco %}<p class="mb-1"><i class="bi bi-signpost me-1 text-muted"></i>{{ unidade.endereco }}{% if unidade.numero %}, {{ unidade.numero }}{% endif %}{% if unidade.complemento %} — {{ unidade.complemento }}{% endif %}</p>{% endif %}
+                        {% if unidade.bairro %}<p class="mb-1 text-muted">{{ unidade.bairro }}</p>{% endif %}
+                        {% if unidade.cidade %}<p class="mb-1 text-muted">{{ unidade.cidade }}/{{ unidade.uf }}</p>{% endif %}
+                        {% if unidade.cep %}<p class="mb-1 text-muted">CEP: {{ unidade.cep }}</p>{% endif %}
+                        {% if unidade.telefone %}
+                        <p class="mb-1">
+                            <i class="bi bi-telephone me-1 text-muted"></i>{{ unidade.telefone }}
+                            {% if unidade.ramal %}
+                            <span class="badge bg-secondary ms-1">Ramal {{ unidade.ramal }}</span>
+                            {% endif %}
+                        </p>
+                        {% elif unidade.ramal %}
+                        <p class="mb-1">
+                            <i class="bi bi-telephone-plus me-1 text-muted"></i>Ramal {{ unidade.ramal }}
+                        </p>
+                        {% endif %}
+                        {% if unidade.email %}<p class="mb-1"><i class="bi bi-envelope me-1 text-muted"></i>{{ unidade.email }}</p>{% endif %}
+                        {% if unidade.numero_cnes %}
+                        <p class="mb-0">
+                            <i class="bi bi-hospital me-1 text-muted"></i>CNES: <strong>{{ unidade.numero_cnes }}</strong>
+                            <a href="http://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search={{ unidade.numero_cnes }}"
+                               target="_blank" class="ms-1 text-info small">ver no DATASUS</a>
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Gerentes -->
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-person-badge me-2"></i>Gerentes</div>
+                    {% set gerentes = unidade.gerentes %}
+                    {% if gerentes %}
+                    <ul class="list-group list-group-flush">
+                        {% for v in gerentes %}
+                        <li class="list-group-item py-2">
+                            <div class="fw-semibold small">{{ v.usuario.nome }}</div>
+                            {% set _fone2 = v.usuario.whatsapp or v.usuario.telefone %}
+                            {% if _fone2 %}
+                            {% set _wdig2 = _fone2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
+                            <a href="https://wa.me/55{{ _wdig2 }}"
+                               target="_blank" class="text-success" style="font-size:0.75rem;">
+                                <i class="bi bi-whatsapp me-1"></i>{{ _fone2 | br_fone }}
+                            </a>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="p-3 text-center text-muted small">Nenhum gerente vinculado.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- Observações -->
+                {% if unidade.observacoes %}
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-chat-left-text me-2"></i>Observações</div>
+                    <div class="card-body small">{{ unidade.observacoes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>{# /tab-content #}
+
+
+<!-- ════════════════════════════════════════
+     MODAIS DE SOLICITAÇÃO DE VÍNCULO
+════════════════════════════════════════ -->
+{% if current_user.pode('vincular_profissionais') %}
+{% for s in solicitacoes_pendentes %}
+
+{# Modal ver detalhes da solicitação #}
+<div class="modal fade" id="modalVerSol{{ s.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2 text-primary"></i>Solicitação — {{ s.nome }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 small">
+                    <div class="col-md-6"><strong>Nome:</strong> {{ s.nome }}</div>
+                    <div class="col-md-6"><strong>E-mail:</strong> {{ s.email }}</div>
+                    <div class="col-md-4"><strong>CPF:</strong> {{ s.cpf or '—' }}</div>
+                    <div class="col-md-4"><strong>CNS:</strong> {{ s.cns or '—' }}</div>
+                    <div class="col-md-4"><strong>Telefone:</strong> {{ s.telefone | br_fone if s.telefone else '—' }}</div>
+                    <div class="col-md-4"><strong>Nascimento:</strong> {{ s.data_nasc | br_date if s.data_nasc else '—' }}</div>
+                    <div class="col-md-4"><strong>Sexo:</strong> {{ 'Masculino' if s.sexo == 'M' else ('Feminino' if s.sexo == 'F' else '—') }}</div>
+                    <div class="col-md-4"><strong>Escolaridade:</strong> {{ s.escolaridade or '—' }}</div>
+                    <div class="col-12"><strong>Mãe:</strong> {{ s.nome_mae or '—' }}</div>
+                    <div class="col-12"><strong>RG:</strong> {{ s.rg or '—' }} {% if s.rg_orgao %}/ {{ s.rg_orgao }}{% endif %} {% if s.rg_uf %}({{ s.rg_uf }}){% endif %}</div>
+                    <div class="col-12 mt-1"><strong>Endereço:</strong>
+                        {{ ([s.end_logradouro, s.end_numero, s.end_bairro, s.end_municipio, s.end_uf] | select | join(', ')) or '—' }}
+                    </div>
+                    <div class="col-12 mt-2 border-top pt-2"><strong>CBO:</strong> {{ s.cbo_label }}</div>
+                    <div class="col-md-4"><strong>Vínculo:</strong> {{ s.vinculo_label }}</div>
+                    <div class="col-md-4"><strong>Tipo:</strong> {{ s.tipo_vinculo_label }}</div>
+                    <div class="col-md-4"><strong>Carga Horária:</strong> {{ s.carga_horaria or '—' }} h/sem</div>
+                    {% if s.cnpj_empresa or s.nome_empresa %}
+                    <div class="col-md-5"><strong>CNPJ Empresa:</strong> {{ s.cnpj_empresa or '—' }}</div>
+                    <div class="col-md-7"><strong>Razão Social:</strong> {{ s.nome_empresa or '—' }}</div>
+                    {% endif %}
+                    <div class="col-md-5"><strong>Órgão Emissor:</strong> {{ s.orgao_emissor or '—' }}</div>
+                    <div class="col-md-7"><strong>Nº Conselho:</strong> {{ s.reg_conselho or '—' }}</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                <form method="POST" action="{{ url_for('solicitacoes.aprovar', id=s.id) }}"
+                      onsubmit="return confirm('Aprovar solicitação de {{ s.nome }}?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>Aprovar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal rejeitar #}
+<div class="modal fade" id="modalRejeitarSol{{ s.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('solicitacoes.rejeitar', id=s.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Rejeitar Solicitação</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Tem certeza que deseja rejeitar a solicitação de <strong>{{ s.nome }}</strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Motivo (opcional)</label>
+                        <textarea name="observacao" class="form-control" rows="3"
+                                  placeholder="Ex: documentação incompleta, unidade não confirmada..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-lg me-1"></i>Rejeitar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endfor %}
+{% endif %}
+
+<!-- ════════════════════════════════════════
+     MODAL VINCULAR PROFISSIONAL
+════════════════════════════════════════ -->
+{% if current_user.pode('vincular_profissionais') %}
+<div class="modal fade" id="modalVincular" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('unidades.vincular_usuario', id=unidade.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus me-2"></i>Vincular Profissional — {{ unidade.nome }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Profissional <span class="text-danger">*</span></label>
+                        <select name="usuario_id" class="form-select" required id="selectProfissional">
+                            <option value="">Selecione...</option>
+                            {% for u in usuarios_disponiveis %}
+                            <option value="{{ u.id }}"
+                                    data-cns="{{ u.cns or '' }}"
+                                    data-cbo="{{ u.cbo or '' }}"
+                                    data-vinculo="{{ u.vinculo or '' }}"
+                                    data-tipo="{{ u.tipo_vinculo or '' }}"
+                                    data-ch="{{ u.carga_horaria or '' }}"
+                                    data-matricula="{{ u.matricula or '' }}">
+                                {{ u.nome }} — {{ u.perfil_label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <hr>
+                    <p class="text-muted small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Preencha para gerar a <strong>Ficha de Cadastro CNES</strong> e o e-mail de <strong>acesso à Rede</strong>.
+                        Os campos são pré-preenchidos com os dados do profissional.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                Matrícula
+                                <span class="text-danger">*</span>
+                            </label>
+                            <select name="matricula_id" id="selectMatricula" class="form-select" required>
+                                <option value="">— Selecione o profissional primeiro —</option>
+                            </select>
+                            <div class="form-text text-muted" id="infoMatricula"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">CNS do Profissional</label>
+                            <input type="text" name="cns_profissional" id="inputCNS" class="form-control"
+                                   placeholder="000 0000 0000 0000" maxlength="20">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Data de Entrada na Unidade</label>
+                            <input type="date" name="dt_entrada_unidade" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Vínculo <span class="text-danger">*</span></label>
+                            <select name="vinculo" class="form-select" required id="selectVinculo">
+                                <option value="">Selecione...</option>
+                                {% for k, v in vinculos_cnes.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
+                            <select name="tipo_vinculo" class="form-select" required>
+                                <option value="">Selecione...</option>
+                                {% for k, v in tipos_vinculo.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Carga Horária (h/sem)</label>
+                            <input type="number" name="carga_horaria" id="inputCH"
+                                   class="form-control" min="1" max="60" placeholder="40">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">CBO — Especialidade de Atuação <span class="text-danger">*</span></label>
+                            <select name="cbo" class="form-select" required id="selectCBO"
+                                    data-singleselect data-placeholder="Selecione a matrícula primeiro...">
+                                <option value="">Selecione a matrícula primeiro...</option>
+                            </select>
+                        </div>
+                        <div class="col-12" id="blocoResidenciaModal" style="display:none">
+                            <label class="form-label">
+                                Especialidade / Residência Médica
+                                <span class="badge bg-warning text-dark">Obrigatório para Residente</span>
+                            </label>
+                            <input type="text" name="especialidade_residencia" class="form-control"
+                                   placeholder="Ex: Clínica Médica, Pediatria...">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-person-check me-1"></i>Vincular e Gerar Fichas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL GERAR FICHA CNES
+════════════════════════════════════════ -->
+<div class="modal fade" id="modalGerarFicha" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" id="formGerarFicha">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-file-earmark-person me-2 text-info"></i>
+                        Gerar Ficha CNES — <span id="gfNome"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Tipo da ficha -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo da Ficha <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo_ficha"
+                                       id="gfTipoCadastro" value="cadastro" checked>
+                                <label class="form-check-label" for="gfTipoCadastro">
+                                    <span class="badge bg-success">Cadastro</span>
+                                    <small class="text-muted ms-1">— incluir profissional na unidade</small>
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo_ficha"
+                                       id="gfTipoAlteracao" value="alteracao">
+                                <label class="form-check-label" for="gfTipoAlteracao">
+                                    <span class="badge bg-warning text-dark">Alteração</span>
+                                    <small class="text-muted ms-1">— mudar CBO / carga horária</small>
+                                </label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipo_ficha"
+                                       id="gfTipoDescadastro" value="descadastro">
+                                <label class="form-check-label" for="gfTipoDescadastro">
+                                    <span class="badge bg-danger">Descadastro</span>
+                                    <small class="text-muted ms-1">— remover do CNES sem desvincular</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">CNS do Profissional</label>
+                            <input type="text" name="cns_profissional" id="gfCNS" class="form-control"
+                                   placeholder="000 0000 0000 0000" maxlength="20">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Data de Entrada na Unidade</label>
+                            <input type="date" name="dt_entrada_unidade" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Vínculo</label>
+                            <select name="vinculo" class="form-select" id="gfVinculo">
+                                <option value="">Selecione...</option>
+                                {% for k, lbl in vinculos_cnes.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo</label>
+                            <select name="tipo_vinculo" class="form-select">
+                                <option value="">Selecione...</option>
+                                {% for k, lbl in tipos_vinculo.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Carga Horária (h/sem)</label>
+                            <input type="number" name="carga_horaria" id="gfCH"
+                                   class="form-control" min="1" max="60" placeholder="40">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">CBO — Especialidade de Atuação</label>
+                            <select name="cbo" class="form-select" id="gfCBO"
+                                    data-singleselect data-placeholder="Digite para buscar CBO...">
+                                <option value="">Selecione...</option>
+                                {% for cod, desc in cbos %}
+                                <option value="{{ cod }}">{{ cod }} – {{ desc }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12" id="gfBlocoResidencia" style="display:none">
+                            <label class="form-label">
+                                Especialidade / Residência Médica
+                                <span class="badge bg-warning text-dark">Obrigatório para Residente</span>
+                            </label>
+                            <input type="text" name="especialidade_residencia" class="form-control"
+                                   placeholder="Ex: Clínica Médica, Pediatria...">
+                        </div>
+                        <!-- Bloco empresa — aparece para Contrato por Prazo Determinado (tipo=3) ou Estágio (vínculo=6) -->
+                        <div class="col-12" id="gfBlocoEmpresa" style="display:none">
+                            <div class="alert alert-info py-2 px-3 mb-2" style="font-size:.82rem;">
+                                <i class="bi bi-building me-1"></i>
+                                <span id="gfBlocoEmpresaLabel">Informe os dados da empresa contratante.</span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">CNPJ Empresa Intermediadora</label>
+                                    <input type="text" name="cnpj_empresa" id="gfCNPJ"
+                                           class="form-control" placeholder="00.000.000/0000-00"
+                                           maxlength="20">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold">Razão Social da Empresa Intermediadora</label>
+                                    <input type="text" name="nome_empresa" id="gfNomeEmpresa"
+                                           class="form-control" placeholder="Razão social da empresa...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-file-earmark-check me-1"></i>Gerar Ficha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     MODAL ALTERAR CBO NO VÍNCULO
+════════════════════════════════════════ -->
+<div class="modal fade" id="modalAlterarCBO" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" id="formAlterarCBO">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square me-2"></i>Alterar CBO no Vínculo — <span id="acbNome"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small py-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Esta alteração afeta <strong>somente o vínculo com esta unidade</strong>.
+                        A matrícula original não é modificada. Uma <span class="badge bg-warning text-dark">Ficha de Alteração CNES</span> será gerada automaticamente.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Novo CBO <span class="text-danger">*</span></label>
+                            <select name="cbo" class="form-select" id="acbCBO" required
+                                    data-singleselect data-placeholder="Digite para buscar CBO...">
+                                <option value="">Selecione...</option>
+                                {% for cod, desc in cbos %}
+                                <option value="{{ cod }}">{{ cod }} – {{ desc }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Vínculo</label>
+                            <select name="vinculo" class="form-select" id="acbVinculo">
+                                <option value="">Selecione...</option>
+                                {% for k, lbl in vinculos_cnes.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo</label>
+                            <select name="tipo_vinculo" class="form-select" id="acbTipo">
+                                <option value="">Selecione...</option>
+                                {% for k, lbl in tipos_vinculo.items() %}
+                                <option value="{{ k }}">{{ k }} – {{ lbl }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Carga Horária (h/sem)</label>
+                            <input type="number" name="carga_horaria" id="acbCH"
+                                   class="form-control" min="1" max="60" placeholder="40">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">CNS do Profissional</label>
+                            <input type="text" name="cns_profissional" id="acbCNS" class="form-control"
+                                   placeholder="000 0000 0000 0000" maxlength="20">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Observações</label>
+                            <textarea name="observacoes" class="form-control" rows="2"
+                                      placeholder="Ex: Nomeação para cargo de gerência em xx/xx/xxxx..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle me-1"></i>Confirmar Alteração e Gerar Ficha
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DESVINCULAR -->
+<div class="modal fade" id="modalDesvincular" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="formDesvincular">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-dash me-2"></i>Desvincular / Descadastrar do CNES
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Você está removendo o vínculo de <strong id="nomeDesvincular"></strong>
+                        da unidade <strong>{{ unidade.nome }}</strong>.
+                    </p>
+                    <p class="text-muted small">
+                        Uma <span class="badge bg-danger">Ficha de Descadastro CNES</span> e um
+                        e-mail de <strong>remoção da Rede</strong> serão gerados automaticamente.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Motivo do descadastro</label>
+                        <textarea name="motivo" class="form-control" rows="3"
+                                  placeholder="Ex: Profissional encerrou contrato em xx/xx/xxxx..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-person-dash me-1"></i>Confirmar Descadastro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Botões "Abrir" da aba Fichas CNES (abre no modal de impressão) ───
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-abrir-ficha');
+    if (btn && typeof abrirImpresso === 'function') {
+        e.preventDefault();
+        abrirImpresso(btn.dataset.url || '', btn.dataset.titulo || 'Ficha CNES');
+    }
+});
+
+// ── Filtro da tabela de equipamentos ─────────────────────────────────
+(function () {
+    const tabela  = document.getElementById('tabelaEquipamentos');
+    if (!tabela) return;
+    const inpBusca = document.getElementById('filtroEquip');
+    const selSala  = document.getElementById('filtroSalaEquip');
+
+    function aplicarFiltro() {
+        const texto = (inpBusca ? inpBusca.value.toLowerCase() : '');
+        const sala  = (selSala  ? selSala.value : '');
+        tabela.querySelectorAll('tbody tr').forEach(function (tr) {
+            const matchTexto = !texto || (tr.dataset.texto || '').includes(texto);
+            const matchSala  = !sala  || tr.dataset.sala === sala;
+            tr.style.display = (matchTexto && matchSala) ? '' : 'none';
+        });
+    }
+
+    inpBusca && inpBusca.addEventListener('input', aplicarFiltro);
+    selSala  && selSala.addEventListener('change', aplicarFiltro);
+
+    // Abre a aba de equipamentos se a URL terminar com #tab-equipamentos
+    if (window.location.hash === '#tab-equipamentos') {
+        const btn = document.querySelector('[data-bs-target="#tab-equipamentos"]');
+        btn && btn.click();
+    }
+})();
+
+// ── Exportar equipamentos da unidade como CSV ─────────────────────────
+(function () {
+    const btn = document.getElementById('btnExportarEquipamentos');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+        const tabela = document.getElementById('tabelaEquipamentos');
+        if (!tabela) return;
+        const cabecalho = ['Tipo', 'Patrimônio / Série', 'Marca', 'Modelo',
+                           'Usuário Vinculado', 'Sala', 'Status', 'Condição'];
+        const linhas = [cabecalho];
+        tabela.querySelectorAll('tbody tr').forEach(function (tr) {
+            if (tr.style.display === 'none') return; // respeita filtro ativo
+            const cols = (tr.dataset.export || '').split('|');
+            linhas.push(cols);
+        });
+        const csv = linhas.map(l =>
+            l.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(';')
+        ).join('\r\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'equipamentos_{{ unidade.nome | replace(" ","_") }}.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+})();
+
+// ── Filtro de status na tabela de profissionais ────────────────────────
+(function () {
+    const rows = document.querySelectorAll('#tabelaProfissionais tbody tr');
+    document.querySelectorAll('#filtroVinculo button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('#filtroVinculo button').forEach(b => {
+                b.classList.remove('active', 'btn-primary', 'btn-outline-secondary');
+                b.classList.add('btn-outline-secondary');
+            });
+            this.classList.remove('btn-outline-secondary');
+            this.classList.add('active', 'btn-primary');
+            const filtro = this.dataset.filtro;
+            rows.forEach(function (row) {
+                row.style.display = (filtro === 'todos' || row.dataset.status === filtro) ? '' : 'none';
+            });
+        });
+    });
+    rows.forEach(r => { if (r.dataset.status === 'inativo') r.style.display = 'none'; });
+})();
+
+// ── Helpers para pré-preencher selects ───────────────────────────────
+function selecionarOpcao(sel, val) {
+    if (!sel || !val) return;
+    // Se o elemento tem Tom Select instanciado, usa a API dele
+    if (sel.tomselect) {
+        sel.tomselect.setValue(val, true); // true = silent (sem disparar evento)
+        return;
+    }
+    for (let i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === val) { sel.selectedIndex = i; return; }
+    }
+}
+
+// ── Modal Vincular: pré-preencher com dados do profissional ───────────
+document.getElementById('selectProfissional')?.addEventListener('change', async function () {
+    const opt      = this.options[this.selectedIndex];
+    const uid      = this.value;
+    const selMat   = document.getElementById('selectMatricula');
+    const infoMat  = document.getElementById('infoMatricula');
+
+    // Limpa seleção anterior de matrículas
+    selMat.innerHTML = '<option value="">— carregando... —</option>';
+    selMat.disabled = true;
+    infoMat.textContent = '';
+
+    if (uid) {
+        const resp = await fetch(`/usuarios/${uid}/matriculas/json`);
+        const data = await resp.json();
+        selMat.innerHTML = '<option value="">Selecione a matrícula...</option>';
+        if (data.matriculas && data.matriculas.length) {
+            data.matriculas.forEach(m => {
+                const o = document.createElement('option');
+                o.value = m.id;
+                const cboDesc = m.cbo_label
+                    ? m.cbo_label.replace(/^\S+\s*[–-]\s*/, '')  // remove "225125 – " do início
+                    : (m.cbo || 'CBO não definido');
+                o.textContent = `${m.numero} — ${cboDesc}`;
+                o.dataset.cbo      = m.cbo          || '';
+                o.dataset.cboLabel = m.cbo_label    || '';
+                o.dataset.vinculo  = m.vinculo       || '';
+                o.dataset.tipo     = m.tipo_vinculo  || '';
+                o.dataset.conselho = m.reg_conselho  || '';
+                selMat.appendChild(o);
+            });
+            // Se só tem uma, já seleciona automaticamente
+            if (data.matriculas.length === 1) {
+                selMat.selectedIndex = 1;
+                selMat.dispatchEvent(new Event('change'));
+            }
+        } else {
+            selMat.innerHTML = '<option value="">Nenhuma matrícula ativa cadastrada</option>';
+            infoMat.textContent = 'Cadastre uma matrícula no perfil do profissional antes de vincular.';
+            infoMat.className = 'form-text text-warning';
+        }
+        selMat.disabled = false;
+    } else {
+        selMat.innerHTML = '<option value="">— Selecione o profissional primeiro —</option>';
+        selMat.disabled = false;
+    }
+
+    document.getElementById('inputCNS').value = opt.dataset.cns || '';
+    document.getElementById('inputCH').value  = opt.dataset.ch  || '';
+    selecionarOpcao(document.getElementById('selectVinculo'), opt.dataset.vinculo);
+    document.getElementById('blocoResidenciaModal').style.display =
+        opt.dataset.vinculo === '5' ? '' : 'none';
+});
+
+// Ao selecionar matrícula, restringe CBO às duas opções permitidas
+document.getElementById('selectMatricula')?.addEventListener('change', function () {
+    const opt = this.options[this.selectedIndex];
+    const selCBO = document.getElementById('selectCBO');
+    if (!selCBO) return;
+
+    // Destrói instância Tom Select anterior para poder recriar com novas opções
+    if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
+
+    if (!opt || !opt.value) {
+        // Sem matrícula: reseta o select de CBO vazio
+        selCBO.innerHTML = '<option value="">Selecione a matrícula primeiro...</option>';
+    } else {
+        const cboCod  = opt.dataset.cbo  || '';
+        const cboDesc = opt.dataset.cboLabel
+            ? opt.dataset.cboLabel.replace(/^\S+\s*[–-]\s*/, '')
+            : cboCod;
+
+        // Monta as duas únicas opções permitidas
+        const opcoes = [];
+        if (cboCod && cboCod !== '131210') {
+            opcoes.push({ value: cboCod, text: `${cboCod} – ${cboDesc}` });
+        }
+        opcoes.push({ value: '131210', text: '131210 – Gerente de Serviços de Saúde' });
+
+        selCBO.innerHTML = '<option value="">Selecione...</option>' +
+            opcoes.map(o => `<option value="${o.value}">${o.text}</option>`).join('');
+
+        // Pré-seleciona o CBO da matrícula (opção padrão)
+        if (cboCod) selCBO.value = cboCod;
+    }
+
+    // Reinicia Tom Select na nova lista
+    new TomSelect(selCBO, {
+        allowEmptyOption: true,
+        placeholder: 'Digite para buscar CBO...',
+        maxOptions: null,
+    });
+
+    if (opt && opt.value) {
+        selecionarOpcao(document.getElementById('selectVinculo'), opt.dataset.vinculo);
+        document.getElementById('blocoResidenciaModal').style.display =
+            opt.dataset.vinculo === '5' ? '' : 'none';
+    }
+});
+
+document.getElementById('selectVinculo')?.addEventListener('change', function () {
+    document.getElementById('blocoResidenciaModal').style.display = this.value === '5' ? '' : 'none';
+});
+
+// ── Modal Gerar Ficha CNES: aberto pelo dropdown ───────────────────────
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-gerar-ficha');
+    if (!btn) return;
+
+    // Encontra a <tr> correspondente
+    const tr = btn.closest('tr') ||
+               document.querySelector(`#tabelaProfissionais tr[data-uid="${btn.dataset.uid}"]`);
+
+    document.getElementById('gfNome').textContent = btn.dataset.nome;
+
+    // Pré-preenche campos com dados já conhecidos do profissional
+    document.getElementById('gfCNS').value = tr ? (tr.dataset.cns || '') : '';
+    document.getElementById('gfCH').value  = tr ? (tr.dataset.ch  || '') : '';
+    selecionarOpcao(document.getElementById('gfCBO'),    tr ? tr.dataset.cbo     : '');
+    selecionarOpcao(document.getElementById('gfVinculo'), tr ? tr.dataset.vinculo : '');
+    // Limpa campos de empresa
+    document.getElementById('gfCNPJ').value = '';
+    document.getElementById('gfNomeEmpresa').value = '';
+    // Atualiza visibilidade dos blocos condicionais
+    gfAtualizarBlocos();
+
+    // Define action do form com a URL correta do profissional
+    document.getElementById('formGerarFicha').action = tr
+        ? tr.dataset.actionFicha
+        : btn.dataset.action || '';
+
+    // Reseta para "Cadastro" por padrão
+    document.getElementById('gfTipoCadastro').checked = true;
+
+    new bootstrap.Modal(document.getElementById('modalGerarFicha')).show();
+});
+
+function gfAtualizarBlocos() {
+    const vinculo     = document.getElementById('gfVinculo')?.value || '';
+    const tipoVinculo = document.querySelector('[name="tipo_vinculo"]')?.value || '';
+    // Residência
+    document.getElementById('gfBlocoResidencia').style.display = vinculo === '5' ? '' : 'none';
+    // Empresa: Estágio (vínculo=6) OU Contrato por Prazo Determinado (tipo=3)
+    const precisaEmpresa = vinculo === '6' || tipoVinculo === '3';
+    document.getElementById('gfBlocoEmpresa').style.display = precisaEmpresa ? '' : 'none';
+    // Atualiza label do aviso
+    const label = document.getElementById('gfBlocoEmpresaLabel');
+    if (label) {
+        label.textContent = vinculo === '6'
+            ? 'Informe os dados da empresa / instituição de estágio.'
+            : 'Informe os dados da empresa contratante (contrato por prazo determinado).';
+    }
+}
+document.getElementById('gfVinculo')?.addEventListener('change', gfAtualizarBlocos);
+document.querySelector('#modalGerarFicha [name="tipo_vinculo"]')?.addEventListener('change', gfAtualizarBlocos);
+
+// ── Modal Alterar CBO no Vínculo ──────────────────────────────────────
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-alterar-cbo');
+    if (!btn) return;
+    document.getElementById('acbNome').textContent = btn.dataset.nome;
+    document.getElementById('formAlterarCBO').action = btn.dataset.action;
+    selecionarOpcao(document.getElementById('acbCBO'),    btn.dataset.cbo);
+    selecionarOpcao(document.getElementById('acbVinculo'), btn.dataset.vinculo);
+    selecionarOpcao(document.getElementById('acbTipo'),    btn.dataset.tipo);
+    document.getElementById('acbCH').value  = btn.dataset.ch  || '';
+    document.getElementById('acbCNS').value = btn.dataset.cns || '';
+    new bootstrap.Modal(document.getElementById('modalAlterarCBO')).show();
+});
+
+// ── Modal Desvincular ─────────────────────────────────────────────────
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-desvincular');
+    if (!btn) return;
+    document.getElementById('nomeDesvincular').textContent = btn.dataset.nome;
+    document.getElementById('formDesvincular').action = btn.dataset.action;
+    new bootstrap.Modal(document.getElementById('modalDesvincular')).show();
+});
+</script>
+{% endblock %}
+

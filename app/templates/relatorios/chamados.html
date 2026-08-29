@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Relatório de Chamados{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-wrench-adjustable"></i> Relatório de Chamados</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_chamados', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_chamados', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_chamados', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" class="row g-2 align-items-end mb-2">
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_labels, filtro_status_list, 'Todos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Tipo', 'tipo', tipos_labels, filtro_tipo_list, 'Todos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Prioridade', 'prioridade', prioridades_labels, filtro_prioridade_list, 'Todas') }}</div>
+        <div class="col-md-1 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i></button>
+            <a href="{{ url_for('relatorios.chamados') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('Número',     0, 'numero') }}
+        {{ filtro_rapido('Unidade',    1, 'unidade') }}
+        {{ filtro_rapido('Tipo',       2, 'tipo') }}
+        {{ filtro_rapido('Título',     3, 'titulo') }}
+        {{ filtro_rapido('Prioridade', 4, 'prioridade') }}
+        {{ filtro_rapido('Status',     5, 'status') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsChamados">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ chamados | length }}</strong></span>
+    <span class="mini-stat">Unidades: <strong data-stat-col="1">—</strong></span>
+    <span class="mini-stat">Tipos: <strong data-stat-col="2">—</strong></span>
+    <span class="mini-stat">Prioridades: <strong data-stat-col="4">—</strong></span>
+    <span class="mini-stat">Status: <strong data-stat-col="5">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if chamados %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="tblChamados">
+                <thead>
+                    <tr>
+                        <th>Número</th><th>Unidade</th><th>Tipo</th><th>Título</th>
+                        <th>Prioridade</th><th>Status</th><th>Aberto em</th>
+                        <th><i class="bi bi-clock-history"></i></th><th>Fechado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in chamados %}
+                    <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer">
+                        <td class="small text-primary">{{ c.numero }}</td>
+                        <td class="small">{{ c.unidade.nome | truncate(20) }}</td>
+                        <td class="small text-muted">{{ c.tipo_label }}</td>
+                        <td class="small">{{ c.titulo | truncate(35) }}</td>
+                        <td><span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span></td>
+                        <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
+                        <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                        <td class="small text-muted text-nowrap" title="Última atualização: {{ c.atualizado_em | br_datetime }}">{{ c.atualizado_em | br_date }}</td>
+                        <td class="small text-muted">{{ c.fechado_em | br_date if c.fechado_em else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="bi bi-wrench"></i><h6>Nenhum chamado encontrado.</h6></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>initFiltrosRapidos('tblChamados', 'miniStatsChamados');</script>
+{% endblock %}

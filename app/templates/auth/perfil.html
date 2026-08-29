@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}Meu Perfil{% endblock %}
+
+{% block head %}
+<style>
+.avatar-wrap {
+    position: relative; width: 96px; height: 96px; margin: 0 auto 1rem;
+}
+.avatar-wrap img, .avatar-inicial {
+    width: 96px; height: 96px; border-radius: 50%;
+    object-fit: cover; display: block;
+    border: 3px solid var(--sigus-primary);
+}
+.avatar-inicial {
+    background: var(--sigus-primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem; font-weight: 700;
+}
+.avatar-edit-btn {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--sigus-primary);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: .75rem; color: var(--sigus-primary);
+}
+.notif-item-perfil {
+    border-left: 3px solid transparent;
+    padding: .5rem .75rem;
+    font-size: .82rem;
+}
+.notif-item-perfil.nao-lida { background: #f0f7ff; border-left-color: var(--sigus-primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-person-circle me-2"></i>Meu Perfil</h1>
+</div>
+
+<div class="row g-3">
+
+    {# ── Coluna esquerda: foto + dados pessoais ── #}
+    <div class="col-lg-4">
+
+        {# Card de foto #}
+        <div class="card mb-3 text-center">
+            <div class="card-body pt-4 pb-3">
+                <div class="avatar-wrap">
+                    {% if current_user.foto_url %}
+                    <img src="{{ current_user.foto_url }}" alt="{{ current_user.nome }}" id="avatarPreview">
+                    {% else %}
+                    <div class="avatar-inicial" id="avatarInicial">{{ current_user.inicial }}</div>
+                    {% endif %}
+                    <label class="avatar-edit-btn" title="Trocar foto" for="inputFotoPerfil">
+                        <i class="bi bi-camera"></i>
+                    </label>
+                </div>
+
+                <div class="fw-semibold">{{ current_user.nome }}</div>
+                <div class="text-muted small">{{ current_user.perfil_label }}</div>
+
+                {# Upload silencioso #}
+                <form method="POST" enctype="multipart/form-data" id="formFoto">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="foto">
+                    <input type="file" id="inputFotoPerfil" name="foto"
+                           accept="image/*" class="d-none">
+                    {# botão oculto — submit é feito automaticamente ao escolher a foto #}
+                    <button type="submit" class="d-none" id="btnSalvarFoto"></button>
+                </form>
+
+                {% if current_user.foto_url %}
+                <form method="POST" class="mt-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="remover_foto">
+                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.75rem;">
+                        <i class="bi bi-trash me-1"></i>Remover foto
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Unidades vinculadas #}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-hospital me-2"></i>Unidades Vinculadas</div>
+            <div class="card-body p-0">
+                {% set vinculos = current_user.unidades.filter_by(ativo=True).all() %}
+                {% if vinculos %}
+                <ul class="list-group list-group-flush">
+                    {% for v in vinculos %}
+                    <li class="list-group-item d-flex align-items-center gap-2 px-3 py-2">
+                        <i class="bi bi-hospital text-primary flex-shrink-0"></i>
+                        <div>
+                            <div class="fw-semibold small">{{ v.unidade.nome }}</div>
+                            {% if v.papel %}<div class="text-muted" style="font-size:.72rem;">{{ v.papel }}</div>{% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted small p-3 mb-0">Nenhuma unidade vinculada.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# ── Coluna central: dados + senha ── #}
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pencil me-2"></i>Dados Pessoais</div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="dados">
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" name="nome" class="form-control"
+                               value="{{ current_user.nome }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" class="form-control"
+                               value="{{ current_user.email }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Perfil de Acesso</label>
+                        <input type="text" class="form-control"
+                               value="{{ current_user.perfil_label }}" disabled>
+                    </div>
+                    <hr>
+                    <div class="fw-semibold small mb-2">Alterar Senha</div>
+                    <div class="mb-3">
+                        <label class="form-label">Senha Atual</label>
+                        <input type="password" name="senha_atual" class="form-control"
+                               placeholder="Deixe em branco para não alterar">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input type="password" name="nova_senha" class="form-control"
+                               placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-circle me-1"></i>Salvar Alterações
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ── Coluna direita: notificações ── #}
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-bell me-2"></i>Notificações</span>
+                {% set n_nao_lidas = notificacoes | selectattr('lida', 'equalto', False) | list | length %}
+                {% if n_nao_lidas > 0 %}
+                <span class="badge bg-danger rounded-pill">{{ n_nao_lidas }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body p-0" style="max-height:460px; overflow-y:auto;">
+                {% if notificacoes %}
+                {% for n in notificacoes %}
+                <div class="notif-item-perfil border-bottom {{ 'nao-lida' if not n.lida }}">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi {{ n.icone }} text-{{ n.cor }} mt-1 flex-shrink-0"></i>
+                        <div class="flex-grow-1 min-width-0">
+                            {% if n.chamado_id %}
+                            <a href="{{ n.url }}" class="fw-semibold text-decoration-none text-dark small">
+                                {{ n.titulo }}
+                            </a>
+                            {% else %}
+                            <div class="fw-semibold small">{{ n.titulo }}</div>
+                            {% endif %}
+                            {% if n.texto %}
+                            <div class="text-muted text-truncate" style="font-size:.74rem;">{{ n.texto }}</div>
+                            {% endif %}
+                            <div class="text-muted" style="font-size:.68rem;">
+                                {{ n.criado_em | br_datetime }}
+                            </div>
+                        </div>
+                        {% if not n.lida %}
+                        <span class="rounded-circle bg-primary flex-shrink-0"
+                              style="width:8px;height:8px;margin-top:6px;"></span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center text-muted py-4 small">
+                    <i class="bi bi-bell-slash d-block fs-3 mb-2 opacity-50"></i>
+                    Nenhuma notificação ainda.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const input  = document.getElementById('inputFotoPerfil');
+    const btnSalvar = document.getElementById('btnSalvarFoto');
+    const preview = document.getElementById('avatarPreview');
+    const inicial = document.getElementById('avatarInicial');
+
+    input?.addEventListener('change', function () {
+        if (!this.files.length) return;
+        const file = this.files[0];
+        if (!file.type.startsWith('image/')) return;
+        // Preview local antes do envio
+        const url = URL.createObjectURL(file);
+        if (preview) {
+            preview.src = url;
+        } else if (inicial) {
+            const img = document.createElement('img');
+            img.src = url; img.id = 'avatarPreview';
+            img.style.cssText = 'width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--sigus-primary);';
+            inicial.replaceWith(img);
+        }
+        // Submit automático — não depende de o usuário clicar em "Salvar"
+        document.getElementById('formFoto').submit();
+    });
+})();
+</script>
+{% endblock %}

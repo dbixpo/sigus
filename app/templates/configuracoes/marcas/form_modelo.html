@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if modelo else 'Novo' }} Modelo{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.marcas') }}">Marcas e Modelos</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-cpu"></i> {{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    {# 1. Tipo de Equipamento #}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Tipo de Equipamento <span class="text-danger">*</span>
+                        </label>
+                        <select name="tipo_equipamento_id" id="sel-tipo" class="form-select" required>
+                            <option value="">— Selecione o tipo —</option>
+                            {% for t in tipos %}
+                            <option value="{{ t.id }}"
+                                {% if pre_tipo_id == t.id or (modelo and modelo.tipo_equipamento_id == t.id) %}
+                                selected
+                                {% endif %}>
+                                {{ t.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {# 2. Marca (filtrada pelo tipo via JS) #}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Marca <span class="text-danger">*</span>
+                        </label>
+                        <select name="marca_id" id="sel-marca" class="form-select" required
+                                {% if not pre_tipo_id and not modelo %}disabled{% endif %}>
+                            <option value="">
+                                {% if pre_tipo_id or modelo %}— Selecione a marca —{% else %}Selecione o tipo primeiro{% endif %}
+                            </option>
+                            {# Em edição, pré-carrega marcas do tipo atual #}
+                            {% if modelo and modelo.tipo_equipamento %}
+                            {% for m in modelo.tipo_equipamento.marcas.order_by('nome').all() %}
+                            <option value="{{ m.id }}"
+                                {% if modelo.marca_id == m.id %}selected{% endif %}>
+                                {{ m.nome }}
+                            </option>
+                            {% endfor %}
+                            {% elif pre_tipo_id %}
+                            {# pré-seleção via querystring: carregado via JS ao abrir #}
+                            {% endif %}
+                        </select>
+                        <div id="aviso-sem-marca" class="form-text text-warning d-none">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Nenhuma marca cadastrada para este tipo.
+                            <a href="{{ url_for('configuracoes.nova_marca') }}" target="_blank">Cadastrar marca</a>
+                        </div>
+                    </div>
+
+                    {# 3. Nome do modelo #}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            Nome do Modelo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" name="nome" id="inp-nome" class="form-control" required
+                               value="{{ modelo.nome if modelo else '' }}"
+                               placeholder="Ex.: OptiPlex 3000, LaserJet Pro, Split 12000 BTUs...">
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if modelo else 'Cadastrar' }}
+                        </button>
+                        <a href="{{ url_for('configuracoes.marcas') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const selTipo  = document.getElementById('sel-tipo');
+    const selMarca = document.getElementById('sel-marca');
+    const aviso    = document.getElementById('aviso-sem-marca');
+    const urlMarcas = "{{ url_for('configuracoes.api_marcas_por_tipo', tipo_id=0) }}".replace('/0', '/');
+
+    const PRE_MARCA_ID = {{ pre_marca_id or (modelo.marca_id if modelo else 'null') }};
+
+    function carregarMarcas(tipoId, marcaPresel) {
+        if (!tipoId) {
+            selMarca.innerHTML = '<option value="">Selecione o tipo primeiro</option>';
+            selMarca.disabled = true;
+            aviso.classList.add('d-none');
+            return;
+        }
+        fetch(urlMarcas + tipoId)
+            .then(r => r.json())
+            .then(marcas => {
+                selMarca.innerHTML = '<option value="">— Selecione a marca —</option>';
+                marcas.forEach(m => {
+                    const opt = new Option(m.nome, m.id);
+                    selMarca.appendChild(opt);
+                });
+                selMarca.disabled = marcas.length === 0;
+                if (marcas.length === 0) {
+                    aviso.classList.remove('d-none');
+                } else {
+                    aviso.classList.add('d-none');
+                    if (marcaPresel) selMarca.value = marcaPresel;
+                }
+            });
+    }
+
+    selTipo.addEventListener('change', function () {
+        carregarMarcas(this.value, null);
+    });
+
+    // Se já há tipo pré-selecionado, carregar marcas agora
+    const tipoAtual = selTipo.value;
+    if (tipoAtual && !{{ 'true' if modelo else 'false' }}) {
+        carregarMarcas(tipoAtual, PRE_MARCA_ID);
+    }
+})();
+</script>
+{% endblock %}

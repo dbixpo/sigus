@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Controle de Empenho{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('contratos.listar') }}">Contratos</a></li>
+        <li class="breadcrumb-item active">Controle de Empenho</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-currency-dollar me-2"></i>Controle de Empenho</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if current_user.pode('cadastrar_contrato') %}
+        <a href="{{ url_for('contrato_financeiro.novo') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo Registro
+        </a>
+        {% endif %}
+        {% if current_user.pode('emitir_relatorios') %}
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_financeiro_dag', formato='xlsx') }}">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_financeiro_dag', formato='xls') }}">
+                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_financeiro_dag', formato='csv') }}">
+                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV</a></li>
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label mb-1">Tipo</label>
+            <select name="tipo" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for t in tipo_opcoes %}
+                <option value="{{ t }}" {% if filtro_tipo == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1">Motivo</label>
+            <select name="motivo" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for m in motivo_opcoes %}
+                <option value="{{ m }}" {% if filtro_motivo == m %}selected{% endif %}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('contrato_financeiro.listar') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if itens %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Contrato (CPL/SEI)</th>
+                        <th>Motivo</th>
+                        <th>Prestador</th>
+                        <th>Objeto</th>
+                        <th>Valor Total</th>
+                        <th>Ref.</th>
+                        <th>Data Necessária</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in itens %}
+                    <tr>
+                        <td class="small"><span class="badge bg-secondary">{{ i.tipo or '—' }}</span></td>
+                        <td class="small">
+                            {% if i.contrato %}
+                            <a href="{{ url_for('contratos.detalhe', id=i.contrato.id) }}">{{ i.processo_display }}</a>
+                            {% else %}
+                            {{ i.processo or '—' }}
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ i.motivo or '—' }}</td>
+                        <td class="small">{{ (i.prestador or '—') | truncate(25) }}</td>
+                        <td class="small text-muted" title="{{ i.objeto or '' }}">{{ (i.objeto or '—') | truncate(40) }}</td>
+                        <td class="small">{{ i.valor_total | br_currency if i.valor_total else '—' }}</td>
+                        <td class="small">{{ i.referencia or '—' }}</td>
+                        <td class="small">{{ i.data_necessaria | br_date if i.data_necessaria else '—' }}</td>
+                        <td>
+                            {% if current_user.pode('editar_contrato') %}
+                            <a href="{{ url_for('contrato_financeiro.editar', id=i.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-currency-dollar"></i>
+            <h6>Nenhum registro de empenho/fonte cadastrado.</h6>
+            <p class="text-muted small">Use o botão acima para adicionar registros de empenho vinculados aos contratos.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

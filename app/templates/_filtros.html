@@ -1,0 +1,48 @@
+{#
+  Macro: filtro_multiselect
+  Renderiza um <select multiple> estilizado com Tom Select.
+
+  Parâmetros:
+    label      — rótulo visível
+    name       — name do campo HTML
+    opcoes     — lista de objetos com .id e .nome   OU  dict {valor: label}
+    selecionados — lista de ids/valores já selecionados
+    placeholder — texto quando nada está selecionado
+#}
+{#
+  Macro: filtro_rapido
+  Renderiza um campo de busca rápida client-side com suporte a tags (separador ;).
+
+  Parâmetros:
+    label   — rótulo visível
+    col_idx — índice da coluna da tabela (data-col)
+    key     — identificador único (usado no id do elemento)
+#}
+{% macro filtro_rapido(label, col_idx, key='') %}
+<div class="col-6 col-md">
+    <label class="fr-label">{{ label }}</label>
+    <div class="fr-wrap" data-col="{{ col_idx }}"{% if key %} id="frWrap_{{ key }}"{% endif %}>
+        <input type="text" class="fr-input" placeholder="Filtrar…"{% if key %} id="frInp_{{ key }}"{% endif %}>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro filtro_multiselect(label, name, opcoes, selecionados=[], placeholder='Todos') %}
+<div>
+    <label class="form-label mb-1 small fw-semibold">{{ label }}</label>
+    <select name="{{ name }}" multiple
+            data-multiselect
+            data-placeholder="{{ placeholder }}"
+            class="form-select form-select-sm">
+        {% if opcoes is mapping %}
+            {% for val, lbl in opcoes.items() %}
+            <option value="{{ val }}" {% if val in selecionados %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+        {% else %}
+            {% for op in opcoes %}
+            <option value="{{ op.id }}" {% if op.id in selecionados %}selected{% endif %}>{{ op.nome }}</option>
+            {% endfor %}
+        {% endif %}
+    </select>
+</div>
+{% endmacro %}

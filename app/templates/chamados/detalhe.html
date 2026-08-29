@@ -1,0 +1,837 @@
+{% extends 'base.html' %}
+{% block title %}Chamado {{ chamado.numero }}{% endblock %}
+
+{% set cats_bp  = {'eletroeletronico':'Eletroeletrônico','equip_medico':'Equip. médico/odont.','mobiliario_medico':'Mobiliário médico','mobiliario_geral':'Mobiliário geral','outro':'Outro'} %}
+{% set servs_bp = {'corretiva':'Manutenção corretiva','preventiva':'Manutenção preventiva','instalacao':'Instalação','desinstalacao':'Desinstalação','treinamento':'Treinamento','calibracao':'Calibração','outro':'Outro'} %}
+{% set prob_em  = {'bem':'No bem permanente','acessorio':'No acessório'} %}
+
+{% block head %}
+<style>
+/* Fotos */
+.fotos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: .5rem; margin-top: .5rem;
+}
+.fotos-grid a {
+    display: block; border-radius: 8px; overflow: hidden;
+    aspect-ratio: 1; background: #f3f4f6; border: 1px solid #e5e7eb; position: relative;
+}
+.fotos-grid a img, .fotos-grid a video { width:100%; height:100%; object-fit:cover; display:block; }
+.fotos-grid .video-badge {
+    position:absolute; bottom:4px; left:4px;
+    background:rgba(0,0,0,.55); color:#fff; font-size:.6rem; padding:1px 5px; border-radius:4px;
+}
+
+/* Timeline */
+.timeline { position: relative; padding-left: 1.6rem; }
+.timeline::before {
+    content: ''; position: absolute; left: .55rem; top: .4rem; bottom: .4rem;
+    width: 2px; background: #e5e7eb;
+}
+.timeline-item { position: relative; margin-bottom: 1.1rem; }
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-dot {
+    position: absolute; left: -1.6rem; top: .3rem;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--sigus-primary); border: 2px solid #fff;
+    box-shadow: 0 0 0 2px var(--sigus-primary);
+}
+.timeline-item:first-child .timeline-dot { background: #16a34a; box-shadow: 0 0 0 2px #16a34a; }
+.timeline-item:last-child  .timeline-dot { background: #6b7280; box-shadow: 0 0 0 2px #6b7280; }
+.timeline-time { font-size: .74rem; color: #6b7280; margin-bottom: .15rem; }
+.timeline-acao { font-weight: 600; font-size: .88rem; }
+.timeline-obs  { font-size: .83rem; color: #374151; margin-top: .2rem;
+                 background: #f9fafb; border-left: 3px solid #e5e7eb;
+                 padding: .3rem .6rem; border-radius: 0 6px 6px 0; white-space: pre-wrap; }
+
+/* Status badges coloridos no sidebar */
+.status-pill {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .25rem .75rem; border-radius: 20px; font-size: .78rem; font-weight: 600;
+}
+
+/* ── Tipo de andamento na timeline ────────────────────────────── */
+.and-tipo-chip {
+    display: inline-flex; align-items: center; gap: .25rem;
+    font-size: .7rem; font-weight: 600; text-transform: uppercase;
+    padding: .15rem .55rem; border-radius: 20px; margin-bottom: .25rem;
+}
+
+/* ── Anexos na timeline ────────────────────────────────────────── */
+.anexos-grid {
+    display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem;
+}
+.anexo-item {
+    display: flex; align-items: center; gap: .4rem;
+    background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px;
+    padding: .3rem .6rem; font-size: .78rem; text-decoration: none; color: #374151;
+    max-width: 200px;
+}
+.anexo-item:hover { background: #e5e7eb; color: #111; }
+.anexo-item .nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.anexo-item .tam  { color: #9ca3af; font-size: .7rem; white-space: nowrap; }
+.anexo-thumb {
+    width: 48px; height: 48px; object-fit: cover; border-radius: 6px;
+    border: 1px solid #e5e7eb; cursor: pointer;
+}
+
+/* ── Upload zona no modal ──────────────────────────────────────── */
+.and-upload-zona {
+    border: 2px dashed #d1d5db; border-radius: 10px;
+    padding: 1rem; text-align: center; cursor: pointer;
+    background: #fafafa; transition: border-color .2s, background .2s;
+}
+.and-upload-zona:hover, .and-upload-zona.drag-over {
+    border-color: var(--sigus-primary); background: #f0f7ff;
+}
+.and-upload-zona input[type=file] { display: none; }
+.and-preview-grid {
+    display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .5rem;
+}
+.and-prev-item {
+    position: relative; border-radius: 8px; overflow: hidden;
+    width: 64px; height: 64px; background: #f3f4f6;
+    border: 1px solid #e5e7eb; flex-shrink: 0;
+}
+.and-prev-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.and-prev-item .and-prev-icon {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: .65rem; color: #6b7280; text-align: center; padding: .2rem;
+}
+.and-prev-item .and-prev-icon i { font-size: 1.4rem; margin-bottom: .15rem; }
+.and-prev-item .rm-btn {
+    position: absolute; top: 2px; right: 2px;
+    background: rgba(0,0,0,.5); color: #fff; border: none; border-radius: 50%;
+    width: 18px; height: 18px; font-size: .6rem;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('chamados.listar') }}">Chamados</a></li>
+        <li class="breadcrumb-item active">{{ chamado.numero }}</li>
+    </ol>
+</nav>
+
+{# ── Banners de pendências abertas ───────────────────────────────── #}
+{% for p in pendencias %}
+<div class="alert alert-{{ 'danger' if p.tipo_andamento == 'alerta' else 'warning' }} d-flex align-items-start gap-3 mb-2"
+     role="alert">
+    <i class="bi bi-{{ 'exclamation-triangle-fill' if p.tipo_andamento == 'alerta' else 'question-circle-fill' }} fs-5 flex-shrink-0 mt-1"></i>
+    <div class="flex-grow-1">
+        <strong>{{ p.tipo_label }}:</strong>
+        {{ p.acao }}
+        {% if p.observacao %}<div class="small mt-1">{{ p.observacao }}</div>{% endif %}
+        <div class="small text-muted mt-1">
+            Registrado por {{ p.usuario.nome if p.usuario else 'Sistema' }}
+            em {{ p.criado_em | br_datetime }}
+        </div>
+    </div>
+    {% if not chamado.status in ['concluido', 'cancelado'] %}
+    <form method="POST"
+          action="{{ url_for('chamados.responder_andamento', id=chamado.id, and_id=p.id) }}"
+          class="flex-shrink-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if p.tipo_andamento == 'alerta' else 'warning' }}">
+            <i class="bi bi-check2 me-1"></i>Marcar como resolvido
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endfor %}
+
+{# ── Cabeçalho da página ─────────────────────────────────────────────── #}
+<div class="page-header mb-3">
+    <div>
+        <h1 class="mb-1">
+            <i class="bi bi-wrench-adjustable me-2"></i>{{ chamado.numero }}
+        </h1>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="badge bg-{{ chamado.status_badge }} fs-6">{{ chamado.status_label }}</span>
+            <span class="badge bg-{{ chamado.prioridade_badge }} fs-6">{{ chamado.prioridade_label }}</span>
+            <span class="badge bg-secondary fs-6">{{ chamado.tipo_label }}</span>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        {# Botão Novo Andamento — só para chamados em aberto #}
+        {% if chamado.status not in ['concluido', 'cancelado'] %}
+        <button type="button" class="btn btn-primary"
+                data-bs-toggle="modal" data-bs-target="#modalAndamento">
+            <i class="bi bi-plus-circle me-1"></i>Novo Andamento
+        </button>
+        {% endif %}
+        {# Botão Imprimir #}
+        <button type="button" class="btn btn-outline-secondary"
+                onclick="abrirImpresso('{{ url_for('chamados.imprimir', id=chamado.id) }}', 'Chamado {{ chamado.numero }}')">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+<div class="row g-3">
+
+    {# ════════════════════════════════════════════════════════════
+       COL PRINCIPAL
+    ════════════════════════════════════════════════════════════ #}
+    <div class="col-lg-8">
+
+        {# ── Dados do chamado ────────────────────────────────── #}
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-info-circle text-primary"></i>
+                <strong>{{ chamado.titulo }}</strong>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Unidade</div>
+                        <div><a href="{{ url_for('unidades.detalhe', id=chamado.unidade_id) }}">{{ chamado.unidade.nome }}</a></div>
+                    </div>
+                    {% if chamado.sala %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Sala</div>
+                        <div>{{ chamado.sala.nome }}</div>
+                    </div>
+                    {% endif %}
+                    {% if chamado.equipamento %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Equipamento</div>
+                        <div>
+                            <a href="{{ url_for('equipamentos.detalhe', id=chamado.equipamento_id) }}">
+                                {{ chamado.equipamento.nome_display }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Aberto por</div>
+                        <div>{{ chamado.solicitante.nome }}</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Setor Responsável</div>
+                        <div>{{ chamado.setor.nome if chamado.setor else '—' }}</div>
+                    </div>
+                    {% if chamado.responsavel %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Técnico Responsável</div>
+                        <div>{{ chamado.responsavel.nome }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {# Descrição #}
+                <div class="mb-2">
+                    <div class="text-muted small mb-1">Descrição do problema</div>
+                    <div class="p-3 bg-light rounded" style="white-space:pre-wrap">{{ chamado.descricao }}</div>
+                </div>
+
+                {# ── Detalhes de Bem Permanente ──────────────── #}
+                {% if chamado.tipo_chamado == 'equipamento' and (chamado.bp_servico or chamado.bp_rechamado is not none) %}
+                <hr class="my-3">
+                <div class="text-muted small fw-semibold mb-2">
+                    <i class="bi bi-pc-display me-1"></i>Detalhes do Bem Permanente
+                </div>
+                <div class="row g-2">
+                    {% if chamado.equipamento %}
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Patrimônio</div>
+                        <div><code>{{ chamado.equipamento.numero_patrimonio or '—' }}</code></div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Nº de Série</div>
+                        <div><code>{{ chamado.equipamento.numero_serie or '—' }}</code></div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Marca / Modelo</div>
+                        <div>
+                            {{ chamado.equipamento.marca.nome if chamado.equipamento.marca else '' }}
+                            {% if chamado.equipamento.modelo %} / {{ chamado.equipamento.modelo.nome }}{% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if chamado.bp_servico %}
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Serviço solicitado</div>
+                        <div>{{ servs_bp.get(chamado.bp_servico, chamado.bp_servico) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if chamado.bp_problema_em %}
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Problema em</div>
+                        <div>{{ prob_em.get(chamado.bp_problema_em, chamado.bp_problema_em) }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="col-sm-4">
+                        <div class="text-muted small">Rechamado?</div>
+                        <div>
+                            {% if chamado.bp_rechamado %}
+                            <span class="badge bg-warning text-dark">Sim</span>
+                            {% if chamado.bp_data_rechamado %}
+                            <span class="ms-1 text-muted small">(anterior: {{ chamado.bp_data_rechamado.strftime('%d/%m/%Y') }})</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="badge bg-secondary">Não</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {# ── Fotos ───────────────────────────────────── #}
+                {% set fotos_list = chamado.fotos.all() %}
+                {% if fotos_list %}
+                <hr class="my-3">
+                <div class="text-muted small mb-1">
+                    <i class="bi bi-images me-1"></i>Fotos / Vídeos ({{ fotos_list|length }})
+                </div>
+                <div class="fotos-grid">
+                    {% for foto in fotos_list %}
+                    <a href="{{ foto.url }}" target="_blank" title="{{ foto.original }}">
+                        {% if foto.is_video %}
+                        <video src="{{ foto.url }}" muted></video>
+                        <span class="video-badge">vídeo</span>
+                        {% else %}
+                        <img src="{{ foto.url }}" alt="{{ foto.original }}" loading="lazy">
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {# Observação de conclusão/cancelamento #}
+                {% if chamado.observacao_conclusao %}
+                <hr class="my-3">
+                <div>
+                    <div class="text-muted small mb-1">
+                        Observação de {{ 'Conclusão' if chamado.status == 'concluido' else 'Cancelamento' }}
+                    </div>
+                    <div class="p-3 bg-light rounded">{{ chamado.observacao_conclusao }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# ── Histórico / Andamentos ──────────────────────────── #}
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-clock-history me-2"></i>Histórico de Andamentos</span>
+                <span class="badge bg-secondary rounded-pill">{{ historico|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if historico %}
+                <div class="timeline">
+                    {% for h in historico %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"
+                             style="background:var(--bs-{{ h.tipo_cor }}); box-shadow:0 0 0 2px var(--bs-{{ h.tipo_cor }})">
+                        </div>
+
+                        {# Chip de tipo (só mostra quando não é andamento comum) #}
+                        {% if h.tipo_andamento != 'andamento' %}
+                        <span class="and-tipo-chip bg-{{ h.tipo_cor }} text-white">
+                            <i class="bi {{ h.tipo_icone }}"></i>{{ h.tipo_label }}
+                            {% if h.pendente %}
+                            <span class="ms-1" title="Aguardando resposta">⚠</span>
+                            {% elif h.respondido_em %}
+                            <span class="ms-1 opacity-75" title="Resolvido">✓</span>
+                            {% endif %}
+                        </span>
+                        {% endif %}
+
+                        <div class="timeline-time">
+                            <i class="bi bi-person me-1"></i>{{ h.usuario.nome if h.usuario else 'Sistema' }}
+                            <span class="mx-1">·</span>
+                            <i class="bi bi-calendar3 me-1"></i>{{ h.criado_em | br_datetime }}
+                            {% if h.contrato %}
+                            <span class="mx-1">·</span>
+                            <i class="bi bi-file-earmark-text me-1"></i>
+                            <span class="text-muted">Contrato {{ h.contrato.identificador }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="timeline-acao">{{ h.acao }}</div>
+
+                        {% if h.observacao %}
+                        <div class="timeline-obs">{{ h.observacao }}</div>
+                        {% endif %}
+
+                        {# Anexos do andamento #}
+                        {% set anx = h.anexos.all() %}
+                        {% if anx %}
+                        <div class="anexos-grid">
+                            {% for a in anx %}
+                            {% if a.is_imagem %}
+                            <a href="{{ a.url }}" target="_blank" title="{{ a.original }}">
+                                <img src="{{ a.url }}" alt="{{ a.original }}" class="anexo-thumb" loading="lazy">
+                            </a>
+                            {% else %}
+                            <a href="{{ a.url }}" target="_blank" class="anexo-item" title="{{ a.original }}">
+                                <i class="bi {{ a.icone }} text-primary"></i>
+                                <span class="nome">{{ a.original | truncate(22) }}</span>
+                                {% if a.tamanho_fmt %}<span class="tam">{{ a.tamanho_fmt }}</span>{% endif %}
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">Nenhum andamento registrado.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    {# ════════════════════════════════════════════════════════════
+       SIDEBAR DIREITO
+    ════════════════════════════════════════════════════════════ #}
+    <div class="col-lg-4">
+
+        {# ── Datas ───────────────────────────────────────────── #}
+        <div class="card mb-3">
+            <div class="card-body py-2 px-3">
+                <div class="d-flex flex-column gap-2" style="font-size:.82rem;">
+                    <div class="text-muted">
+                        <i class="bi bi-calendar-plus me-1"></i>Aberto em:
+                        <strong>{{ chamado.criado_em | br_datetime }}</strong>
+                    </div>
+                    <div class="text-muted">
+                        <i class="bi bi-clock-history me-1"></i>Última atualização:
+                        <strong>{{ chamado.atualizado_em | br_datetime }}</strong>
+                    </div>
+                    {% if chamado.fechado_em %}
+                    <div class="text-muted">
+                        <i class="bi bi-check-circle text-success me-1"></i>Fechado em:
+                        <strong>{{ chamado.fechado_em | br_datetime }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# ── Outros chamados do mesmo equipamento / sala ─────── #}
+        {% if outros_chamados %}
+        {% set _oc_total = outros_chamados|length %}
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span>
+                    {% if chamado.equipamento %}
+                    <i class="bi bi-pc-display me-2 text-primary"></i>Histórico do Equipamento
+                    {% else %}
+                    <i class="bi bi-door-open me-2 text-warning"></i>Histórico da Sala
+                    {% endif %}
+                </span>
+                <span class="badge bg-secondary rounded-pill">{{ _oc_total }}</span>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for c in outros_chamados %}
+                    <li class="list-group-item px-3 py-2 {% if loop.index > 3 %}oc-extra d-none{% endif %}">
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                               class="text-decoration-none fw-semibold text-primary small">
+                                {{ c.numero }}
+                            </a>
+                            <span class="badge bg-{{ c.status_badge }} text-nowrap" style="font-size:.65rem">
+                                {{ c.status_label }}
+                            </span>
+                        </div>
+                        <div class="text-muted" style="font-size:.72rem">
+                            {{ c.criado_em | br_datetime }}
+                        </div>
+                        {% if c.descricao %}
+                        <div class="text-truncate text-muted" style="font-size:.75rem; max-width:100%">
+                            {{ c.descricao | truncate(70) }}
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% if _oc_total > 3 %}
+                <div class="text-center py-2 border-top">
+                    <button type="button" class="btn btn-link btn-sm text-muted p-0" id="btnVerMaisOC">
+                        <i class="bi bi-chevron-down me-1"></i>Ver mais {{ _oc_total - 3 }} chamado{{ 's' if _oc_total - 3 > 1 else '' }}
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── Alterar status ──────────────────────────────────── #}
+        {% if chamado.status not in ['concluido', 'cancelado'] %}
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-arrow-repeat me-2"></i>Alterar Status</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('chamados.atualizar_status', id=chamado.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Novo Status</label>
+                        <select name="status" class="form-select form-select-sm" required>
+                            {% for s in status_opts %}
+                            <option value="{{ s }}" {% if chamado.status == s %}selected{% endif %}>
+                                {{ status_labels[s] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Setor</label>
+                        <select name="setor_id" class="form-select form-select-sm">
+                            <option value="">Manter atual</option>
+                            {% for s in setores %}
+                            <option value="{{ s.id }}" {% if chamado.setor_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label form-label-sm">Observação</label>
+                        <textarea name="observacao" class="form-control form-control-sm" rows="2"
+                                  placeholder="Motivo ou ação tomada..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                        <i class="bi bi-arrow-repeat me-1"></i>Alterar Status
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        {# Chamado fechado — mostra status em destaque #}
+        <div class="card mb-3">
+            <div class="card-body text-center py-3">
+                <span class="badge bg-{{ chamado.status_badge }} fs-5 px-3 py-2">
+                    <i class="bi bi-{{ 'check-circle' if chamado.status == 'concluido' else 'x-circle' }} me-2"></i>
+                    {{ chamado.status_label }}
+                </span>
+                {% if chamado.fechado_em %}
+                <div class="text-muted small mt-2">{{ chamado.fechado_em | br_datetime }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{# ════════════════════════════════════════════════════════════════════
+   MODAL — Novo Andamento
+════════════════════════════════════════════════════════════════════ #}
+{% if chamado.status not in ['concluido', 'cancelado'] %}
+<div class="modal fade" id="modalAndamento" tabindex="-1" aria-labelledby="modalAndamentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="POST" enctype="multipart/form-data"
+                  action="{{ url_for('chamados.adicionar_andamento', id=chamado.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="tipo_andamento" id="hiddenTipoAndamento" value="andamento">
+
+                <div class="modal-header" id="andModalHeader">
+                    <h5 class="modal-title" id="modalAndamentoLabel">
+                        <i class="bi bi-plus-circle me-2 text-primary" id="andModalIcone"></i>
+                        <span id="andModalTitulo">Novo Andamento</span>
+                        <small class="text-muted fw-normal ms-2">{{ chamado.numero }}</small>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    {# ── Tipo de andamento ─────────────────────────────── #}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipo de andamento</label>
+                        <div class="d-flex flex-wrap gap-2" id="tipoAndamentoBtns">
+                            <button type="button" class="btn btn-sm btn-primary and-tipo-btn active"
+                                    data-tipo="andamento" data-icone="bi-chat-left-text"
+                                    data-titulo="Andamento" data-cor="primary">
+                                <i class="bi bi-chat-left-text me-1"></i>Andamento
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning and-tipo-btn"
+                                    data-tipo="pedido_info" data-icone="bi-question-circle"
+                                    data-titulo="Pedido de Informação" data-cor="warning">
+                                <i class="bi bi-question-circle me-1"></i>Pedido de Informação
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger and-tipo-btn"
+                                    data-tipo="alerta" data-icone="bi-exclamation-triangle"
+                                    data-titulo="Alerta / Pendência" data-cor="danger">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Alerta / Pendência
+                            </button>
+                            {% if current_user.pode('fechar_chamado') %}
+                            <button type="button" class="btn btn-sm btn-outline-success and-tipo-btn"
+                                    data-tipo="nota_encerramento" data-icone="bi-file-check"
+                                    data-titulo="Nota de Encerramento" data-cor="success">
+                                <i class="bi bi-file-check me-1"></i>Nota de Encerramento
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div id="andTipoInfo" class="form-text text-muted mt-1">
+                            Registro simples de uma ação ou atualização.
+                        </div>
+                    </div>
+
+                    {# ── Descrição ─────────────────────────────────────── #}
+                    <div class="mb-3">
+                        <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                        <input type="text" name="acao" class="form-control" required
+                               id="andAcaoInput"
+                               placeholder="Ex: Técnico acionado, Peça solicitada, Visita realizada...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Detalhes / Observação</label>
+                        <textarea name="observacao" class="form-control" rows="3"
+                                  id="andObservacao"
+                                  placeholder="Descreva com detalhes o que foi feito, encontrado ou solicitado..."></textarea>
+                    </div>
+
+                    {# ── Anexos ────────────────────────────────────────── #}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Anexos
+                            <span class="text-muted fw-normal small">(fotos, PDF, documentos — até 10 arquivos, 50 MB cada)</span>
+                        </label>
+                        <div class="and-upload-zona" id="andUploadZona">
+                            <input type="file" id="andInputAnexos" name="anexos" multiple
+                                   accept="image/*,video/*,application/pdf,application/msword,
+                                           application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+                                           application/vnd.ms-excel,
+                                           application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+                            <i class="bi bi-paperclip fs-4 text-muted d-block mb-1"></i>
+                            <div class="small text-muted">Clique ou arraste arquivos aqui</div>
+                        </div>
+                        <div class="and-preview-grid" id="andPreviewGrid"></div>
+                        <div class="text-muted small mt-1" id="andAnexoCount"></div>
+                    </div>
+
+                    {# ── Contrato vinculado ────────────────────────────── #}
+                    <div class="mb-3">
+                        <label class="form-label d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-text text-secondary"></i>
+                            Contrato vinculado
+                            <span class="text-muted fw-normal small">(opcional)</span>
+                            {% if chamado.equipamento %}
+                            <span class="badge bg-light text-secondary border" style="font-size:.65rem; font-weight:normal;">
+                                cobrindo {{ chamado.equipamento.tipo_equipamento.nome if chamado.equipamento.tipo_equipamento else 'este equipamento' }}
+                            </span>
+                            {% endif %}
+                        </label>
+                        {% if contratos_equip %}
+                        <select name="contrato_id" class="form-select" data-singleselect
+                                data-placeholder="— Nenhum —">
+                            <option value="">— Nenhum —</option>
+                            {% for ct in contratos_equip %}
+                            <option value="{{ ct.id }}">
+                                {{ ct.identificador }}
+                                {% if ct.tipo_contrato %} · {{ ct.tipo_contrato }}{% endif %}
+                                — {{ ct.empresa_display }}
+                                (vence {{ ct.data_fim.strftime('%d/%m/%Y') }})
+                                {% if ct.status == 'a_vencer' %} ⚠️{% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        {% elif chamado.equipamento %}
+                        <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:.82rem;">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Nenhum contrato vigente cobre <strong>{{ chamado.equipamento.nome_display }}</strong>.
+                            <a href="{{ url_for('contratos.listar') }}" target="_blank" class="alert-link ms-1">
+                                Gerenciar contratos
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info py-2 px-3 mb-0" style="font-size:.82rem;">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Nenhum contrato vigente cadastrado no sistema.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {# ── Status / Setor ────────────────────────────────── #}
+                    <div class="row g-3" id="andStatusSetor">
+                        <div class="col-sm-6">
+                            <label class="form-label">Atualizar Status</label>
+                            <select name="novo_status" class="form-select" id="andNovoStatus">
+                                <option value="">— Manter atual ({{ chamado.status_label }}) —</option>
+                                {% for s in status_opts %}
+                                {% if s != chamado.status %}
+                                <option value="{{ s }}">{{ status_labels[s] }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label">Setor</label>
+                            <select name="setor_id" class="form-select">
+                                <option value="">— Manter atual —</option>
+                                {% for s in setores %}
+                                <option value="{{ s.id }}" {% if chamado.setor_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                </div>{# /modal-body #}
+
+                <div class="modal-footer" id="andModalFooter">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="andBtnSubmit">
+                        <i class="bi bi-check-circle me-1"></i>Registrar Andamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    /* ── Tipo de andamento ─────────────────────────────────────── */
+    const TIPO_INFO = {
+        andamento:         { placeholder: 'Ex: Técnico acionado, Peça solicitada, Visita realizada...', info: 'Registro simples de uma ação ou atualização.', submitLabel: 'Registrar Andamento', submitCls: 'btn-primary' },
+        pedido_info:       { placeholder: 'Ex: Aguardando confirmação do responsável, Solicitar nota fiscal...', info: 'Será criado um alerta no chamado aguardando resposta ou ação.', submitLabel: 'Registrar Pedido de Informação', submitCls: 'btn-warning' },
+        alerta:            { placeholder: 'Ex: Equipamento apresentou risco, Prazo esgotando...', info: 'Gera um alerta em destaque no topo do chamado até ser marcado como resolvido.', submitLabel: 'Registrar Alerta', submitCls: 'btn-danger' },
+        nota_encerramento: { placeholder: 'Ex: Manutenção concluída, equipamento operacional...', info: 'Encerra o chamado com esta nota como registro final de conclusão.', submitLabel: 'Encerrar Chamado', submitCls: 'btn-success' },
+    };
+
+    const hiddenTipo   = document.getElementById('hiddenTipoAndamento');
+    const btnSubmit    = document.getElementById('andBtnSubmit');
+    const andTipoInfo  = document.getElementById('andTipoInfo');
+    const andAcaoInput = document.getElementById('andAcaoInput');
+    const andModalTit  = document.getElementById('andModalTitulo');
+    const andModalIco  = document.getElementById('andModalIcone');
+    const andNovoStatus = document.getElementById('andNovoStatus');
+
+    document.querySelectorAll('.and-tipo-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.and-tipo-btn').forEach(b => {
+                const cor = b.dataset.cor;
+                b.className = `btn btn-sm btn-outline-${cor} and-tipo-btn`;
+            });
+            const cor   = btn.dataset.cor;
+            const tipo  = btn.dataset.tipo;
+            btn.className = `btn btn-sm btn-${cor} and-tipo-btn active`;
+
+            hiddenTipo.value = tipo;
+            const cfg = TIPO_INFO[tipo] || TIPO_INFO.andamento;
+            andTipoInfo.textContent = cfg.info;
+            andAcaoInput.placeholder = cfg.placeholder;
+            andModalTit.textContent  = btn.dataset.titulo || 'Novo Andamento';
+            andModalIco.className    = `bi ${btn.dataset.icone} me-2 text-${cor}`;
+
+            // Botão de submit
+            btnSubmit.className = `btn ${cfg.submitCls}`;
+            btnSubmit.innerHTML = `<i class="bi bi-check-circle me-1"></i>${cfg.submitLabel}`;
+
+            // Nota de encerramento: oculta seleção de status (força concluído), mostra aviso
+            if (tipo === 'nota_encerramento') {
+                document.getElementById('andStatusSetor').style.display = 'none';
+            } else {
+                document.getElementById('andStatusSetor').style.display = '';
+            }
+        });
+    });
+
+    /* ── Upload de anexos ──────────────────────────────────────── */
+    const zona    = document.getElementById('andUploadZona');
+    const inputF  = document.getElementById('andInputAnexos');
+    const grid    = document.getElementById('andPreviewGrid');
+    const countEl = document.getElementById('andAnexoCount');
+    const MAX     = 10;
+    let arquivos  = [];
+
+    zona?.addEventListener('click', () => inputF.click());
+    zona?.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over'); });
+    zona?.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
+    zona?.addEventListener('drop', e => { e.preventDefault(); zona.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+    inputF?.addEventListener('change', e => { addFiles(e.target.files); inputF.value = ''; });
+
+    function addFiles(list) {
+        for (const f of list) {
+            if (arquivos.length >= MAX) break;
+            if (!arquivos.find(x => x.name === f.name && x.size === f.size)) arquivos.push(f);
+        }
+        renderPreview(); syncInput();
+    }
+
+    function renderPreview() {
+        if (!grid) return;
+        grid.innerHTML = '';
+        arquivos.forEach((f, i) => {
+            const item = document.createElement('div');
+            item.className = 'and-prev-item';
+
+            if (f.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                item.appendChild(img);
+            } else {
+                const ico = document.createElement('div');
+                ico.className = 'and-prev-icon';
+                let iconeClass = 'bi-paperclip';
+                if (f.type === 'application/pdf') iconeClass = 'bi-file-pdf text-danger';
+                else if (f.type.startsWith('video/')) iconeClass = 'bi-camera-video text-warning';
+                else if (f.type.includes('word')) iconeClass = 'bi-file-word text-primary';
+                else if (f.type.includes('excel') || f.type.includes('spreadsheet')) iconeClass = 'bi-file-excel text-success';
+                ico.innerHTML = `<i class="bi ${iconeClass}"></i><span>${f.name.split('.').pop().toUpperCase()}</span>`;
+                item.appendChild(ico);
+            }
+
+            const rm = document.createElement('button');
+            rm.type = 'button'; rm.className = 'rm-btn';
+            rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.addEventListener('click', () => { arquivos.splice(i, 1); renderPreview(); syncInput(); });
+            item.appendChild(rm);
+            grid.appendChild(item);
+        });
+        if (countEl) countEl.textContent = arquivos.length ? `${arquivos.length} arquivo(s) selecionado(s)` : '';
+    }
+
+    function syncInput() {
+        if (!inputF) return;
+        const dt = new DataTransfer();
+        arquivos.forEach(f => dt.items.add(f));
+        inputF.files = dt.files;
+    }
+
+    // Limpa preview ao fechar o modal
+    document.getElementById('modalAndamento')?.addEventListener('hidden.bs.modal', () => {
+        arquivos = [];
+        renderPreview();
+        document.querySelectorAll('.and-tipo-btn').forEach(b => {
+            const cor = b.dataset.cor;
+            b.className = `btn btn-sm btn-outline-${cor} and-tipo-btn`;
+        });
+        const primeiro = document.querySelector('.and-tipo-btn[data-tipo="andamento"]');
+        if (primeiro) primeiro.click();
+    });
+
+    /* ── Ver mais / menos no histórico do equipamento ─────────── */
+    const btnVerMais = document.getElementById('btnVerMaisOC');
+    if (btnVerMais) {
+        btnVerMais.addEventListener('click', function () {
+            const extras = document.querySelectorAll('.oc-extra');
+            const expandido = !extras[0].classList.contains('d-none');
+            extras.forEach(el => el.classList.toggle('d-none', expandido));
+            this.innerHTML = expandido
+                ? `<i class="bi bi-chevron-down me-1"></i>${this.dataset.labelMais}`
+                : `<i class="bi bi-chevron-up me-1"></i>Ver menos`;
+        });
+        // guarda o label original para restaurar
+        btnVerMais.dataset.labelMais = btnVerMais.textContent.trim();
+    }
+})();
+</script>
+{% endblock %}

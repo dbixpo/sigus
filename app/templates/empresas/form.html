@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if empresa else 'Nova' }} Empresa{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('empresas.listar') }}">Empresas</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar Empresa' if empresa else 'Nova Empresa' }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-building me-2"></i>{{ 'Editar Empresa' if empresa else 'Nova Empresa' }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-building me-1"></i>Dados da Empresa (Administrativo)</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Informações da sede/comercial — CNPJ, razão social, endereço e contatos corporativos.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">CNPJ *</label>
+                            <input type="text" name="cnpj" id="cnpj" class="form-control" required
+                                   value="{% if empresa and empresa.cnpj|length >= 14 %}{{ empresa.cnpj[:2] }}.{{ empresa.cnpj[2:5] }}.{{ empresa.cnpj[5:8] }}/{{ empresa.cnpj[8:12] }}-{{ empresa.cnpj[12:] }}{% endif %}"
+                                   placeholder="00.000.000/0001-00" maxlength="18">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Razão Social *</label>
+                            <input type="text" name="razao_social" class="form-control" required
+                                   value="{{ empresa.razao_social if empresa else '' }}">
+                        </div>
+                        <div class="col-12"><hr class="my-2"><small class="text-muted">Endereço (sede/comercial)</small></div>
+                        <div class="col-md-8">
+                            <label class="form-label">Logradouro</label>
+                            <input type="text" name="logradouro" class="form-control"
+                                   value="{{ empresa.logradouro if empresa and empresa.logradouro else '' }}"
+                                   placeholder="Rua, Avenida...">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Nº</label>
+                            <input type="text" name="numero" class="form-control"
+                                   value="{{ empresa.numero if empresa and empresa.numero else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Complemento</label>
+                            <input type="text" name="complemento" class="form-control"
+                                   value="{{ empresa.complemento if empresa and empresa.complemento else '' }}"
+                                   placeholder="Sala, andar...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Bairro</label>
+                            <input type="text" name="bairro" class="form-control"
+                                   value="{{ empresa.bairro if empresa and empresa.bairro else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" name="cidade" class="form-control"
+                                   value="{{ empresa.cidade if empresa and empresa.cidade else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Estado</label>
+                            <input type="text" name="estado" class="form-control" maxlength="2"
+                                   value="{{ empresa.estado if empresa and empresa.estado else '' }}"
+                                   placeholder="MG">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">CEP</label>
+                            <input type="text" name="cep" id="cep" class="form-control"
+                                   value="{{ empresa.cep_formatado if empresa and empresa.cep else '' }}"
+                                   placeholder="00000-000" maxlength="9">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail comercial</label>
+                            <input type="email" name="email" class="form-control"
+                                   value="{{ empresa.email if empresa else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Telefone comercial</label>
+                            <input type="text" name="telefone" id="telefone_comercial" class="form-control"
+                                   value="{{ empresa.telefone_formatado if empresa and empresa.telefone else '' }}"
+                                   placeholder="(00) 00000-0000" maxlength="16">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-headset me-1"></i>Dados da Empresa (Local)</div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Apelido e contatos locais da empresa.</p>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Apelido Local</label>
+                            <input type="text" name="nome_comum" class="form-control"
+                                   value="{{ empresa.nome_comum if empresa else '' }}"
+                                   placeholder="Nome comum utilizado pelos Servidores">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail Local</label>
+                            <input type="email" name="email_suporte" class="form-control"
+                                   value="{{ empresa.email_suporte if empresa and empresa.email_suporte else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Telefone Local</label>
+                            <input type="text" name="telefone_suporte" id="telefone_suporte" class="form-control"
+                                   value="{{ empresa.telefone_suporte_formatado if empresa and empresa.telefone_suporte else '' }}"
+                                   placeholder="(00) 00000-0000" maxlength="16">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">Logo / Identidade Visual</div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start gap-3">
+                        {% if empresa and empresa.foto_url %}
+                        <img src="{{ empresa.foto_url }}" alt="Logo" style="width:80px;height:80px;object-fit:contain;border-radius:8px;border:1px solid #e2e8f0;">
+                        {% endif %}
+                        <div>
+                            <label class="form-label">Enviar nova imagem</label>
+                            <input type="file" name="logo" class="form-control" accept="image/*">
+                            <small class="text-muted">PNG, JPG ou GIF. Será exibido como identificação da empresa.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if empresa else 'Cadastrar' }}
+                </button>
+                <a href="{{ url_for('empresas.detalhe', id=empresa.id) if empresa else url_for('empresas.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+    // ── Máscara CNPJ 00.000.000/0001-00 ────────────────────────
+    const cnpjInp = document.getElementById('cnpj');
+    if (cnpjInp) {
+        cnpjInp.addEventListener('input', function(){
+            let v = this.value.replace(/\D/g, '').slice(0, 14);
+            if (v.length > 12) v = v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8,12)+'-'+v.slice(12);
+            else if (v.length > 8)  v = v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8);
+            else if (v.length > 5)  v = v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
+            else if (v.length > 2)  v = v.slice(0,2)+'.'+v.slice(2);
+            this.value = v;
+        });
+    }
+
+    // ── Máscara CEP 00000-000 ───────────────────────────────────
+    const cepInp = document.getElementById('cep');
+    if (cepInp) {
+        cepInp.addEventListener('input', function(){
+            let v = this.value.replace(/\D/g, '').slice(0, 8);
+            if (v.length > 5) v = v.slice(0,5)+'-'+v.slice(5);
+            this.value = v;
+        });
+    }
+
+    // ── Máscara telefone (00) 00000-0000 ────────────────────────
+    function maskTel(inp){
+        if (!inp) return;
+        inp.addEventListener('input', function(){
+            let v = this.value.replace(/\D/g, '').slice(0, 11);
+            if (v.length > 10) v = '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+            else if (v.length > 6) v = '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
+            else if (v.length > 2) v = '('+v.slice(0,2)+') '+v.slice(2);
+            this.value = v;
+        });
+    }
+    maskTel(document.getElementById('telefone_comercial'));
+    maskTel(document.getElementById('telefone_suporte'));
+
+    // Backend recebe valores e usa _cnpj_limpo / _digitos para armazenar só dígitos
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if contrato else 'Novo' }} Contrato{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('contratos.listar') }}">Contratos</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar Contrato' if contrato else 'Novo Contrato' }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-file-earmark-text"></i> {{ 'Editar Contrato' if contrato else 'Novo Contrato' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-section">
+                <div class="form-section-title">Identificação do Contrato</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">CPL</label>
+                        <input type="text" name="cpl" class="form-control"
+                               value="{{ contrato.cpl if contrato else '' }}"
+                               placeholder="Ex: 424/2020">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nº do Processo SEI</label>
+                        <input type="text" name="numero_sei" class="form-control"
+                               value="{{ contrato.numero_sei if contrato else '' }}"
+                               placeholder="Ex: 0001.2024.0001234-5">
+                        <small class="text-muted">Informe a CPL ou o Nº do Processo SEI (um dos dois é obrigatório)</small>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Link de Acesso Direto do Processo SEI</label>
+                        <input type="url" name="link_sei" class="form-control"
+                               value="{{ contrato.link_sei if contrato else '' }}"
+                               placeholder="https://...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Modalidade</label>
+                        <select name="modalidade" class="form-select">
+                            <option value="">— Selecionar —</option>
+                            {% for m in modalidades %}
+                            <option value="{{ m }}" {% if contrato and contrato.modalidade == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Empresa Contratada *</label>
+                        <select name="empresa_id" id="empresa_id" class="form-select">
+                            <option value="">— Selecionar empresa cadastrada —</option>
+                            <option value="outro" {% if contrato and not contrato.empresa_id and contrato.empresa %}selected{% endif %}>Outra (informar manualmente)</option>
+                            {% for e in empresas %}
+                            <option value="{{ e.id }}" {% if contrato and contrato.empresa_id == e.id %}selected{% endif %}>
+                                {{ e.razao_social }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div id="empresa_outra_wrap" class="mt-2" style="display:{% if contrato and not contrato.empresa_id %}block{% else %}none{% endif %};">
+                            <input type="text" name="empresa" id="empresa_outra" class="form-control"
+                                   value="{{ contrato.empresa if contrato and not contrato.empresa_id else '' }}"
+                                   placeholder="Nome da empresa">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nº do Contrato</label>
+                        <input type="text" name="numero_contrato" class="form-control"
+                               value="{{ contrato.numero_contrato if contrato else '' }}"
+                               placeholder="Nº do contrato (se diferente da CPL/SEI)">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo de Contrato</label>
+                        <input type="text" name="tipo_contrato" class="form-control"
+                               value="{{ contrato.tipo_contrato if contrato else '' }}"
+                               placeholder="Ex: Manutenção Preventiva, Locação, Aquisição...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data de Início *</label>
+                        <input type="date" name="data_inicio" class="form-control" required
+                               value="{{ contrato.data_inicio.strftime('%Y-%m-%d') if contrato and contrato.data_inicio else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data de Assinatura</label>
+                        <input type="date" name="data_assinatura" class="form-control"
+                               value="{{ contrato.data_assinatura.strftime('%Y-%m-%d') if contrato and contrato.data_assinatura else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Data de Término *</label>
+                        <input type="date" name="data_fim" class="form-control" required
+                               value="{{ contrato.data_fim.strftime('%Y-%m-%d') if contrato and contrato.data_fim else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Vigência</label>
+                        <input type="text" name="vigencia" class="form-control"
+                               value="{{ contrato.vigencia if contrato else '' }}"
+                               placeholder="Ex: 12 meses">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Seção</label>
+                        <input type="text" name="secao" class="form-control"
+                               value="{{ contrato.secao if contrato else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fonte</label>
+                        <input type="text" name="fonte" class="form-control"
+                               value="{{ contrato.fonte if contrato else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="mandado_judicial" value="1" class="form-check-input"
+                                   id="mandado_judicial" {% if contrato and contrato.mandado_judicial %}checked{% endif %}>
+                            <label class="form-check-label" for="mandado_judicial">Mandado Judicial</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Total (R$)</label>
+                        <input type="number" name="valor_total" class="form-control" step="0.01"
+                               value="{{ contrato.valor_total if contrato else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Inicial Total (R$)</label>
+                        <input type="number" name="valor_inicial" class="form-control" step="0.01"
+                               value="{{ contrato.valor_inicial if contrato else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Atual (R$)</label>
+                        <input type="number" name="valor_atual" class="form-control" step="0.01"
+                               value="{{ contrato.valor_atual if contrato else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor Mensal Atual (R$)</label>
+                        <input type="number" name="valor_mensal_atual" class="form-control" step="0.01"
+                               value="{{ contrato.valor_mensal_atual if contrato else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Aditivo (Data e %)</label>
+                        <input type="text" name="aditivo_data_pct" class="form-control"
+                               value="{{ contrato.aditivo_data_pct if contrato else '' }}"
+                               placeholder="Ex: 01/2024 — 5%">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Reajuste (Data base e %)</label>
+                        <input type="text" name="reajuste_data_base_pct" class="form-control"
+                               value="{{ contrato.reajuste_data_base_pct if contrato else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Supressão (Data e %)</label>
+                        <input type="text" name="supressao_data_pct" class="form-control"
+                               value="{{ contrato.supressao_data_pct if contrato else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Fiscalização</label>
+                        <input type="text" name="fiscalizacao" class="form-control"
+                               value="{{ contrato.fiscalizacao if contrato else '' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Contato (Nome e Telefone)</label>
+                        <input type="text" name="contato_nome_telefone" class="form-control"
+                               value="{{ contrato.contato_nome_telefone if contrato else '' }}"
+                               placeholder="Nome e telefone do responsável">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Objeto do Contrato</label>
+                        <textarea name="objeto" class="form-control" rows="3"
+                                  placeholder="Descreva o objeto/escopo do contrato...">{{ contrato.objeto if contrato else '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Empenhos</label>
+                        <textarea name="empenhos" class="form-control" rows="2"
+                                  placeholder="Informações de empenhos...">{{ contrato.empenhos if contrato else '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="2">{{ contrato.observacoes if contrato else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if contrato else 'Cadastrar Contrato' }}
+                </button>
+                <a href="{{ url_for('contratos.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function(){
+    var sel = document.getElementById('empresa_id');
+    var wrap = document.getElementById('empresa_outra_wrap');
+    var inp = document.getElementById('empresa_outra');
+    function toggle(){
+        var v = sel.value;
+        wrap.style.display = (v === 'outro') ? 'block' : 'none';
+        inp.required = (v === 'outro');
+        if (v !== 'outro') inp.value = '';
+    }
+    sel.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
+{% endblock %}

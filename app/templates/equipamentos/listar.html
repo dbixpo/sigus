@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Equipamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-pc-display"></i> Equipamentos</h1>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            {{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}
+        </div>
+        <div class="col-md-3">
+            {{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Tipo de Equipamento', 'tipo', tipos, filtro_tipos, 'Todos') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Status', 'status', status_opts, filtro_status_list, 'Todos') }}
+        </div>
+        <div class="col-md-2">
+            {{ filtro_multiselect('Condição', 'condicao', condicao_opts, filtro_condicao_list, 'Todas') }}
+        </div>
+        <div class="col-md-1 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                <i class="bi bi-search"></i>
+            </button>
+            <a href="{{ url_for('equipamentos.listar') }}" class="btn btn-outline-secondary btn-sm" title="Limpar">
+                <i class="bi bi-x-circle"></i>
+            </a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span>{{ equipamentos | length }} equipamento(s) encontrado(s)</span>
+    </div>
+    <div class="card-body p-0">
+        {% if equipamentos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Equipamento</th><th>Identificação</th><th>Marca/Modelo</th>
+                        <th>Unidade / Sala</th><th>Usuário(s)</th>
+                        <th>Status</th><th>Condição</th><th>Contrato</th>
+                        <th class="text-muted" title="Última atualização"><i class="bi bi-clock-history"></i></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in equipamentos %}
+                    <tr onclick="window.location='{{ url_for('equipamentos.detalhe', id=e.id) }}'" style="cursor:pointer">
+                        <td>
+                            <i class="{{ e.tipo_equipamento.icone }} me-1 text-primary"></i>
+                            <span class="small fw-semibold">{{ e.nome_display }}</span>
+                        </td>
+                        <td class="small text-muted">
+                            {% if e.numero_patrimonio %}
+                            <span title="Patrimônio"><i class="bi bi-tag me-1"></i>{{ e.numero_patrimonio }}</span>
+                            {% elif e.numero_serie %}
+                            <span title="Nº de Série"><i class="bi bi-upc me-1"></i>{{ e.numero_serie }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td class="small">
+                            {{ e.marca.nome if e.marca else '—' }}
+                            {% if e.modelo %}<span class="text-muted">/ {{ e.modelo.nome }}</span>{% endif %}
+                        </td>
+                        <td class="small">
+                            <div>{{ e.sala.unidade.nome | truncate(22) }}</div>
+                            <div class="text-muted">{{ e.sala.nome }}</div>
+                        </td>
+                        <td class="small">
+                            {% set usvs = e.usuarios_vinculados.all() %}
+                            {% if usvs %}
+                                {% for ev in usvs[:2] %}
+                                <div class="text-nowrap">
+                                    <i class="bi bi-person-circle me-1 text-secondary"></i>{{ ev.usuario.nome | truncate(20) }}
+                                </div>
+                                {% endfor %}
+                                {% if usvs | length > 2 %}
+                                <div class="text-muted" style="font-size:.78rem">+{{ usvs | length - 2 }} mais</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
+                        <td><span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao_label }}</span></td>
+                        <td>
+                            {% set c = e.contrato_vigente %}
+                            {% if c %}
+                            <span class="badge bg-success small" title="{{ c.identificador }}">Com contrato</span>
+                            {% else %}
+                            <span class="badge bg-light text-muted small">Sem contrato</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted text-nowrap"
+                            title="Última atualização: {{ e.atualizado_em | br_datetime }}">
+                            {{ e.atualizado_em | br_date }}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('equipamentos.detalhe', id=e.id) }}"
+                               class="btn btn-sm btn-outline-primary">Ver</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-pc-display"></i>
+            <h6>Nenhum equipamento encontrado</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

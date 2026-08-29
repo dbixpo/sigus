@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Empresas{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Início</a></li>
+        <li class="breadcrumb-item active">Empresas Contratadas</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="bi bi-building me-2"></i>Empresas</h1>
+    {% if current_user.pode('cadastrar_contrato') %}
+    <a href="{{ url_for('empresas.novo') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Nova Empresa
+    </a>
+    {% endif %}
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label mb-1">Status</label>
+            <select name="ativo" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                <option value="1" {% if filtro_ativo == '1' %}selected{% endif %}>Ativas</option>
+                <option value="0" {% if filtro_ativo == '0' %}selected{% endif %}>Inativas</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('empresas.listar') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if empresas %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:60px;"></th>
+                        <th>Razão Social</th>
+                        <th>Nome Comum</th>
+                        <th>CNPJ</th>
+                        <th>Telefone</th>
+                        <th>E-mail</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in empresas %}
+                    <tr onclick="window.location='{{ url_for('empresas.detalhe', id=e.id) }}'" style="cursor:pointer;">
+                        <td>
+                            {% if e.foto_url %}
+                            <img src="{{ e.foto_url }}" alt="" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">
+                            {% else %}
+                            <div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,var(--sigus-primary),#0ea5e9);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;">{{ (e.razao_social or '?')[0]|upper }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="fw-semibold">{{ e.razao_social | truncate(40) }}</td>
+                        <td class="small">{{ e.nome_comum or '—' }}</td>
+                        <td class="small text-muted">{{ e.cnpj[:2] }}.{{ e.cnpj[2:5] }}.{{ e.cnpj[5:8] }}/{{ e.cnpj[8:12] }}-{{ e.cnpj[12:] }}</td>
+                        <td class="small">{{ e.telefone_formatado or '—' }}</td>
+                        <td class="small">{{ e.email or '—' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if e.ativo else 'secondary' }}">{{ 'Ativa' if e.ativo else 'Inativa' }}</span>
+                        </td>
+                        <td><a href="{{ url_for('empresas.detalhe', id=e.id) }}" class="btn btn-sm btn-outline-primary">Ver</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-building"></i>
+            <h6>Nenhuma empresa cadastrada.</h6>
+            <p class="text-muted small">Cadastre empresas contratadas para vincular às ações do planejamento.</p>
+            {% if current_user.pode('cadastrar_contrato') %}
+            <a href="{{ url_for('empresas.novo') }}" class="btn btn-primary btn-sm mt-2">
+                <i class="bi bi-plus-circle me-1"></i>Nova Empresa
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

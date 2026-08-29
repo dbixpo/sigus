@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if divisao else 'Nova' }} Divisão{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.divisoes') }}">Divisões</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar: ' + divisao.nome if divisao else 'Nova Divisão' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-diagram-3"></i> {{ 'Editar Divisão' if divisao else 'Nova Divisão' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required
+                               value="{{ divisao.nome if divisao else '' }}"
+                               placeholder="Ex.: SUEQ Predial, Divisão de Atenção Primária">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="2"
+                                  placeholder="Descreva o papel desta divisão...">{{ divisao.descricao or '' if divisao else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipos de chamado que esta divisão cuida</label>
+                        <div class="form-text mb-2">Chamados desses tipos serão visíveis para toda a divisão (ex.: predial, equipamento).</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for k, v in tipos_chamado_labels.items() %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tipos_chamado" value="{{ k }}"
+                                       id="tc_{{ k }}"
+                                       {% if divisao and k in (divisao.tipos_chamado or []) %}checked{% endif %}>
+                                <label class="form-check-label" for="tc_{{ k }}">{{ v }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tipos de unidade que esta divisão supervisiona</label>
+                        <div class="form-text mb-2">Supervisores veem chamados de todas as unidades desses tipos (ex.: USF, UBS para APS).</div>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tu in tipos_unidade %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="tipos_unidade_ids" value="{{ tu.id }}"
+                                       id="tu_{{ tu.id }}"
+                                       {% if divisao and tu.id in (divisao.tipos_unidade_ids or []) %}checked{% endif %}>
+                                <label class="form-check-label" for="tu_{{ tu.id }}">{{ tu.sigla }} — {{ tu.nome }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if not tipos_unidade %}
+                        <div class="text-muted small">Nenhum tipo de unidade cadastrado. Cadastre em Tipos de Unidade primeiro.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                                   {% if not divisao or divisao.ativo %}checked{% endif %}>
+                            <label class="form-check-label" for="ativo">Divisão ativa</label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>{{ 'Salvar Alterações' if divisao else 'Cadastrar' }}
+                        </button>
+                        <a href="{{ url_for('configuracoes.divisoes') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if divisao and divisao.setores.count() > 0 %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="bi bi-people me-2"></i>Setores desta divisão
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for s in divisao.setores %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ s.nome }}
+                    <a href="{{ url_for('configuracoes.editar_setor', id=s.id) }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

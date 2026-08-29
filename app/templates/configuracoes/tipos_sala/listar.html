@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Tipos de Sala{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Tipos de Sala</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="bi bi-door-open"></i> Tipos de Sala</h1>
+    <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if tipos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:50px">Ícone</th>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th class="text-center">Salas cadastradas</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tipos %}
+                    <tr>
+                        <td class="text-center">
+                            <i class="{{ t.icone }} fs-5 text-primary"></i>
+                        </td>
+                        <td class="fw-semibold">{{ t.nome }}</td>
+                        <td class="text-muted small">{{ t.descricao or '—' }}</td>
+                        <td class="text-center">
+                            {% set total = t.salas.filter_by(ativo=True).count() %}
+                            <span class="badge bg-{{ 'primary' if total > 0 else 'secondary' }}">
+                                {{ total }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">
+                                {{ 'Ativo' if t.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_tipo_sala', id=t.id) }}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="POST"
+                                  action="{{ url_for('configuracoes.alternar_status_tipo_sala', id=t.id) }}"
+                                  class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
+                                        title="{{ 'Desativar' if t.ativo else 'Ativar' }}">
+                                    <i class="bi bi-{{ 'toggle-on' if t.ativo else 'toggle-off' }}"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-door-open"></i>
+            <h6>Nenhum tipo de sala cadastrado</h6>
+            <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary mt-2">
+                Cadastrar primeiro tipo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
