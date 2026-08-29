@@ -4,9 +4,9 @@
 {% block content %}
 <div class="page-header">
     <a href="{{ url_for('transferencias.listar', aba='lojinha') }}" class="btn btn-sm btn-outline-secondary me-2">
-        <i class="bi bi-arrow-left"></i>
+        <i class="fas fa-arrow-left"></i>
     </a>
-    <h1><i class="bi bi-shop me-1"></i> Lojinha Interna — Colocar à disposição</h1>
+    <h1><i class="fas fa-shop me-1"></i> Lojinha Interna — Colocar à disposição</h1>
 </div>
 
 <p class="text-muted mb-3">
@@ -36,10 +36,10 @@
             <span>Itens à disposição</span>
             <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-outline-primary" id="btnAddInventario">
-                    <i class="bi bi-box-seam me-1"></i>Do inventário
+                    <i class="fas fa-box-seam me-1"></i>Do inventário
                 </button>
                 <button type="button" class="btn btn-outline-secondary" id="btnAddManual">
-                    <i class="bi bi-pencil-square me-1"></i>Item manual
+                    <i class="fas fa-pen-to-square me-1"></i>Item manual
                 </button>
             </div>
         </div>
@@ -67,7 +67,7 @@
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" id="btnSubmit">
-            <i class="bi bi-check-lg me-1"></i>Adicionar à Lojinha
+            <i class="fas fa-check-lg me-1"></i>Adicionar à Lojinha
         </button>
         <a href="{{ url_for('transferencias.listar', aba='lojinha') }}" class="btn btn-outline-secondary">Cancelar</a>
     </div>
@@ -123,7 +123,7 @@
         corpo.innerHTML = items.map((it, idx) => {
             const desc = it.equipamento_id ? (it._display || '—') : it.descricao;
             const patSer = it.equipamento_id ? (it._patrimonio || it._serie || '—') : (it.numero_patrimonio || it.numero_serie || '—');
-            return `<tr data-idx="${idx}"><td>${it.quantidade}</td><td>${escapeHtml(desc)}</td><td class="small text-muted">${escapeHtml(patSer)}</td><td><span class="badge bg-secondary">${it.classificacao}</span></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-remover" data-idx="${idx}"><i class="bi bi-trash"></i></button></td></tr>`;
+            return `<tr data-idx="${idx}"><td>${it.quantidade}</td><td>${escapeHtml(desc)}</td><td class="small text-muted">${escapeHtml(patSer)}</td><td><span class="badge bg-secondary">${it.classificacao}</span></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-remover" data-idx="${idx}"><i class="fas fa-trash"></i></button></td></tr>`;
         }).join('');
         serializar();
     }

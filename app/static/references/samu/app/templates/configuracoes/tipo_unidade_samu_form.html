@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Tipo de Unidade SAMU — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-tags"></i> Tipo de Unidade SAMU — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required
+                           {% if item and item.predefinido %}readonly title="Tipos pré-cadastrados: apenas a sigla pode ser alterada"{% endif %}>
+                    {% if item and item.predefinido %}
+                    <small class="text-muted">Tipos pré-cadastrados: só a sigla pode ser editada.</small>
+                    {% endif %}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Sigla <span class="text-danger">*</span></label>
+                    <input type="text" name="sigla" class="form-control" value="{{ item.sigla if item else '' }}" required maxlength="20" placeholder="Ex: ALFA, BETA">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Ordem prioridade</label>
+                    <input type="number" name="ordem_prioridade" class="form-control" value="{{ item.ordem_prioridade if item and item.ordem_prioridade is not none else 0 }}" min="0">
+                    <small class="text-muted">Para regulação (1=maior)</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ícone</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light" id="iconPreview" style="min-width:50px; justify-content:center;">
+                            {% if item and item.icon %}<i class="{{ item.icon | icon_class }} fs-4" aria-hidden="true"></i>{% else %}<span class="text-muted small">—</span>{% endif %}
+                        </span>
+                        <input type="text" name="icon" id="iconInput" class="form-control" value="{{ item.icon if item and item.icon else '' }}" placeholder="fa-solid fa-ambulance, bi bi-truck">
+                    </div>
+                    <small class="text-muted">
+                        Classe completa: <a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank" rel="noopener noreferrer">Font Awesome</a> (ex: fa-solid fa-ambulance) ou
+                        <a href="https://icons.getbootstrap.com/" target="_blank" rel="noopener noreferrer">Bootstrap Icons</a> (ex: bi bi-truck)
+                    </small>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.tipos_unidade_samu') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var inp = document.getElementById('iconInput');
+    var preview = document.getElementById('iconPreview');
+    if (!inp || !preview) return;
+    function atualizarPreview() {
+        var v = (inp.value || '').trim();
+        if (!v) {
+            preview.innerHTML = '<span class="text-muted small">—</span>';
+            return;
+        }
+        var cls = v;
+        if (v.indexOf('fa-solid') === 0 || v.indexOf('fas ') === 0 || v.indexOf('fa-regular') === 0 || v.indexOf('fa-brands') === 0) { /* FA6 com estilo: ok */ }
+        else if (v.indexOf('fa-') === 0) cls = 'fa-solid ' + v; /* fa-truck-medical -> fa-solid fa-truck-medical */
+        else if (v.indexOf('bi ') === 0) { /* Bootstrap Icons completo */ }
+        else if (v.indexOf('bi-') === 0) cls = 'bi ' + v;
+        else cls = 'fa-solid fa-' + v; /* palavra solta: truck-medical -> fa-solid fa-truck-medical */
+        preview.innerHTML = '<i class="' + cls + ' fs-4" aria-hidden="true"></i>';
+    }
+    inp.addEventListener('input', atualizarPreview);
+    inp.addEventListener('change', atualizarPreview);
+})();
+</script>
+{% endblock %}

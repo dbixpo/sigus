@@ -4,21 +4,21 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-wrench-adjustable"></i> Chamados</h1>
+    <h1><i class="fas fa-wrench"></i> Chamados</h1>
     {% if current_user.pode('abrir_chamado') %}
     <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Chamado
+        <i class="fas fa-plus-circle me-1"></i>Novo Chamado
     </a>
     {% endif %}
 </div>
 
 {% if filtro_aplicado_automatico %}
 <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-2" style="font-size:.85rem">
-    <i class="bi bi-funnel-fill flex-shrink-0"></i>
+    <i class="fas fa-funnel-fill flex-shrink-0"></i>
     <span>
         Exibindo chamados com status: <strong>{{ filtro_status_list | join(', ') }}</strong>
         (padrão configurado).
-        <a href="/chamados/?ver_todos=1" class="ms-2 alert-link">Ver todos os status</a>
+        <a href="{{ url_for('chamados.listar', ver_todos=1) }}" class="ms-2 alert-link">Ver todos os status</a>
     </span>
 </div>
 {% endif %}
@@ -42,10 +42,10 @@
         </div>
         <div class="col-md-2 d-flex gap-1 align-items-end">
             <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                <i class="bi bi-search me-1"></i>Filtrar
+                <i class="fas fa-search me-1"></i>Filtrar
             </button>
             <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros">
-                <i class="bi bi-x-circle"></i>
+                <i class="fas fa-times-circle"></i>
             </a>
         </div>
     </form>
@@ -61,7 +61,7 @@
                     <tr>
                         <th>Número</th><th>Título</th><th>Unidade</th><th>Tipo</th>
                         <th>Prioridade</th><th>Status</th><th>Abertura</th>
-                        <th class="text-muted" title="Última atualização"><i class="bi bi-clock-history"></i></th>
+                        <th class="text-muted" title="Última atualização"><i class="fas fa-clock-history"></i></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -90,7 +90,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-check-circle-fill text-success"></i>
+            <i class="fas fa-check-circle-fill text-success"></i>
             <h6>Nenhum chamado encontrado</h6>
         </div>
         {% endif %}

@@ -3,9 +3,9 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-tags"></i> Tipos de Equipamento</h1>
+    <h1><i class="fas fa-tags"></i> Tipos de Equipamento</h1>
     <a href="{{ url_for('equipamentos.novo_tipo') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
     </a>
 </div>
 <div class="card">
@@ -26,7 +26,7 @@
                         <td><span class="badge bg-primary">{{ t.campos.count() }}</span></td>
                         <td>
                             <a href="{{ url_for('equipamentos.editar_tipo', id=t.id) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil me-1"></i>Editar / Campos
+                                <i class="fas fa-pencil-alt me-1"></i>Editar / Campos
                             </a>
                         </td>
                     </tr>

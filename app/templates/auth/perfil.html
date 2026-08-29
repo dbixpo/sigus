@@ -34,7 +34,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-person-circle me-2"></i>Meu Perfil</h1>
+    <h1><i class="fas fa-user-circle me-2"></i>Meu Perfil</h1>
 </div>
 
 <div class="row g-3">
@@ -52,7 +52,7 @@
                     <div class="avatar-inicial" id="avatarInicial">{{ current_user.inicial }}</div>
                     {% endif %}
                     <label class="avatar-edit-btn" title="Trocar foto" for="inputFotoPerfil">
-                        <i class="bi bi-camera"></i>
+                        <i class="fas fa-camera"></i>
                     </label>
                 </div>
 
@@ -74,7 +74,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="acao" value="remover_foto">
                     <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.75rem;">
-                        <i class="bi bi-trash me-1"></i>Remover foto
+                        <i class="fas fa-trash me-1"></i>Remover foto
                     </button>
                 </form>
                 {% endif %}
@@ -83,14 +83,14 @@
 
         {# Unidades vinculadas #}
         <div class="card">
-            <div class="card-header"><i class="bi bi-hospital me-2"></i>Unidades Vinculadas</div>
+            <div class="card-header"><i class="fas fa-hospital me-2"></i>Unidades Vinculadas</div>
             <div class="card-body p-0">
                 {% set vinculos = current_user.unidades.filter_by(ativo=True).all() %}
                 {% if vinculos %}
                 <ul class="list-group list-group-flush">
                     {% for v in vinculos %}
                     <li class="list-group-item d-flex align-items-center gap-2 px-3 py-2">
-                        <i class="bi bi-hospital text-primary flex-shrink-0"></i>
+                        <i class="fas fa-hospital text-primary flex-shrink-0"></i>
                         <div>
                             <div class="fw-semibold small">{{ v.unidade.nome }}</div>
                             {% if v.papel %}<div class="text-muted" style="font-size:.72rem;">{{ v.papel }}</div>{% endif %}
@@ -108,7 +108,7 @@
     {# ── Coluna central: dados + senha ── #}
     <div class="col-lg-4">
         <div class="card">
-            <div class="card-header"><i class="bi bi-pencil me-2"></i>Dados Pessoais</div>
+            <div class="card-header"><i class="fas fa-pencil-alt me-2"></i>Dados Pessoais</div>
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -141,7 +141,7 @@
                                placeholder="Mínimo 6 caracteres">
                     </div>
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-check-circle me-1"></i>Salvar Alterações
+                        <i class="fas fa-check-circle me-1"></i>Salvar Alterações
                     </button>
                 </form>
             </div>
@@ -152,7 +152,7 @@
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-bell me-2"></i>Notificações</span>
+                <span><i class="fas fa-bell me-2"></i>Notificações</span>
                 {% set n_nao_lidas = notificacoes | selectattr('lida', 'equalto', False) | list | length %}
                 {% if n_nao_lidas > 0 %}
                 <span class="badge bg-danger rounded-pill">{{ n_nao_lidas }}</span>
@@ -163,7 +163,7 @@
                 {% for n in notificacoes %}
                 <div class="notif-item-perfil border-bottom {{ 'nao-lida' if not n.lida }}">
                     <div class="d-flex align-items-start gap-2">
-                        <i class="bi {{ n.icone }} text-{{ n.cor }} mt-1 flex-shrink-0"></i>
+                        <i class="{{ n.icone }} text-{{ n.cor }} mt-1 flex-shrink-0"></i>
                         <div class="flex-grow-1 min-width-0">
                             {% if n.chamado_id %}
                             <a href="{{ n.url }}" class="fw-semibold text-decoration-none text-dark small">
@@ -188,7 +188,7 @@
                 {% endfor %}
                 {% else %}
                 <div class="text-center text-muted py-4 small">
-                    <i class="bi bi-bell-slash d-block fs-3 mb-2 opacity-50"></i>
+                    <i class="fas fa-bell-slash d-block fs-3 mb-2 opacity-50"></i>
                     Nenhuma notificação ainda.
                 </div>
                 {% endif %}

@@ -19,6 +19,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.usuario import Usuario, CBOS, VINCULOS, TIPOS_VINCULO, ESCOLARIDADES
+from app.models.cbo import CBO
 from app.models.solicitacao_vinculo import SolicitacaoVinculo
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.notificacao import Notificacao
@@ -73,6 +74,12 @@ def _cpf_digitos(cpf):
     return ''.join(c for c in (cpf or '') if c.isdigit())
 
 
+def _cnpj_limpo(val):
+    """Remove caracteres não numéricos do CNPJ."""
+    import re
+    return re.sub(r'\D', '', val or '')
+
+
 # ─── Rota pública ─────────────────────────────────────────────────────────────
 
 @solicitacoes_bp.route('/', methods=['GET', 'POST'])
@@ -87,10 +94,12 @@ def formulario():
         cpf_raw   = request.form.get('cpf', '').strip()
         cpf_digits = ''.join(c for c in cpf_raw if c.isdigit())
 
+        # Busca CBOs ativos do banco de dados
+        cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()]
         if not nome or not email:
             flash('Nome e e-mail são obrigatórios.', 'danger')
             return render_template('solicitacoes/formulario.html',
-                                   unidades=unidades, cbos=CBOS,
+                                   unidades=unidades, cbos=cbos_ativos,
                                    vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
                                    escolaridades=ESCOLARIDADES,
                                    form=request.form)
@@ -98,7 +107,7 @@ def formulario():
         if cpf_digits and not _validar_cpf(cpf_digits):
             flash('CPF inválido. Verifique os dígitos e tente novamente.', 'danger')
             return render_template('solicitacoes/formulario.html',
-                                   unidades=unidades, cbos=CBOS,
+                                   unidades=unidades, cbos=cbos_ativos,
                                    vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
                                    escolaridades=ESCOLARIDADES,
                                    form=request.form)
@@ -107,7 +116,7 @@ def formulario():
         if not unidade_id or not Unidade.query.get(unidade_id):
             flash('Selecione uma unidade válida.', 'danger')
             return render_template('solicitacoes/formulario.html',
-                                   unidades=unidades, cbos=CBOS,
+                                   unidades=unidades, cbos=cbos_ativos,
                                    vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
                                    escolaridades=ESCOLARIDADES,
                                    form=request.form)
@@ -159,11 +168,24 @@ def formulario():
             vinculo       = _s('vinculo'),
             tipo_vinculo  = _s('tipo_vinculo'),
             carga_horaria = int(ch_str) if ch_str.isdigit() else None,
-            cnpj_empresa  = _s('cnpj_empresa'),
-            nome_empresa  = _s('nome_empresa'),
             dt_entrada    = _d('dt_entrada'),
             assinatura_base64 = _s('assinatura_base64') or None,
         )
+        
+        # Se empresa_id foi selecionado, busca dados da empresa
+        empresa_id = request.form.get('empresa_id', type=int)
+        if empresa_id:
+            from app.models.empresa import EmpresaContratada
+            empresa = EmpresaContratada.query.get(empresa_id)
+            if empresa:
+                sol.cnpj_empresa = empresa.cnpj  # Já está sem máscara no banco
+                sol.nome_empresa = empresa.razao_social
+            else:
+                sol.cnpj_empresa = _cnpj_limpo(_s('cnpj_empresa')) or None
+                sol.nome_empresa = _s('nome_empresa')
+        else:
+            sol.cnpj_empresa = _cnpj_limpo(_s('cnpj_empresa')) or None
+            sol.nome_empresa = _s('nome_empresa')
         db.session.add(sol)
         db.session.flush()  # garante sol.id antes de notificar
 
@@ -173,8 +195,10 @@ def formulario():
 
         return redirect(url_for('solicitacoes.confirmacao', id=sol.id))
 
+    # Busca CBOs ativos do banco de dados
+    cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()]
     return render_template('solicitacoes/formulario.html',
-                           unidades=unidades, cbos=CBOS,
+                           unidades=unidades, cbos=cbos_ativos,
                            vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
                            escolaridades=ESCOLARIDADES,
                            form={})
@@ -254,24 +278,32 @@ def aprovar(id):
     ).first()
 
     if not vinculo_existente:
-        vinculo = UsuarioUnidade(
+        vinculo_obj = UsuarioUnidade(
             usuario_id = usuario.id,
             unidade_id = sol.unidade_id,
             ativo      = True,
         )
-        db.session.add(vinculo)
+        db.session.add(vinculo_obj)
     elif not vinculo_existente.ativo:
         vinculo_existente.ativo = True
 
     db.session.flush()
 
     # 4. Gerar Ficha CNES de cadastro
+    # Obtém vínculo e tipo da solicitação
+    vinculo_ficha = sol.vinculo
+    tipo_vinculo = sol.tipo_vinculo
+    
+    # Se vínculo é Residência (5) ou Estágio (6), tipo deve ser automaticamente "3 - Contrato por Prazo Determinado"
+    if vinculo_ficha in ('5', '6'):
+        tipo_vinculo = '3'
+    
     ficha = FichaCnesVinculo(
         usuario_id       = usuario.id,
         unidade_id       = sol.unidade_id,
         tipo             = 'cadastro',
-        vinculo          = sol.vinculo,
-        tipo_vinculo     = sol.tipo_vinculo,
+        vinculo          = vinculo_ficha,
+        tipo_vinculo     = tipo_vinculo,
         carga_horaria    = sol.carga_horaria,
         cbo              = sol.cbo,
         dt_entrada_unidade = sol.dt_entrada,

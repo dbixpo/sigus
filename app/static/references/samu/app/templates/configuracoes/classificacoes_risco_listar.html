@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-flag"></i> {{ titulo }}</h1>
+    <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Ordem</th>
+                    <th>Nome</th>
+                    <th>Cor</th>
+                    <th>Ativo</th>
+                    <th style="width:100px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>{{ item.ordem }}</td>
+                    <td>{{ item.nome or '—' }}</td>
+                    <td><span class="badge" style="background-color:{{ item.cor or '#6c757d' }}; color:white;">{{ item.cor or '—' }}</span></td>
+                    <td>{% if item.ativo %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-secondary">Não</span>{% endif %}</td>
+                    <td><a href="{{ url_for('configuracoes.classificacao_risco_form', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-flag fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhuma classificação de risco cadastrada.</p>
+        <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary btn-sm mt-2"><i class="bi bi-plus-circle me-1"></i>Cadastrar</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2"><a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted"><i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard</a></div>
+{% endblock %}

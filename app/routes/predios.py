@@ -5,11 +5,11 @@ from app.models.predio import Predio
 from app.models.unidade import Unidade
 from app.models.usuario import Usuario
 
-predios_bp = Blueprint('predios', __name__, url_prefix='/predios')
+predios_bp = Blueprint('predios', __name__, url_prefix='/configuracoes/predios')
 
 
 def _exigir_admin():
-    if not current_user.pode('cadastrar_unidade'):
+    if not current_user.pode('cadastrar_predio'):
         abort(403)
 
 
@@ -19,6 +19,8 @@ def _exigir_admin():
 @predios_bp.route('/')
 @login_required
 def listar():
+    if not current_user.pode('ver_predios') and not current_user.pode('cadastrar_predio'):
+        abort(403)
     predios = Predio.query.order_by(Predio.nome).all()
     return render_template('predios/listar.html', predios=predios)
 
@@ -29,6 +31,8 @@ def listar():
 @predios_bp.route('/<int:id>')
 @login_required
 def detalhe(id):
+    if not current_user.pode('ver_predios') and not current_user.pode('cadastrar_predio'):
+        abort(403)
     from app.models.chamado import Chamado
     predio = Predio.query.get_or_404(id)
     unidades = predio.unidades.filter_by(status='ativa').order_by(Unidade.nome).all()
@@ -66,11 +70,15 @@ def novo():
             cep=request.form.get('cep', '').strip() or None,
             telefone=request.form.get('telefone', '').strip() or None,
             link_maps=request.form.get('link_maps', '').strip() or None,
+            latitude=request.form.get('latitude', type=float),
+            longitude=request.form.get('longitude', type=float),
             responsavel_predial_id=request.form.get('responsavel_predial_id', type=int) or None,
             observacoes=request.form.get('observacoes', '').strip() or None,
         )
         db.session.add(predio)
         db.session.commit()
+        from app.routes.relatorios import invalidate_mapa_saude_payload_cache
+        invalidate_mapa_saude_payload_cache()
         flash(f'Prédio "{predio.nome}" cadastrado com sucesso!', 'success')
         return redirect(url_for('predios.detalhe', id=predio.id))
 
@@ -101,9 +109,13 @@ def editar(id):
         predio.cep = request.form.get('cep', '').strip() or None
         predio.telefone  = request.form.get('telefone', '').strip() or None
         predio.link_maps = request.form.get('link_maps', '').strip() or None
+        predio.latitude = request.form.get('latitude', type=float)
+        predio.longitude = request.form.get('longitude', type=float)
         predio.responsavel_predial_id = request.form.get('responsavel_predial_id', type=int) or None
         predio.observacoes = request.form.get('observacoes', '').strip() or None
         db.session.commit()
+        from app.routes.relatorios import invalidate_mapa_saude_payload_cache
+        invalidate_mapa_saude_payload_cache()
         flash('Prédio atualizado com sucesso!', 'success')
         return redirect(url_for('predios.detalhe', id=predio.id))
 

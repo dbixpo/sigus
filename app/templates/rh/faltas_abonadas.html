@@ -3,10 +3,10 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-calendar-check"></i> Faltas Abonadas</h1>
+    <h1><i class="fas fa-calendar-check"></i> Faltas Abonadas</h1>
     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNovaAbonada"
             {% if restantes <= 0 %}disabled title="Limite de {{ limite }} abonadas ativas atingido para {{ ano }}"{% endif %}>
-        <i class="bi bi-plus-circle me-1"></i>Nova Falta Abonada
+        <i class="fas fa-plus-circle me-1"></i>Nova Falta Abonada
     </button>
 </div>
 
@@ -54,7 +54,7 @@
     <li class="nav-item">
         <a class="nav-link {{ 'active' if not ver_hist else '' }}"
            href="{{ url_for('rh.faltas_abonadas', ano=ano) }}">
-            <i class="bi bi-calendar-check me-1"></i>Ativas
+            <i class="fas fa-calendar-check me-1"></i>Ativas
             {% if faltas_ativas %}
             <span class="badge bg-success ms-1">{{ faltas_ativas | length }}</span>
             {% endif %}
@@ -63,7 +63,7 @@
     <li class="nav-item">
         <a class="nav-link {{ 'active' if ver_hist else '' }}"
            href="{{ url_for('rh.faltas_abonadas', ano=ano, historico='1') }}">
-            <i class="bi bi-clock-history me-1"></i>Histórico
+            <i class="fas fa-clock-history me-1"></i>Histórico
             {% if faltas_canceladas %}
             <span class="badge bg-secondary ms-1">{{ faltas_canceladas | length }}</span>
             {% endif %}
@@ -114,7 +114,7 @@
                                 <button type="button"
                                         class="btn btn-sm btn-outline-primary" title="Imprimir"
                                         onclick="abrirImpresso('{{ url_for('rh.imprimir_abonada', id=f.id) }}', 'Falta Abonada — {{ f.data_falta.strftime('%d/%m/%Y') }}')">
-                                    <i class="bi bi-printer"></i>
+                                    <i class="fas fa-print"></i>
                                 </button>
                                 <button type="button"
                                         class="btn btn-sm btn-outline-danger"
@@ -123,7 +123,7 @@
                                         data-bs-target="#modalCancelar"
                                         data-id="{{ f.id }}"
                                         data-data="{{ f.data_falta.strftime('%d/%m/%Y') }}">
-                                    <i class="bi bi-x-circle"></i>
+                                    <i class="fas fa-times-circle"></i>
                                 </button>
                             </div>
                         </td>
@@ -134,7 +134,7 @@
         </div>
         {% else %}
         <div class="empty-state py-5 text-center text-muted">
-            <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
+            <i class="fas fa-calendar-x fs-1 d-block mb-3 opacity-25"></i>
             <h6>Nenhuma falta abonada ativa em {{ ano }}.</h6>
             <p class="small">Você tem {{ restantes }} abonada{{ 's' if restantes != 1 else '' }} disponível{{ 'eis' if restantes != 1 else '' }}.</p>
         </div>
@@ -190,7 +190,7 @@
                                   onsubmit="return confirm('Reativar esta abonada?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-success" title="Reativar">
-                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                    <i class="fas fa-arrow-counterclockwise"></i>
                                 </button>
                             </form>
                         </td>
@@ -201,7 +201,7 @@
         </div>
         {% else %}
         <div class="empty-state py-5 text-center text-muted">
-            <i class="bi bi-clock-history fs-1 d-block mb-3 opacity-25"></i>
+            <i class="fas fa-clock-history fs-1 d-block mb-3 opacity-25"></i>
             <h6>Nenhuma abonada cancelada em {{ ano }}.</h6>
         </div>
         {% endif %}
@@ -219,13 +219,13 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-calendar-plus me-2 text-primary"></i>Nova Falta Abonada
+                        <i class="fas fa-calendar-plus me-2 text-primary"></i>Nova Falta Abonada
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info small py-2 px-3 mb-3">
-                        <i class="bi bi-info-circle me-1"></i>
+                        <i class="fas fa-info-circle me-1"></i>
                         Você tem <strong>{{ restantes }}</strong> abonada{{ 's' if restantes != 1 else '' }} restante{{ 's' if restantes != 1 else '' }} em {{ ano }}.
                         Permitido <strong>1 por mês</strong>, máximo <strong>6 por ano</strong>.
                     </div>
@@ -264,7 +264,7 @@
                         <label class="form-label fw-semibold">Data da Falta <span class="text-danger">*</span></label>
                         <input type="date" name="data_falta" id="inputDataFalta" class="form-control" required>
                         <div id="avisoMesOcupado" class="alert alert-warning small py-2 px-3 mt-2 mb-0" style="display:none;">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
                             <span id="avisoMesTexto"></span>
                         </div>
                         <div class="form-text text-muted mt-1" id="legendaMeses">
@@ -282,7 +282,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check2 me-1"></i>Registrar
+                        <i class="fas fa-check me-1"></i>Registrar
                     </button>
                 </div>
             </form>
@@ -298,7 +298,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-x-circle me-2 text-warning"></i>Cancelar Falta Abonada
+                        <i class="fas fa-times-circle me-2 text-warning"></i>Cancelar Falta Abonada
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -317,7 +317,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
                     <button type="submit" class="btn btn-warning">
-                        <i class="bi bi-x-circle me-1"></i>Confirmar Cancelamento
+                        <i class="fas fa-times-circle me-1"></i>Confirmar Cancelamento
                     </button>
                 </div>
             </form>
@@ -401,8 +401,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (modalCancelar) {
         modalCancelar.addEventListener('show.bs.modal', function (e) {
             var btn  = e.relatedTarget;
+            const baseUrl = window.SIGUS_BASE_URL || '';
             document.getElementById('formCancelar').action =
-                '/rh/faltas-abonadas/' + btn.dataset.id + '/cancelar';
+                baseUrl + '/rh/faltas-abonadas/' + btn.dataset.id + '/cancelar';
             document.getElementById('cancelarData').textContent = btn.dataset.data;
         });
     }

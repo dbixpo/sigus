@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+{% block title %}Despacho de Viaturas{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+#mapaDespacho { height: 400px; background: #e9ecef; }
+#mapaDespacho.leaflet-container { font: 12px/1.5 "Inter", sans-serif; }
+.leaflet-tooltip.despacho-mapa-tooltip {
+    background: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-width: 255px !important;
+    max-width: 485px !important;
+}
+.leaflet-tooltip.despacho-mapa-tooltip::before { border-left-color: #fff !important; }
+.despacho-tooltip-card {
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: normal;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 16px;
+}
+.despacho-tooltip-card .tt-numero { grid-column: 1 / -1; font-weight: 700; color: #0d6efd; margin-bottom: 4px; }
+.despacho-tooltip-card .tt-campo { }
+.despacho-tooltip-card .tt-campo .tt-label { font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: .5px; color: #6c757d; }
+.despacho-tooltip-card .tt-campo .tt-valor { color: #212529; margin-top: 1px; }
+.despacho-tooltip-card .tt-campo-full { grid-column: 1 / -1; }
+.despacho-tooltip-card .tt-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 11px; }
+.leaflet-hospital-icon { background: none !important; border: none !important; }
+/* Modal Montar Equipes: garantir que fique clicável acima de qualquer overlay */
+#modalMontarEquipes.modal .modal-dialog { position: relative; z-index: 1060; }
+#modalMontarEquipes.modal .modal-content { pointer-events: auto; }
+#modalMontarEquipes.modal.show { z-index: 1055; }
+/* Dual list (disponível | setas | selecionado) */
+.dual-list-wrap { flex: 1 1 0; min-width: 0; }
+.dual-list-box { height: 140px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px; background: #fff; }
+.dual-list-box .list-item { padding: 6px 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+.dual-list-box .list-item:hover { background: #f8f9fa; }
+.dual-list-box .list-item.selected { background: #e7f1ff; }
+.dual-list-box .list-item:last-child { border-bottom: none; }
+.dual-list-arrows { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 0 8px; }
+.dual-list-arrows .btn { padding: 6px 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-broadcast-pin text-primary"></i> Despacho de Viaturas</h1>
+    <button type="button" class="btn btn-samu-primary" id="btnAbrirMontarEquipes">
+        <i class="bi bi-people me-1"></i>Montar Equipes
+    </button>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-semibold">
+                <i class="bi bi-clock-history me-2"></i>Aguardando Atendimento
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nº</th>
+                                <th>Paciente</th>
+                                <th>Apelido</th>
+                                <th>Origem</th>
+                                <th>Cidade/UF</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in aguardando_rows %}
+                            {% set _p = (r.ocorrencia.pacientes or [{}])[0] %}
+                            {% set _nome = (_p.get('nome') or '')|trim %}
+                            {% set _palavra = ((_nome.split() + [''])|first) if _nome else '' %}
+                            {% set _primeiro = (_palavra[0]|upper + _palavra[1:]|lower) if _palavra else '' %}
+                            {% set _idade = _p.get('idade') %}
+                            {% set _un = (_p.get('idade_unidade') or 'ano') %}
+                            {% set _un_label = 'ANOS' if _un == 'ano' else ('MESES' if _un == 'mes' else 'DIAS') %}
+                            <tr>
+                                <td class="fw-semibold">
+                                    <a href="{{ url_for('atendimento.despacho_viaturas_atender', numero_ocorrencia=r.ocorrencia.numero) }}" class="text-decoration-none link-primary">{{ r.ocorrencia.numero[-6:] if r.ocorrencia.numero and r.ocorrencia.numero|length >= 6 else r.ocorrencia.numero }}</a>
+                                </td>
+                                <td class="text-break">{% if _primeiro or _idade %}{{ _primeiro or '—' }}{% if _idade %} ({{ _idade }} {{ _un_label }}){% endif %}{% else %}—{% endif %}</td>
+                                <td class="text-break">{{ r.ocorrencia.apelido or '—' }}</td>
+                                <td>{{ r.ocorrencia.origem_ligacao.nome if r.ocorrencia.origem_ligacao else '—' }}</td>
+                                <td>{{ (r.ocorrencia.end_cidade or '—') }}{% if r.ocorrencia.end_cidade and r.ocorrencia.end_uf %}/{{ r.ocorrencia.end_uf }}{% elif r.ocorrencia.end_uf %}{{ r.ocorrencia.end_uf }}{% endif %}</td>
+                                <td>
+                                    <span class="badge" style="background-color:{{ r.classificacao.cor or '#6c757d' }}; color:white;">
+                                        <i class="{{ (r.tipo.icon or 'fa-solid fa-ambulance') | icon_class }} me-1"></i>{{ r.tipo.sigla }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-muted text-center py-4">Nenhum recurso aguardando atendimento.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-semibold">
+                <i class="bi bi-truck me-2"></i>Em Ocorrência
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nº</th>
+                                <th>Apelido</th>
+                                <th>Viatura</th>
+                                <th style="width:100px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in em_ocorrencia %}
+                            <tr>
+                                <td class="fw-semibold">{{ o.numero[-6:] if o.numero and o.numero|length >= 6 else o.numero }}</td>
+                                <td class="text-break">{{ o.apelido or '—' }}</td>
+                                <td>{{ o.unidade_samu.apelido or o.unidade_samu.nome if o.unidade_samu else '—' }}</td>
+                                <td><a href="{{ url_for('atendimento.despacho_viaturas_atender', numero_ocorrencia=o.numero) }}" class="btn btn-sm btn-outline-primary">Registrar</a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-muted text-center py-4">Nenhuma ocorrência em andamento.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center w-100" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMapaDespacho" aria-expanded="false" aria-controls="collapseMapaDespacho">
+            <i class="bi bi-geo-alt me-2"></i>
+            <span class="fw-semibold">Ver localização das ocorrências no mapa</span>
+            <i class="bi bi-chevron-down ms-auto"></i>
+        </button>
+    </div>
+    <div class="collapse" id="collapseMapaDespacho">
+        <div class="card-body p-0 position-relative">
+            {% if mapa_ocorrencias or mapa_unidades_saude %}
+            {% if mapa_unidades_saude %}
+            <div class="px-3 pt-2 pb-1 border-bottom bg-white">
+                <div class="form-check form-check-sm">
+                    <input class="form-check-input" type="checkbox" id="cbExibirUnidadesSaude">
+                    <label class="form-check-label small" for="cbExibirUnidadesSaude">Exibir unidades de saúde</label>
+                </div>
+            </div>
+            {% endif %}
+            <div id="mapaDespacho"></div>
+            <div id="mapaDespachoLoading" class="position-absolute top-0 start-0 end-0 bottom-0 d-flex align-items-center justify-content-center bg-light opacity-75 small text-muted d-none" style="z-index:1000;">Carregando endereços...</div>
+            {% else %}
+            <div class="text-muted text-center py-4 small">Nenhuma ocorrência ou unidade de saúde com endereço para exibir no mapa.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="mt-2"><a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted"><i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard</a></div>
+
+{% endblock %}
+
+{% block modals %}
+{# Modal Montar Equipes #}
+<div class="modal fade" id="modalMontarEquipes" tabindex="-1" aria-labelledby="modalMontarEquipesLabel" aria-hidden="true" data-bs-backdrop="true" data-bs-keyboard="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-people me-2"></i>Montar Equipes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Selecione a viatura</label>
+                        <select id="equipeSelectUnidade" class="form-select">
+                            <option value="">— Selecione a viatura —</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <hr class="my-2">
+                        <h6 class="fw-semibold mb-2">Veículo</h6>
+                        <div class="d-flex align-items-stretch gap-2">
+                            <div class="dual-list-wrap">
+                                <div class="small text-muted mb-1">Disponíveis</div>
+                                <div id="equipeVeiculosDisponiveis" class="dual-list-box"></div>
+                            </div>
+                            <div class="dual-list-arrows">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVeiculoAdicionar" title="Adicionar à equipe"><i class="bi bi-chevron-right"></i></button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVeiculoRemover" title="Remover da equipe"><i class="bi bi-chevron-left"></i></button>
+                            </div>
+                            <div class="dual-list-wrap">
+                                <div class="small text-muted mb-1">Na equipe</div>
+                                <div id="equipeVeiculosSelecionados" class="dual-list-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <hr class="my-2">
+                        <h6 class="fw-semibold mb-2">Profissionais</h6>
+                        <div class="mb-2">
+                            <label class="form-label small mb-0">Categoria</label>
+                            <select id="equipeSelectCategoria" class="form-select form-select-sm" style="max-width:280px;">
+                                <option value="">— Selecione a categoria —</option>
+                            </select>
+                        </div>
+                        <div class="d-flex align-items-stretch gap-2">
+                            <div class="dual-list-wrap">
+                                <div class="small text-muted mb-1">Disponíveis</div>
+                                <div id="equipeProfissionaisDisponiveis" class="dual-list-box"></div>
+                            </div>
+                            <div class="dual-list-arrows">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnProfissionalAdicionar" title="Adicionar à equipe"><i class="bi bi-chevron-right"></i></button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnProfissionalRemover" title="Remover da equipe"><i class="bi bi-chevron-left"></i></button>
+                            </div>
+                            <div class="dual-list-wrap">
+                                <div class="small text-muted mb-1">Na equipe</div>
+                                <div id="equipeProfissionaisSelecionados" class="dual-list-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-samu-primary" id="btnEquipeSalvar">Salvar equipe</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var API_EQUIPES_VIATURAS = "{{ url_for('atendimento.despacho_api_equipes_viaturas') }}";
+    var API_EQUIPES_VEICULOS = "{{ url_for('atendimento.despacho_api_equipes_veiculos') }}";
+    var API_EQUIPES_CATEGORIAS = "{{ url_for('atendimento.despacho_api_equipes_categorias') }}";
+    var API_EQUIPES_PROFISSIONAIS = "{{ url_for('atendimento.despacho_api_equipes_profissionais') }}";
+    var API_EQUIPES_GET = "{{ url_for('atendimento.despacho_api_equipes_get') }}";
+    var API_EQUIPES_SAVE = "{{ url_for('atendimento.despacho_api_equipes_salvar') }}";
+    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    document.getElementById('btnAbrirMontarEquipes')?.addEventListener('click', function() {
+        var modalEl = document.getElementById('modalMontarEquipes');
+        if (modalEl) {
+            var m = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: true, keyboard: true });
+            m.show();
+        }
+    });
+
+    var equipeVeiculosTodos = [];
+    var equipeVeiculosSelecionadosArr = [];
+    var equipeProfissionaisPorCategoria = {};
+    var equipeProfissionaisSelecionadosArr = [];
+
+    function renderDualList(box, items, selectedId, dataKey) {
+        box.innerHTML = '';
+        items.forEach(function(item) {
+            var div = document.createElement('div');
+            div.className = 'list-item' + (item[dataKey] == selectedId ? ' selected' : '');
+            div.dataset.id = item[dataKey];
+            div.textContent = item.nome || item.prefixo || '—';
+            if (item.perfil_nome || item.cbo_nome) div.textContent += ' (' + (item.perfil_nome || item.cbo_nome || '') + ')';
+            div.addEventListener('click', function() {
+                box.querySelectorAll('.list-item').forEach(function(el) { el.classList.remove('selected'); });
+                this.classList.add('selected');
+            });
+            box.appendChild(div);
+        });
+    }
+
+    function renderVeiculosDualList() {
+        var selIds = equipeVeiculosSelecionadosArr.map(function(v) { return v.id; });
+        var disp = equipeVeiculosTodos.filter(function(v) { return selIds.indexOf(v.id) === -1; });
+        var boxDisp = document.getElementById('equipeVeiculosDisponiveis');
+        var boxSel = document.getElementById('equipeVeiculosSelecionados');
+        if (boxDisp) renderDualList(boxDisp, disp, null, 'id');
+        if (boxSel) renderDualList(boxSel, equipeVeiculosSelecionadosArr, null, 'id');
+    }
+
+    function renderProfissionaisDualList() {
+        var cat = document.getElementById('equipeSelectCategoria').value;
+        var disponiveis = (equipeProfissionaisPorCategoria[cat] || []).filter(function(p) {
+            return !equipeProfissionaisSelecionadosArr.some(function(m) { return m.usuario_id === p.id; });
+        });
+        var boxDisp = document.getElementById('equipeProfissionaisDisponiveis');
+        var boxSel = document.getElementById('equipeProfissionaisSelecionados');
+        if (boxDisp) {
+            boxDisp.innerHTML = '';
+            disponiveis.forEach(function(p) {
+                var div = document.createElement('div');
+                div.className = 'list-item';
+                div.dataset.id = p.id;
+                div.textContent = p.nome || '—';
+                div.addEventListener('click', function() {
+                    boxDisp.querySelectorAll('.list-item').forEach(function(el) { el.classList.remove('selected'); });
+                    this.classList.add('selected');
+                });
+                boxDisp.appendChild(div);
+            });
+        }
+        if (boxSel) {
+            boxSel.innerHTML = '';
+            equipeProfissionaisSelecionadosArr.forEach(function(m) {
+                var div = document.createElement('div');
+                div.className = 'list-item';
+                div.dataset.id = m.usuario_id;
+                div.textContent = (m.nome || '—') + ((m.perfil_nome || m.cbo_nome) ? ' (' + (m.perfil_nome || m.cbo_nome) + ')' : '');
+                div.addEventListener('click', function() {
+                    boxSel.querySelectorAll('.list-item').forEach(function(el) { el.classList.remove('selected'); });
+                    this.classList.add('selected');
+                });
+                boxSel.appendChild(div);
+            });
+        }
+    }
+
+    function getSelectedInBox(box) {
+        var el = box && box.querySelector('.list-item.selected');
+        return el ? el.dataset.id : null;
+    }
+
+    document.getElementById('modalMontarEquipes')?.addEventListener('shown.bs.modal', function() {
+        fetch(API_EQUIPES_VIATURAS, { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(d) {
+            var sel = document.getElementById('equipeSelectUnidade');
+            sel.innerHTML = '<option value="">— Selecione a viatura —</option>';
+            (d.viaturas || []).forEach(function(v) {
+                var opt = document.createElement('option');
+                opt.value = v.id;
+                opt.textContent = v.apelido || v.nome;
+                sel.appendChild(opt);
+            });
+        });
+        fetch(API_EQUIPES_VEICULOS, { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(d) {
+            equipeVeiculosTodos = (d.veiculos || []).map(function(v) { return { id: v.id, prefixo: v.prefixo, nome: v.prefixo }; });
+            renderVeiculosDualList();
+        });
+        fetch(API_EQUIPES_CATEGORIAS, { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(d) {
+            window.__categoriasMap = {};
+            (d.categorias || []).forEach(function(c) { window.__categoriasMap[c.cod] = c.nome; });
+            var sel = document.getElementById('equipeSelectCategoria');
+            sel.innerHTML = '<option value="">— Selecione a categoria —</option>';
+            (d.categorias || []).forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.cod;
+                opt.textContent = c.nome;
+                sel.appendChild(opt);
+            });
+        });
+    });
+
+    document.getElementById('equipeSelectUnidade')?.addEventListener('change', function() {
+        var id = this.value;
+        equipeVeiculosSelecionadosArr = [];
+        equipeProfissionaisSelecionadosArr = [];
+        renderVeiculosDualList();
+        renderProfissionaisDualList();
+        if (!id) return;
+        fetch(API_EQUIPES_GET + '?unidade_samu_id=' + id, { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.equipe) {
+                if (d.equipe.veiculo_id && d.equipe.veiculo_prefixo) {
+                    equipeVeiculosSelecionadosArr = [{ id: d.equipe.veiculo_id, prefixo: d.equipe.veiculo_prefixo, nome: d.equipe.veiculo_prefixo }];
+                }
+                equipeProfissionaisSelecionadosArr = (d.equipe.membros || []).map(function(m) {
+                    return { usuario_id: m.usuario_id, perfil: m.perfil || '', nome: m.nome, perfil_nome: m.perfil_nome || '' };
+                });
+            }
+            renderVeiculosDualList();
+            renderProfissionaisDualList();
+        });
+    });
+
+    document.getElementById('equipeSelectCategoria')?.addEventListener('change', function() {
+        var cat = this.value;
+        if (!cat) { document.getElementById('equipeProfissionaisDisponiveis').innerHTML = ''; return; }
+        if (equipeProfissionaisPorCategoria[cat]) {
+            renderProfissionaisDualList();
+            return;
+        }
+        fetch(API_EQUIPES_PROFISSIONAIS + '?perfil=' + encodeURIComponent(cat), { credentials: 'same-origin' }).then(function(r) { return r.json(); }).then(function(d) {
+            equipeProfissionaisPorCategoria[cat] = (d.profissionais || []).map(function(p) {
+                return { id: p.id, nome: p.nome };
+            });
+            renderProfissionaisDualList();
+        });
+    });
+
+    document.getElementById('btnVeiculoAdicionar')?.addEventListener('click', function() {
+        var box = document.getElementById('equipeVeiculosDisponiveis');
+        var id = getSelectedInBox(box);
+        if (!id) return;
+        if (equipeVeiculosSelecionadosArr.length >= 1) return;
+        var v = equipeVeiculosTodos.find(function(x) { return String(x.id) === String(id); });
+        if (v) {
+            equipeVeiculosSelecionadosArr.push(v);
+            renderVeiculosDualList();
+        }
+    });
+
+    document.getElementById('btnVeiculoRemover')?.addEventListener('click', function() {
+        var box = document.getElementById('equipeVeiculosSelecionados');
+        var id = getSelectedInBox(box);
+        if (!id) return;
+        equipeVeiculosSelecionadosArr = equipeVeiculosSelecionadosArr.filter(function(v) { return String(v.id) !== String(id); });
+        renderVeiculosDualList();
+    });
+
+    document.getElementById('btnProfissionalAdicionar')?.addEventListener('click', function() {
+        var box = document.getElementById('equipeProfissionaisDisponiveis');
+        var id = getSelectedInBox(box);
+        var cat = document.getElementById('equipeSelectCategoria').value;
+        if (!id || !cat) return;
+        var p = (equipeProfissionaisPorCategoria[cat] || []).find(function(x) { return String(x.id) === String(id); });
+        if (p && !equipeProfissionaisSelecionadosArr.some(function(m) { return m.usuario_id == id; })) {
+            equipeProfissionaisSelecionadosArr.push({
+                usuario_id: parseInt(id),
+                perfil: cat,
+                nome: p.nome,
+                perfil_nome: window.__categoriasMap[cat] || ''
+            });
+            renderProfissionaisDualList();
+        }
+    });
+
+    document.getElementById('btnProfissionalRemover')?.addEventListener('click', function() {
+        var box = document.getElementById('equipeProfissionaisSelecionados');
+        var id = getSelectedInBox(box);
+        if (!id) return;
+        equipeProfissionaisSelecionadosArr = equipeProfissionaisSelecionadosArr.filter(function(m) { return String(m.usuario_id) !== String(id); });
+        renderProfissionaisDualList();
+    });
+
+    document.getElementById('btnEquipeSalvar')?.addEventListener('click', function() {
+        var unidadeId = document.getElementById('equipeSelectUnidade').value;
+        var veiculoId = equipeVeiculosSelecionadosArr[0] ? equipeVeiculosSelecionadosArr[0].id : '';
+        if (!unidadeId) { alert('Selecione a viatura (Unidade SAMU).'); return; }
+        var fd = new FormData();
+        fd.append('csrf_token', csrfToken);
+        fd.append('unidade_samu_id', unidadeId);
+        fd.append('veiculo_id', veiculoId || '');
+        fd.append('membros', JSON.stringify(equipeProfissionaisSelecionadosArr.map(function(m) { return { usuario_id: m.usuario_id, perfil: m.perfil || m.cbo }; })));
+        fetch(API_EQUIPES_SAVE, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('modalMontarEquipes')).hide();
+                    alert('Equipe salva com sucesso.');
+                } else alert(data.erro || 'Erro ao salvar');
+            });
+    });
+})();
+</script>
+{% if mapa_ocorrencias or mapa_unidades_saude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function() {
+    var mapaOcorrencias = {{ mapa_ocorrencias | tojson }};
+    var mapaUnidadesSaude = {{ mapa_unidades_saude | tojson }};
+    var map = null;
+    var markersOcorrencia = [];
+    var markersUnidade = [];
+    var unidadesGeocoded = [];
+    var coll = document.getElementById('collapseMapaDespacho');
+    var loading = document.getElementById('mapaDespachoLoading');
+    var cbUnidades = document.getElementById('cbExibirUnidadesSaude');
+    var iconHospital = L.divIcon({
+        html: '<i class="fa-solid fa-hospital" style="color:#c20d2f;font-size:26px;text-shadow:0 1px 2px rgba(0,0,0,0.3);"></i>',
+        className: 'leaflet-hospital-icon',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+    });
+    function initMapa() {
+        var div = document.getElementById('mapaDespacho');
+        if (!div || map) return;
+        map = L.map('mapaDespacho').setView([-22.12, -51.38], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+    }
+    var esc = function(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+    function addMarkerOcorrencia(item, lat, lon) {
+        var m = L.marker([lat, lon]).addTo(map);
+        var html = '<div class="despacho-tooltip-card">' +
+            '<div class="tt-numero">Ocorrência ' + esc(item.numero) + '</div>' +
+            '<div class="tt-campo"><div class="tt-label">Nome</div><div class="tt-valor">' + esc(item.paciente || '—') + '</div></div>' +
+            '<div class="tt-campo">' + (item.tipo ? '<div class="tt-label">Tipo</div><div class="tt-valor"><span class="tt-badge" style="background:' + esc(item.cor || '#6c757d') + '">' + esc(item.tipo) + '</span></div>' : '') + '</div>' +
+            '<div class="tt-campo"><div class="tt-label">Cidade/UF</div><div class="tt-valor">' + esc(item.cidade_uf || '—') + '</div></div>' +
+            '<div class="tt-campo"><div class="tt-label">Origem</div><div class="tt-valor">' + esc(item.origem || '—') + '</div></div>' +
+            (item.apelido ? '<div class="tt-campo tt-campo-full"><div class="tt-label">Apelido</div><div class="tt-valor">' + esc(item.apelido) + '</div></div>' : '') +
+            '</div>';
+        m.bindTooltip(html, { permanent: false, direction: 'right', offset: [0, 0], className: 'despacho-mapa-tooltip' });
+        m.bindPopup('<strong>' + esc(item.numero) + '</strong><br>' + esc(item.endereco));
+        return m;
+    }
+    function addMarkerUnidade(item, lat, lon) {
+        var m = L.marker([lat, lon], { icon: iconHospital }).addTo(map);
+        var html = '<div class="despacho-tooltip-card">' +
+            '<div class="tt-numero" style="color:#c20d2f;"><i class="fa-solid fa-hospital me-1"></i>' + esc(item.nome || 'Unidade de Saúde') + '</div>' +
+            (item.tipo ? '<div class="tt-campo tt-campo-full"><div class="tt-label">Tipo</div><div class="tt-valor"><span class="tt-badge" style="background:#c20d2f">' + esc(item.tipo) + '</span></div></div>' : '') +
+            (item.cidade_uf ? '<div class="tt-campo tt-campo-full"><div class="tt-label">Cidade/UF</div><div class="tt-valor">' + esc(item.cidade_uf) + '</div></div>' : '') +
+            '<div class="tt-campo tt-campo-full"><div class="tt-label">Endereço</div><div class="tt-valor small">' + esc(item.endereco) + '</div></div>' +
+            '</div>';
+        m.bindTooltip(html, { permanent: false, direction: 'right', offset: [0, 0], className: 'despacho-mapa-tooltip' });
+        m.bindPopup('<strong>' + esc(item.nome) + '</strong><br>' + esc(item.endereco) + (item.link_maps ? '<br><a href="' + esc(item.link_maps) + '" target="_blank" rel="noopener">Abrir no Google Maps</a>' : ''));
+        return m;
+    }
+    function geocodeEAdicionarOcorrencias() {
+        if (!mapaOcorrencias.length) {
+            if (cbUnidades && cbUnidades.checked) geocodeEAdicionarUnidades();
+            else ajustarBounds();
+            return;
+        }
+        if (loading) loading.classList.remove('d-none');
+        var restantes = mapaOcorrencias.slice();
+        var bounds = L.latLngBounds();
+        function processarProximo() {
+            if (restantes.length === 0) {
+                if (loading) loading.classList.add('d-none');
+                if (cbUnidades && cbUnidades.checked) geocodeEAdicionarUnidades();
+                else ajustarBounds();
+                return;
+            }
+            var item = restantes.shift();
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(item.endereco) + '&limit=1', {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && data[0] && map) {
+                    var lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                    var m = addMarkerOcorrencia(item, lat, lon);
+                    markersOcorrencia.push(m);
+                    bounds.extend([lat, lon]);
+                }
+                setTimeout(processarProximo, 1100);
+            })
+            .catch(function() { setTimeout(processarProximo, 1100); });
+        }
+        processarProximo();
+    }
+    function geocodeEAdicionarUnidades() {
+        if (!mapaUnidadesSaude.length || !map) return;
+        if (unidadesGeocoded.length === mapaUnidadesSaude.length) {
+            unidadesGeocoded.forEach(function(x) {
+                var m = addMarkerUnidade(x.item, x.lat, x.lon);
+                markersUnidade.push(m);
+            });
+            ajustarBounds();
+            return;
+        }
+        if (loading) loading.classList.remove('d-none');
+        var restantes = mapaUnidadesSaude.slice();
+        function processarProximo() {
+            if (restantes.length === 0) {
+                if (loading) loading.classList.add('d-none');
+                ajustarBounds();
+                return;
+            }
+            var item = restantes.shift();
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(item.endereco) + '&limit=1', {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data && data[0] && map) {
+                    var lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                    unidadesGeocoded.push({ item: item, lat: lat, lon: lon });
+                    var m = addMarkerUnidade(item, lat, lon);
+                    markersUnidade.push(m);
+                }
+                setTimeout(processarProximo, 1100);
+            })
+            .catch(function() { setTimeout(processarProximo, 1100); });
+        }
+        processarProximo();
+    }
+    function removerMarkersUnidade() {
+        markersUnidade.forEach(function(m) { map.removeLayer(m); });
+        markersUnidade = [];
+    }
+    function ajustarBounds() {
+        var bounds = L.latLngBounds();
+        markersOcorrencia.forEach(function(m) { bounds.extend(m.getLatLng()); });
+        markersUnidade.forEach(function(m) { bounds.extend(m.getLatLng()); });
+        if (bounds.isValid()) map.fitBounds(bounds, { padding: [30, 30] });
+    }
+    if (coll) {
+        coll.addEventListener('shown.bs.collapse', function() {
+            if (!map) initMapa();
+            if (markersOcorrencia.length === 0 && mapaOcorrencias.length > 0) geocodeEAdicionarOcorrencias();
+            else if (markersOcorrencia.length === 0 && mapaUnidadesSaude.length > 0 && cbUnidades && cbUnidades.checked) geocodeEAdicionarUnidades();
+        });
+    }
+    if (cbUnidades) {
+        cbUnidades.addEventListener('change', function() {
+            if (!map) return;
+            if (this.checked) {
+                geocodeEAdicionarUnidades();
+            } else {
+                removerMarkersUnidade();
+                ajustarBounds();
+            }
+        });
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

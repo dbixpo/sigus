@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'chamados/base_externo.html' if chamado_externo else 'base.html' %}
 {% block title %}Novo Chamado{% endblock %}
 
 {% block head %}
@@ -54,16 +54,35 @@
     color: var(--sigus-primary);
     transform: translateX(4px);
 }
+.escolha-card-preview {
+    cursor: default;
+    border-style: dashed;
+    border-color: #c4b5fd;
+    background: #fafafa;
+}
+.escolha-card-preview:hover {
+    transform: none;
+    border-color: #c4b5fd;
+    box-shadow: none;
+}
+.escolha-card-preview .escolha-seta { display: none; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="escolha-wrapper">
+    {% if chamado_externo %}{% include 'chamados/_externo_banner.html' %}{% endif %}
     <div class="page-header mb-4">
-        <h1><i class="bi bi-wrench-adjustable me-2"></i>Novo Chamado</h1>
-        <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i>Voltar
+        <h1><i class="fas fa-wrench me-2"></i>Novo Chamado</h1>
+        {% if chamado_externo %}
+        <a href="{{ url_for('chamados_externo.identificacao', novo=1) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Voltar
         </a>
+        {% else %}
+        <a href="{{ url_for('chamados.listar') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Voltar
+        </a>
+        {% endif %}
     </div>
 
     <p class="text-muted mb-4">Selecione o tipo de chamado que deseja abrir:</p>
@@ -71,9 +90,9 @@
     <div class="d-flex flex-column gap-3">
 
         {# ── Bem Permanente ─────────────────────────────────────────── #}
-        <a href="{{ url_for('chamados.novo_bem_permanente') }}" class="escolha-card">
+        <a href="{{ url_for(abrir_chamado_bp ~ '.novo_bem_permanente') }}" class="escolha-card">
             <div class="escolha-icone" style="background: linear-gradient(135deg,#1a6abf,#0e4a7a);">
-                <i class="bi bi-pc-display-horizontal"></i>
+                <i class="fas fa-laptop"></i>
             </div>
             <div>
                 <div class="escolha-texto-titulo">Bem Permanente</div>
@@ -82,13 +101,28 @@
                     Ex: computador, maca, ar-condicionado, cadeira, geladeira.
                 </div>
             </div>
-            <i class="bi bi-chevron-right escolha-seta"></i>
+            <i class="fas fa-chevron-right escolha-seta"></i>
+        </a>
+
+        {# ── Solicitação de Equipamento ─────────────────────────────── #}
+        <a href="{{ url_for(abrir_chamado_bp ~ '.novo_solicitacao_equipamento') }}" class="escolha-card">
+            <div class="escolha-icone" style="background: linear-gradient(135deg,#059669,#047857);">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div>
+                <div class="escolha-texto-titulo">Solicitação de Equipamento</div>
+                <div class="escolha-texto-desc">
+                    Registro de necessidade de novos equipamentos para ampliação ou substituição.<br>
+                    Ex: computador, monitor, impressora — por sala, com motivo e itens a substituir.
+                </div>
+            </div>
+            <i class="fas fa-chevron-right escolha-seta"></i>
         </a>
 
         {# ── Predial ────────────────────────────────────────────────── #}
-        <a href="{{ url_for('chamados.novo_predial') }}" class="escolha-card">
+        <a href="{{ url_for(abrir_chamado_bp ~ '.novo_predial') }}" class="escolha-card">
             <div class="escolha-icone" style="background: linear-gradient(135deg,#d97706,#92400e);">
-                <i class="bi bi-building-gear"></i>
+                <i class="fas fa-tools"></i>
             </div>
             <div>
                 <div class="escolha-texto-titulo">Predial</div>
@@ -97,7 +131,22 @@
                     Ex: janela, porta, elétrica, hidráulica, pintura, infiltração.
                 </div>
             </div>
-            <i class="bi bi-chevron-right escolha-seta"></i>
+            <i class="fas fa-chevron-right escolha-seta"></i>
+        </a>
+
+        {# ── Solicitação Administrativa ─────────────────────────────── #}
+        <a href="{{ url_for(abrir_chamado_bp ~ '.novo_solicitacao_administrativa') }}" class="escolha-card">
+            <div class="escolha-icone" style="background: linear-gradient(135deg,#7c3aed,#5b21b6);">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div>
+                <div class="escolha-texto-titulo">Solicitação Administrativa</div>
+                <div class="escolha-texto-desc">
+                    Para o que hoje você mandaria no WhatsApp: pedidos, dúvidas e encaminhamentos do dia a dia.<br>
+                    Ex: parametrizar cadastro, vincular profissional, pedir acesso, orientação operacional. Cada unidade ou setor registra e a fila fica com quem deve atender.
+                </div>
+            </div>
+            <i class="fas fa-chevron-right escolha-seta"></i>
         </a>
 
     </div>

@@ -28,7 +28,7 @@
     border-radius: 50px;
     background: #fff;
 }
-.search-wrap .bi-search {
+.search-wrap .fa-search {
     position: absolute; left: .85rem; top: 50%;
     transform: translateY(-50%);
     color: #9ca3af; pointer-events: none;
@@ -149,7 +149,7 @@
 {% block content %}
 <div class="links-page">
     <div class="page-header">
-        <h1><i class="bi bi-link-45deg me-2"></i>Links Úteis</h1>
+        <h1><i class="fas fa-link me-2"></i>Links Úteis</h1>
     </div>
 
     {# Conta links visíveis de forma segura #}
@@ -162,7 +162,7 @@
     {# ── Toolbar ─────────────────────────────────────────────────── #}
     <div class="links-toolbar">
         <div class="search-wrap">
-            <i class="bi bi-search"></i>
+            <i class="fas fa-search"></i>
             <input type="text" id="inputBusca" class="form-control form-control-sm"
                    placeholder="Buscar link...">
         </div>
@@ -175,13 +175,13 @@
         {% for d in dados %}{% if d.links %}
         <button class="filtro-btn" data-tipo="{{ d.tipo.id }}"
                 data-cor="{{ d.tipo.cor }}">
-            <i class="bi {{ d.tipo.icone }}"></i>{{ d.tipo.nome }}
+            <i class="{{ d.tipo.icone_fa }}"></i>{{ d.tipo.nome }}
         </button>
         {% endif %}{% endfor %}
 
         {% if sem_cat %}
         <button class="filtro-btn" data-tipo="sem_cat" data-cor="#6b7280">
-            <i class="bi bi-question-circle"></i>Outros
+            <i class="fas fa-question-circle"></i>Outros
         </button>
         {% endif %}
     </div>
@@ -191,7 +191,7 @@
     <div class="links-secao" data-secao="{{ d.tipo.id }}">
         <div class="links-secao-header">
             <div class="secao-icone" style="background:{{ d.tipo.cor }};">
-                <i class="bi {{ d.tipo.icone }}"></i>
+                <i class="{{ d.tipo.icone_fa }}"></i>
             </div>
             <span class="secao-nome">{{ d.tipo.nome }}</span>
             {% if d.tipo.descricao %}
@@ -210,13 +210,13 @@
                 <div class="lk-thumb"
                      style="background:{% if _src %}#f0f0f0{% else %}{{ d.tipo.cor }}{% endif %};">
                     {% if _src %}<img src="{{ _src }}" alt="{{ link.nome }}">
-                    {% else %}<i class="bi {{ link.icone or 'bi-link-45deg' }}"></i>{% endif %}
+                    {% else %}<i class="{{ link.icone_fa }}"></i>{% endif %}
                 </div>
                 <div class="lk-body">
                     <div class="lk-nome">{{ link.nome }}</div>
                     {% if link.descricao %}<div class="lk-desc">{{ link.descricao }}</div>{% endif %}
                 </div>
-                <i class="bi bi-chevron-right lk-arrow"></i>
+                <i class="fas fa-chevron-right lk-arrow"></i>
             </a>
             {% endfor %}
         </div>
@@ -228,7 +228,7 @@
     <div class="links-secao" data-secao="sem_cat">
         <div class="links-secao-header">
             <div class="secao-icone" style="background:#6b7280;">
-                <i class="bi bi-question-circle"></i>
+                <i class="fas fa-question-circle"></i>
             </div>
             <span class="secao-nome">Outros</span>
         </div>
@@ -243,13 +243,13 @@
                data-oculto="0">
                 <div class="lk-thumb" style="background:#6b7280;">
                     {% if _src %}<img src="{{ _src }}" alt="{{ link.nome }}">
-                    {% else %}<i class="bi {{ link.icone or 'bi-link-45deg' }}"></i>{% endif %}
+                    {% else %}<i class="{{ link.icone_fa }}"></i>{% endif %}
                 </div>
                 <div class="lk-body">
                     <div class="lk-nome">{{ link.nome }}</div>
                     {% if link.descricao %}<div class="lk-desc">{{ link.descricao }}</div>{% endif %}
                 </div>
-                <i class="bi bi-chevron-right lk-arrow"></i>
+                <i class="fas fa-chevron-right lk-arrow"></i>
             </a>
             {% endfor %}
         </div>
@@ -257,7 +257,7 @@
     {% endif %}
 
     <div class="links-no-results text-center py-5" id="noResults">
-        <i class="bi bi-search fs-1 text-muted d-block mb-2"></i>
+        <i class="fas fa-search fs-1 text-muted d-block mb-2"></i>
         <div class="text-muted">
             Nenhum link encontrado para "<strong id="termoExibido"></strong>"
         </div>
@@ -265,11 +265,11 @@
 
     {% else %}
     <div class="text-center py-5">
-        <i class="bi bi-link-45deg fs-1 text-muted d-block mb-3"></i>
+        <i class="fas fa-link fs-1 text-muted d-block mb-3"></i>
         <h6 class="text-muted">Nenhum link cadastrado ainda.</h6>
         {% if current_user.perfil in ('administrador', 'gestor_secretaria') %}
         <a href="{{ url_for('links.novo') }}" class="btn btn-primary mt-2">
-            <i class="bi bi-plus-circle me-1"></i>Adicionar primeiro link
+            <i class="fas fa-plus-circle me-1"></i>Adicionar primeiro link
         </a>
         {% endif %}
     </div>

@@ -1,0 +1,105 @@
+{% extends 'chamados/base_externo.html' %}
+{% block title %}Abrir Chamado — Identificação{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div class="form-card-header">
+        <h4><i class="fas fa-wrench me-2"></i>Abrir Chamado</h4>
+        <p>Informe seus dados e a unidade onde você está para abrir uma solicitação administrativa.</p>
+    </div>
+    <div class="form-body">
+        <form method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if next_url %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            {% endif %}
+
+            <div class="secao">
+                <div class="secao-titulo">Seus dados</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nome completo <span class="text-danger">*</span></label>
+                        <input type="text" name="nome" class="form-control" required maxlength="200"
+                               placeholder="Como podemos te identificar"
+                               value="{{ form_data.get('nome', '') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">WhatsApp <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text text-success"><i class="fab fa-whatsapp"></i></span>
+                            <input type="tel" name="whatsapp" id="inputWhatsappExterno" class="form-control" required
+                                   maxlength="15" placeholder="(15) 99999-9999"
+                                   value="{{ form_data.get('whatsapp', '') | br_fone if form_data.get('whatsapp') else '' }}">
+                        </div>
+                        <div class="form-text">Usado para retorno sobre a solicitação.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">E-mail institucional <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" required maxlength="200"
+                                   placeholder="seu.nome@instituicao.gov.br"
+                                   value="{{ form_data.get('email', '') }}">
+                        </div>
+                        <div class="form-text">E-mail corporativo ou institucional para contato.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="secao">
+                <div class="secao-titulo">Unidade</div>
+                <label class="form-label">Em qual unidade você está? <span class="text-danger">*</span></label>
+                <select name="unidade_id" class="form-select" required>
+                    <option value="">Selecione a unidade...</option>
+                    {% for u in unidades %}
+                    <option value="{{ u.id }}"
+                        {% if form_data.get('unidade_id')|string == u.id|string %}selected{% endif %}>
+                        {{ u.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Continuar <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4 pt-3 border-top">
+            <span class="text-muted small">Já abriu um chamado?</span>
+            <a href="{{ url_for('chamados_externo.acompanhar') }}" class="small ms-1">
+                Acompanhar pelo número <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const inp = document.getElementById('inputWhatsappExterno');
+    if (!inp) return;
+
+    function mascarar(v) {
+        const d = v.replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 2)  return d.replace(/^(\d{0,2})/, '($1');
+        if (d.length <= 7)  return d.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+        if (d.length <= 10) return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+    }
+
+    inp.addEventListener('input', function () {
+        const pos = this.selectionStart;
+        const antes = this.value.length;
+        this.value = mascarar(this.value);
+        const diff = this.value.length - antes;
+        this.setSelectionRange(Math.max(0, pos + diff), Math.max(0, pos + diff));
+    });
+
+    if (inp.value) inp.value = mascarar(inp.value);
+})();
+</script>
+{% endblock %}

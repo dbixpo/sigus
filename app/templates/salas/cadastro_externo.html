@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGUS - Cadastro Externo de Salas</title>
+<link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
+<style>
+:root {
+  --sigus-primary: #1A82B8;
+  --sigus-dark: #1E3A50;
+}
+body { background: #f0f4f8; font-family: "Segoe UI", Arial, sans-serif; font-size: 14px; }
+.ts-dropdown,
+.ts-control,
+.ts-wrapper {
+  font-size: .85rem;
+}
+.ts-dropdown {
+  /* garante que o dropdown fique por cima do card/bootstrap */
+  z-index: 3000 !important;
+}
+.tooltip-wide {
+  --bs-tooltip-max-width: 420px;
+}
+.tooltip-wide .tooltip-inner {
+  text-align: left;
+}
+.topo {
+  background: var(--sigus-dark);
+  border-bottom: 3px solid var(--sigus-primary);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.topo img { height: 44px; }
+.topo-titulo { color: #fff; line-height: 1.2; }
+.topo-titulo strong { font-size: 1.05rem; display: block; }
+.topo-titulo small { font-size: .7rem; opacity: .75; }
+.form-card {
+  max-width: 1080px;
+  margin: 28px auto 48px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.09);
+  overflow: hidden;
+}
+.form-card-header {
+  background: var(--sigus-primary);
+  color: #fff;
+  padding: 16px 24px;
+}
+.form-card-header h4 { margin: 0; font-size: 1rem; font-weight: 700; }
+.form-card-header p { margin: 4px 0 0; font-size: .8rem; opacity: .9; }
+.form-body { padding: 22px 24px; }
+.secao {
+  border-top: 1px solid #c8d8e4;
+  margin-top: 18px;
+  padding-top: 10px;
+}
+.secao:first-of-type { border-top: none; margin-top: 0; }
+.secao-titulo {
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--sigus-primary);
+  letter-spacing: .08em;
+  margin-bottom: 12px;
+}
+.form-label { font-size: .78rem; font-weight: 600; color: #444; margin-bottom: 3px; }
+.form-control, .form-select {
+  font-size: .85rem;
+  border-color: #c8d4dc;
+  border-radius: 5px;
+  padding: 6px 9px;
+  height: auto;
+}
+.btn-salvar {
+  background: var(--sigus-primary);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 7px;
+  font-size: .9rem;
+  font-weight: 600;
+}
+.btn-salvar:hover { background: #1569a0; color: #fff; }
+.form-wrap { display: none; }
+.form-wrap.show { display: block; }
+.lista-wrap { margin-top: 16px; }
+.badge-unidade {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+@media (max-width: 767px) {
+  .topo { padding: 12px 14px; }
+  .topo img { height: 34px; }
+  .form-body { padding: 14px; }
+  .table-responsive { font-size: .8rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <img src="{{ url_for('static', filename='img/logo-sd-branco.png') }}" alt="Saúde Digital">
+  <div class="topo-titulo">
+    <strong>SIGUS - Cadastro Externo de Salas</strong>
+    <small>Sistema Integrado de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba</small>
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h4><i class="fas fa-door-open me-2"></i>Cadastro de Salas por Unidade</h4>
+    <p>Selecione a unidade, cadastre a sala e acompanhe abaixo a lista de salas já criadas.</p>
+  </div>
+  <div class="form-body">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show py-2 small" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="secao">
+      <div class="secao-titulo"><i class="fas fa-hospital me-1"></i>Seleção da Unidade</div>
+      <div class="row g-2">
+        <div class="col-md-8">
+          <label class="form-label">Unidade de Saúde</label>
+          <select id="selUnidadeExterna" class="form-select">
+            <option value="">Selecione...</option>
+            {# Evita renderizar centenas de options; TomSelect faz live-search via API #}
+            {% if unidade %}
+            <option value="{{ unidade.id }}" selected>{{ unidade.nome }}</option>
+            {% endif %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="blocoFormulario" class="form-wrap {{ 'show' if unidade else '' }}">
+      <form method="POST" class="secao">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="unidade_id" id="inputUnidadeId" value="{{ unidade.id if unidade else '' }}">
+        <input type="hidden" name="sala_id" value="{{ sala_edicao.id if sala_edicao else '' }}">
+
+        <div class="secao-titulo">
+          <i class="fas fa-pen me-1"></i>
+          {{ 'Editar Sala' if sala_edicao else 'Dados da Sala' }}
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Nome da Sala <span class="text-danger">*</span></label>
+            <input type="text" name="nome" class="form-control" required
+                   value="{{ sala_edicao.nome if sala_edicao else '' }}"
+                   placeholder="Ex.: Consultório 1, Sala de Enfermagem A...">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Tipo de Sala</label>
+            <select name="tipo_sala_id" class="form-select" required>
+              <option value="">- Selecione o tipo -</option>
+              {% for t in tipos %}
+              <option value="{{ t.id }}" {{ 'selected' if sala_edicao and sala_edicao.tipo_sala_id == t.id else '' }}>{{ t.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-5">
+            <label class="form-label">Responsável <span class="text-muted small">(opcional)</span></label>
+            <input type="text" name="responsavel" class="form-control"
+                   value="{{ sala_edicao.responsavel if sala_edicao else '' }}"
+                   placeholder="Nome do responsável pela sala...">
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">
+              Máx. prof. simultâneos <span class="text-danger">*</span>
+              <a href="javascript:void(0)"
+                 class="text-muted ms-1"
+                 tabindex="0"
+                 role="button"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="top"
+                 data-bs-custom-class="tooltip-wide"
+                 data-bs-html="true"
+                 title="Informe o número máximo de pessoas que utilizam a sala ao mesmo tempo (simultaneamente).<br>Não considerar por período (manhã/tarde), e sim o maior número possível no mesmo momento.<br><br><strong>Exemplos:</strong><br>• Consultório: geralmente 1 profissional<br>• Consultório de GO: geralmente 2 profissionais (ex: GO + técnico de enfermagem)<br>• Pós consulta: geralmente 2 profissionais<br>• Recepção / Coordenação / Administrativo: considerar todas as pessoas que trabalham juntas no local<br><br><strong>Sempre informe o maior número simultâneo.</strong>">
+                <i class="fas fa-circle-info"></i>
+              </a>
+            </label>
+            <input type="number" name="capacidade_maxima" class="form-control" required min="0" step="1"
+                   value="{{ (sala_edicao.capacidade_maxima if sala_edicao else 0) }}"
+                   placeholder="Ex.: 2">
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Ramal <span class="text-muted small">(opcional)</span></label>
+            <input type="text" name="ramal" class="form-control"
+                   value="{{ (sala_edicao.ramal or '') if sala_edicao else '' }}"
+                   placeholder="Ex.: 1234"
+                   inputmode="numeric">
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">Observações</label>
+            <textarea name="observacoes" class="form-control" rows="2">{{ sala_edicao.observacoes if sala_edicao else '' }}</textarea>
+          </div>
+        </div>
+
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+          <button type="submit" class="btn btn-salvar">
+            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar alterações' if sala_edicao else 'Salvar e Adicionar outro' }}
+          </button>
+          {% if sala_edicao %}
+          <a class="btn btn-outline-secondary" href="{{ url_for('salas.cadastro_externo', unidade_id=unidade.id) }}">
+            Cancelar edição
+          </a>
+          {% endif %}
+        </div>
+      </form>
+
+      <div class="secao lista-wrap">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="secao-titulo mb-0"><i class="fas fa-list me-1"></i>Salas já cadastradas</div>
+          {% if unidade %}
+          <span class="badge badge-unidade">Unidade: {{ unidade.nome }}</span>
+          {% endif %}
+        </div>
+
+        {% if salas %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Unidade</th>
+                <th>Sala/Setor</th>
+                <th>Tipo</th>
+                <th class="text-center" title="Máx. profissionais simultâneos">Máx. prof. simult.</th>
+                <th>Ramal</th>
+                <th>Obs.</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in salas %}
+              <tr>
+                <td>{{ s.unidade.nome }}</td>
+                <td class="fw-semibold">{{ s.nome }}</td>
+                <td><span class="text-muted small">{{ s.tipo_label }}</span></td>
+                <td class="text-center">
+                  <span class="small text-muted">{{ s.capacidade_maxima }}</span>
+                </td>
+                <td>
+                  {% if s.ramal %}
+                    <span class="small"><i class="fas fa-telephone-plus me-1 text-secondary"></i>{{ s.ramal }}</span>
+                  {% else %}
+                    <span class="text-muted small"></span>
+                  {% endif %}
+                </td>
+                <td class="small text-muted" title="{{ s.observacoes or '' }}">
+                  {{ (s.observacoes or '') | truncate(60) }}
+                </td>
+                <td>
+                  <a href="{{ url_for('salas.cadastro_externo', unidade_id=unidade.id, edit_id=s.id) }}"
+                     class="btn btn-outline-secondary btn-sm" title="Editar sala">
+                    <i class="fas fa-pencil-alt"></i>
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-muted small">Nenhuma sala cadastrada para a unidade selecionada.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+(function () {
+  var sel = document.getElementById('selUnidadeExterna');
+  var inputUnidade = document.getElementById('inputUnidadeId');
+  var selTipoSala = document.querySelector('select[name="tipo_sala_id"]');
+  var tomUnidade = null;
+  var isInit = true;
+
+  if (sel) {
+    tomUnidade = new TomSelect(sel, {
+      create: false,
+      maxItems: 1,
+      allowEmptyOption: true,
+      openOnFocus: true,
+      closeAfterSelect: true,
+      dropdownParent: 'body',
+      valueField: 'id',
+      labelField: 'nome',
+      searchField: ['nome'],
+      plugins: ['dropdown_input', 'clear_button'],
+      placeholder: 'Selecione...',
+      sortField: [{ field: 'nome', direction: 'asc' }],
+      loadThrottle: 250,
+      preload: 'focus',
+      shouldLoad: function (query) {
+        // permite carregar lista inicial ao focar e buscar ao digitar
+        return true;
+      },
+      load: function (query, callback) {
+        var q = (query || '').trim();
+        // quando clicar/focar sem digitar, traz uma lista inicial (top 30)
+        var url = "{{ url_for('salas.api_unidades') }}" + "?q=" + encodeURIComponent(q) + "&limit=30";
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            callback((data && data.items) ? data.items : []);
+            // garante que o menu sempre comece do topo após carregar
+            window.setTimeout(function () {
+              try {
+                if (tomUnidade && tomUnidade.dropdown_content) tomUnidade.dropdown_content.scrollTop = 0;
+              } catch (e) {}
+            }, 0);
+          })
+          .catch(function () { callback(); });
+      }
+    });
+
+    // Ao abrir o menu, força o scroll pro topo (evita "abrir no meio")
+    tomUnidade.on('dropdown_open', function () {
+      window.setTimeout(function () {
+        try {
+          if (tomUnidade && tomUnidade.dropdown_content) tomUnidade.dropdown_content.scrollTop = 0;
+        } catch (e) {}
+      }, 0);
+    });
+  }
+
+  if (selTipoSala) {
+    new TomSelect(selTipoSala, {
+      create: false,
+      maxItems: 1,
+      allowEmptyOption: false,
+      openOnFocus: true,
+      closeAfterSelect: true,
+      searchField: ['text'],
+      plugins: ['dropdown_input'],
+      placeholder: '- Selecione o tipo -',
+      sortField: [{ field: '$order', direction: 'asc' }]
+    });
+  }
+
+  // Evita redirecionamentos indevidos durante a inicialização do TomSelect
+  window.setTimeout(function () { isInit = false; }, 0);
+
+  function navegarParaUnidade(unidadeId) {
+    if (inputUnidade) inputUnidade.value = unidadeId || '';
+    if (!unidadeId) {
+      window.location.href = "{{ url_for('salas.cadastro_externo') }}";
+      return;
+    }
+    window.location.href =
+      "{{ url_for('salas.cadastro_externo') }}" + "?unidade_id=" + encodeURIComponent(unidadeId);
+  }
+
+  if (tomUnidade) {
+    tomUnidade.on('change', function (value) {
+      if (isInit) return;
+      navegarParaUnidade(value || '');
+    });
+  } else if (sel) {
+    // Fallback (caso TomSelect não carregue por algum motivo)
+    sel.addEventListener('change', function () {
+      if (isInit) return;
+      navegarParaUnidade(this.value || '');
+    });
+  }
+})();
+</script>
+<script>
+(function () {
+  // Tooltips (Bootstrap)
+  var els = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  for (var i = 0; i < els.length; i++) {
+    try { new bootstrap.Tooltip(els[i]); } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>

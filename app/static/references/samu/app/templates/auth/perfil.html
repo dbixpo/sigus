@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% block title %}Meu Perfil{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet">
+<style>
+.avatar-wrap {
+    position: relative; width: 96px; height: 96px; margin: 0 auto 1rem;
+}
+.avatar-wrap img, .avatar-inicial {
+    width: 96px; height: 96px; border-radius: 50%;
+    object-fit: cover; display: block;
+    border: 3px solid var(--samu-vermelho);
+}
+.avatar-inicial {
+    background: var(--samu-vermelho); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem; font-weight: 700;
+}
+.avatar-edit-btn {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--samu-vermelho);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: .75rem; color: var(--samu-vermelho);
+}
+#cropModal .img-container { max-height: 70vh; min-height: 200px; }
+#cropModal .img-container img { max-width: 100%; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Início</a></li>
+        <li class="breadcrumb-item active">Meu Perfil</li>
+    </ol>
+</nav>
+
+<div class="page-header mb-4">
+    <h1><i class="bi bi-person-circle me-2"></i>Meu Perfil</h1>
+</div>
+
+<div class="row g-3">
+
+    {# ── Coluna esquerda: foto + unidade ── #}
+    <div class="col-lg-4">
+        <div class="card mb-3 text-center">
+            <div class="card-body pt-4 pb-3">
+                <div class="avatar-wrap">
+                    {% if current_user.foto_url %}
+                    <img src="{{ current_user.foto_url }}" alt="{{ current_user.nome }}" id="avatarPreview">
+                    {% else %}
+                    <div class="avatar-inicial" id="avatarInicial">{{ current_user.inicial }}</div>
+                    {% endif %}
+                    <label class="avatar-edit-btn" title="Trocar foto" for="inputFotoPerfil">
+                        <i class="bi bi-camera"></i>
+                    </label>
+                </div>
+
+                <div class="fw-semibold">{{ current_user.nome }}</div>
+
+                <input type="file" id="inputFotoPerfil" accept="image/*" class="d-none">
+
+                {% if current_user.foto_url %}
+                <form method="POST" class="mt-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="remover_foto">
+                    <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.75rem;">
+                        <i class="bi bi-trash me-1"></i>Remover foto
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Modal Crop #}
+        <div class="modal fade" id="cropModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-crop me-2"></i>Recortar foto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="img-container mx-auto">
+                            <img id="cropImage" src="" alt="">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-samu-primary" id="btnAplicarCrop">
+                            <i class="bi bi-check-lg me-1"></i>Aplicar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if current_user.unidade_samu %}
+        <div class="card">
+            <div class="card-header"><i class="bi bi-geo-alt me-2"></i>Unidade SAMU</div>
+            <div class="card-body py-3">
+                <div class="fw-semibold small">{{ current_user.unidade_samu.nome_exibicao }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Coluna central: dados + senha ── #}
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-pencil me-2"></i>Dados Pessoais</div>
+            <div class="card-body">
+                <form method="POST" id="formDados">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="acao" value="dados">
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" name="nome" class="form-control" value="{{ current_user.nome }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Apelido</label>
+                        <input type="text" name="apelido" class="form-control" value="{{ current_user.apelido or '' }}"
+                               placeholder="Nome curto exibido na barra (ex.: João)">
+                        <div class="form-text">Se não informado, será exibido apenas o primeiro nome.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Usuário de acesso</label>
+                        <input type="text" class="form-control" value="{{ current_user.usuario }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-control" value="{{ current_user.email or '' }}" placeholder="email@exemplo.com">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="bi bi-whatsapp text-success me-1"></i>Telefone (WhatsApp)</label>
+                        <input type="tel" name="whatsapp" class="form-control" value="{{ current_user.whatsapp | br_fone if current_user.whatsapp else '' }}" id="inputWhatsapp" placeholder="(15) 99999-9999" maxlength="15">
+                    </div>
+                    <hr>
+                    <div class="fw-semibold small mb-2">Alterar Senha</div>
+                    <div class="mb-3">
+                        <label class="form-label">Senha Atual</label>
+                        <input type="password" name="senha_atual" class="form-control"
+                               placeholder="Deixe em branco para não alterar">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nova Senha</label>
+                        <input type="password" name="nova_senha" class="form-control" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <button type="submit" class="btn btn-samu-primary w-100">
+                        <i class="bi bi-check-circle me-1"></i>Salvar Alterações
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+(function () {
+    const input = document.getElementById('inputFotoPerfil');
+    const preview = document.getElementById('avatarPreview');
+    const inicial = document.getElementById('avatarInicial');
+    const cropModal = document.getElementById('cropModal');
+    const cropImage = document.getElementById('cropImage');
+    const btnAplicar = document.getElementById('btnAplicarCrop');
+    let cropper = null;
+    let fileEscolhido = null;
+
+    input?.addEventListener('change', function () {
+        if (!this.files.length) return;
+        const file = this.files[0];
+        if (!file.type.startsWith('image/')) {
+            alert('Selecione apenas imagens.');
+            return;
+        }
+        fileEscolhido = file;
+        const url = URL.createObjectURL(file);
+        cropImage.src = url;
+        if (cropper) cropper.destroy();
+        const modal = new bootstrap.Modal(cropModal);
+        modal.show();
+        cropModal.addEventListener('shown.bs.modal', function onShown() {
+            cropper = new Cropper(cropImage, {
+                aspectRatio: 1,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+            });
+            cropModal.removeEventListener('shown.bs.modal', onShown);
+        });
+    });
+
+    cropModal.addEventListener('hidden.bs.modal', function () {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        if (cropImage.src) URL.revokeObjectURL(cropImage.src);
+        cropImage.src = '';
+        input.value = '';
+    });
+
+    btnAplicar?.addEventListener('click', async function () {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ width: 256, height: 256 });
+        canvas.toBlob(async function (blob) {
+            const fd = new FormData();
+            fd.append('csrf_token', document.querySelector('[name=csrf_token]').value);
+            fd.append('acao', 'foto');
+            fd.append('foto', blob, 'foto.jpg');
+            const resp = await fetch('{{ url_for("auth.perfil") }}', {
+                method: 'POST',
+                body: fd
+            });
+            if (resp.redirected) {
+                window.location.href = resp.url;
+            } else {
+                alert('Erro ao salvar foto.');
+            }
+        }, 'image/jpeg', 0.9);
+    });
+
+    // Máscara WhatsApp/Telefone (fixo: (15) 3238-2771 | celular: (15) 99999-9999)
+    const inpWhats = document.getElementById('inputWhatsapp');
+    if (inpWhats) {
+        function mascararFone(v) {
+            const d = v.replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+            const isCell = d[2] === '9';
+            if (isCell) {
+                if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            } else {
+                if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            }
+        }
+        inpWhats.addEventListener('input', function () { this.value = mascararFone(this.value); });
+    }
+    document.getElementById('formDados')?.addEventListener('submit', function () {
+        if (inpWhats) inpWhats.value = inpWhats.value.replace(/\D/g, '');
+    }, true);
+})();
+</script>
+{% endblock %}

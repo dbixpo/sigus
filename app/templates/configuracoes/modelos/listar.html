@@ -10,9 +10,9 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-cpu"></i> Modelos</h1>
+    <h1><i class="fas fa-microchip"></i> Modelos</h1>
     <a href="{{ url_for('configuracoes.novo_modelo2') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Modelo
+        <i class="fas fa-plus-circle me-1"></i>Novo Modelo
     </a>
 </div>
 
@@ -40,7 +40,7 @@
             </div>
             <div class="col-sm-auto">
                 <a href="{{ url_for('configuracoes.listar_modelos') }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x-circle me-1"></i>Limpar
+                    <i class="fas fa-times-circle me-1"></i>Limpar
                 </a>
             </div>
         </form>
@@ -48,6 +48,15 @@
 </div>
 
 {% if modelos %}
+<div class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label mb-0 small text-muted">Buscar</label>
+            <input type="text" id="filtroModelos" class="form-control form-control-sm"
+                   placeholder="Digite para filtrar por modelo, marca, tipo...">
+        </div>
+    </div>
+</div>
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -63,14 +72,18 @@
                 </thead>
                 <tbody>
                     {% for md in modelos %}
-                    <tr>
+                    <tr class="linha-modelo" 
+                        data-modelo-nome="{{ md.nome | lower }}"
+                        data-marca="{{ md.marca.nome | lower if md.marca else '' }}"
+                        data-tipo="{{ md.tipo_equipamento.nome | lower if md.tipo_equipamento else '' }}"
+                        data-equipamentos="{{ md.equipamentos.count() }}">
                         <td class="fw-semibold">
-                            <i class="bi bi-cpu me-2 text-secondary"></i>{{ md.nome }}
+                            <i class="fas fa-microchip me-2 text-secondary"></i>{{ md.nome }}
                         </td>
                         <td>
                             {% if md.marca %}
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                <i class="bi bi-tag me-1"></i>{{ md.marca.nome }}
+                                <i class="fas fa-tag me-1"></i>{{ md.marca.nome }}
                             </span>
                             {% else %}
                             <span class="text-muted small">—</span>
@@ -79,11 +92,11 @@
                         <td>
                             {% if md.tipo_equipamento %}
                             <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                <i class="bi {{ md.tipo_equipamento.icone }} me-1"></i>{{ md.tipo_equipamento.nome }}
+                                <i class="{{ md.tipo_equipamento.icone }} me-1"></i>{{ md.tipo_equipamento.nome }}
                             </span>
                             {% else %}
                             <span class="badge bg-warning text-dark">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Sem tipo
+                                <i class="fas fa-exclamation-triangle me-1"></i>Sem tipo
                             </span>
                             {% endif %}
                         </td>
@@ -95,7 +108,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_modelo2', id=md.id) }}"
                                class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             {% if md.equipamentos.count() == 0 %}
                             <form method="POST" action="{{ url_for('configuracoes.excluir_modelo2', id=md.id) }}"
@@ -103,7 +116,7 @@
                                   onsubmit="return confirm('Excluir o modelo {{ md.nome }}?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash"></i>
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                             {% endif %}
@@ -117,7 +130,7 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <i class="bi bi-cpu fs-1 text-muted d-block mb-3"></i>
+    <i class="fas fa-microchip fs-1 text-muted d-block mb-3"></i>
     <h5>Nenhum modelo encontrado</h5>
     <p class="text-muted">
         {% if filtro_tipo or filtro_marca %}
@@ -127,8 +140,68 @@
         {% endif %}
     </p>
     <a href="{{ url_for('configuracoes.novo_modelo2') }}" class="btn btn-primary mt-2">
-        <i class="bi bi-plus-circle me-1"></i>Cadastrar Primeiro Modelo
+        <i class="fas fa-plus-circle me-1"></i>Cadastrar Primeiro Modelo
     </a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var inputBusca = document.getElementById('filtroModelos');
+    if (!inputBusca) return;
+    
+    function normalizarTexto(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    
+    function aplicarFiltro() {
+        var termo = normalizarTexto(inputBusca.value);
+        var linhas = document.querySelectorAll('.linha-modelo');
+        var totalVisiveis = 0;
+        
+        linhas.forEach(function(linha) {
+            var nome = normalizarTexto(linha.dataset.modeloNome || '');
+            var marca = normalizarTexto(linha.dataset.marca || '');
+            var tipo = normalizarTexto(linha.dataset.tipo || '');
+            var equipamentos = linha.dataset.equipamentos || '';
+            
+            var textoCompleto = nome + ' ' + marca + ' ' + tipo + ' ' + equipamentos;
+            var passaFiltro = !termo || textoCompleto.indexOf(termo) !== -1;
+            
+            linha.style.display = passaFiltro ? '' : 'none';
+            if (passaFiltro) totalVisiveis++;
+        });
+        
+        // Mostra mensagem se não houver resultados
+        var tabela = document.querySelector('.table');
+        var mensagemSemResultados = document.getElementById('mensagemSemResultados');
+        if (termo && totalVisiveis === 0) {
+            if (!mensagemSemResultados) {
+                mensagemSemResultados = document.createElement('div');
+                mensagemSemResultados.id = 'mensagemSemResultados';
+                mensagemSemResultados.className = 'alert alert-info mt-3';
+                mensagemSemResultados.innerHTML = '<i class="fas fa-info-circle me-2"></i>Nenhum modelo encontrado com o termo "' + termo + '".';
+                tabela.parentElement.parentElement.appendChild(mensagemSemResultados);
+            }
+        } else {
+            if (mensagemSemResultados) {
+                mensagemSemResultados.remove();
+            }
+        }
+    }
+    
+    inputBusca.addEventListener('input', aplicarFiltro);
+    
+    // Limpa filtro com ESC
+    inputBusca.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            inputBusca.value = '';
+            aplicarFiltro();
+            inputBusca.focus();
+        }
+    });
+})();
+</script>
 {% endblock %}

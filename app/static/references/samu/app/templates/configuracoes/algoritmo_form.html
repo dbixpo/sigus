@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% block title %}Protocolo de Acolhimento — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="algoritmo-form-page">
+<div class="page-header mb-4">
+    <h1><i class="bi bi-diagram-3"></i> Protocolo de Acolhimento — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="tabsProtocolo" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-dados" data-bs-toggle="tab" data-bs-target="#pane-dados" type="button">Dados</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-perguntas" data-bs-toggle="tab" data-bs-target="#pane-perguntas" type="button">Perguntas</button>
+    </li>
+    {% if item and item.perguntas.count() > 0 %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-fluxo" data-bs-toggle="tab" data-bs-target="#pane-fluxo" type="button">Fluxograma</button>
+    </li>
+    {% endif %}
+    {% if item %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-grau-risco" data-bs-toggle="tab" data-bs-target="#pane-grau-risco" type="button">Grau de Risco</button>
+    </li>
+    {% endif %}
+</ul>
+
+<div class="tab-content" id="tabsProtocoloContent">
+<form method="POST" id="formProtocolo">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="tab-pane fade show active" id="pane-dados">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-8">
+                            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                            <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required placeholder="Ex: Falta de ar">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold d-block">&nbsp;</label>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                                <label class="form-check-label" for="ativo">Ativo</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Descrição</label>
+                            <textarea name="descricao" class="form-control" rows="2">{{ item.descricao if item and item.descricao else '' }}</textarea>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                        <a href="{{ url_for('configuracoes.algoritmos_acolhimento') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="pane-perguntas">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    {% if item %}
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3 pb-2 border-bottom">
+                        <div>
+                            <h6 class="mb-1 fw-semibold">Perguntas do protocolo</h6>
+                            <p class="text-muted small mb-0">Clique para expandir e editar. Arraste para reordenar (minimizado).</p>
+                        </div>
+                        <button type="button" class="btn btn-samu-primary" id="btnAdicionarLinha"><i class="bi bi-plus-lg me-1"></i>Nova pergunta</button>
+                    </div>
+                    <div id="perguntasStack" class="perguntas-stack">
+                        {% for p in item.perguntas.order_by('ordem').all() %}
+                        <div class="pergunta-card pergunta-row" data-idx="{{ loop.index0 }}">
+                            <div class="pergunta-card-header pergunta-header-toggle">
+                                <div class="pergunta-drag-handle" title="Arraste para reordenar"><i class="bi bi-grip-vertical"></i><span class="pergunta-numero">{{ loop.index }}</span></div>
+                                <input type="text" class="form-control form-control-sm pergunta-enunciado-input" name="pergunta_{{ loop.index0 }}_enunciado" value="{{ p.enunciado }}" required placeholder="{{ 'Descrição do procedimento...' if p.tipo == 'texto' else 'Ex: Quando começou a falta de ar?' }}">
+                                <button type="button" class="btn btn-sm btn-link pergunta-toggle" aria-label="Expandir"><i class="bi bi-chevron-right"></i></button>
+                                <button type="button" class="btn btn-sm btn-link text-danger btn-remover" title="Remover"><i class="bi bi-trash"></i></button>
+                            </div>
+                            <input type="hidden" name="pergunta_{{ loop.index0 }}_secao" value="">
+                            <div class="pergunta-card-body collapse">
+                                <div class="pergunta-card-inner">
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold">Tipo de resposta</label>
+                                        <select class="form-select form-select-sm pergunta-tipo-select" name="pergunta_{{ loop.index0 }}_tipo">
+                                            {% for tv, tl in TIPOS %}
+                                            <option value="{{ tv }}" {% if p.tipo == tv %}selected{% endif %}>{{ tl }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="pergunta-opcoes-wrap" {% if p.tipo == 'texto' %}data-tipo-texto="1"{% endif %}>
+                                        <span class="pergunta-opcoes-vazio text-muted small" {% if p.tipo != 'texto' %}style="display:none;"{% endif %}>
+                                            <i class="bi bi-info-circle me-1"></i>Texto informativo — avança automaticamente
+                                        </span>
+                                        <div class="pergunta-opcoes-input-wrap" {% if p.tipo == 'texto' %}style="display:none;"{% endif %}>
+                                            <label class="form-label small fw-semibold">Opções de resposta</label>
+                                            <div class="opcoes-lista">
+                                                {% for o in p.opcoes.order_by('ordem').all() %}
+                                                <div class="opcao-row">
+                                                    <div class="flex-grow-1" style="min-width:0;">
+                                                        <input type="text" class="form-control form-control-sm opcao-texto" placeholder="Resposta (ex: Sim)" value="{{ o.texto }}">
+                                                    </div>
+                                                    <div class="opcao-pontos-wrap">
+                                                        <label class="form-label d-block mb-0">Pontuação</label>
+                                                        <input type="number" class="form-control form-control-sm opcao-pontos" placeholder="0" value="{{ o.pontuacao|default(0) }}" min="0">
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remover-opcao"><i class="bi bi-x-lg"></i></button>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary btn-adicionar-opcao"><i class="bi bi-plus me-1"></i>Adicionar resposta</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" class="pergunta-opcoes-hidden" name="pergunta_{{ loop.index0 }}_opcoes" value="{% for o in p.opcoes.order_by('ordem').all() %}{{ o.texto }}|{{ o.pontuacao|default(0) }}{{ '\n' if not loop.last else '' }}{% endfor %}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr class="my-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                        <a href="{{ url_for('configuracoes.algoritmos_acolhimento') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Salve os dados do protocolo primeiro para cadastrar perguntas.</p>
+                    <a href="{{ url_for('configuracoes.algoritmos_acolhimento') }}" class="btn btn-outline-secondary mt-2">Voltar</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if item %}
+        <div class="tab-pane fade" id="pane-grau-risco">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Defina as faixas de pontuação para cada grau de risco. A pontuação é a soma dos pontos das respostas escolhidas.</p>
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle" id="tabelaGrausRisco">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>De (pontos)</th>
+                                    <th>Até (pontos)</th>
+                                    <th>Grau de Risco</th>
+                                    <th style="width:50px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyGrausRisco">
+                                {% for g in graus_risco %}
+                                <tr class="grau-row">
+                                    <td><input type="number" class="form-control form-control-sm" name="grau_{{ loop.index0 }}_min" value="{{ g.min }}" min="0" placeholder="0"></td>
+                                    <td><input type="number" class="form-control form-control-sm" name="grau_{{ loop.index0 }}_max" value="{{ g.max }}" min="0" placeholder="10"></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="grau_{{ loop.index0 }}_grau" value="{{ g.grau }}" placeholder="Ex: Baixo"></td>
+                                    <td><button type="button" class="btn btn-sm btn-outline-danger btn-remover-grau"><i class="bi bi-trash"></i></button></td>
+                                </tr>
+                                {% endfor %}
+                                {% if not graus_risco %}
+                                <tr class="grau-row">
+                                    <td><input type="number" class="form-control form-control-sm" name="grau_0_min" value="0" min="0" placeholder="0"></td>
+                                    <td><input type="number" class="form-control form-control-sm" name="grau_0_max" value="3" min="0" placeholder="10"></td>
+                                    <td><input type="text" class="form-control form-control-sm" name="grau_0_grau" value="Baixo" placeholder="Ex: Baixo"></td>
+                                    <td><button type="button" class="btn btn-sm btn-outline-danger btn-remover-grau"><i class="bi bi-trash"></i></button></td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAdicionarGrau"><i class="bi bi-plus-circle me-1"></i>Adicionar faixa</button>
+                    <hr class="my-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                        <a href="{{ url_for('configuracoes.algoritmos_acolhimento') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+</form>
+        {% if item and perguntas %}
+        <div class="tab-pane fade" id="pane-fluxo">
+            <form method="POST" class="fluxo-form" action="{{ url_for('configuracoes.algoritmo_fluxo', id=item.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% include 'configuracoes/_fluxo_tab.html' %}
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+{% if item %}
+<style>
+/* Layout algoritmo form: evita overflow horizontal */
+.algoritmo-form-page { max-width: 100%; overflow-x: hidden; min-width: 0; }
+.algoritmo-form-page .card { max-width: 100%; min-width: 0; }
+/* Abas: só a ativa é exibida (panes estão dentro do form, não filho direto de tab-content) */
+.algoritmo-form-page .tab-content .tab-pane { display: none; }
+.algoritmo-form-page .tab-content .tab-pane.active { display: block; }
+#pane-dados .card-body,
+#pane-perguntas .card-body,
+#pane-grau-risco .card-body { padding: 1.25rem; }
+#pane-fluxo > .fluxo-form > p:first-child { margin-bottom: 0.75rem; }
+#pane-perguntas .perguntas-stack { margin-top: 0.75rem; }
+</style>
+{% endif %}
+{% if item and perguntas %}
+<style>
+.fluxo-card-compact { margin-bottom: 0; }
+.fluxo-header-compact { padding: 0.35rem 0.75rem !important; font-size: 0.9rem; }
+.fluxo-body-compact { padding: 0.5rem 0.75rem !important; }
+.fluxo-table-compact th, .fluxo-table-compact td { padding: 0.25rem 0.5rem !important; vertical-align: middle; }
+.fluxo-table-compact thead th { font-size: 0.75rem; font-weight: 600; }
+.fluxo-table-compact .badge { font-size: 0.7rem; }
+.fluxo-table-compact .form-select { padding: 0.2rem 2rem 0.2rem 0.4rem; font-size: 0.8rem; min-height: 28px; }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if item %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+(function() {
+    var stack = document.getElementById('perguntasStack');
+    var btnAdd = document.getElementById('btnAdicionarLinha');
+    if (!stack || !btnAdd) return;
+    var tipoOptions = {{ TIPOS | tojson }};
+
+    function toggleCollapse(card) {
+        var body = card.querySelector('.pergunta-card-body');
+        var icon = card.querySelector('.pergunta-toggle i');
+        if (body && icon) {
+            body.classList.toggle('show');
+            icon.className = body.classList.contains('show') ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
+        }
+    }
+
+    function reindexar() {
+        stack.querySelectorAll('.pergunta-row').forEach(function(card, i) {
+            card.setAttribute('data-idx', i);
+            var num = card.querySelector('.pergunta-numero');
+            if (num) num.textContent = i + 1;
+            card.querySelectorAll('[name^="pergunta_"]').forEach(function(inp) {
+                var base = inp.name.replace(/^pergunta_\d+_/, '');
+                inp.name = 'pergunta_' + i + '_' + base;
+            });
+        });
+    }
+
+    function toggleTipoTexto(card) {
+        var sel = card.querySelector('select[name$="_tipo"]');
+        var enunciado = card.querySelector('.pergunta-enunciado-input');
+        var wrap = card.querySelector('.pergunta-opcoes-wrap');
+        if (!sel || !wrap) return;
+        var isTexto = sel.value === 'texto';
+        if (enunciado) enunciado.placeholder = isTexto ? 'Descrição do procedimento...' : 'Ex: Quando começou a falta de ar?';
+        var vazio = wrap.querySelector('.pergunta-opcoes-vazio');
+        var inputWrap = wrap.querySelector('.pergunta-opcoes-input-wrap');
+        if (vazio) vazio.style.display = isTexto ? '' : 'none';
+        if (inputWrap) inputWrap.style.display = isTexto ? 'none' : '';
+        wrap.setAttribute('data-tipo-texto', isTexto ? '1' : '0');
+    }
+
+    function addOpcaoRow(lista) {
+        var row = document.createElement('div');
+        row.className = 'opcao-row';
+        row.innerHTML = '<div class="flex-grow-1" style="min-width:0;"><input type="text" class="form-control form-control-sm opcao-texto" placeholder="Resposta (ex: Sim)"></div>' +
+            '<div class="opcao-pontos-wrap"><label class="form-label d-block mb-0">Pontuação</label><input type="number" class="form-control form-control-sm opcao-pontos" placeholder="0" value="0" min="0"></div>' +
+            '<button type="button" class="btn btn-sm btn-outline-danger btn-remover-opcao"><i class="bi bi-x-lg"></i></button>';
+        lista.appendChild(row);
+        row.querySelector('.btn-remover-opcao').addEventListener('click', function() { row.remove(); });
+    }
+
+    function addLinha() {
+        var idx = stack.querySelectorAll('.pergunta-row').length;
+        var selectOpts = tipoOptions.map(function(t) { return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('');
+        var card = document.createElement('div');
+        card.className = 'pergunta-card pergunta-row';
+        card.setAttribute('data-idx', idx);
+        card.innerHTML =
+            '<div class="pergunta-card-header pergunta-header-toggle">' +
+            '<div class="pergunta-drag-handle" title="Arraste para reordenar"><i class="bi bi-grip-vertical"></i><span class="pergunta-numero">' + (idx + 1) + '</span></div>' +
+            '<input type="text" class="form-control form-control-sm pergunta-enunciado-input" name="pergunta_' + idx + '_enunciado" required placeholder="Ex: Quando começou a falta de ar?">' +
+            '<button type="button" class="btn btn-sm btn-link pergunta-toggle" aria-label="Expandir"><i class="bi bi-chevron-right"></i></button>' +
+            '<button type="button" class="btn btn-sm btn-link text-danger btn-remover" title="Remover"><i class="bi bi-trash"></i></button>' +
+            '</div>' +
+            '<input type="hidden" name="pergunta_' + idx + '_secao" value="">' +
+            '<div class="pergunta-card-body collapse">' +
+            '<div class="pergunta-card-inner">' +
+            '<div class="mb-3"><label class="form-label small fw-semibold">Tipo de resposta</label>' +
+            '<select class="form-select form-select-sm pergunta-tipo-select" name="pergunta_' + idx + '_tipo">' + selectOpts + '</select></div>' +
+            '<div class="pergunta-opcoes-wrap" data-tipo-texto="0">' +
+            '<span class="pergunta-opcoes-vazio text-muted small" style="display:none;"><i class="bi bi-info-circle me-1"></i>Texto informativo — avança automaticamente</span>' +
+            '<div class="pergunta-opcoes-input-wrap">' +
+            '<label class="form-label small fw-semibold">Opções de resposta</label>' +
+            '<div class="opcoes-lista"></div>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary btn-adicionar-opcao"><i class="bi bi-plus me-1"></i>Adicionar resposta</button></div></div>' +
+            '</div></div>' +
+            '<input type="hidden" class="pergunta-opcoes-hidden" name="pergunta_' + idx + '_opcoes" value="">';
+        stack.appendChild(card);
+
+        var lista = card.querySelector('.opcoes-lista');
+        card.querySelector('.btn-adicionar-opcao').addEventListener('click', function() { addOpcaoRow(lista); });
+        addOpcaoRow(lista);
+
+        card.querySelector('.btn-remover').addEventListener('click', function(e) { e.stopPropagation(); card.remove(); reindexar(); });
+        card.querySelector('select[name$="_tipo"]').addEventListener('change', function() { toggleTipoTexto(card); });
+
+        var header = card.querySelector('.pergunta-header-toggle');
+        header.addEventListener('click', function(e) {
+            if (e.target.closest('.pergunta-drag-handle') || e.target.closest('.btn-remover') || e.target.closest('.pergunta-enunciado-input')) return;
+            toggleCollapse(card);
+        });
+    }
+
+    stack.querySelectorAll('.pergunta-row').forEach(function(card) {
+        var sel = card.querySelector('select[name$="_tipo"]');
+        if (sel) sel.addEventListener('change', function() { toggleTipoTexto(card); });
+        var header = card.querySelector('.pergunta-header-toggle');
+        if (header) header.addEventListener('click', function(e) {
+            if (e.target.closest('.pergunta-drag-handle') || e.target.closest('.btn-remover') || e.target.closest('.pergunta-enunciado-input')) return;
+            toggleCollapse(card);
+        });
+        var lista = card.querySelector('.opcoes-lista');
+        var btnAddOp = card.querySelector('.btn-adicionar-opcao');
+        if (lista && btnAddOp) {
+            btnAddOp.addEventListener('click', function() { addOpcaoRow(lista); });
+            lista.querySelectorAll('.btn-remover-opcao').forEach(function(btn) {
+                btn.addEventListener('click', function() { btn.closest('.opcao-row').remove(); });
+            });
+        }
+    });
+
+    btnAdd.addEventListener('click', addLinha);
+    stack.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-remover')) {
+            e.target.closest('.pergunta-row').remove();
+            reindexar();
+        }
+    });
+
+    document.getElementById('formProtocolo').addEventListener('submit', function() {
+        stack.querySelectorAll('.pergunta-row').forEach(function(card) {
+            var hidden = card.querySelector('.pergunta-opcoes-hidden');
+            var wrap = card.querySelector('.pergunta-opcoes-input-wrap');
+            if (!hidden || !wrap) return;
+            var lines = [];
+            wrap.querySelectorAll('.opcao-row').forEach(function(row) {
+                var texto = (row.querySelector('.opcao-texto') || {}).value || '';
+                var pts = (row.querySelector('.opcao-pontos') || {}).value || '0';
+                if (texto.trim()) lines.push(texto.trim() + '|' + pts);
+            });
+            hidden.value = lines.join('\n');
+        });
+    });
+
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(stack, {
+            handle: '.pergunta-drag-handle',
+            animation: 150,
+            onEnd: function() { reindexar(); }
+        });
+    }
+
+    // Graus de risco: adicionar/remover e reindexar
+    var tbodyGraus = document.getElementById('tbodyGrausRisco');
+    var btnAddGrau = document.getElementById('btnAdicionarGrau');
+    if (tbodyGraus && btnAddGrau) {
+        function reindexarGraus() {
+            tbodyGraus.querySelectorAll('.grau-row').forEach(function(tr, i) {
+                tr.querySelectorAll('[name^="grau_"]').forEach(function(inp) {
+                    var base = inp.name.replace(/^grau_\d+_/, '');
+                    inp.name = 'grau_' + i + '_' + base;
+                });
+            });
+        }
+        btnAddGrau.addEventListener('click', function() {
+            var idx = tbodyGraus.querySelectorAll('.grau-row').length;
+            var tr = document.createElement('tr');
+            tr.className = 'grau-row';
+            tr.innerHTML = '<td><input type="number" class="form-control form-control-sm" name="grau_' + idx + '_min" value="0" min="0" placeholder="0"></td>' +
+                '<td><input type="number" class="form-control form-control-sm" name="grau_' + idx + '_max" value="0" min="0" placeholder="10"></td>' +
+                '<td><input type="text" class="form-control form-control-sm" name="grau_' + idx + '_grau" value="" placeholder="Ex: Médio"></td>' +
+                '<td><button type="button" class="btn btn-sm btn-outline-danger btn-remover-grau"><i class="bi bi-trash"></i></button></td>';
+            tbodyGraus.appendChild(tr);
+            tr.querySelector('.btn-remover-grau').addEventListener('click', function() { tr.remove(); reindexarGraus(); });
+            reindexarGraus();
+        });
+        tbodyGraus.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remover-grau')) {
+                e.target.closest('.grau-row').remove();
+                reindexarGraus();
+            }
+        });
+    }
+
+    // Abrir aba pelo parâmetro da URL (ex: ?tab=fluxo)
+    var params = new URLSearchParams(window.location.search);
+    var tabParam = params.get('tab');
+    if (tabParam) {
+        var tabBtn = document.querySelector('[data-bs-target="#pane-' + tabParam + '"]');
+        if (tabBtn) {
+            var bsTab = bootstrap.Tab.getOrCreateInstance(tabBtn);
+            bsTab.show();
+        }
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

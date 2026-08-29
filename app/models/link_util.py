@@ -1,6 +1,7 @@
 from datetime import datetime
 from app import db
 from app.utils import prefixed_static_url
+from app.models.tipo_link import _icone_para_fontawesome
 
 # Perfis que podem ver links
 PERFIS_LINK = [
@@ -31,7 +32,7 @@ class LinkUtil(db.Model):
     url         = db.Column(db.String(500))
     imagem_url  = db.Column(db.String(500))          # URL externa (alternativo)
     imagem_path = db.Column(db.String(300))          # caminho em static/uploads/links/
-    icone       = db.Column(db.String(60), default='bi-link-45deg')
+    icone       = db.Column(db.String(60), default='fas fa-link')
     nova_aba    = db.Column(db.Boolean, nullable=False, default=True)
     ativo       = db.Column(db.Boolean, nullable=False, default=True)
     ordem       = db.Column(db.Integer, nullable=False, default=0)
@@ -44,6 +45,11 @@ class LinkUtil(db.Model):
                               onupdate=datetime.utcnow)
 
     criador = db.relationship('Usuario', foreign_keys=[criado_por])
+
+    @property
+    def icone_fa(self):
+        """Retorna as classes do ícone em Font Awesome (para exibição)."""
+        return _icone_para_fontawesome(self.icone or 'fas fa-link')
 
     @property
     def imagem_src(self) -> str | None:

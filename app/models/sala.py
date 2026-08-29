@@ -11,6 +11,7 @@ class Sala(db.Model):
     tipo          = db.Column(db.String(100))  # legado — mantido para compatibilidade
     tipo_sala_id  = db.Column(db.Integer, db.ForeignKey('tipos_sala.id', ondelete='SET NULL'))
     responsavel   = db.Column(db.String(150))
+    capacidade_maxima = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     ramal         = db.Column(db.String(20))
     ativo         = db.Column(db.Boolean, nullable=False, default=True)
     observacoes   = db.Column(db.Text)

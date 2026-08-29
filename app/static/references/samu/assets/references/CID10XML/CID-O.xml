@@ -1,0 +1,4260 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+
+<!--
+<?xml-stylesheet type="text/xsl" href="CID-O.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-cnv-grupos.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-cnv-grupos-sel.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-cnv-grupos-categorias.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-cnv-categorias.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-csv-grupos.xsl"?>
+<?xml-stylesheet type="text/xsl" href="CID-O-csv-categorias.xsl"?>
+-->
+
+<!DOCTYPE cid-o SYSTEM "CID-O.dtd">
+<cid-o>
+	<grupo codgrupo="M800-M800" inicial="M800" final="M800">
+		<nome>Neoplasias SOE</nome>
+		<categoria codcat="M8000/0">
+			<nome>Neoplasia benigna</nome>
+			</categoria>
+		<categoria codcat="M8000/1">
+			<nome>Neoplasia de comportamento incerto se benigno ou maligno</nome>
+			</categoria>
+		<categoria codcat="M8000/3">
+			<nome>Neoplasia maligna</nome>
+			</categoria>
+		<categoria codcat="M8000/6">
+			<nome>Neoplasia metastática</nome>
+			</categoria>
+		<categoria codcat="M8001/0">
+			<nome>Células tumorais, benignas</nome>
+			</categoria>
+		<categoria codcat="M8001/1">
+			<nome>Células tumorais, incerto se benignas ou malignas</nome>
+			</categoria>
+		<categoria codcat="M8001/3">
+			<nome>Células tumorais malignas</nome>
+			</categoria>
+		<categoria codcat="M8002/3">
+			<nome>Tumor maligno, tipo de células pequenas</nome>
+			</categoria>
+		<categoria codcat="M8003/3">
+			<nome>Tumor maligno, tipo de células gigantes</nome>
+			</categoria>
+		<categoria codcat="M8004/3">
+			<nome>Tumor maligno, tipo de células fusiformes</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M801-M804" inicial="M801" final="M804">
+		<nome>Neoplasias epiteliais SOE</nome>
+		<categoria codcat="M8010/0">
+			<nome>Tumor epitelial benigno</nome>
+			</categoria>
+		<categoria codcat="M8010/2">
+			<nome>Carcinoma in situ SOE</nome>
+			</categoria>
+		<categoria codcat="M8010/3">
+			<nome>Carcinoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8010/6">
+			<nome>Carcinoma metastático SOE</nome>
+			</categoria>
+		<categoria codcat="M8011/0">
+			<nome>Epitelioma benigno</nome>
+			</categoria>
+		<categoria codcat="M8011/3">
+			<nome>Epitelioma maligno</nome>
+			</categoria>
+		<categoria codcat="M8012/3">
+			<nome>Carcinomas de células grandes SOE</nome>
+			</categoria>
+		<categoria codcat="M8020/3">
+			<nome>Carcinoma indiferenciado SOE</nome>
+			</categoria>
+		<categoria codcat="M8021/3">
+			<nome>Carcinoma anaplásico SOE</nome>
+			</categoria>
+		<categoria codcat="M8022/3">
+			<nome>Carcinoma pleomórfico</nome>
+			</categoria>
+		<categoria codcat="M8030/3">
+			<nome>Carcinoma de células gigantes e de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8031/3">
+			<nome>Carcinoma de células gigantes</nome>
+			</categoria>
+		<categoria codcat="M8032/3">
+			<nome>Carcinoma de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8033/3">
+			<nome>Carcinoma pseudossarcomatoso</nome>
+			</categoria>
+		<categoria codcat="M8034/3">
+			<nome>Carcinoma de células poligonais</nome>
+			</categoria>
+		<categoria codcat="M8040/1">
+			<nome>&quot;Tumorlet&quot;</nome>
+			</categoria>
+		<categoria codcat="M8041/3">
+			<nome>Carcinoma de células pequenas SOE</nome>
+			</categoria>
+		<categoria codcat="M8042/3">
+			<nome>Carcinoma &quot;oat cell&quot;</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8043/3">
+			<nome>Carcinoma de células pequenas, fusiformes</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8044/3">
+			<nome>Carcinoma de células pequenas, intermediárias</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8045/3">
+			<nome>Carcinoma de células pequenas e de células grandes</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M805-M808" inicial="M805" final="M808">
+		<nome>Neoplasias de células escamosas</nome>
+		<categoria codcat="M8050/0">
+			<nome>Papiloma SOE</nome>
+			<nota>exceto Papiloma de bexiga M8120/1</nota>
+			</categoria>
+		<categoria codcat="M8050/2">
+			<nome>Carcinoma papilar in situ</nome>
+			</categoria>
+		<categoria codcat="M8050/3">
+			<nome>Carcinoma papilar SOE</nome>
+			</categoria>
+		<categoria codcat="M8051/0">
+			<nome>Papiloma verrucoso</nome>
+			</categoria>
+		<categoria codcat="M8051/3">
+			<nome>Carcinoma verrucoso SOE</nome>
+			</categoria>
+		<categoria codcat="M8052/0">
+			<nome>Papiloma de células escamosas</nome>
+			</categoria>
+		<categoria codcat="M8052/3">
+			<nome>Carcinoma papilar de células escamosas</nome>
+			</categoria>
+		<categoria codcat="M8053/0">
+			<nome>Papiloma invertido</nome>
+			</categoria>
+		<categoria codcat="M8060/0">
+			<nome>Papilomatose SOE</nome>
+			</categoria>
+		<categoria codcat="M8070/2">
+			<nome>Carcinoma in situ de células escamosas, SOE</nome>
+			</categoria>
+		<categoria codcat="M8070/3">
+			<nome>Carcinoma de células escamosas SOE</nome>
+			</categoria>
+		<categoria codcat="M8070/6">
+			<nome>Carcinoma de células escamosas, metastático, SOE</nome>
+			</categoria>
+		<categoria codcat="M8071/3">
+			<nome>Carcinoma de células escamosas, queratinizado, SOE</nome>
+			</categoria>
+		<categoria codcat="M8072/3">
+			<nome>Carcinoma de células escamosas, de células grandes, não queratinizado</nome>
+			</categoria>
+		<categoria codcat="M8073/3">
+			<nome>Carcinoma de células escamosas, de células pequenas, não queratinizado</nome>
+			</categoria>
+		<categoria codcat="M8074/3">
+			<nome>Carcinoma de células escamosas, de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8075/3">
+			<nome>Carcinoma de células escamosas adenóides</nome>
+			</categoria>
+		<categoria codcat="M8076/2">
+			<nome>Carcinoma in situ de células escamosas com invasão questionável do estroma</nome>
+			<referencias>
+				<referencia codrefer="C53">C53.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8076/3">
+			<nome>Carcinoma de células escamosas, microinvasivo</nome>
+			<referencias>
+				<referencia codrefer="C53">C53.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8077/2">
+			<nome>Neoplasia intra-epitelial, grau III, de colo uterino, vulva e vagina</nome>
+			</categoria>
+		<categoria codcat="M8080/2">
+			<nome>Eritroplasia de Queyrat</nome>
+			</categoria>
+		<categoria codcat="M8081/2">
+			<nome>Doença de Bowen</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8082/3">
+			<nome>Carcinoma linfoepitelial</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M809-M811" inicial="M809" final="M811">
+		<nome>Neoplasias de células basais</nome>
+		<categoria codcat="M8090/1">
+			<nome>Tumor de células basais</nome>
+			<referencias>
+				<referencia codrefer="D48.5">D48.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8090/3">
+			<nome>Carcinoma de células basais SOE</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8091/3">
+			<nome>Carcinoma de células basais, multicêntrico</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8092/3">
+			<nome>Carcinoma de células basais, tipo morféia</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8093/3">
+			<nome>Carcinoma de células basais, fibroepitelial</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8094/3">
+			<nome>Carcinoma basoescamoso</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8095/3">
+			<nome>Carcinoma metatípico</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8096/0">
+			<nome>Epitelioma intra-epidérmico de Jadassohn</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8100/0">
+			<nome>Tricoepitelioma</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8101/0">
+			<nome>Tricofoliculoma</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8102/0">
+			<nome>Tricolemoma</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8110/0">
+			<nome>Pilomatrixoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8110/3">
+			<nome>Carcinoma da pilomátrix</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M812-M813" inicial="M812" final="M813">
+		<nome>Papilomas e carcinomas de células de transição</nome>
+		<categoria codcat="M8120/0">
+			<nome>Papiloma de células de transição, SOE</nome>
+			</categoria>
+		<categoria codcat="M8120/1">
+			<nome>Papiloma urotelial</nome>
+			</categoria>
+		<categoria codcat="M8120/2">
+			<nome>Carcinoma in situ de células transicionais</nome>
+			</categoria>
+		<categoria codcat="M8120/3">
+			<nome>Carcinoma de células transicionais SOE</nome>
+			</categoria>
+		<categoria codcat="M8121/0">
+			<nome>Papiloma schneideriano</nome>
+			</categoria>
+		<categoria codcat="M8121/1">
+			<nome>Papiloma de células transicionais, tipo invertido</nome>
+			</categoria>
+		<categoria codcat="M8121/3">
+			<nome>Carcinoma schneideriano</nome>
+			</categoria>
+		<categoria codcat="M8122/3">
+			<nome>Carcinoma de células transicionais, tipo células fusiformas</nome>
+			</categoria>
+		<categoria codcat="M8123/3">
+			<nome>Carcinoma basalóide</nome>
+			<referencias>
+				<referencia codrefer="C21.1">C21.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8124/3">
+			<nome>Carcinoma cloacogênico</nome>
+			<referencias>
+				<referencia codrefer="C21.2">C21.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8130/3">
+			<nome>Carcinoma papilar de células transicionais</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M814-M838" inicial="M814" final="M838">
+		<nome>Adenomas e adenocarcinomas</nome>
+		<categoria codcat="M8140/0">
+			<nome>Adenoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8140/1">
+			<nome>Adenoma brônquico SOE</nome>
+			<referencias>
+				<referencia codrefer="D38.1">D38.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8140/2">
+			<nome>Adenocarcinoma in situ SOE</nome>
+			</categoria>
+		<categoria codcat="M8140/3">
+			<nome>Adenocarcinoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8140/6">
+			<nome>Adenocarcinoma metastático SOE</nome>
+			</categoria>
+		<categoria codcat="M8141/3">
+			<nome>Adenocarcinoma esquirroso</nome>
+			</categoria>
+		<categoria codcat="M8142/3">
+			<nome>Linite plástica</nome>
+			<referencias>
+				<referencia codrefer="C16">C16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8143/3">
+			<nome>Adenocarcinoma de propagação superficial</nome>
+			</categoria>
+		<categoria codcat="M8144/3">
+			<nome>Adenocarcionama, tipo intestinal</nome>
+			<referencias>
+				<referencia codrefer="C16">C16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8145/3">
+			<nome>Carcinoma, tipo difuso</nome>
+			<referencias>
+				<referencia codrefer="C16">C16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8146/0">
+			<nome>Adenoma monomórfico</nome>
+			</categoria>
+		<categoria codcat="M8147/0">
+			<nome>Adenoma de células basais</nome>
+			<referencias>
+				<referencia codrefer="D11">D11.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8147/3">
+			<nome>Adenocarcinoma de células basais</nome>
+			<referencias>
+				<referencia codrefer="C07">C07.-</referencia>
+				<referencia codrefer="C08">C08.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8150/0">
+			<nome>Adenoma de células das ilhotas</nome>
+			<referencias>
+				<referencia codrefer="D13.7">D13.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8150/3">
+			<nome>Carcinoma de células das ilhotas</nome>
+			<referencias>
+				<referencia codrefer="C25.4">C25.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8151/0">
+			<nome>Insulinoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D13.7">D13.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8151/3">
+			<nome>Insulinoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C25.4">C25.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8152/0">
+			<nome>Glucagonoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D13.7">D13.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8152/3">
+			<nome>Glucagonoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C25.4">C25.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8153/1">
+			<nome>Gastrinoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8153/3">
+			<nome>Gastrinoma maligno</nome>
+			</categoria>
+		<categoria codcat="M8154/3">
+			<nome>Adenocarcinoma misto, das ilhotas e exócrino</nome>
+			<referencias>
+				<referencia codrefer="C25">C25.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8155/3">
+			<nome>Vipoma</nome>
+			</categoria>
+		<categoria codcat="M8160/0">
+			<nome>Adenoma de duto biliar</nome>
+			<referencias>
+				<referencia codrefer="D13.4">D13.4</referencia>
+				<referencia codrefer="D13.5">D13.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8160/3">
+			<nome>Colangiocarcinoma</nome>
+			<referencias>
+				<referencia codrefer="C22.1">C22.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8161/0">
+			<nome>Cistadenoma de dutos biliares</nome>
+			</categoria>
+		<categoria codcat="M8161/3">
+			<nome>Cistadenocarcinoma de dutos biliares</nome>
+			</categoria>
+		<categoria codcat="M8162/3">
+			<nome>Tumor de Klatskin</nome>
+			<referencias>
+				<referencia codrefer="C22.1">C22.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8170/0">
+			<nome>Adenoma de células hepáticas</nome>
+			<referencias>
+				<referencia codrefer="D13.4">D13.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8170/3">
+			<nome>Carcinoma hepatocelular SOE</nome>
+			<referencias>
+				<referencia codrefer="C22.0">C22.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8171/3">
+			<nome>Carcinoma hepatocelular fibrolamelar</nome>
+			<referencias>
+				<referencia codrefer="C22.0">C22.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8180/3">
+			<nome>Carcinoma hepatocelular e colangiocarcinoma combinados</nome>
+			<referencias>
+				<referencia codrefer="C22.0">C22.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8190/0">
+			<nome>Adenoma trabecular</nome>
+			</categoria>
+		<categoria codcat="M8190/3">
+			<nome>Adenocarcinoma trabecular</nome>
+			</categoria>
+		<categoria codcat="M8191/0">
+			<nome>Adenoma embrionário</nome>
+			</categoria>
+		<categoria codcat="M8200/0">
+			<nome>Cilindroma dérmico écrino</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8200/3">
+			<nome>Carcinoma cístico adenóide</nome>
+			</categoria>
+		<categoria codcat="M8201/3">
+			<nome>Carcinoma cribriforme</nome>
+			</categoria>
+		<categoria codcat="M8202/0">
+			<nome>Adenoma microcístico</nome>
+			<referencias>
+				<referencia codrefer="D13.7">D13.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8210/0">
+			<nome>Pólipo adenomatoso SOE</nome>
+			</categoria>
+		<categoria codcat="M8210/2">
+			<nome>Adenocarcinoma in situ em pólipo adenomatoso</nome>
+			</categoria>
+		<categoria codcat="M8210/3">
+			<nome>Adenocarcinoma em pólipo adenomatoso</nome>
+			</categoria>
+		<categoria codcat="M8211/0">
+			<nome>Adenoma tubular SOE</nome>
+			</categoria>
+		<categoria codcat="M8211/3">
+			<nome>Adenocarcinoma tubular</nome>
+			</categoria>
+		<categoria codcat="M8220/0">
+			<nome>Polipose adenomatosa do cólon</nome>
+			<referencias>
+				<referencia codrefer="D12">D12.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8220/3">
+			<nome>Adenocarcinoma em polipose adenomatosa do cólon</nome>
+			<referencias>
+				<referencia codrefer="C18">C18.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8221/0">
+			<nome>Pólipos adenomatosos múltiplos</nome>
+			</categoria>
+		<categoria codcat="M8221/3">
+			<nome>Adenocarcinoma em pólipos adenomatosos múltiplos</nome>
+			</categoria>
+		<categoria codcat="M8230/3">
+			<nome>Carcinoma sólido SOE</nome>
+			</categoria>
+		<categoria codcat="M8231/3">
+			<nome>Carcinoma simples</nome>
+			</categoria>
+		<categoria codcat="M8240/1">
+			<nome>Tumor carcinóide SOE da apêndice</nome>
+			<referencias>
+				<referencia codrefer="D37.7">D37.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8240/3">
+			<nome>Tumor carcinóide SOE</nome>
+			<nota>exceto do apêndice M8240/1</nota>
+			</categoria>
+		<categoria codcat="M8241/1">
+			<nome>Tumor carcinóide argentafínico SOE</nome>
+			</categoria>
+		<categoria codcat="M8241/3">
+			<nome>Tumor carcinóide argentafínico maligno</nome>
+			</categoria>
+		<categoria codcat="M8243/3">
+			<nome>Carcinoma de células caliciformes</nome>
+			<referencias>
+				<referencia codrefer="C18.1">C18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8244/3">
+			<nome>Carcinóide composto</nome>
+			</categoria>
+		<categoria codcat="M8245/3">
+			<nome>Tumor adenocarcinóide</nome>
+			</categoria>
+		<categoria codcat="M8246/3">
+			<nome>Carcinoma neuroendócrino</nome>
+			</categoria>
+		<categoria codcat="M8247/3">
+			<nome>Carcinoma de células de Merkel</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8248/1">
+			<nome>Apudoma</nome>
+			</categoria>
+		<categoria codcat="M8250/1">
+			<nome>Adenomatose pulmonar</nome>
+			<referencias>
+				<referencia codrefer="D38.1">D38.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8250/3">
+			<nome>Adenocarcinoma bronquíolo-alveolar</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8251/0">
+			<nome>Adenoma alveolar</nome>
+			<referencias>
+				<referencia codrefer="D14.3">D14.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8251/3">
+			<nome>Adenocarcinoma alveolar</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8260/0">
+			<nome>Adenoma papilar SOE</nome>
+			</categoria>
+		<categoria codcat="M8260/3">
+			<nome>Adenocarcinoma papilar SOE</nome>
+			</categoria>
+		<categoria codcat="M8261/1">
+			<nome>Adenoma viloso SOE</nome>
+			</categoria>
+		<categoria codcat="M8261/2">
+			<nome>Adenocarcinoma in situ em adenoma viloso</nome>
+			</categoria>
+		<categoria codcat="M8261/3">
+			<nome>Adenocarcinoma em adenoma viloso</nome>
+			</categoria>
+		<categoria codcat="M8262/3">
+			<nome>Adenocarcinoma viloso</nome>
+			</categoria>
+		<categoria codcat="M8263/0">
+			<nome>Adenoma tubuloviloso SOE</nome>
+			</categoria>
+		<categoria codcat="M8263/2">
+			<nome>Adenocarcinoma in situ em adenoma tubuloviloso</nome>
+			</categoria>
+		<categoria codcat="M8263/3">
+			<nome>Adenocarcinoma em adenoma tubuloviloso</nome>
+			</categoria>
+		<categoria codcat="M8270/0">
+			<nome>Adenoma cromófobo</nome>
+			<referencias>
+				<referencia codrefer="D35.2">D35.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8270/3">
+			<nome>Carcinoma cromófobo</nome>
+			<referencias>
+				<referencia codrefer="C75.1">C75.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8271/0">
+			<nome>Prolactinoma</nome>
+			<referencias>
+				<referencia codrefer="D35.2">D35.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8280/0">
+			<nome>Adenoma acidófilo</nome>
+			<referencias>
+				<referencia codrefer="D35.2">D35.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8280/3">
+			<nome>Carcinoma acidófilo</nome>
+			<referencias>
+				<referencia codrefer="C75.1">C75.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8281/0">
+			<nome>Adenoma misto acidófilo-basófilo</nome>
+			<referencias>
+				<referencia codrefer="D35.2">D35.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8281/3">
+			<nome>Carcinoma misto acidófilo-basófilo</nome>
+			<referencias>
+				<referencia codrefer="C75.1">C75.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8290/0">
+			<nome>Adenoma oxifílico</nome>
+			</categoria>
+		<categoria codcat="M8290/3">
+			<nome>Adenocarcinoma oxifílico</nome>
+			</categoria>
+		<categoria codcat="M8300/0">
+			<nome>Adenoma basófilo</nome>
+			<referencias>
+				<referencia codrefer="C75.1">C75.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8300/3">
+			<nome>Carcinoma basófilo</nome>
+			<referencias>
+				<referencia codrefer="D35.2">D35.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8310/0">
+			<nome>Adenoma de células claras</nome>
+			</categoria>
+		<categoria codcat="M8310/3">
+			<nome>Adenocarcinoma de células claras SOE</nome>
+			</categoria>
+		<categoria codcat="M8311/1">
+			<nome>Tumor hipernefróide</nome>
+			</categoria>
+		<categoria codcat="M8312/3">
+			<nome>Carcinoma de células renais</nome>
+			<referencias>
+				<referencia codrefer="C64">C64</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8313/0">
+			<nome>Adenofibroma de células claras</nome>
+			</categoria>
+		<categoria codcat="M8314/3">
+			<nome>Carcinoma rico em lípides</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8315/3">
+			<nome>Carcinoma rico em glicogênio</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8320/3">
+			<nome>Carcinoma de células granulares</nome>
+			</categoria>
+		<categoria codcat="M8321/0">
+			<nome>Adenoma de células principais</nome>
+			<referencias>
+				<referencia codrefer="D35.1">D35.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8322/0">
+			<nome>Adenoma de células claras (water-clear cell)</nome>
+			<referencias>
+				<referencia codrefer="D35.1">D35.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8322/3">
+			<nome>Adenocarcinoma de células claras (water-clear cell)</nome>
+			<referencias>
+				<referencia codrefer="C75.0">C75.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8323/0">
+			<nome>Adenoma de células mistas</nome>
+			</categoria>
+		<categoria codcat="M8323/3">
+			<nome>Adenocarcinoma de células mistas</nome>
+			</categoria>
+		<categoria codcat="M8324/0">
+			<nome>Lipoadenoma</nome>
+			</categoria>
+		<categoria codcat="M8330/0">
+			<nome>Adenoma folicular</nome>
+			<referencias>
+				<referencia codrefer="D34">D34</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8330/3">
+			<nome>Adenocarcinoma folicular SOE</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8331/3">
+			<nome>Adenocarcinoma folicular bem diferenciado</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8332/3">
+			<nome>Adenocarcinoma folicular trabecular</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8333/0">
+			<nome>Adenoma microfolicular</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8334/0">
+			<nome>Adenoma macrofolicular</nome>
+			<referencias>
+				<referencia codrefer="D34">D34</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8340/3">
+			<nome>Carcinoma papilar, variante folicular</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8350/3">
+			<nome>Carcinoma esclerosante não-encapsulado</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8360/1">
+			<nome>Adenomas endócrinos múltiplos</nome>
+			</categoria>
+		<categoria codcat="M8361/1">
+			<nome>Tumor justaglomerular</nome>
+			<referencias>
+				<referencia codrefer="D41.0">D41.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8370/0">
+			<nome>Adenoma de córtex supra-renal SOE</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8370/3">
+			<nome>Carcinoma de córtex supra-renal</nome>
+			<referencias>
+				<referencia codrefer="C74.0">C74.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8371/0">
+			<nome>Adenoma de córtex supra-renal de células compactas</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8372/0">
+			<nome>Adenoma de córtex supra-renal, variante densamente pigmentada</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8373/0">
+			<nome>Adenoma de córtex supra-renal, de células claras</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8374/0">
+			<nome>Adenoma de córtex supra-renal, de células glomerulosas</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8375/0">
+			<nome>Adenoma de córtex supra-renal, de células mistas</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8380/0">
+			<nome>Adenoma endometrióide SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8380/1">
+			<nome>Adenoma endometrióide &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8380/3">
+			<nome>Carcinoma endometrióide</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8381/0">
+			<nome>Adenofibroma endometrióide SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8381/1">
+			<nome>Adenofibroma endometrióide &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8381/3">
+			<nome>Adenofibroma endometróide maligno</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M839-M842" inicial="M839" final="M842">
+		<nome>Neoplasias dos anexos e apêndices cutâneos</nome>
+		<categoria codcat="M8390/0">
+			<nome>Adenoma de apêndice cutâneo</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8390/3">
+			<nome>Carcinoma de apêndice cutâneo</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8400/0">
+			<nome>Adenoma de glândula sudorípara</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8400/1">
+			<nome>Tumor de glândula sudorípara SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.5">D48.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8400/3">
+			<nome>Adenocarcinoma de glândula sudorípara</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8401/0">
+			<nome>Adenoma apócrino</nome>
+			</categoria>
+		<categoria codcat="M8401/3">
+			<nome>Adenocarcinoma apócrino</nome>
+			</categoria>
+		<categoria codcat="M8402/0">
+			<nome>Acrospiroma écrino</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8403/0">
+			<nome>Espiradenoma écrino</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8404/0">
+			<nome>Hidrocistoma</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8405/0">
+			<nome>Hidradenoma papilar</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8406/0">
+			<nome>Siringadenoma papilar</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8407/0">
+			<nome>Siringoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8408/0">
+			<nome>Adenoma papilar écrino</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8410/0">
+			<nome>Adenoma sebáceo</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8410/3">
+			<nome>Adenocarcinoma sebáceo</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8420/0">
+			<nome>Adenoma ceruminoso</nome>
+			<referencias>
+				<referencia codrefer="D23.2">D23.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8420/3">
+			<nome>Adenocarcinoma ceruminoso</nome>
+			<referencias>
+				<referencia codrefer="C44.2">C44.2</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M843-M843" inicial="M843" final="M843">
+		<nome>Neoplasias mucoepidemóides</nome>
+		<categoria codcat="M8430/1">
+			<nome>Tumor mucoepidermóide</nome>
+			</categoria>
+		<categoria codcat="M8430/3">
+			<nome>Carcinoma mucoepidermóide</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M844-M849" inicial="M844" final="M849">
+		<nome>Neoplasias císticas, mucinosas e serosas</nome>
+		<categoria codcat="M8440/0">
+			<nome>Cistadenoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8440/3">
+			<nome>Cistadenocarcinoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8441/0">
+			<nome>Cistadenoma seroso SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8441/3">
+			<nome>Cistadenocarcinoma seroso SOE</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8442/3">
+			<nome>Cistadenoma seroso &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8450/0">
+			<nome>Cistadenoma papilar SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8450/3">
+			<nome>Cistadenocarcinoma papilar SOE</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8451/3">
+			<nome>Cistadenoma papilar &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8452/1">
+			<nome>Tumor cístico papilar</nome>
+			<referencias>
+				<referencia codrefer="D37.7">D37.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8460/0">
+			<nome>Cistadenoma seroso papilar SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8460/3">
+			<nome>Cistadenocarcinoma seroso papilar</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8461/0">
+			<nome>Papiloma seroso superficial</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8461/3">
+			<nome>Carcinoma papilar seroso superficial</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8462/3">
+			<nome>Cistadenoma seroso papilar &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8470/0">
+			<nome>Cistadenoma mucinoso SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8470/3">
+			<nome>Cistadenocarcinoma mucinoso</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8471/0">
+			<nome>Cistadenoma mucinoso papilar SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8471/3">
+			<nome>Cistadenocarcinoma mucinoso papilar</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8472/3">
+			<nome>Cistadenoma mucinoso &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8473/3">
+			<nome>Cistadenoma mucinoso papilar &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8480/0">
+			<nome>Adenoma mucinoso</nome>
+			</categoria>
+		<categoria codcat="M8480/3">
+			<nome>Adenocarcinoma mucinoso</nome>
+			</categoria>
+		<categoria codcat="M8480/6">
+			<nome>Pseudomixoma de peritônio</nome>
+			<referencias>
+				<referencia codrefer="C78.6">C78.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8481/3">
+			<nome>Adenocarcinoma produtor de mucina</nome>
+			</categoria>
+		<categoria codcat="M8490/3">
+			<nome>Carcinoma de células em anel de sinete</nome>
+			</categoria>
+		<categoria codcat="M8490/6">
+			<nome>Carcinoma metastático de células em anel de sinete</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M850-M854" inicial="M850" final="M854">
+		<nome>Neoplasias ductais, lobulares e medulares</nome>
+		<categoria codcat="M8500/2">
+			<nome>Carcinoma intraductal não infiltrante SOE</nome>
+			</categoria>
+		<categoria codcat="M8500/3">
+			<nome>Carcinoma de dutos infiltrante</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8501/2">
+			<nome>Comedocarcinoma não infiltrante</nome>
+			<referencias>
+				<referencia codrefer="D05">D05.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8501/3">
+			<nome>Comedocarcinoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8502/3">
+			<nome>Carcinoma juvenil da mama</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8503/0">
+			<nome>Papiloma intraductal</nome>
+			</categoria>
+		<categoria codcat="M8503/2">
+			<nome>Adenocarcinoma papilar intraductal não infiltrante</nome>
+			<referencias>
+				<referencia codrefer="D05">D05.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8503/3">
+			<nome>Adenocarcinoma papilar intraductal com invasão</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8504/0">
+			<nome>Adenoma papilar intracístico</nome>
+			</categoria>
+		<categoria codcat="M8504/2">
+			<nome>Carcinoma intracístico não infiltrante</nome>
+			</categoria>
+		<categoria codcat="M8504/3">
+			<nome>Carcinoma intracístico SOE</nome>
+			</categoria>
+		<categoria codcat="M8505/0">
+			<nome>Papilomatose intraductal SOE</nome>
+			</categoria>
+		<categoria codcat="M8506/0">
+			<nome>Adenoma do mamilo</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8510/3">
+			<nome>Carcinoma medular SOE</nome>
+			</categoria>
+		<categoria codcat="M8511/3">
+			<nome>Carcinoma medular com estroma amilóide</nome>
+			<referencias>
+				<referencia codrefer="C73">C73</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8512/3">
+			<nome>Carcinoma medular com estroma linfóide</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8520/2">
+			<nome>Carcinoma lobular in situ</nome>
+			<referencias>
+				<referencia codrefer="D05.0">D05.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8520/3">
+			<nome>Carcinoma lobular SOE</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8521/3">
+			<nome>Carcinoma ductular infiltrante</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8522/2">
+			<nome>Carcinoma intraductel e carcinoma lobular in situ</nome>
+			<referencias>
+				<referencia codrefer="D05.7">D05.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8522/3">
+			<nome>Carcinoma infiltrante de dutos e lobular</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8530/3">
+			<nome>Carcinoma inflamatório</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8540/3">
+			<nome>Doença mamária de Paget</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8541/3">
+			<nome>Doença de Paget e carcinoma de dutos infiltrante da mama</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8542/3">
+			<nome>Doença de Paget extramamária</nome>
+			<nota>exceto doença de Paget do osso</nota>
+			</categoria>
+		<categoria codcat="M8543/3">
+			<nome>Doença de Paget e carcinoma intraductal da mama</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M855-M855" inicial="M855" final="M855">
+		<nome>Neoplasias de células acinares</nome>
+		<categoria codcat="M8550/0">
+			<nome>Adenoma de células acinares</nome>
+			</categoria>
+		<categoria codcat="M8550/1">
+			<nome>Tumor de células acinares</nome>
+			</categoria>
+		<categoria codcat="M8551/0">
+			<nome>Carcinoma de células acinares</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M856-M858" inicial="M856" final="M858">
+		<nome>Neoplasias epiteliais complexas</nome>
+		<categoria codcat="M8560/3">
+			<nome>Carcinoma adenoescamoso</nome>
+			</categoria>
+		<categoria codcat="M8561/0">
+			<nome>Adenolinfoma</nome>
+			<referencias>
+				<referencia codrefer="D11">D11.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8562/3">
+			<nome>Carcinoma epitelial-mioepitelial</nome>
+			</categoria>
+		<categoria codcat="M8570/3">
+			<nome>Adenocarcinoma com metaplasia escamosa</nome>
+			</categoria>
+		<categoria codcat="M8571/3">
+			<nome>Adenocarcinoma com metaplasia cartilaginosa e óssea</nome>
+			</categoria>
+		<categoria codcat="M8572/3">
+			<nome>Adenocarcinoma com metaplasia de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8573/3">
+			<nome>Adenocarcinoma com metaplasia apócrina</nome>
+			</categoria>
+		<categoria codcat="M8580/0">
+			<nome>Timoma benigno</nome>
+			<referencias>
+				<referencia codrefer="D15.0">D15.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8580/3">
+			<nome>Timoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C37">C37</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M859-M867" inicial="M859" final="M867">
+		<nome>Neoplasias especializadas das gônadas</nome>
+		<categoria codcat="M8590/1">
+			<nome>Tumor dos cordões sexuais e estroma</nome>
+			</categoria>
+		<categoria codcat="M8600/0">
+			<nome>Tecoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8600/3">
+			<nome>Tecoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8601/3">
+			<nome>Tecoma luteinizado</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8602/0">
+			<nome>Tumor esclerosante do estroma</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8610/0">
+			<nome>Luteoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8620/1">
+			<nome>Tumor de células da granulosa SOE</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8620/3">
+			<nome>Tumor maligno de células da granulosa</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8621/1">
+			<nome>Tumor de células da granulosa e células da teca</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8622/1">
+			<nome>Tumor juvenil de células da granulosa</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8623/1">
+			<nome>Tumor dos cordões sexuais com túbulos anulares</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8630/0">
+			<nome>Androblastoma benigno</nome>
+			</categoria>
+		<categoria codcat="M8630/1">
+			<nome>Androblastoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8630/3">
+			<nome>Androblastoma maligno</nome>
+			</categoria>
+		<categoria codcat="M8631/0">
+			<nome>Tumor de células de Sertoli-Leydig</nome>
+			</categoria>
+		<categoria codcat="M8632/1">
+			<nome>Ginandroblastoma</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8640/0">
+			<nome>Tumor de células de Sertoli SOE</nome>
+			</categoria>
+		<categoria codcat="M8640/3">
+			<nome>Carcinoma de células de Sertoli</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8641/0">
+			<nome>Tumor de células de Sertoli com depósito de lípides</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8650/0">
+			<nome>Tumor benigno de células de Leydig</nome>
+			<referencias>
+				<referencia codrefer="D29.2">D29.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8650/1">
+			<nome>Tumor de células de Leydig SOE</nome>
+			<referencias>
+				<referencia codrefer="D40.1">D40.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8650/3">
+			<nome>Tumor maligno de células de Leydig</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8660/0">
+			<nome>Tumor de células do hilo</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8670/0">
+			<nome>Tumor de células lipídicas do ovário</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8671/0">
+			<nome>Tumor de supra-renal acessório [resto adrenal]</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M868-M871" inicial="M868" final="M871">
+		<nome>Paragangliomas e tumores do glomo</nome>
+		<categoria codcat="M8680/1">
+			<nome>Paraganglioma SOE</nome>
+			</categoria>
+		<categoria codcat="M8680/3">
+			<nome>Paraganglioma maligno</nome>
+			</categoria>
+		<categoria codcat="M8681/1">
+			<nome>Paraganglioma simpático</nome>
+			</categoria>
+		<categoria codcat="M8682/1">
+			<nome>Paraganglioma parassimpático</nome>
+			</categoria>
+		<categoria codcat="M8683/0">
+			<nome>Paraganglioma gangliocítico</nome>
+			<referencias>
+				<referencia codrefer="D13.2">D13.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8690/1">
+			<nome>Tumor do glomo jugular</nome>
+			<referencias>
+				<referencia codrefer="D44.7">D44.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8691/1">
+			<nome>Tumor do corpo aórtico</nome>
+			<referencias>
+				<referencia codrefer="D44.7">D44.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8692/1">
+			<nome>Tumor do corpo carotídeo</nome>
+			<referencias>
+				<referencia codrefer="D44.6">D44.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8693/1">
+			<nome>Paraganglioma extra-supra-renal SOE</nome>
+			</categoria>
+		<categoria codcat="M8693/3">
+			<nome>Paraganglioma extra-supra-renal maligno</nome>
+			</categoria>
+		<categoria codcat="M8700/0">
+			<nome>Feocromocitoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D35.0">D35.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8700/3">
+			<nome>Feocromocitoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C74.1">C74.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8710/3">
+			<nome>Glomangiossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8711/0">
+			<nome>Tumor de glomo</nome>
+			</categoria>
+		<categoria codcat="M8712/3">
+			<nome>Glomangioma</nome>
+			</categoria>
+		<categoria codcat="M8713/0">
+			<nome>Glomangiomioma</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M872-M879" inicial="M872" final="M879">
+		<nome>Nevos e melanomas</nome>
+		<categoria codcat="M8720/0">
+			<nome>Nevo pigmentado SOE</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8720/2">
+			<nome>Melanoma in situ</nome>
+			<referencias>
+				<referencia codrefer="D03">D03.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8720/3">
+			<nome>Melanoma maligno SOE</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8721/3">
+			<nome>Melanoma nodular</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8722/0">
+			<nome>Nevo de células baloniformes</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8722/3">
+			<nome>Melanoma de células baloniformes</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8723/0">
+			<nome>Halo nevo</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8723/3">
+			<nome>Melanoma maligno em regressão</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8724/0">
+			<nome>Pápula fibrosa do nariz</nome>
+			<referencias>
+				<referencia codrefer="D22.3">D22.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8725/0">
+			<nome>Neuronevo</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8726/0">
+			<nome>Nevo magnocelular</nome>
+			<referencias>
+				<referencia codrefer="D31.4">D31.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8727/0">
+			<nome>Nevo displásico</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8730/0">
+			<nome>Nevo não pigmentado</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8730/3">
+			<nome>Melanoma amelanótico</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8740/0">
+			<nome>Nevo juncional SOE</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8740/3">
+			<nome>Melanoma maligno em nevo juncional</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8741/2">
+			<nome>Melanose pré-cancerosa SOE</nome>
+			<referencias>
+				<referencia codrefer="D03">D03.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8741/3">
+			<nome>Melanoma maligno em melanose pré-cancerosa</nome>
+			<referencias>
+				<referencia codrefer="D03">D03.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8742/2">
+			<nome>Sarda melanótica de Hutchinson SOE</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8742/3">
+			<nome>Melanoma maligno em sarda melanótica de Hutchinson</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8743/3">
+			<nome>Melanoma de propagação superficial</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8744/3">
+			<nome>Melanoma lentiginoso maligno das extremidades periféricas</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8745/3">
+			<nome>Melanoma desmoplástico maligno</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8750/0">
+			<nome>Nevo intradérmico</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8760/0">
+			<nome>Nevo composto</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8761/1">
+			<nome>Nevo pigmentado gigante SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.5">D48.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8761/3">
+			<nome>Melanoma maligno em nevo pigmentado gigante</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8770/0">
+			<nome>Nevo epitelióide e de células fusiformes</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8770/3">
+			<nome>Melanoma misto epitelióide e de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8771/0">
+			<nome>Nevo de células epitelióides</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8771/3">
+			<nome>Melanoma de células epitelióides</nome>
+			</categoria>
+		<categoria codcat="M8772/0">
+			<nome>Nevo de células fusiformes</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8772/3">
+			<nome>Melanoma de células fusiformes SOE</nome>
+			</categoria>
+		<categoria codcat="M8773/3">
+			<nome>Melanoma de células fusiformes, tipo A</nome>
+			<referencias>
+				<referencia codrefer="C69.4">C69.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8774/3">
+			<nome>Melanoma de células fusiformes, tipo B</nome>
+			<referencias>
+				<referencia codrefer="C69.4">C69.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8780/0">
+			<nome>Nevo azul SOE</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8780/3">
+			<nome>Nevo azul maligno</nome>
+			<referencias>
+				<referencia codrefer="C43">C43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8790/0">
+			<nome>Nevo azul celular</nome>
+			<referencias>
+				<referencia codrefer="D22">D22.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M880-M880" inicial="M880" final="M880">
+		<nome>Tumores e sarcomas de tecidos moles SOE</nome>
+		<categoria codcat="M8800/0">
+			<nome>Tumor benigno de tecidos moles</nome>
+			</categoria>
+		<categoria codcat="M8800/3">
+			<nome>Sarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8800/6">
+			<nome>Sarcomatose SOE</nome>
+			</categoria>
+		<categoria codcat="M8801/3">
+			<nome>Sarcoma de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M8802/3">
+			<nome>Sarcoma de células gigantes</nome>
+			<nota>exceto de osso M9250/3</nota>
+			</categoria>
+		<categoria codcat="M8803/3">
+			<nome>Sarcoma de células pequenas</nome>
+			</categoria>
+		<categoria codcat="M8804/3">
+			<nome>Sarcoma epitelióide</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M881-M883" inicial="M881" final="M883">
+		<nome>Neoplasias fibromatosas</nome>
+		<categoria codcat="M8810/0">
+			<nome>Fibroma SOE</nome>
+			</categoria>
+		<categoria codcat="M8810/3">
+			<nome>Fibrossarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8811/0">
+			<nome>Fibromixoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8811/3">
+			<nome>Firbromixossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8812/0">
+			<nome>Fibroma periostal</nome>
+			<referencias>
+				<referencia codrefer="D16">D16</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8812/3">
+			<nome>Fibrossarcoma periostal</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8813/0">
+			<nome>Fibroma de fáscia</nome>
+			</categoria>
+		<categoria codcat="M8813/3">
+			<nome>Fibrossarcoma de fáscia</nome>
+			</categoria>
+		<categoria codcat="M8814/3">
+			<nome>Fibrossarcoma infantil</nome>
+			</categoria>
+		<categoria codcat="M8820/0">
+			<nome>Elastofibroma</nome>
+			</categoria>
+		<categoria codcat="M8821/1">
+			<nome>Fibromatose agressiva</nome>
+			</categoria>
+		<categoria codcat="M8822/1">
+			<nome>Fibromatose abdominal</nome>
+			</categoria>
+		<categoria codcat="M8823/1">
+			<nome>Fibroma desmoplástico</nome>
+			</categoria>
+		<categoria codcat="M8824/1">
+			<nome>Miofibromatose</nome>
+			</categoria>
+		<categoria codcat="M8830/0">
+			<nome>Histiocitoma fibroso SOE</nome>
+			</categoria>
+		<categoria codcat="M8830/1">
+			<nome>Histiocitoma fibroso atípico</nome>
+			</categoria>
+		<categoria codcat="M8830/3">
+			<nome>Histiocitoma fibroso maligno</nome>
+			</categoria>
+		<categoria codcat="M8832/0">
+			<nome>Dermatofibroma SOE</nome>
+			<referencias>
+				<referencia codrefer="D23">D23.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8832/3">
+			<nome>Dermatofibrossarcoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C44">C44.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8833/3">
+			<nome>Dermatofibrossarcoma protuberante pigmentado</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M884-M884" inicial="M884" final="M884">
+		<nome>Neoplasias mixomatosas</nome>
+		<categoria codcat="M8840/0">
+			<nome>Mixoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8840/3">
+			<nome>Mixossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8841/1">
+			<nome>Angiomixoma</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M885-M888" inicial="M885" final="M888">
+		<nome>Neoplasias lipomatosas</nome>
+		<categoria codcat="M8850/0">
+			<nome>Lipoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8850/3">
+			<nome>Lipossarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8851/0">
+			<nome>Fibrolipoma</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8851/3">
+			<nome>Lipossarcoma bem diferenciado</nome>
+			</categoria>
+		<categoria codcat="M8852/0">
+			<nome>Fibromixolipoma</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8852/3">
+			<nome>Lipossarcoma mixóide</nome>
+			</categoria>
+		<categoria codcat="M8853/3">
+			<nome>Lipossarcoma de células redondas</nome>
+			</categoria>
+		<categoria codcat="M8854/0">
+			<nome>Lipoma pleomórfico</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8854/3">
+			<nome>Lipossarcoma pleomórfico</nome>
+			</categoria>
+		<categoria codcat="M8855/3">
+			<nome>Lipossarcoma misto</nome>
+			</categoria>
+		<categoria codcat="M8856/0">
+			<nome>Lipoma intramuscular</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8857/0">
+			<nome>Lipoma de células fusiformes</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8858/3">
+			<nome>Lipossarcoma desdiferenciado</nome>
+			</categoria>
+		<categoria codcat="M8860/0">
+			<nome>Angiomiolipoma</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8861/0">
+			<nome>Angiolipoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8870/0">
+			<nome>Mielolipoma</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8880/0">
+			<nome>Hibernoma</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8881/0">
+			<nome>Lipoblastomatose</nome>
+			<referencias>
+				<referencia codrefer="D17">D17.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M889-M892" inicial="M889" final="M892">
+		<nome>Neoplasias miomatosas</nome>
+		<categoria codcat="M8890/0">
+			<nome>Leiomioma SOE</nome>
+			</categoria>
+		<categoria codcat="M8890/1">
+			<nome>Leiomiomatose SOE</nome>
+			</categoria>
+		<categoria codcat="M8890/3">
+			<nome>Leiomiossarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8891/0">
+			<nome>Leiomioma epitelióide</nome>
+			</categoria>
+		<categoria codcat="M8892/0">
+			<nome>Leiomioma celular</nome>
+			</categoria>
+		<categoria codcat="M8893/0">
+			<nome>Leiomioma bizarro</nome>
+			</categoria>
+		<categoria codcat="M8894/0">
+			<nome>Angiomioma</nome>
+			</categoria>
+		<categoria codcat="M8894/3">
+			<nome>Angiomiossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8895/0">
+			<nome>Mioma</nome>
+			</categoria>
+		<categoria codcat="M8895/3">
+			<nome>Miossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8896/3">
+			<nome>Leiomiossarcoma mixóide</nome>
+			</categoria>
+		<categoria codcat="M8897/1">
+			<nome>Tumor de músculo liso SOE</nome>
+			</categoria>
+		<categoria codcat="M8900/0">
+			<nome>Rabdomioma SOE</nome>
+			</categoria>
+		<categoria codcat="M8900/3">
+			<nome>Rabdomiossarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8901/3">
+			<nome>Rabdomiossarcoma pleomórfico</nome>
+			</categoria>
+		<categoria codcat="M8902/3">
+			<nome>Rabdomiossarcoma tipo misto</nome>
+			</categoria>
+		<categoria codcat="M8903/0">
+			<nome>Rabdomioma fetal</nome>
+			</categoria>
+		<categoria codcat="M8904/0">
+			<nome>Rabdomioma adulto</nome>
+			</categoria>
+		<categoria codcat="M8910/3">
+			<nome>Rabdomiossarcoma embrionário</nome>
+			</categoria>
+		<categoria codcat="M8920/3">
+			<nome>Rabdomiossarcoma alveolar</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M893-M899" inicial="M893" final="M899">
+		<nome>Neoplasias complexas mistas e do estroma</nome>
+		<categoria codcat="M8930/0">
+			<nome>Nódulo do estroma endometrial</nome>
+			<referencias>
+				<referencia codrefer="D26.1">D26.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8930/3">
+			<nome>Sarcoma do estroma endometrial</nome>
+			<referencias>
+				<referencia codrefer="C54">C54.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8931/1">
+			<nome>Miose endolinfático do estroma</nome>
+			<referencias>
+				<referencia codrefer="D39.0">D39.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8932/0">
+			<nome>Adenomioma</nome>
+			</categoria>
+		<categoria codcat="M8933/3">
+			<nome>Adenossarcoma</nome>
+			</categoria>
+		<categoria codcat="M8940/0">
+			<nome>Adenoma pleomórfico</nome>
+			</categoria>
+		<categoria codcat="M8940/3">
+			<nome>Tumor misto maligno SOE</nome>
+			</categoria>
+		<categoria codcat="M8941/3">
+			<nome>Carcinoma em adenoma pleomórfico</nome>
+			<referencias>
+				<referencia codrefer="C07">C07</referencia>
+				<referencia codrefer="C08">C08.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8950/3">
+			<nome>Tumor mulleriano misto</nome>
+			<referencias>
+				<referencia codrefer="C54">C54.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8951/3">
+			<nome>Tumor mesodérmico misto</nome>
+			</categoria>
+		<categoria codcat="M8960/1">
+			<nome>Nefroma mesoblástico</nome>
+			</categoria>
+		<categoria codcat="M8960/3">
+			<nome>Nefroblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C64">C64</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8963/3">
+			<nome>Sarcoma rabdóide</nome>
+			</categoria>
+		<categoria codcat="M8964/3">
+			<nome>Sarcoma de células claras do rim</nome>
+			<referencias>
+				<referencia codrefer="C64">C64</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8970/3">
+			<nome>Hepatoblastoma</nome>
+			<referencias>
+				<referencia codrefer="C22.0">C22.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8971/3">
+			<nome>Pancreatoblastoma</nome>
+			<referencias>
+				<referencia codrefer="C25">C25.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8972/3">
+			<nome>Blastoma pulmonar</nome>
+			<referencias>
+				<referencia codrefer="C34">C34.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M8980/3">
+			<nome>Carcinossarcoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8981/3">
+			<nome>Carcinossarcoma embrionário</nome>
+			</categoria>
+		<categoria codcat="M8982/0">
+			<nome>Mioepitelioma</nome>
+			</categoria>
+		<categoria codcat="M8990/0">
+			<nome>Mesenquimoma benigno</nome>
+			</categoria>
+		<categoria codcat="M8990/1">
+			<nome>Mesenquimoma SOE</nome>
+			</categoria>
+		<categoria codcat="M8990/3">
+			<nome>Mesenquimoma maligno</nome>
+			</categoria>
+		<categoria codcat="M8991/3">
+			<nome>Sarcoma embrionário</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M900-M903" inicial="M900" final="M903">
+		<nome>Neoplasias fibroepitelias</nome>
+		<categoria codcat="M9000/0">
+			<nome>Tumor de Brenner SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9000/1">
+			<nome>Tumor de Brenner &quot;borderline&quot;</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9000/3">
+			<nome>Tumor de Brenner maligno</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9010/0">
+			<nome>Fibroadenoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9011/0">
+			<nome>Fibroadenoma intracanalicular</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9012/0">
+			<nome>Fibroadenoma pericanalicular</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9013/0">
+			<nome>Adenofibroma SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9014/0">
+			<nome>Adenofibroma seroso</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9015/0">
+			<nome>Adenofibroma mucinoso</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9016/0">
+			<nome>Fibroadenoma gigante</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9020/0">
+			<nome>Tumor filodes benigno</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9020/1">
+			<nome>Tumor filodes SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.6">D48.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9020/3">
+			<nome>Tumor filodes maligno</nome>
+			<referencias>
+				<referencia codrefer="C50">C50.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9030/3">
+			<nome>Fibroadenoma juvenil</nome>
+			<referencias>
+				<referencia codrefer="D24">D24</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M904-M904" inicial="M904" final="M904">
+		<nome>Neoplasias semelhantes a sinoviais &quot;sinóvia-like&quot;</nome>
+		<categoria codcat="M9040/0">
+			<nome>Sinovioma benigno</nome>
+			</categoria>
+		<categoria codcat="M9040/3">
+			<nome>Sarcoma sinovial SOE</nome>
+			</categoria>
+		<categoria codcat="M9041/3">
+			<nome>Sarcoma sinovial de células fusiformes</nome>
+			</categoria>
+		<categoria codcat="M9042/3">
+			<nome>Sarcoma sinovial de células epitelióides</nome>
+			</categoria>
+		<categoria codcat="M9043/3">
+			<nome>Sarcoma sinovial bifásico</nome>
+			</categoria>
+		<categoria codcat="M9044/3">
+			<nome>Sarcoma de células claras</nome>
+			<nota>exceto rim M8964/3</nota>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M905-M905" inicial="M905" final="M905">
+		<nome>Neoplasias mesoteliais</nome>
+		<categoria codcat="M9050/0">
+			<nome>Mesotelioma benigno</nome>
+			<referencias>
+				<referencia codrefer="D19">D19.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9050/3">
+			<nome>Mesotelioma maligno</nome>
+			<referencias>
+				<referencia codrefer="C45">C45.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9051/0">
+			<nome>Mesotelioma fibroso benigno</nome>
+			<referencias>
+				<referencia codrefer="D19">D19.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9051/3">
+			<nome>Mesotelioma fibroso maligno</nome>
+			<referencias>
+				<referencia codrefer="C45">C45.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9052/0">
+			<nome>Mesotelioma epitelióide benigno</nome>
+			<referencias>
+				<referencia codrefer="D19">D19.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9052/3">
+			<nome>Mesotelioma epitelióide maligno</nome>
+			<referencias>
+				<referencia codrefer="C45">C45.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9053/0">
+			<nome>Mesotelioma bifásico benigno</nome>
+			<referencias>
+				<referencia codrefer="D19">D19.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9053/3">
+			<nome>Mesotelioma bifásico maligno</nome>
+			<referencias>
+				<referencia codrefer="C45">C45.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9054/0">
+			<nome>Tumor adenomatóide SOE</nome>
+			<referencias>
+				<referencia codrefer="D19">D19.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9055/1">
+			<nome>Mesotelioma cístico</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M906-M909" inicial="M906" final="M909">
+		<nome>Neoplasias de células germinativas</nome>
+		<categoria codcat="M9060/3">
+			<nome>Disgerminoma</nome>
+			</categoria>
+		<categoria codcat="M9061/3">
+			<nome>Seminoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9062/3">
+			<nome>Seminoma anaplástico</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9063/3">
+			<nome>Seminoma espermatocítico</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9064/3">
+			<nome>Germinoma</nome>
+			</categoria>
+		<categoria codcat="M9070/3">
+			<nome>Carcinoma embrionário SOE</nome>
+			</categoria>
+		<categoria codcat="M9071/3">
+			<nome>Tumor de seio endodérmico</nome>
+			</categoria>
+		<categoria codcat="M9072/3">
+			<nome>Poliembrioma</nome>
+			</categoria>
+		<categoria codcat="M9073/1">
+			<nome>Gonadoblastoma</nome>
+			</categoria>
+		<categoria codcat="M9080/0">
+			<nome>Teratoma benigno</nome>
+			</categoria>
+		<categoria codcat="M9080/1">
+			<nome>Teratoma SOE</nome>
+			</categoria>
+		<categoria codcat="M9080/3">
+			<nome>Teratoma maligno SOE</nome>
+			</categoria>
+		<categoria codcat="M9081/3">
+			<nome>Teratocarcinoma</nome>
+			</categoria>
+		<categoria codcat="M9082/3">
+			<nome>Teratoma maligno não diferenciado</nome>
+			</categoria>
+		<categoria codcat="M9083/3">
+			<nome>Teratoma maligno intemediário</nome>
+			</categoria>
+		<categoria codcat="M9084/0">
+			<nome>Cisto dermóide SOE</nome>
+			</categoria>
+		<categoria codcat="M9084/3">
+			<nome>Teratoma com transformação maligna</nome>
+			</categoria>
+		<categoria codcat="M9085/3">
+			<nome>Tumor misto de células germinativas</nome>
+			</categoria>
+		<categoria codcat="M9090/0">
+			<nome>Estruma ovariana SOE</nome>
+			<referencias>
+				<referencia codrefer="D27">D27</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9090/3">
+			<nome>Estruma ovariana maligna</nome>
+			<referencias>
+				<referencia codrefer="C56">C56</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9091/1">
+			<nome>Carcinóide estrumal</nome>
+			<referencias>
+				<referencia codrefer="D39.1">D39.1</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M910-M910" inicial="M910" final="M910">
+		<nome>Neoplasias trofoblásticas</nome>
+		<categoria codcat="M9100/0">
+			<nome>Mola hidatiforme SOE</nome>
+			<referencias>
+				<referencia codrefer="O01.9">O01.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9100/1">
+			<nome>Mola hidatiforma invasiva</nome>
+			<referencias>
+				<referencia codrefer="D39.2">D39.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9100/3">
+			<nome>Coriocarcinoma SOE</nome>
+			</categoria>
+		<categoria codcat="M9101/3">
+			<nome>Coriocarcinoma combinado com outros elementos de células germinativas</nome>
+			</categoria>
+		<categoria codcat="M9102/3">
+			<nome>Teratoma maligno trofoblástico</nome>
+			<referencias>
+				<referencia codrefer="C62">C62.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9103/0">
+			<nome>Mola hidatiforme parcial</nome>
+			<referencias>
+				<referencia codrefer="O01.1">O01.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9104/1">
+			<nome>Tumor trofoblástico do sítio placentário</nome>
+			<referencias>
+				<referencia codrefer="D39.2">D39.2</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M911-M911" inicial="M911" final="M911">
+		<nome>Mesonefromas</nome>
+		<categoria codcat="M9110/0">
+			<nome>Mesomefroma benigno</nome>
+			</categoria>
+		<categoria codcat="M9110/1">
+			<nome>Tumor mesonéfrico</nome>
+			</categoria>
+		<categoria codcat="M9110/3">
+			<nome>Mesomefroma maligno</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M912-M916" inicial="M912" final="M916">
+		<nome>Tumores de vasos sanguíneos</nome>
+		<categoria codcat="M9120/0">
+			<nome>Hemangioma SOE</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9120/3">
+			<nome>Hemangiossarcoma</nome>
+			</categoria>
+		<categoria codcat="M9121/0">
+			<nome>Hemangioma cavernoso</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9122/0">
+			<nome>Hemangioma venoso</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9123/0">
+			<nome>Hemangioma racemoso</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9124/3">
+			<nome>Sarcoma das células de Kupfer</nome>
+			<referencias>
+				<referencia codrefer="C22.3">C22.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9125/0">
+			<nome>Hemangioma epitelióde</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9126/0">
+			<nome>Hemangioma histiocitóide</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9130/0">
+			<nome>Hemangioendotelioma benigno</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9130/1">
+			<nome>Hemangioendotelioma SOE</nome>
+			</categoria>
+		<categoria codcat="M9130/3">
+			<nome>Hemangioendotelioma maligno</nome>
+			</categoria>
+		<categoria codcat="M9131/0">
+			<nome>Hemangioma capilar</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9132/0">
+			<nome>Hemangioma intramuscular</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9133/1">
+			<nome>Hemangioendotelioma epitelióide SOE</nome>
+			</categoria>
+		<categoria codcat="M9133/3">
+			<nome>Hemangioendotelioma epitelióide maligno</nome>
+			</categoria>
+		<categoria codcat="M9134/1">
+			<nome>Tumor alveolar brônquio intravascular</nome>
+			<referencias>
+				<referencia codrefer="D38.1">D38.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9140/3">
+			<nome>Sarcoma de Kaposi</nome>
+			<referencias>
+				<referencia codrefer="C46">C46.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9141/0">
+			<nome>Angioqueratoma</nome>
+			</categoria>
+		<categoria codcat="M9142/0">
+			<nome>Hemangioma queratótico verrucoso</nome>
+			<referencias>
+				<referencia codrefer="D18.0">D18.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9150/0">
+			<nome>Hemangiopericitoma benigno</nome>
+			</categoria>
+		<categoria codcat="M9150/1">
+			<nome>Hemangiopericitoma SOE</nome>
+			</categoria>
+		<categoria codcat="M9150/3">
+			<nome>Hemangiopericitoma maligno</nome>
+			</categoria>
+		<categoria codcat="M9160/0">
+			<nome>Angiofibroma SOE</nome>
+			</categoria>
+		<categoria codcat="M9161/1">
+			<nome>Hemangioblastoma</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M917-M917" inicial="M917" final="M917">
+		<nome>Tumores de vasos linfáticos</nome>
+		<categoria codcat="M9170/0">
+			<nome>Linfangioma SOE</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9170/3">
+			<nome>Linfangiossarcoma</nome>
+			</categoria>
+		<categoria codcat="M9171/0">
+			<nome>Linfangioma capilar</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9172/0">
+			<nome>Linfangioma cavernoso</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9173/0">
+			<nome>Linfangioma cístico</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9174/0">
+			<nome>Linfangiomioma</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9174/1">
+			<nome>Linfangiomiomatose</nome>
+			</categoria>
+		<categoria codcat="M9175/0">
+			<nome>Hemolinfangioma</nome>
+			<referencias>
+				<referencia codrefer="D18.1">D18.1</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M918-M924" inicial="M918" final="M924">
+		<nome>Neoplasias ósseas e condromatosas</nome>
+		<categoria codcat="M9180/0">
+			<nome>Osteoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9180/3">
+			<nome>Osteossarcoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9181/3">
+			<nome>Osteossarcoma condroblástico</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9182/3">
+			<nome>Osteossarcoma fibroblástico</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9183/3">
+			<nome>Osteossarcoma telangiectásico</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9184/3">
+			<nome>Osteossarcoma em doença de Paget do osso</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9185/3">
+			<nome>Osteossarcoma de células pequenas</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9190/3">
+			<nome>Osteossarcoma justacortical</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9191/0">
+			<nome>Osteoma osteóide SOE</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9200/0">
+			<nome>Osteoblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9200/1">
+			<nome>Osteoblastoma agressivo</nome>
+			<referencias>
+				<referencia codrefer="D48.0">D48.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9210/0">
+			<nome>Osteocondroma</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9210/1">
+			<nome>Osteocondromatose SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.0">D48.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9220/0">
+			<nome>Condroma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9220/1">
+			<nome>Condromatose SOE</nome>
+			</categoria>
+		<categoria codcat="M9220/3">
+			<nome>Condrossarcoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9221/0">
+			<nome>Condroma justacortical</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9221/3">
+			<nome>Condrossarcoma justacortical</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9230/0">
+			<nome>Condroblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9230/3">
+			<nome>Condroblastoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9231/3">
+			<nome>Condrossarcoma mixóide</nome>
+			</categoria>
+		<categoria codcat="M9240/3">
+			<nome>Condrossarcoma mesenquimal</nome>
+			</categoria>
+		<categoria codcat="M9241/0">
+			<nome>Fibrossarcoma condromixóide</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M925-M925" inicial="M925" final="M925">
+		<nome>Tumor de células gigantes</nome>
+		<categoria codcat="M9250/1">
+			<nome>Tumor de células gigantes do osso, SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.0">D48.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9250/3">
+			<nome>Tumor maligno de células gigantes do osso</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9251/1">
+			<nome>Tumor de células gigantes de partes moles, SOE</nome>
+			</categoria>
+		<categoria codcat="M9251/3">
+			<nome>Tumor maligno de células gigantes de partes moles</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M926-M926" inicial="M926" final="M926">
+		<nome>Tumores ósseos diversos</nome>
+		<referencias>
+			<referencia codrefer="C40">C40.-</referencia>
+			<referencia codrefer="C41">C41.-</referencia>
+			</referencias>
+		<categoria codcat="M9260/3">
+			<nome>Sarcoma de Ewing</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				<referencia codrefer="C41">C41.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9261/3">
+			<nome>Adamantinoma de ossos longos</nome>
+			<referencias>
+				<referencia codrefer="C40">C40.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9262/0">
+			<nome>Fibroma ossificante</nome>
+			<referencias>
+				<referencia codrefer="D16">D16.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M927-M934" inicial="M927" final="M934">
+		<nome>Tumores odontogênicos</nome>
+		<categoria codcat="M9270/0">
+			<nome>Tumor odontogênico benigno</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9270/1">
+			<nome>Tumor odontogênico SOE</nome>
+			<referencias>
+				<referencia codrefer="D48.0">D48.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9270/3">
+			<nome>Tumor odontogênico maligno</nome>
+			<referencias>
+				<referencia codrefer="C41.0">C41.0</referencia>
+				<referencia codrefer="C41.1">C41.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9271/0">
+			<nome>Dentinoma</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9272/0">
+			<nome>Cementoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9273/0">
+			<nome>Cementoblastoma benigno</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9274/0">
+			<nome>Fibroma cementificante</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9275/0">
+			<nome>Cementoma gigantiforme</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9280/0">
+			<nome>Odontoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9281/0">
+			<nome>Odontoma composto</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9282/0">
+			<nome>Odontoma complexo</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9290/0">
+			<nome>Fibro-odontoma ameloblástico</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9290/3">
+			<nome>Odontossarcoma ameloblástico</nome>
+			<referencias>
+				<referencia codrefer="C41.0">C41.0</referencia>
+				<referencia codrefer="C41.1">C41.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9300/0">
+			<nome>Tumor odontogênico adenomatóide</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9301/0">
+			<nome>Cisto odontogênico calcificante</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9302/0">
+			<nome>Tumor odontogênico de células fantasma</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9310/0">
+			<nome>Ameloblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9310/3">
+			<nome>Ameloblastoma maligno</nome>
+			<referencias>
+				<referencia codrefer="C41.0">C41.0</referencia>
+				<referencia codrefer="C41.1">C41.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9311/0">
+			<nome>Odontoameloblastoma</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9312/0">
+			<nome>Tumor odontogênico escamoso</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9320/0">
+			<nome>Mixoma odontogênico</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9321/0">
+			<nome>Fibroma odontogênico central</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9322/0">
+			<nome>Fibroma odontogênico periférico</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9330/0">
+			<nome>Fibroma ameloblástico</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9330/3">
+			<nome>Fibrossarcoma ameloblástico</nome>
+			<referencias>
+				<referencia codrefer="C41.0">C41.0</referencia>
+				<referencia codrefer="C41.1">C41.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9340/3">
+			<nome>Tumor odontogênico epitelial calcificante</nome>
+			<referencias>
+				<referencia codrefer="D16.4">D16.4</referencia>
+				<referencia codrefer="D16.5">D16.5</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M935-M937" inicial="M935" final="M937">
+		<nome>Tumores diversos</nome>
+		<categoria codcat="M9350/1">
+			<nome>Craniofaringioma</nome>
+			<referencias>
+				<referencia codrefer="D44.3">D44.3</referencia>
+				<referencia codrefer="D44.4">D44.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9360/1">
+			<nome>Pinealoma</nome>
+			<referencias>
+				<referencia codrefer="D44.5">D44.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9361/1">
+			<nome>Pineocitoma</nome>
+			<referencias>
+				<referencia codrefer="D44.5">D44.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9362/3">
+			<nome>Pineoblastoma</nome>
+			<referencias>
+				<referencia codrefer="C75.3">C75.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9363/0">
+			<nome>Tumor neuroectodérmico melanótico</nome>
+			</categoria>
+		<categoria codcat="M9364/3">
+			<nome>Tumor neuroectodérmico periférico</nome>
+			</categoria>
+		<categoria codcat="M9370/0">
+			<nome>Cordoma</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M938-M948" inicial="M938" final="M948">
+		<nome>Gliomas</nome>
+		<categoria codcat="M9380/3">
+			<nome>Glioma maligno</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9381/3">
+			<nome>Gliomatose cerebral</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9382/3">
+			<nome>Glioma misto</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9383/1">
+			<nome>Glioma subependimal</nome>
+			<referencias>
+				<referencia codrefer="D43">D43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9384/1">
+			<nome>Astrocitoma subependimal de células gigantes</nome>
+			<referencias>
+				<referencia codrefer="D43">D43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9390/0">
+			<nome>Papiloma de plexo coróide, SOE</nome>
+			<referencias>
+				<referencia codrefer="D33.0">D33.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9390/3">
+			<nome>Papiloma maligno de plexo coróide</nome>
+			<referencias>
+				<referencia codrefer="C71.5">C71.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9391/3">
+			<nome>Ependimoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9392/3">
+			<nome>Ependimoma anaplástico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9393/1">
+			<nome>Ependimoma papilar</nome>
+			<referencias>
+				<referencia codrefer="D43">D43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9394/1">
+			<nome>Ependimoma mixopapilar</nome>
+			<referencias>
+				<referencia codrefer="D43">D43.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9400/3">
+			<nome>Astrocitoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9401/3">
+			<nome>Astrocitoma anaplástico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9410/3">
+			<nome>Astrocitoma protoplásmico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9411/3">
+			<nome>Astrocitoma gemistocítico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9420/3">
+			<nome>Astrocitoma fibrilar</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9421/3">
+			<nome>Astrocitoma pilocítico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9422/3">
+			<nome>Espongioblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9423/3">
+			<nome>Espongioblastoma polar</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9424/3">
+			<nome>Xantoastrocitoma pleomórfico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9430/0">
+			<nome>Astroblastoma</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9440/3">
+			<nome>Glioblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9441/3">
+			<nome>Glioblastoma de células gigantes</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9442/3">
+			<nome>Gliossarcoma</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9443/3">
+			<nome>Espongioblastoma polar primitivo</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9450/3">
+			<nome>Oligodendroglioma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9451/3">
+			<nome>Oligodendroglioma anaplástico</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9460/3">
+			<nome>Oligodendroblastoma</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9470/3">
+			<nome>Meduloblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C71.6">C71.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9471/3">
+			<nome>Meduloblastoma desmoplástico</nome>
+			<referencias>
+				<referencia codrefer="C71.6">C71.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9472/3">
+			<nome>Medulomioblastoma</nome>
+			<referencias>
+				<referencia codrefer="C71.6">C71.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9473/3">
+			<nome>Tumor neuroectodérmico primitivo</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9480/3">
+			<nome>Sarcoma cerebelar SOE</nome>
+			<referencias>
+				<referencia codrefer="C71.6">C71.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9481/3">
+			<nome>Sarcoma monstrocelular</nome>
+			<referencias>
+				<referencia codrefer="C71">C71.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M949-M952" inicial="M949" final="M952">
+		<nome>Neoplasias neuroepiteliomatosas</nome>
+		<categoria codcat="M9490/0">
+			<nome>Ganglioneuroma</nome>
+			</categoria>
+		<categoria codcat="M9490/3">
+			<nome>Ganglioneuroblastoma</nome>
+			</categoria>
+		<categoria codcat="M9491/3">
+			<nome>Ganglioneuromatose</nome>
+			</categoria>
+		<categoria codcat="M9500/3">
+			<nome>Neuroblastoma SOE</nome>
+			</categoria>
+		<categoria codcat="M9501/3">
+			<nome>Meduloepitelioma SOE</nome>
+			</categoria>
+		<categoria codcat="M9502/3">
+			<nome>Meduloepitelioma teratóide</nome>
+			</categoria>
+		<categoria codcat="M9503/3">
+			<nome>Neuroepitelioma SOE</nome>
+			</categoria>
+		<categoria codcat="M9504/3">
+			<nome>Espongioneuroblastoma</nome>
+			</categoria>
+		<categoria codcat="M9505/1">
+			<nome>Ganglioglioma</nome>
+			</categoria>
+		<categoria codcat="M9506/0">
+			<nome>Neurocitoma</nome>
+			</categoria>
+		<categoria codcat="M9507/0">
+			<nome>Tumor paciniano</nome>
+			</categoria>
+		<categoria codcat="M9510/3">
+			<nome>Retinoblastoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C69.2">C69.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9511/3">
+			<nome>Retinoblastoma diferenciado</nome>
+			<referencias>
+				<referencia codrefer="C69.2">C69.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9512/3">
+			<nome>Retinoblastoma não-diferenciado</nome>
+			<referencias>
+				<referencia codrefer="C69.2">C69.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9520/3">
+			<nome>Tumor neurogênico olfatório</nome>
+			</categoria>
+		<categoria codcat="M9521/3">
+			<nome>Estesioneurocitoma</nome>
+			<referencias>
+				<referencia codrefer="C30.0">C30.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9522/3">
+			<nome>Estesioneuroblastoma</nome>
+			<referencias>
+				<referencia codrefer="C30.0">C30.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9523/3">
+			<nome>Estesioneuroepitelioma</nome>
+			<referencias>
+				<referencia codrefer="C30.0">C30.0</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M953-M953" inicial="M953" final="M953">
+		<nome>Meningiomas</nome>
+		<categoria codcat="M9530/0">
+			<nome>Meningioma SOE</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9530/1">
+			<nome>Meningiomatose SOE</nome>
+			<referencias>
+				<referencia codrefer="D42">D42.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9530/3">
+			<nome>Meningioma maligno</nome>
+			<referencias>
+				<referencia codrefer="C70">C70.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9531/0">
+			<nome>Meningioma meningoteliomatoso</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9532/0">
+			<nome>Meningioma fibroso</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9533/0">
+			<nome>Meningioma psamomatoso</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9534/0">
+			<nome>Meningioma angiomatoso</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9535/0">
+			<nome>Meningioma hemangioblástico</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9536/0">
+			<nome>Meningioma hemangiopericítico</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9537/0">
+			<nome>Meningioma transicional</nome>
+			<referencias>
+				<referencia codrefer="D32">D32.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9538/1">
+			<nome>Meningioma papilar</nome>
+			<referencias>
+				<referencia codrefer="D42">D42.-</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9539/3">
+			<nome>Sarcomatose meníngea</nome>
+			<referencias>
+				<referencia codrefer="C70">C70.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M954-M957" inicial="M954" final="M957">
+		<nome>Tumores da bainha nervosa</nome>
+		<categoria codcat="M9540/0">
+			<nome>Neurofibroma SOE</nome>
+			<referencias>
+				<referencia codrefer="Q85.0">Q85.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9540/1">
+			<nome>Neurofibromatose SOE</nome>
+			</categoria>
+		<categoria codcat="M9540/3">
+			<nome>Neurofibrossarcoma</nome>
+			</categoria>
+		<categoria codcat="M9541/0">
+			<nome>Neurofibroma melanótico</nome>
+			</categoria>
+		<categoria codcat="M9550/0">
+			<nome>Neurofibroma plexiforme</nome>
+			</categoria>
+		<categoria codcat="M9560/0">
+			<nome>Neurilemoma SOE</nome>
+			</categoria>
+		<categoria codcat="M9560/1">
+			<nome>Neurinomatose</nome>
+			</categoria>
+		<categoria codcat="M9560/3">
+			<nome>Neurilemoma maligno</nome>
+			</categoria>
+		<categoria codcat="M9561/3">
+			<nome>Tumor tritão maligno</nome>
+			</categoria>
+		<categoria codcat="M9562/0">
+			<nome>Neurotequeoma</nome>
+			</categoria>
+		<categoria codcat="M9570/0">
+			<nome>Neuroma SOE</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M958-M958" inicial="M958" final="M958">
+		<nome>Tumores de células granulares e sarcoma alveolar de partes moles</nome>
+		<categoria codcat="M9580/0">
+			<nome>Tumores de células granulares SOE</nome>
+			</categoria>
+		<categoria codcat="M9580/3">
+			<nome>Tumor maligno de células granulares</nome>
+			</categoria>
+		<categoria codcat="M9581/3">
+			<nome>Sarcoma alveolar de partes moles</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M959-M971" inicial="M959" final="M971">
+		<nome>Linfomas Hodgkin e não-Hodgkin</nome>
+	<grupo codgrupo="M959-M959" inicial="M959" final="M959">
+		<nome>Linfomas malignos SOE ou difuso</nome>
+		<categoria codcat="M9590/3">
+			<nome>Linfoma maligno SOE</nome>
+			<referencias>
+				<referencia codrefer="C84.5">C84.5</referencia>
+				<referencia codrefer="C85.9">C85.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9591/3">
+			<nome>Linfoma maligno não-Hodgkin SOE</nome>
+			<referencias>
+				<referencia codrefer="C85.9">C85.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9592/3">
+			<nome>Linfossarcoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C85.0">C85.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9593/3">
+			<nome>Reticulossarcoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.3">C83.3</referencia>
+				<referencia codrefer="C83.9">C83.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9594/3">
+			<nome>Microglioma</nome>
+			<referencias>
+				<referencia codrefer="C85.7">C85.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9595/3">
+			<nome>Linfoma maligno difuso SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.9">C83.9</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M965-M966" inicial="M965" final="M966">
+		<nome>Doença de Hodgkin</nome>
+		<categoria codcat="M9650/3">
+			<nome>Doença de Hodgkin SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.9">C81.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9652/3">
+			<nome>Doença de Hodgkin de celularidade mista SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.2">C81.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9653/3">
+			<nome>Doença de Hodgkin, de depleção linfocítica, SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.3">C81.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9654/3">
+			<nome>Doença de Hodgkin, de depleção linfocítica, com fibrose difusa</nome>
+			<referencias>
+				<referencia codrefer="C81.3">C81.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9655/3">
+			<nome>Doença de Hodgkin, de depleção linfocítica, reticular</nome>
+			<referencias>
+				<referencia codrefer="C81.3">C81.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9657/3">
+			<nome>Doença de Hodgkin, com predominância linfocítica, SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.0">C81.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9658/3">
+			<nome>Doença de Hodgkin, com predominância linfocítica, difusa</nome>
+			<referencias>
+				<referencia codrefer="C81.0">C81.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9659/3">
+			<nome>Doença de Hodgkin, com predominância linfocítica, nodular</nome>
+			<referencias>
+				<referencia codrefer="C81.0">C81.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9660/3">
+			<nome>Paragranuloma de Hodgkin SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.7">C81.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9661/3">
+			<nome>Granuloma de Hodgkin</nome>
+			<referencias>
+				<referencia codrefer="C81.7">C81.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9662/3">
+			<nome>Sarcoma de Hodgkin</nome>
+			<referencias>
+				<referencia codrefer="C81.7">C81.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9663/3">
+			<nome>Doença de Hodgkin, esclerose nodular, SOE</nome>
+			<referencias>
+				<referencia codrefer="C81.1">C81.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9664/3">
+			<nome>Doença de Hodgkin, esclerose nodular, fase celular</nome>
+			<referencias>
+				<referencia codrefer="C81.1">C81.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9665/3">
+			<nome>Doença de Hodgkin, esclerose nodular, predominância linfocítica</nome>
+			<referencias>
+				<referencia codrefer="C81.1">C81.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9666/3">
+			<nome>Doença de Hodgkin, esclerose nodular, celularidade mista</nome>
+			<referencias>
+				<referencia codrefer="C81.1">C81.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9667/3">
+			<nome>Doença de Hodgkin, esclerose nodular, depleção linfocítica</nome>
+			<referencias>
+				<referencia codrefer="C81.1">C81.1</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M967-M968" inicial="M967" final="M968">
+		<nome>Linfoma maligno tipo especificado, difuso ou SOE</nome>
+		<categoria codcat="M9670/3">
+			<nome>Linfoma maligno, linfócitos pequenos, SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.0">C83.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9671/3">
+			<nome>Linfoma maligno, linfoplasmocítico</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9672/3">
+			<nome>Linfoma maligno de pequenas células clivadas, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.1">C83.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9673/3">
+			<nome>Linfoma maligna linfocítico, diferenciação intermediária, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9674/3">
+			<nome>Linfoma maligno centrocítico</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9675/3">
+			<nome>Linfoma maligno, misto de células pequenas e grandes, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.2">C83.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9676/3">
+			<nome>Linfoma maligno, centroblástico-centrocítico, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9677/3">
+			<nome>Polipose linfomatosa maligna</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9680/3">
+			<nome>Linfoma maligno de células grandes, difuso, SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.3">C83.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9681/3">
+			<nome>Linfoma maligno, de células grandes, clivadas, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.3">C83.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9682/3">
+			<nome>Linfoma maligno, de células grandes, não clivadas, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.3">C83.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9683/3">
+			<nome>Linfoma maligno, centroblástico, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.8">C83.8</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9684/3">
+			<nome>Linfoma maligno imunoblástico SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.4">C83.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9685/3">
+			<nome>Linfoma maligno linfoblástico</nome>
+			<referencias>
+				<referencia codrefer="C83.5">C83.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9686/3">
+			<nome>Linfoma maligno, de células pequenas não clivadas, difuso</nome>
+			<referencias>
+				<referencia codrefer="C83.0">C83.0</referencia>
+				<referencia codrefer="C83.6">C83.6</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9687/3">
+			<nome>Linfoma de Burkitt SOE</nome>
+			<referencias>
+				<referencia codrefer="C83.7">C83.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M969-M969" inicial="M969" final="M969">
+		<nome>Linfoma maligno, folicular ou nodular com ou sem áreas difusas</nome>
+		<categoria codcat="M9690/3">
+			<nome>Linfoma maligno folicular SOE</nome>
+			<referencias>
+				<referencia codrefer="C82.9">C82.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9691/3">
+			<nome>Linfoma maligno, misto de células pequenas clivadas e células grandes, folicular</nome>
+			<referencias>
+				<referencia codrefer="C82.1">C82.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9692/3">
+			<nome>Linfoma maligno, centroblástico-centrocítico, folicular</nome>
+			<referencias>
+				<referencia codrefer="C82.7">C82.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9693/3">
+			<nome>Linfoma maligno, linfocítico, bem diferenciado, nodular</nome>
+			<referencias>
+				<referencia codrefer="C82.7">C82.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9694/3">
+			<nome>Linfoma maligno, linfocítico, diferenciação intermediária, nodular</nome>
+			<referencias>
+				<referencia codrefer="C82.7">C82.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9695/3">
+			<nome>Linfoma maligno de células pequenas clivadas, folicular</nome>
+			<referencias>
+				<referencia codrefer="C82.0">C82.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9696/3">
+			<nome>Linfoma maligno linfocítico, pouco diferenciado, nodular</nome>
+			<referencias>
+				<referencia codrefer="C82.7">C82.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9697/3">
+			<nome>Linfoma maligno centroblástico folicular</nome>
+			<referencias>
+				<referencia codrefer="C82.7">C82.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9698/3">
+			<nome>Linfoma maligno de células grandes, folicular, SOE</nome>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M970-M970" inicial="M970" final="M970">
+		<nome>Linfomas de células T periféricos e cutâneos especificados</nome>
+		<categoria codcat="M9700/3">
+			<nome>Micose fungóide</nome>
+			<referencias>
+				<referencia codrefer="C84.0">C84.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9701/3">
+			<nome>Doença de Sézary</nome>
+			<referencias>
+				<referencia codrefer="C84.1">C84.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9702/3">
+			<nome>Linfoma de células T periférico SOE</nome>
+			<referencias>
+				<referencia codrefer="C84.4">C84.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9703/3">
+			<nome>Linfoma de zona T</nome>
+			<referencias>
+				<referencia codrefer="C84.2">C84.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9704/3">
+			<nome>Linfoma linfoepitelóide</nome>
+			<referencias>
+				<referencia codrefer="C84.3">C84.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9705/3">
+			<nome>Linfoma de células T periféricos (linfadenopatia angio-imunoblástica com disproteinemia)</nome>
+			<referencias>
+				<referencia codrefer="C84.4">C84.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9706/3">
+			<nome>Linfoma de células T, periférico, de células pequenas pleomórficas</nome>
+			<referencias>
+				<referencia codrefer="C84.4">C84.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9707/3">
+			<nome>Linfoma de células T, periférico, pleomórfico de células médias e grandes</nome>
+			<referencias>
+				<referencia codrefer="C84.4">C84.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9709/3">
+			<nome>Linfoma cutâneo</nome>
+			<referencias>
+				<referencia codrefer="C84.5">C84.5</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M971-M971" inicial="M971" final="M971">
+		<nome>Outras linfomas não-Hodgkin especificados</nome>
+		<categoria codcat="M9711/3">
+			<nome>Linfoma de células B monocitóides</nome>
+			<referencias>
+				<referencia codrefer="C85.7">C85.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9712/3">
+			<nome>Angioendoteliomatose</nome>
+			<referencias>
+				<referencia codrefer="C85.7">C85.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9713/3">
+			<nome>Linfoma de células T angiocêntrico</nome>
+			<referencias>
+				<referencia codrefer="C85.7">C85.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9714/3">
+			<nome>Linfoma de células grandes (Ki-1+)</nome>
+			<referencias>
+				<referencia codrefer="C85.7">C85.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+		</grupo>
+	<grupo codgrupo="M972-M972" inicial="M972" final="M972">
+		<nome>Outras neoplasias linforreticulares</nome>
+		<categoria codcat="M9720/3">
+			<nome>Histiocitose maligna</nome>
+			<referencias>
+				<referencia codrefer="C96.1">C96.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9722/3">
+			<nome>Doença de Letterer-Siwe</nome>
+			<referencias>
+				<referencia codrefer="C96.0">C96.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9723/3">
+			<nome>Linfoma histiocítico verdadeiro</nome>
+			<referencias>
+				<referencia codrefer="C96.3">C96.3</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M973-M973" inicial="M973" final="M973">
+		<nome>Tumores de plasmóscitos</nome>
+		<categoria codcat="M9731/3">
+			<nome>Plasmocitoma SOE</nome>
+			<referencias>
+				<referencia codrefer="C90.2">C90.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9732/3">
+			<nome>Mieloma múltiplo</nome>
+			<referencias>
+				<referencia codrefer="C90.0">C90.0</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M974-M974" inicial="M974" final="M974">
+		<nome>Tumores de mastócitos</nome>
+		<categoria codcat="M9740/1">
+			<nome>Mastocitoma SOE</nome>
+			<referencias>
+				<referencia codrefer="D47.0">D47.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9740/3">
+			<nome>Sarcoma de mastócitos</nome>
+			<referencias>
+				<referencia codrefer="C96.2">C96.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9741/3">
+			<nome>Mastocitose maligna</nome>
+			<referencias>
+				<referencia codrefer="C96.2">C96.2</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M976-M976" inicial="M976" final="M976">
+		<nome>Doenças imunoproliferativas</nome>
+		<categoria codcat="M9760/3">
+			<nome>Doença imunoproliferativa SOE</nome>
+			<referencias>
+				<referencia codrefer="C88.9">C88.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9761/3">
+			<nome>Macroglobulinemia de Waldenström</nome>
+			<referencias>
+				<referencia codrefer="C88.0">C88.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9762/3">
+			<nome>Doença da cadeia pesada alfa</nome>
+			<referencias>
+				<referencia codrefer="C88.1">C88.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9763/3">
+			<nome>Doença da cadeia pesada gama</nome>
+			<referencias>
+				<referencia codrefer="C88.2">C88.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9764/3">
+			<nome>Doença imunoproliferativa do intestino delgado</nome>
+			<referencias>
+				<referencia codrefer="C88.3">C88.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9765/1">
+			<nome>Gamopatia monoclonal</nome>
+			<referencias>
+				<referencia codrefer="D47.2">D47.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9766/1">
+			<nome>Lesão imunoproliferativa angiocêntrica</nome>
+			<referencias>
+				<referencia codrefer="D47.7">D47.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9767/1">
+			<nome>Linfadenopatia angioimunoblástica</nome>
+			<referencias>
+				<referencia codrefer="D47.7">D47.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9768/1">
+			<nome>Doença linfoproliferativa T-gama</nome>
+			<referencias>
+				<referencia codrefer="D47.7">D47.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M980-M994" inicial="M980" final="M994">
+		<nome>Leucemias</nome>
+	<grupo codgrupo="M980-M980" inicial="M980" final="M980">
+		<nome>Leucemias SOE</nome>
+		<categoria codcat="M9800/3">
+			<nome>Leucemia SOE</nome>
+			<referencias>
+				<referencia codrefer="C95.9">C95.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9801/3">
+			<nome>Leucemia aguda SOE</nome>
+			<referencias>
+				<referencia codrefer="C95.0">C95.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9802/3">
+			<nome>Leucemia subaguda SOE</nome>
+			<referencias>
+				<referencia codrefer="C95.2">C95.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9803/3">
+			<nome>Leucemia crônica SOE</nome>
+			<referencias>
+				<referencia codrefer="C95.1">C95.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9804/3">
+			<nome>Leucemia aleucêmica SOE</nome>
+			<referencias>
+				<referencia codrefer="C95.7">C95.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M982-M982" inicial="M982" final="M982">
+		<nome>Leucemias linfóides</nome>
+		<categoria codcat="M9820/3">
+			<nome>Leucemia linfóide SOE</nome>
+			<referencias>
+				<referencia codrefer="C91.9">C91.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9821/3">
+			<nome>Leucemia linfoblástica aguda SOE</nome>
+			<referencias>
+				<referencia codrefer="C91.0">C91.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9822/3">
+			<nome>Leucemia linfóide subaguda</nome>
+			<referencias>
+				<referencia codrefer="C91.2">C91.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9823/3">
+			<nome>Leucemia linfocítica crônica</nome>
+			<referencias>
+				<referencia codrefer="C91.1">C91.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9824/3">
+			<nome>Leucemia linfóide aleucêmica</nome>
+			<referencias>
+				<referencia codrefer="C91.7">C91.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9825/3">
+			<nome>Leucemia prolinfocítica</nome>
+			<referencias>
+				<referencia codrefer="C91.3">C91.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9826/3">
+			<nome>Leucemia de células de Burkitt</nome>
+			<referencias>
+				<referencia codrefer="C91.7">C91.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9827/3">
+			<nome>Leucemia /linfoma de células T adultas</nome>
+			<referencias>
+				<referencia codrefer="C91.5">C91.5</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M983-M983" inicial="M983" final="M983">
+		<nome>Leucemia de plasmócitos</nome>
+		<categoria codcat="M9830/3">
+			<nome>Leucemia de plasmócitos</nome>
+			<referencias>
+				<referencia codrefer="C90.1">C90.1</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M984-M984" inicial="M984" final="M984">
+		<nome>Eritroleucemias</nome>
+		<categoria codcat="M9840/3">
+			<nome>Eritroleucemia</nome>
+			<referencias>
+				<referencia codrefer="C94.0">C94.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9841/3">
+			<nome>Eritremia aguda</nome>
+			<referencias>
+				<referencia codrefer="C94.0">C94.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9842/3">
+			<nome>Eritremia crônica</nome>
+			<referencias>
+				<referencia codrefer="C94.1">C94.1</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M985-M985" inicial="M985" final="M985">
+		<nome>Leucemia de células de linfossarcoma</nome>
+		<categoria codcat="M9850/3">
+			<nome>Leucemia de células de linfossarcoma</nome>
+			<referencias>
+				<referencia codrefer="C94.0">C94.0</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M986-M986" inicial="M986" final="M986">
+		<nome>Leucemias mielóides (granulocíticas)</nome>
+		<categoria codcat="M9860/3">
+			<nome>Leucemia mielóide SOE</nome>
+			<referencias>
+				<referencia codrefer="C92.9">C92.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9861/3">
+			<nome>Leucemia mielóide aguda</nome>
+			<referencias>
+				<referencia codrefer="C92.0">C92.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9862/3">
+			<nome>Leucemia mielóide subaguda</nome>
+			<referencias>
+				<referencia codrefer="C92.2">C92.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9863/3">
+			<nome>Leucemia mielóide crônica</nome>
+			<referencias>
+				<referencia codrefer="C92.1">C92.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9864/3">
+			<nome>Leucemia mielóide aleucêmica</nome>
+			<referencias>
+				<referencia codrefer="C92.7">C92.7</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9866/3">
+			<nome>Leucemia promielocítica aguda</nome>
+			<referencias>
+				<referencia codrefer="C92.4">C92.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9867/3">
+			<nome>Leucemia mielomonocítica aguda</nome>
+			<referencias>
+				<referencia codrefer="C92.5">C92.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9868/3">
+			<nome>Leucemia mielomonocítica crônica</nome>
+			<referencias>
+				<referencia codrefer="C92.7">C92.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M987-M987" inicial="M987" final="M987">
+		<nome>Leucemia basófila</nome>
+		<categoria codcat="M9870/3">
+			<nome>Leucemia basófila</nome>
+			<referencias>
+				<referencia codrefer="C92">C92.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M988-M988" inicial="M988" final="M988">
+		<nome>Leucemia eosinofílica</nome>
+		<categoria codcat="M9880/3">
+			<nome>Leucemia eosinofílica</nome>
+			<referencias>
+				<referencia codrefer="C92">C92.-</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M989-M989" inicial="M989" final="M989">
+		<nome>Leucemias monocíticas</nome>
+		<categoria codcat="M9890/3">
+			<nome>Leucemia monocítica SOE</nome>
+			<referencias>
+				<referencia codrefer="C93.9">C93.9</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9891/3">
+			<nome>Leucemia monocítica aguda</nome>
+			<referencias>
+				<referencia codrefer="C93.0">C93.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9892/3">
+			<nome>Leucemia monocítica subaguda</nome>
+			<referencias>
+				<referencia codrefer="C93.2">C93.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9893/3">
+			<nome>Leucemia monocítica crônica</nome>
+			<referencias>
+				<referencia codrefer="C93.1">C93.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9894/3">
+			<nome>Leucemia monocítica aleucêmica</nome>
+			<referencias>
+				<referencia codrefer="C93.7">C93.7</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M990-M994" inicial="M990" final="M994">
+		<nome>Outras leucemias</nome>
+		<categoria codcat="M9900/3">
+			<nome>Leucemia de mastócitos</nome>
+			<referencias>
+				<referencia codrefer="C94.3">C94.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9910/3">
+			<nome>Leucemia megacarioblástica aguda</nome>
+			<referencias>
+				<referencia codrefer="C94.2">C94.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9930/3">
+			<nome>Sarcoma mielóide</nome>
+			<referencias>
+				<referencia codrefer="C92.3">C92.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9931/3">
+			<nome>Panmielose aguda</nome>
+			<referencias>
+				<referencia codrefer="C94.4">C94.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9932/3">
+			<nome>Mielofibrose aguda</nome>
+			<referencias>
+				<referencia codrefer="C94.5">C94.5</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9940/3">
+			<nome>Leucemia &quot;hairy cell&quot;</nome>
+			<referencias>
+				<referencia codrefer="C91.4">C91.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9941/3">
+			<nome>Reticuloendoteliose leucêmica</nome>
+			<referencias>
+				<referencia codrefer="C91.4">C91.4</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+		</grupo>
+	<grupo codgrupo="M995-M997" inicial="M995" final="M997">
+		<nome>Transtornos mieloproleferativos e linfoproliferativos diversos</nome>
+		<categoria codcat="M9950/1">
+			<nome>Policitemia vera</nome>
+			<referencias>
+				<referencia codrefer="D45">D45</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9960/1">
+			<nome>Doença mieloproliferativa crônica</nome>
+			<referencias>
+				<referencia codrefer="D47.1">D47.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9961/3">
+			<nome>Mieloesclerose com metaplasia mielóide</nome>
+			<referencias>
+				<referencia codrefer="D47.1">D47.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9962/1">
+			<nome>Trombocitemia idiopática</nome>
+			<referencias>
+				<referencia codrefer="D47.3">D47.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9970/1">
+			<nome>Doença linfoproliferativa SOE</nome>
+			<referencias>
+				<referencia codrefer="D47.9">D47.9</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+	<grupo codgrupo="M998-M998" inicial="M998" final="M998">
+		<nome>Síndrome mielodisplásica</nome>
+		<categoria codcat="M9980/1">
+			<nome>Anemia refratária SOE</nome>
+			<referencias>
+				<referencia codrefer="D46.4">D46.4</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9981/1">
+			<nome>Anemia refratária sem sideroblastos</nome>
+			<referencias>
+				<referencia codrefer="D46.0">D46.0</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9982/1">
+			<nome>Anemia refratária com sideroblastos</nome>
+			<referencias>
+				<referencia codrefer="D46.1">D46.1</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9983/1">
+			<nome>Anemia refratária com excesso de blastos</nome>
+			<referencias>
+				<referencia codrefer="D46.2">D46.2</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9984/1">
+			<nome>Anemia refratária com excesso de blastos com transformação</nome>
+			<referencias>
+				<referencia codrefer="D46.3">D46.3</referencia>
+				</referencias>
+			</categoria>
+		<categoria codcat="M9989/1">
+			<nome>Síndrome mielodisplásica SOE</nome>
+			<referencias>
+				<referencia codrefer="D46.9">D46.9</referencia>
+				</referencias>
+			</categoria>
+		</grupo>
+</cid-o>

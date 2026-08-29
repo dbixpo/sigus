@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Fluxograma — {{ item.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h1 class="flex-grow-1"><i class="bi bi-diagram-3-fill"></i> Fluxograma — {{ item.nome }}</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('configuracoes.algoritmo_acolhimento_form', id=item.id) }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+        <button type="button" class="btn btn-samu-primary" onclick="window.print();"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+</div>
+
+<form method="POST" class="fluxo-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <p class="text-muted small mb-2">Para cada opção de resposta, defina a ação: para qual pergunta o fluxo deve ir. Se "Fim", encerra o protocolo.</p>
+
+    <div class="row g-2 algoritmo-fluxo-cards">
+{% for p in perguntas %}
+{% set _p_idx0 = loop.index0 %}
+        <div class="col-12">
+            <div class="card shadow-sm fluxo-card-compact">
+                <div class="card-header fluxo-header-compact {{ 'bg-info bg-opacity-10' if p.tipo == 'texto' else 'bg-light' }}">
+                    <strong>{{ loop.index }}. {{ (p.enunciado[:80] + '...') if p.enunciado|length > 80 else p.enunciado }}</strong>
+                    {% if p.tipo == 'texto' %}<span class="badge bg-info ms-2">Texto informativo</span>{% endif %}
+                </div>
+                <div class="card-body fluxo-body-compact">
+                    {% set opcoes_list = p.opcoes.order_by('ordem').all() %}
+                    {% if p.tipo == 'texto' %}
+                    <p class="text-muted small mb-0"><i class="bi bi-arrow-right-circle me-1"></i>Avança automaticamente para a próxima (sem opções)</p>
+                    {% elif opcoes_list %}
+                    <table class="table table-sm table-borderless mb-0 fluxo-table-compact">
+                        <thead>
+                            <tr>
+                                <th style="width:1%; white-space:nowrap;">Resposta</th>
+                                <th>Ação de acordo com a resposta</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for opc in opcoes_list %}
+                        <tr>
+                            <td class="align-middle" style="white-space:nowrap;">
+                                <span class="badge bg-secondary">{{ opc.texto }}</span>
+                            </td>
+                            <td class="align-middle">
+                                <select name="opcao_{{ opc.id }}_proxima" class="form-select form-select-sm">
+                                    <option value="">— Fim —</option>
+                                    {% for px in perguntas %}
+                                    {% if loop.index0 > _p_idx0 %}
+                                    <option value="{{ px.id }}" {% if opc.proxima_pergunta_id == px.id %}selected{% endif %}>{{ loop.index }}. {{ px.enunciado[:50] }}{% if px.enunciado|length > 50 %}...{% endif %}</option>
+                                    {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted small mb-0">Sem opções.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+
+    <hr class="my-3">
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar fluxo</button>
+        <a href="{{ url_for('configuracoes.algoritmo_acolhimento_form', id=item.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+
+{# Layout de impressão com logos #}
+<div class="d-none print-only-container">
+    <div class="row align-items-center mb-4">
+        <div class="col-4 text-start"></div>
+        <div class="col-4 text-center"><h4 class="mb-0">Algoritmo de Acolhimento</h4><p class="mb-0 small text-muted">{{ item.nome }}</p></div>
+        <div class="col-4 text-end"><img src="{{ url_for('assets.static', filename='logo/Logo SAMU Horizontal (Colorido).png') }}" alt="SAMU" height="50" onerror="this.style.display='none'"></div>
+    </div>
+</div>
+
+<style>
+/* Fluxograma compacto */
+.fluxo-card-compact { margin-bottom: 0; }
+.fluxo-header-compact { padding: 0.35rem 0.75rem !important; font-size: 0.9rem; }
+.fluxo-body-compact { padding: 0.5rem 0.75rem !important; }
+.fluxo-table-compact th,
+.fluxo-table-compact td { padding: 0.25rem 0.5rem !important; vertical-align: middle; }
+.fluxo-table-compact thead th { font-size: 0.75rem; font-weight: 600; }
+.fluxo-table-compact .badge { font-size: 0.7rem; }
+.fluxo-table-compact .form-select { padding: 0.2rem 2rem 0.2rem 0.4rem; font-size: 0.8rem; min-height: 28px; }
+
+@media print {
+    .nav, .page-header .btn, .fluxo-form button[type=submit], .btn-outline-secondary, footer, .breadcrumb { display: none !important; }
+    .print-only-container { display: block !important; }
+}
+.print-only-container { position: absolute; top: 0; left: 0; right: 0; }
+</style>
+{% endblock %}

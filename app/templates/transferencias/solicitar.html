@@ -4,9 +4,9 @@
 {% block content %}
 <div class="page-header">
     <a href="{{ url_for('equipamentos.detalhe', id=equipamento.id) }}" class="btn btn-sm btn-outline-secondary me-2">
-        <i class="bi bi-arrow-left"></i>
+        <i class="fas fa-arrow-left"></i>
     </a>
-    <h1><i class="bi bi-arrow-right-circle"></i> Solicitar Transferência</h1>
+    <h1><i class="fas fa-arrow-right-circle"></i> Solicitar Transferência</h1>
 </div>
 
 <div class="row g-3">
@@ -65,7 +65,7 @@
                         <a href="{{ url_for('equipamentos.detalhe', id=equipamento.id) }}"
                            class="btn btn-outline-secondary">Cancelar</a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-send me-1"></i>Solicitar Transferência
+                            <i class="fas fa-send me-1"></i>Solicitar Transferência
                         </button>
                     </div>
                 </form>
@@ -73,7 +73,7 @@
         </div>
 
         <div class="alert alert-info mt-3 small">
-            <i class="bi bi-info-circle-fill me-2"></i>
+            <i class="fas fa-info-circle-fill me-2"></i>
             <strong>Fluxo:</strong> você solicita → o coordenador da unidade destino recebe a notificação →
             ele aceita e aloca o equipamento em uma sala, ou recusa.
         </div>

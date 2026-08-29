@@ -52,6 +52,7 @@ def create_app(config_name='default'):
     from app.routes.salas import salas_bp
     from app.routes.equipamentos import equipamentos_bp
     from app.routes.chamados import chamados_bp
+    from app.routes.chamados_externo import chamados_externo_bp
     from app.routes.contratos import contratos_bp
     from app.routes.contrato_financeiro import contrato_financeiro_bp
     from app.routes.usuarios import usuarios_bp
@@ -73,6 +74,7 @@ def create_app(config_name='default'):
     app.register_blueprint(salas_bp)
     app.register_blueprint(equipamentos_bp)
     app.register_blueprint(chamados_bp)
+    app.register_blueprint(chamados_externo_bp)
     app.register_blueprint(contratos_bp)
     app.register_blueprint(contrato_financeiro_bp)
     app.register_blueprint(usuarios_bp)
@@ -85,6 +87,58 @@ def create_app(config_name='default'):
     app.register_blueprint(rh_bp)
     app.register_blueprint(planejamentos_bp)
     app.register_blueprint(empresas_bp)
+
+    # Redirects legados: /unidades e /predios → /configuracoes/unidades e /configuracoes/predios
+    from flask import redirect as flask_redirect, url_for, request
+
+    # Mapa público de unidades: URL curta /mapa-da-saude (sem /relatorios/...)
+    from app.routes.relatorios import (
+        mapa_saude_publico,
+        mapa_saude_publico_dados,
+        mapa_saude_publico_contorno,
+        mapa_saude_publico_bairros,
+        mapa_saude_publico_abrang,
+    )
+    app.add_url_rule('/mapa-da-saude', endpoint='mapa_da_saude', view_func=mapa_saude_publico)
+    app.add_url_rule('/mapa-da-saude/dados', endpoint='mapa_da_saude_dados', view_func=mapa_saude_publico_dados)
+    app.add_url_rule('/mapa-da-saude/contorno', endpoint='mapa_da_saude_contorno', view_func=mapa_saude_publico_contorno)
+    app.add_url_rule('/mapa-da-saude/bairros', endpoint='mapa_da_saude_bairros', view_func=mapa_saude_publico_bairros)
+    app.add_url_rule('/mapa-da-saude/abrang', endpoint='mapa_da_saude_abrang', view_func=mapa_saude_publico_abrang)
+
+    @app.route('/relatorios/mapa-saude/publico')
+    @app.route('/relatorios/mapa-saude-publico')
+    def redirect_mapa_publico_legado():
+        return flask_redirect(url_for('mapa_da_saude'), code=301)
+
+    @app.route('/relatorios/mapa-saude/publico/dados')
+    def redirect_mapa_publico_dados_legado():
+        return flask_redirect(url_for('mapa_da_saude_dados', **dict(request.args)), code=301)
+
+    @app.route('/relatorios/mapa-saude/publico/contorno')
+    def redirect_mapa_publico_contorno_legado():
+        return flask_redirect(url_for('mapa_da_saude_contorno', **dict(request.args)), code=301)
+
+    @app.route('/relatorios/mapa-saude/publico/bairros')
+    def redirect_mapa_publico_bairros_legado():
+        return flask_redirect(url_for('mapa_da_saude_bairros', **dict(request.args)), code=301)
+
+    @app.route('/relatorios/mapa-saude/publico/abrang')
+    def redirect_mapa_publico_abrang_legado():
+        return flask_redirect(url_for('mapa_da_saude_abrang', **dict(request.args)), code=301)
+
+    @app.route('/unidades')
+    @app.route('/unidades/<path:subpath>')
+    def redirect_unidades(subpath=''):
+        base = url_for('unidades.listar').rstrip('/')
+        target = f"{base}/{subpath}" if subpath else base
+        return flask_redirect(target)
+
+    @app.route('/predios')
+    @app.route('/predios/<path:subpath>')
+    def redirect_predios(subpath=''):
+        base = url_for('predios.listar').rstrip('/')
+        target = f"{base}/{subpath}" if subpath else base
+        return flask_redirect(target)
 
     # Filtros Jinja2
     from app.utils import registrar_filtros
@@ -116,16 +170,13 @@ def create_app(config_name='default'):
         )
 
     # Context processor: unidades para seletor de unidade padrão
+    # Sempre lista apenas unidades às quais o usuário está vinculado (independente do perfil)
     @app.context_processor
     def inject_unidades_seletor():
         from flask_login import current_user
         opcoes = []
         if current_user.is_authenticated:
-            if current_user.pode('ver_todas_unidades'):
-                from app.models.unidade import Unidade
-                opcoes = Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
-            elif current_user.requer_vinculo:
-                opcoes = current_user.unidades_ativas
+            opcoes = current_user.unidades_ativas
         return {'unidades_seletor': opcoes}
 
     # ── Guarda de acesso: perfis que precisam de vínculo ────────────────
@@ -140,6 +191,17 @@ def create_app(config_name='default'):
         'solicitacoes.formulario', 'solicitacoes.confirmacao',
         'notificacoes.recentes', 'notificacoes.contagem',
         'notificacoes.marcar_lida', 'notificacoes.marcar_todas_lidas',
+        # Mapa público (acesso sem vínculo, inclusive usuário logado)
+        'mapa_da_saude',
+        'mapa_da_saude_dados',
+        'mapa_da_saude_contorno',
+        'mapa_da_saude_bairros',
+        'mapa_da_saude_abrang',
+        'redirect_mapa_publico_legado',
+        'redirect_mapa_publico_dados_legado',
+        'redirect_mapa_publico_contorno_legado',
+        'redirect_mapa_publico_bairros_legado',
+        'redirect_mapa_publico_abrang_legado',
     }
 
     @app.before_request
@@ -153,6 +215,15 @@ def create_app(config_name='default'):
             return
         if not cu.tem_vinculo:
             return redirect(url_for('unidades.sem_vinculo'))
+
+        # Garante unidade padrão válida: usuários com vínculos sempre têm uma unidade selecionada.
+        ids = [uu.unidade_id for uu in cu.unidades.filter_by(ativo=True).all()]
+        if ids and (not getattr(cu, 'unidade_padrao_id', None) or cu.unidade_padrao_id not in ids):
+            cu.unidade_padrao_id = ids[0]
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     # ── Auditoria: registra todas as requisições (exceto static) ─────────────
     @app.after_request

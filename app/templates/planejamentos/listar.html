@@ -11,7 +11,7 @@
 .projeto-card { border: 1px solid #d0d5dd; margin-bottom: 1rem; overflow: hidden; background: #fff; border-radius: 2px; }
 .projeto-header {
     display: grid; align-items: center; gap: 0 0.75rem; padding: 1rem 1.25rem;
-    grid-template-columns: 28px minmax(350px, 1fr) 160px 120px 125px 130px 78px 160px 1fr 100px;
+    grid-template-columns: 28px minmax(350px, 1fr) 160px 120px 125px 130px 78px 160px 140px 100px;
     cursor: pointer; transition: background .15s;
 }
 .projeto-header:hover { background: #f8fafc; }
@@ -21,7 +21,13 @@
 .projeto-header .col-status { display: flex; flex-wrap: wrap; gap: 0.25rem 0.4rem; align-items: center; justify-content: center; }
 .ultima-atualizacao { font-size: 0.7rem; line-height: 1.35; }
 .ultima-atualizacao-nome { font-size: 0.65rem; color: #94a3b8; }
-.projeto-header .col-buttons { justify-self: end; width: 100%; }
+.proxima-acao { font-size: 0.65rem; line-height: 1.35; min-width: 0; }
+.proxima-acao-label { color: #94a3b8; margin-bottom: 0.15rem; font-size: 0.6rem; }
+.proxima-acao-responsavel { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
+.proxima-acao-responsavel .resp-avatar { width: 20px; height: 20px; border-width: 1px; }
+.proxima-acao-responsavel .resp-inicial { width: 20px; height: 20px; min-width: 20px; font-size: 0.65rem; }
+.proxima-acao-responsavel .resp-nome { font-size: 0.65rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.projeto-header .col-buttons { justify-self: end; }
 .projeto-header .col-buttons .d-flex { justify-content: flex-end; }
 .projeto-header .col-buttons .btn { margin-left: 0.5rem !important; }
 .projeto-header .col-buttons .btn:first-child { margin-left: 0 !important; }
@@ -123,6 +129,7 @@
 .resp-item { display: inline-flex; align-items: center; gap: .4rem; margin-right: .5rem; margin-bottom: .2rem; }
 .resp-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .resp-inicial { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-width: 28px; border-radius: 50%; font-size: .7rem; font-weight: 700; background: linear-gradient(135deg, var(--sigus-primary), #0ea5e9); color: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.resp-inicial.resp-empresa { background: linear-gradient(135deg, #64748b, #94a3b8); }
 .resp-nome { font-size: .85rem; font-weight: 500; color: #334155; white-space: nowrap; }
 .resp-empresa { background: #6366f1 !important; font-size: .75rem; }
 .obs-upload { border: 2px dashed #d1d5db; border-radius: 8px; padding: .5rem; text-align: center; cursor: pointer; background: #f9fafb; font-size: .8rem; }
@@ -140,28 +147,92 @@
 }
 .abas-planos a:hover { color: var(--sigus-primary); background: #f1f5f9; }
 .abas-planos a.active { color: var(--sigus-primary); background: #fff; border: 1px solid #e2e8f0; border-bottom-color: #fff; margin-bottom: -1px; }
+
+/* ========== Mobile UX (apenas para telas < 768px) ========== */
+@media (max-width: 767px) {
+    .page-header { flex-direction: column; align-items: flex-start !important; gap: 0.75rem !important; }
+    .page-header h1 { font-size: 1.35rem; }
+    .page-header .ms-auto { margin-left: 0 !important; margin-right: 0 !important; width: 100%; }
+    .page-header .d-flex.gap-2 { flex-direction: column; width: 100%; }
+    .page-header .btn { width: 100%; justify-content: center; }
+
+    .d-flex.flex-wrap.align-items-end.gap-3.mb-3 { flex-direction: column; align-items: stretch !important; }
+    .d-flex.flex-wrap.align-items-end.gap-3.mb-3 > div { min-width: 0 !important; }
+    .d-flex.flex-wrap.align-items-end.gap-3.mb-3 .form-select { min-width: 0 !important; width: 100% !important; }
+    .d-flex.flex-wrap.align-items-end.gap-3.mb-3 .form-check-label { font-size: 0.8rem; }
+    .d-flex.flex-wrap.align-items-end.gap-3.mb-3 .form-check { padding-left: 0.5rem; }
+
+    .abas-planos { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 4px; margin-bottom: 0.75rem; }
+    .abas-planos a { white-space: nowrap; font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+
+    .projeto-header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        flex-direction: row !important;
+        align-items: flex-start !important;
+        gap: 0.5rem 0.75rem !important;
+        padding: 0.85rem 1rem !important;
+    }
+    .projeto-header > * { min-width: 0 !important; }
+    .projeto-header .btn-toggle { flex: 0 0 auto; align-self: flex-start; }
+    .projeto-header .projeto-titulo { flex: 1 1 calc(100% - 32px); }
+    .projeto-header .projeto-titulo { font-size: 0.95rem; margin-top: -0.35rem; }
+    .projeto-header .projeto-progresso { flex: 1 1 100%; width: 100% !important; max-width: 100%; }
+    .projeto-header .projeto-progresso .progress { max-width: 100%; }
+    .projeto-header .col-status, .projeto-header .badge, .projeto-header .text-muted.small,
+    .projeto-header .ultima-atualizacao, .projeto-header .proxima-acao { font-size: 0.75rem; }
+    .projeto-header .proxima-acao-responsavel { flex-wrap: wrap; }
+    .projeto-header .proxima-acao-responsavel .resp-nome { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+    .projeto-header .col-buttons { flex: 1 1 100%; margin-top: 0.25rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+
+    .projeto-body { padding: 0.85rem 1rem !important; }
+    .panorama-tabela-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -1rem; padding: 0 1rem; }
+    .panorama-tabela { font-size: 0.8rem; min-width: 600px; }
+    .panorama-tabela th, .panorama-tabela td { padding: 0.5rem 0.6rem; }
+    .panorama-tabela .resp-avatar, .panorama-tabela .resp-inicial { width: 22px !important; height: 22px !important; min-width: 22px !important; font-size: 0.6rem !important; }
+    .panorama-tabela .resp-nome { font-size: 0.75rem !important; }
+    .panorama-tabela .status-select { min-width: 95px !important; font-size: 0.75rem; }
+    .acao-titulo-cell { font-size: 0.85rem !important; padding-left: 0.85rem !important; }
+    .acao-titulo-inner .btn-toggle-inline { margin-right: 0.2rem; }
+
+    .obs-tabelinha { font-size: 0.75rem; display: block; overflow-x: auto; }
+    .obs-tabelinha th, .obs-tabelinha td { padding: 0.4rem 0.5rem; }
+    .obs-tabelinha .obs-col-texto { min-width: 120px; }
+    .obs-tabelinha .obs-col-resp { min-width: 90px; }
+    .obs-tabelinha .obs-col-data { min-width: 85px; }
+    .obs-timeline { max-height: 160px !important; }
+
+    .btn-add-acao { width: 100%; justify-content: center; padding: 0.5rem; }
+    .plano-descricao-secao, .plano-anexos-secao { margin-bottom: 0.75rem !important; padding-right: 0 !important; }
+    .plano-anexo-item { font-size: 0.8rem !important; }
+    .plano-descricao-conteudo { font-size: 0.85rem !important; }
+
+    .planejamentos-dica { font-size: 0.8rem; }
+    .modal-header .modal-title { font-size: 0.95rem; }
+    .trix-editor-wrapper trix-editor { min-height: 100px !important; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/trix@2.1.0/dist/trix.umd.min.js"></script>
 {% endblock %}
 
 {% block content %}
 <div class="page-header d-flex flex-wrap align-items-center gap-2">
-    <h1 class="mb-0"><i class="bi bi-clipboard2-check me-2"></i>Planejamentos e Projetos</h1>
+    <h1 class="mb-0"><i class="fas fa-clipboard-check me-2"></i>Planejamentos e Projetos</h1>
     <div class="ms-auto d-flex align-items-center gap-2">
         <a href="#" class="btn btn-outline-secondary" onclick="abrirImpresso('{{ url_for('planejamentos.imprimir', unidade_id=unidade_id, aba=aba) if unidade_id else url_for('planejamentos.imprimir', aba=aba) }}', '{{ 'Planos em Aberto' if aba == 'abertos' else 'Planos Concluídos' if aba == 'concluidos' else 'Planos Cancelados' }}'); return false;">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </a>
         {% if pode_criar %}
-        <a href="{{ url_for('planejamentos.criar') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>Novo Planejamento
+        <a href="{{ url_for('planejamentos.criar', unidade_id=unidade_id) if unidade_id else url_for('planejamentos.criar') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i>Novo Planejamento
         </a>
         {% endif %}
     </div>
 </div>
 
-<div class="row align-items-center mb-3">
-    <div class="col-auto">
-        <label class="form-label mb-0 small text-muted">Unidade</label>
+<div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+    <div>
+        <label class="form-label mb-1 small text-muted">Unidade</label>
         <select id="selUnidade" class="form-select form-select-sm" style="min-width:220px;"
                 {% if unidades|length <= 1 %}disabled{% endif %}>
             <option value="">Todas as unidades</option>
@@ -170,30 +241,33 @@
             {% endfor %}
         </select>
     </div>
-</div>
-
-<nav class="abas-planos">
-    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='abertos') }}" class="{{ 'active' if aba == 'abertos' else '' }}">Planos em Aberto ({{ contagem_por_aba.get('abertos', 0) }})</a>
-    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='concluidos') }}" class="{{ 'active' if aba == 'concluidos' else '' }}">Planos Concluídos ({{ contagem_por_aba.get('concluidos', 0) }})</a>
-    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='cancelados') }}" class="{{ 'active' if aba == 'cancelados' else '' }}">Planos Cancelados ({{ contagem_por_aba.get('cancelados', 0) }})</a>
-</nav>
-
-{% if ids_com_minhas_acoes %}
-<div class="alert alert-info py-2 mb-3 d-flex align-items-center">
-    <i class="bi bi-person-check-fill me-2 fs-5"></i>
-    <div>
-        <strong>Minhas ações em aberto:</strong>
-        {% for d in planejamentos_dados %}
-        {% if d.plano.id in ids_com_minhas_acoes %}
-        <a href="{{ url_for('planejamentos.listar', expand=d.plano.id, unidade_id=d.plano.unidade_id, aba='abertos') }}" class="alert-link">{{ d.plano.titulo }}</a>{% if not loop.last %}, {% endif %}
-        {% endif %}
-        {% endfor %}
-        — você tem ações não concluídas em {{ ids_com_minhas_acoes|length }} planejamento(s).
+    <div class="flex-grow-1" style="min-width:200px;">
+        <label class="form-label mb-1 small text-muted">Buscar</label>
+        <input type="text" id="filtroPlanos" class="form-control form-control-sm"
+               placeholder="Digite para filtrar por título, unidade, descrição, responsáveis...">
+    </div>
+    <div class="d-flex align-items-center" style="padding-bottom:0.25rem;">
+        <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="chkSomenteMinhasPendencias" checked>
+            <label class="form-check-label small" for="chkSomenteMinhasPendencias">
+                Verificar apenas planos com pendências minhas
+            </label>
+        </div>
     </div>
 </div>
-{% endif %}
 
-<p class="text-muted small mb-3">
+{# Repete filtro/somente_minhas na URL ao trocar de aba (sem localStorage). #}
+{% set _aba_filtro = filtro_inicial if (filtro_inicial is defined and filtro_inicial) else none %}
+{% set _aba_sm_raw = somente_minhas_inicial if somente_minhas_inicial is defined else '' %}
+{% set _aba_somente = (0 if _aba_sm_raw in ('0', 'false') else (1 if _aba_sm_raw in ('1', 'true') else none)) %}
+
+<nav class="abas-planos">
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='abertos', filtro=_aba_filtro, somente_minhas=_aba_somente) }}" class="{{ 'active' if aba == 'abertos' else '' }}">Planos em Aberto ({{ contagem_por_aba.get('abertos', 0) }})</a>
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='concluidos', filtro=_aba_filtro, somente_minhas=_aba_somente) }}" class="{{ 'active' if aba == 'concluidos' else '' }}">Planos Concluídos ({{ contagem_por_aba.get('concluidos', 0) }})</a>
+    <a href="{{ url_for('planejamentos.listar', unidade_id=unidade_id, aba='cancelados', filtro=_aba_filtro, somente_minhas=_aba_somente) }}" class="{{ 'active' if aba == 'cancelados' else '' }}">Planos Cancelados ({{ contagem_por_aba.get('cancelados', 0) }})</a>
+</nav>
+
+<p class="text-muted small mb-3 planejamentos-dica">
     Clique no projeto para expandir as ações; clique na tarefa para expandir as observações. Visual de planilha com níveis.
 </p>
 
@@ -202,11 +276,13 @@
     {% for d in planejamentos_dados %}
     {% set p = d.plano %}
     {% set expanded = expand_id == p.id %}
-    <div class="projeto-card">
+    <div class="projeto-card"
+         data-plano-id="{{ p.id }}"
+         data-minhas="{% if p.id in ids_com_minhas_acoes %}1{% else %}0{% endif %}">
         <div class="projeto-header">
             <button type="button" class="btn btn-link btn-toggle p-0 text-decoration-none" aria-label="Expandir"
                     data-bs-toggle="collapse" data-bs-target="#projeto-{{ p.id }}" aria-expanded="{{ 'true' if expanded else 'false' }}">
-                <i class="bi bi-chevron-right"></i>
+                <i class="fas fa-chevron-right"></i>
             </button>
             <div class="projeto-titulo">{{ p.titulo }}</div>
             <div class="projeto-progresso">
@@ -218,15 +294,25 @@
                 </div>
             </div>
             <div id="status-resumo-{{ p.id }}" class="col-status small">
-                {% if d.status_resumo.atrasadas %}<span class="badge bg-danger" title="Atrasadas">Atraso {{ d.status_resumo.atrasadas }}</span>{% endif %}
-                {% if d.status_resumo.em_andamento %}<span class="badge" style="background:#2563eb;color:#fff;" title="Em andamento">Em and. {{ d.status_resumo.em_andamento }}</span>{% endif %}
-                {% if d.status_resumo.pendentes %}<span class="badge" style="background:#eab308;color:#422006;" title="Pendentes">Pend {{ d.status_resumo.pendentes }}</span>{% endif %}
-                {% if d.status_resumo.concluidas %}<span class="badge bg-success" title="Concluídas">Ok {{ d.status_resumo.concluidas }}</span>{% endif %}
-                {% if d.status_resumo.canceladas %}<span class="badge bg-secondary" title="Canceladas">Canc {{ d.status_resumo.canceladas }}</span>{% endif %}
-                {% if p.id in ids_com_minhas_acoes %}<span class="badge badge-minhas-acoes bg-warning text-dark"><i class="bi bi-person-fill"></i> {{ contagem_acoes_usuario.get(p.id, 0) }}</span>{% endif %}
+                {% if p.id in ids_com_minhas_acoes %}<span class="badge badge-minhas-acoes bg-warning text-dark"><i class="fas fa-user-fill"></i> {{ contagem_acoes_usuario.get(p.id, 0) }}</span>{% endif %}
             </div>
             <span class="badge {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span>
-            <span class="text-muted small"><i class="bi bi-building me-1"></i>{{ p.unidade.nome }}</span>
+            <div class="text-muted small">
+                <i class="fas fa-building me-1"></i>
+                {% set unidades_vinculadas = d.unidades_vinculadas if d.unidades_vinculadas is defined else [] %}
+                {% set tipos_vinculados = d.tipos_vinculados if d.tipos_vinculados is defined else [] %}
+                {% if unidades_vinculadas or tipos_vinculados %}
+                    {% for u in unidades_vinculadas %}
+                        {{ u.nome }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    {% if unidades_vinculadas and tipos_vinculados %}, {% endif %}
+                    {% for t in tipos_vinculados %}
+                        <span class="badge bg-info text-dark">{{ t.sigla }}</span>{% if not loop.last %} {% endif %}
+                    {% endfor %}
+                {% else %}
+                    {{ p.unidade.nome }}
+                {% endif %}
+            </div>
             <span class="text-muted small">{{ d.acoes_flat|length }} {{ 'ação' if d.acoes_flat|length == 1 else 'ações' }}</span>
             {% set _atual = p.atualizado_em or p.criado_em %}
             {% set _quem = p.ultimo_editor if p.atualizado_por else p.criador %}
@@ -236,27 +322,80 @@
                 {% if _quem %}<div class="ultima-atualizacao-nome">{{ _quem.nome }}</div>{% endif %}
                 {% else %}<span>—</span>{% endif %}
             </div>
+            <div class="proxima-acao text-muted">
+                {% if d.proxima_acao %}
+                    {% set tem_resp = d.proxima_acao.responsaveis|length > 0 if d.proxima_acao.responsaveis else False %}
+                    {% set tem_emp = d.proxima_acao.empresas|length > 0 if d.proxima_acao.empresas else False %}
+                    {% if tem_resp or tem_emp %}
+                    <div class="proxima-acao-label">Próxima ação</div>
+                    <div class="proxima-acao-responsavel d-flex flex-wrap align-items-center gap-1">
+                        {% if tem_resp %}
+                            {% for resp in d.proxima_acao.responsaveis %}
+                            <div class="resp-item">
+                                {% if resp.foto_url %}
+                                <img src="{{ resp.foto_url }}" alt="" class="resp-avatar">
+                                {% else %}
+                                <span class="resp-inicial">{{ (resp.nome or '?')[0]|upper if resp.nome else '?' }}</span>
+                                {% endif %}
+                                <span class="resp-nome">{{ ((resp.nome or '').split() + ['?'])[0] }}</span>
+                            </div>
+                            {% endfor %}
+                        {% elif tem_emp %}
+                            {% for emp in d.proxima_acao.empresas %}
+                            <div class="resp-item">
+                                {% if emp.foto_url %}
+                                <img src="{{ emp.foto_url }}" alt="" class="resp-avatar">
+                                {% else %}
+                                <span class="resp-inicial resp-empresa"><i class="fas fa-building"></i></span>
+                                {% endif %}
+                                <span class="resp-nome">{{ (emp.nome_comum or emp.razao_social)[:15] }}{% if (emp.nome_comum or emp.razao_social)|length > 15 %}…{% endif %}</span>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <span class="text-muted" style="font-size: 0.65rem;">—</span>
+                    {% endif %}
+                {% else %}
+                <span class="text-muted" style="font-size: 0.65rem;">—</span>
+                {% endif %}
+            </div>
             <div class="col-buttons d-flex align-items-center" onclick="event.stopPropagation();">
                 {% if pode_editar_gut %}
-                <a href="{{ url_for('planejamentos.editar', id=p.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                <a href="{{ url_for('planejamentos.editar', id=p.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="fas fa-pencil-alt"></i></a>
                 {% endif %}
-                <a href="#" class="btn btn-sm btn-outline-secondary" onclick="event.preventDefault(); abrirImpresso('{{ url_for('planejamentos.imprimir_projeto', plano_id=p.id) }}', '{{ p.titulo | e }}'); return false;" title="Imprimir projeto"><i class="bi bi-printer"></i></a>
+                <a href="#" class="btn btn-sm btn-outline-secondary" onclick="event.preventDefault(); abrirImpresso('{{ url_for('planejamentos.imprimir_projeto', plano_id=p.id) }}', '{{ p.titulo | e }}'); return false;" title="Imprimir projeto"><i class="fas fa-print"></i></a>
             </div>
         </div>
         <div class="collapse {{ 'show' if expanded else '' }}" id="projeto-{{ p.id }}">
             <div class="projeto-body">
-                {% if p.anexos.count() %}
+                {% if p.descricao %}
+                <div class="plano-descricao-secao mb-3 pb-3 border-bottom">
+                    <h6 class="text-muted small mb-2"><i class="fas fa-file-text me-1"></i>Descrição</h6>
+                    <div class="plano-descricao-conteudo" style="font-size:0.9rem; line-height:1.6; color:#334155;">
+                        {{ p.descricao | safe }}
+                    </div>
+                </div>
+                {% endif %}
+                {% set anexos_plano = d.anexos if d.anexos is defined else [] %}
+                {% if anexos_plano %}
                 <div class="plano-anexos-secao mb-3">
-                    <h6 class="text-muted small mb-2"><i class="bi bi-paperclip me-1"></i>Anexos do plano</h6>
+                    <h6 class="text-muted small mb-2"><i class="fas fa-paperclip me-1"></i>Anexos do plano</h6>
                     <div class="d-flex flex-wrap align-items-center gap-1">
-                        {% for a in p.anexos %}
+                        {% for a in anexos_plano %}
                         <div class="plano-anexo-item">
                             {% if a.eh_imagem %}
-                            <i class="bi bi-image text-success"></i>
-                            {% else %}
-                            <i class="bi bi-file-earmark-pdf text-danger"></i>
-                            {% endif %}
+                            <i class="fas fa-image text-success"></i>
                             <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.original }}</a>
+                            {% elif a.eh_audio %}
+                            <audio controls preload="none" style="height:28px; max-width:260px;">
+                                <source src="{{ a.url }}" type="{{ a.mime_type or 'audio/mpeg' }}">
+                                Seu navegador nao suporta audio.
+                            </audio>
+                            {% else %}
+                            <i class="fas fa-file-pdf text-danger"></i>
+                            <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.original }}</a>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -265,12 +404,13 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     {% if pode_criar_acao %}
                     <button type="button" class="btn btn-add-acao btn-sm" data-bs-toggle="modal" data-bs-target="#modal-acao-{{ p.id }}" onclick="event.stopPropagation();">
-                        <i class="bi bi-plus-lg me-1"></i>Adicionar ação
+                        <i class="fas fa-plus-lg me-1"></i>Adicionar ação
                     </button>
                     {% else %}
                     <span></span>
                     {% endif %}
                 </div>
+                <div class="panorama-tabela-wrapper">
                 <table class="panorama-tabela">
                     <thead>
                         <tr>
@@ -280,6 +420,7 @@
                             <th>Status</th>
                             <th>Prazo</th>
                             <th>Criação</th>
+                            <th>Última Atualização</th>
                             <th>Prioridade</th>
                         </tr>
                     </thead>
@@ -287,11 +428,11 @@
                         {% for acao in d.acoes_flat %}
                         <tr class="sortable-row row-{{ acao.status_badge_cls }}" data-id="{{ acao.id }}" data-plano-id="{{ p.id }}">
                             {% if pode_criar_acao %}
-                            <td class="drag-handle text-center" title="Arrastar para reordenar" onclick="event.stopPropagation();"><i class="bi bi-grip-vertical"></i></td>
+                            <td class="drag-handle text-center" title="Arrastar para reordenar" onclick="event.stopPropagation();"><i class="fas fa-grip-vertical"></i></td>
                             {% endif %}
                             <td class="acao-titulo-cell" data-bs-toggle="collapse" data-bs-target="#acao-detail-{{ acao.id }}" aria-expanded="false" title="Clique para expandir observações">
                                 <span class="acao-titulo-inner">
-                                    <span class="btn-toggle-inline"><i class="bi bi-chevron-right acao-chevron"></i></span>
+                                    <span class="btn-toggle-inline"><i class="fas fa-chevron-right acao-chevron"></i></span>
                                     {{ acao.titulo }}
                                 </span>
                             </td>
@@ -315,7 +456,7 @@
                                     {% if e.foto_url %}
                                     <img src="{{ e.foto_url }}" alt="" class="resp-avatar">
                                     {% else %}
-                                    <span class="resp-inicial resp-empresa"><i class="bi bi-building"></i></span>
+                                    <span class="resp-inicial resp-empresa"><i class="fas fa-building"></i></span>
                                     {% endif %}
                                     <span class="resp-nome">{{ (e.nome_comum or e.razao_social)[:20] }}{% if (e.nome_comum or e.razao_social)|length > 20 %}…{% endif %}</span>
                                 </div>
@@ -325,7 +466,7 @@
                                 </span>
                                 {% if pode_criar_acao %}
                                 <button type="button" class="btn btn-link btn-sm p-0 text-muted" data-bs-toggle="modal" data-bs-target="#modal-resp-{{ acao.id }}" onclick="event.stopPropagation();" title="Editar responsável(eis)">
-                                    <i class="bi bi-pencil-square"></i>
+                                    <i class="fas fa-pen-to-square"></i>
                                 </button>
                                 {% endif %}
                                 </div>
@@ -346,16 +487,33 @@
                                 <span class="{% if acao.prazo_dias_texto and 'Vence hoje' in acao.prazo_dias_texto %}prazo-hoje{% elif acao.prazo_dias_texto and 'Venceu há' in acao.prazo_dias_texto %}prazo-vencido{% endif %}">
                                     {{ acao.prazo.strftime('%d/%m/%Y') }}{% if acao.prazo_dias_texto %} <small class="text-muted">({{ acao.prazo_dias_texto }})</small>{% endif %}
                                 </span>
-                                {% else %}<span class="text-muted">—</span>{% endif %}
+                                {% else %}
+                                    {% if pode_criar_acao %}
+                                    <div class="d-flex align-items-center gap-1">
+                                        <span class="text-muted">—</span>
+                                        <button type="button"
+                                                class="btn btn-link btn-sm p-0 text-muted"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#modal-prazo-{{ acao.id }}"
+                                                onclick="event.stopPropagation();"
+                                                title="Definir prazo da ação">
+                                            <i class="fas fa-pen-to-square"></i>
+                                        </button>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted">—</span>
+                                    {% endif %}
+                                {% endif %}
                             </td>
                             <td><span class="text-muted small" title="Data da criação">{{ acao.criado_em | br_datetime if acao.criado_em else '—' }}</span></td>
+                            <td><span class="text-muted small" title="{% if acao.atualizado_em %}Última atualização{% else %}Nunca atualizado{% endif %}" id="atualizado-{{ acao.id }}">{% if acao.atualizado_em %}{{ acao.atualizado_em | br_datetime }}{% else %}<span class="text-muted">—</span>{% endif %}</span></td>
                             <td><span class="badge {{ p.gut_prioridade.cls }}">{{ p.gut_prioridade.texto }}</span></td>
                         </tr>
                         <tr class="acao-detail-row">
-                            <td colspan="{{ 7 if pode_criar_acao else 6 }}" class="p-0 border-0">
+                            <td colspan="{{ 8 if pode_criar_acao else 7 }}" class="p-0 border-0">
                                 <div class="collapse acao-detail-collapse" id="acao-detail-{{ acao.id }}">
                                     <div class="acao-detail-inner p-3">
-                                    <h6 class="text-muted small mb-2"><i class="bi bi-chat-left-text me-1"></i>Observações</h6>
+                                    <h6 class="text-muted small mb-2"><i class="fas fa-chat-left-text me-1"></i>Observações</h6>
                                     <div class="obs-timeline mb-2" id="obs-list-{{ acao.id }}" style="max-height: 220px; overflow-y: auto;">
                                         {% if acao.observacoes %}
                                         <table class="obs-tabelinha">
@@ -368,17 +526,26 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {% for obs in acao.observacoes %}
+                                                {% for obs in acao.observacoes|sort(attribute='criado_em') %}
                                                 <tr>
                                                     <td class="obs-col-texto"><div class="obs-texto">{{ obs.texto | safe }}</div></td>
                                                     <td class="obs-col-anexo">
                                                         {% if obs.anexos %}
                                                         <div class="d-flex flex-wrap gap-1">
-                                                        {% for a in obs.anexos %}
-                                                        <a href="{{ a.url }}" target="_blank" rel="noopener" class="obs-anexo">
-                                                            {% if a.eh_imagem %}<i class="bi bi-image text-success"></i>{% else %}<i class="bi bi-file-earmark-pdf text-danger"></i>{% endif %}
-                                                            {{ a.original }}
-                                                        </a>
+                                                        {% for a in obs.anexos|sort(attribute='id') %}
+                                                        <div class="obs-anexo">
+                                                            {% if a.eh_audio %}
+                                                            <audio controls preload="none" style="display:block; margin-top:.25rem; height:28px; max-width:260px;">
+                                                                <source src="{{ a.url }}" type="{{ a.mime_type or 'audio/mpeg' }}">
+                                                                Seu navegador nao suporta audio.
+                                                            </audio>
+                                                            {% else %}
+                                                            <a href="{{ a.url }}" target="_blank" rel="noopener" download="{{ a.original }}">
+                                                                <i class="{{ a.icone_classe }}"></i>
+                                                                {{ a.original }}
+                                                            </a>
+                                                            {% endif %}
+                                                        </div>
                                                         {% endfor %}
                                                         </div>
                                                         {% else %}—{% endif %}
@@ -405,7 +572,7 @@
                                         {% endif %}
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-add-obs-{{ acao.id }}" onclick="event.stopPropagation();">
-                                        <i class="bi bi-plus-lg me-1"></i>Adicionar observação
+                                        <i class="fas fa-plus-lg me-1"></i>Adicionar observação
                                     </button>
                                     </div>
                                 </div>
@@ -417,13 +584,14 @@
                         {% endif %}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>
 
     {% for acao in d.acoes_flat %}
     <div class="modal fade" id="modal-add-obs-{{ acao.id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Adicionar observação — {{ acao.titulo[:50] }}{% if acao.titulo|length > 50 %}…{% endif %}</h5>
@@ -442,22 +610,25 @@
                         <div class="mb-2">
                             <label class="form-label small text-muted">Anexos (opcional)</label>
                             <div class="obs-upload" onclick="this.querySelector('input').click()">
-                                <input type="file" name="anexos" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf" style="display:none">
-                                <i class="bi bi-cloud-arrow-up me-1"></i>Arraste ou clique para anexar (PDF, imagens)
+                                <input type="file" name="anexos" multiple
+                                       accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.ogg,.mp3,image/*,audio/*,application/pdf,
+.doc,.docx,.xls,.xlsx,.ods,.odt,.ppt,.pptx,.odp,.txt,.csv,.zip,.rar,.eml,message/rfc822,text/csv,application/csv,application/zip,application/x-zip-compressed,application/vnd.rar,application/x-rar-compressed"
+                                       style="display:none">
+                                <i class="fas fa-cloud-upload-alt me-1"></i>Arraste ou clique para anexar (PDF, imagens, áudio, documentos, CSV, .zip/.rar)
                             </div>
                             <div class="obs-anexos-preview mt-1 small text-muted"></div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Registrar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus-lg me-1"></i>Registrar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
     <div class="modal fade" id="modal-resp-{{ acao.id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-dialog modal-dialog-centered modal-md modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header py-2">
                     <h6 class="modal-title">Vincular responsável(eis) — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
@@ -498,11 +669,41 @@
             </div>
         </div>
     </div>
+    {% if pode_criar_acao and not acao.prazo %}
+    <div class="modal fade" id="modal-prazo-{{ acao.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title">Definir prazo — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <form class="form-definir-prazo" data-acao-id="{{ acao.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="alert alert-warning py-2 small">
+                            <strong>Atenção:</strong> uma vez que o prazo for definido, <strong>ele não poderá ser alterado</strong>.
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-semibold">Prazo da ação</label>
+                            <input type="date" name="prazo" class="form-control form-control-sm" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-check me-1"></i>Salvar prazo
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     {% endfor %}
 
     {% if pode_criar_acao %}
     <div class="modal fade" id="modal-acao-{{ p.id }}" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header border-0 pb-0">
                     <h5 class="modal-title">Adicionar ação</h5>
@@ -550,7 +751,7 @@
                     </div>
                     <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Adicionar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus-lg me-1"></i>Adicionar</button>
                     </div>
                 </form>
             </div>
@@ -561,7 +762,7 @@
 </div>
 {% else %}
 <div class="text-center py-5 text-muted">
-    <i class="bi bi-clipboard2 fs-1 d-block mb-3 opacity-50"></i>
+    <i class="fas fa-clipboard2 fs-1 d-block mb-3 opacity-50"></i>
     {% if tem_planos_geral %}
     <h5>{% if aba == 'abertos' %}Nenhum plano em aberto{% elif aba == 'concluidos' %}Nenhum plano concluído{% else %}Nenhum plano cancelado{% endif %}</h5>
     <p class="mb-0">Não há planejamentos nesta categoria para a unidade selecionada.</p>
@@ -569,12 +770,28 @@
     <h5>Nenhum planejamento criado</h5>
     <p class="mb-3">Crie o primeiro planejamento para sua unidade.</p>
     {% if pode_criar %}
-    <a href="{{ url_for('planejamentos.criar') }}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Novo Planejamento</a>
+    <a href="{{ url_for('planejamentos.criar', unidade_id=unidade_id) if unidade_id else url_for('planejamentos.criar') }}" class="btn btn-primary"><i class="fas fa-plus-circle me-1"></i>Novo Planejamento</a>
     {% endif %}
     {% endif %}
 </div>
 {% endif %}
 
+<script>
+// Filtros iniciais só pela URL (servidor). Sem localStorage nem redirect — evita “puxar” aba/unidade antiga e segunda carga confusa.
+(function () {
+    var inputBusca = document.getElementById('filtroPlanos');
+    var chkMinhas = document.getElementById('chkSomenteMinhasPendencias');
+    if (inputBusca) {
+        var v = {{ (filtro_inicial if filtro_inicial is defined else '') | tojson }};
+        if (v) inputBusca.value = v;
+    }
+    if (chkMinhas) {
+        var vm = {{ (somente_minhas_inicial if somente_minhas_inicial is defined else '') | tojson }};
+        if (vm === '0' || vm === 'false') chkMinhas.checked = false;
+        else if (vm === '1' || vm === 'true') chkMinhas.checked = true;
+    }
+})();
+</script>
 {% if unidades|length > 1 %}
 <script>
 (function () {
@@ -583,6 +800,10 @@
         var v = this.value, url = '{{ url_for("planejamentos.listar") }}', params = [];
         if (v) params.push('unidade_id=' + v);
         params.push('aba={{ aba }}');
+        var filtro = document.getElementById('filtroPlanos');
+        var chk = document.getElementById('chkSomenteMinhasPendencias');
+        if (filtro && filtro.value) params.push('filtro=' + encodeURIComponent(filtro.value));
+        if (chk) params.push('somente_minhas=' + (chk.checked ? '1' : '0'));
         window.location = url + (params.length ? '?' + params.join('&') : '');
     });
 })();
@@ -630,7 +851,8 @@
         });
     });
     document.querySelectorAll('.form-criar-acao').forEach(function (form) {
-        form.addEventListener('submit', function () {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
             var tipoSel = form.querySelector('.js-tipo-vinculo-criar');
             var v = tipoSel ? tipoSel.value : 'profissional';
             var profSel = form.querySelector('select[name="responsaveis"]');
@@ -642,6 +864,36 @@
             }
             if (v === 'empresa') clearSelect(profSel);
             if (v === 'profissional') clearSelect(empSel);
+
+            var fd = new FormData(form);
+            var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
+            var submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...'; }
+            fetch(form.action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) {
+                    var ct = r.headers.get('content-type') || '';
+                    return ct.indexOf('json') !== -1 ? r.json() : r.text().then(function () { return {}; });
+                })
+                .then(function (data) {
+                    if (data.ok && data.redirect) {
+                        var params = [];
+                        var currentUrl = new URL(window.location.href);
+                        var aba = currentUrl.searchParams.get('aba') || 'abertos';
+                        params.push('aba=' + aba);
+                        var filtro = document.getElementById('filtroPlanos');
+                        var chk = document.getElementById('chkSomenteMinhasPendencias');
+                        if (filtro && filtro.value) params.push('filtro=' + encodeURIComponent(filtro.value));
+                        if (chk) params.push('somente_minhas=' + (chk.checked ? '1' : '0'));
+                        var sep = data.redirect.indexOf('?') !== -1 ? '&' : '?';
+                        window.location.href = data.redirect + sep + params.join('&');
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(function () {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-plus-lg me-1"></i>Adicionar'; }
+                    window.location.href = form.action;
+                });
         });
     });
     var respTsCache = {};
@@ -697,19 +949,35 @@
             e.preventDefault();
             var acaoId = form.dataset.acaoId;
             var fd = new FormData();
-            fd.append('csrf_token', document.querySelector('meta[name=csrf-token]')?.content || '');
+            var csrf = form.querySelector('input[name=csrf_token]')?.value || document.querySelector('meta[name=csrf-token]')?.content || document.getElementById('csrfPlanos')?.value || '';
+            fd.append('csrf_token', csrf);
             var tipoSel = form.querySelector('.tipo-vinculo-select');
             var v = tipoSel ? tipoSel.value : 'profissional';
             var profTs = respTsCache['prof-' + acaoId];
             var empTs = respTsCache['emp-' + acaoId];
-            if ((v === 'profissional' || v === 'ambos') && profTs) {
-                (profTs.getValue() || []).forEach(function (id) { fd.append('responsaveis', id); });
+            function getSelectedIds(ts, nativeSel) {
+                if (ts && ts.getValue) return ts.getValue() || [];
+                if (!nativeSel) return [];
+                var ids = [];
+                for (var i = 0; i < nativeSel.options.length; i++) {
+                    if (nativeSel.options[i].selected && nativeSel.options[i].value) ids.push(nativeSel.options[i].value);
+                }
+                return ids;
             }
-            if ((v === 'empresa' || v === 'ambos') && empTs) {
-                (empTs.getValue() || []).forEach(function (id) { fd.append('empresas', id); });
+            var profSel = form.querySelector('select[name=responsaveis]');
+            var empSel = form.querySelector('select[name=empresas]');
+            if (v === 'profissional' || v === 'ambos') {
+                getSelectedIds(profTs, profSel).forEach(function (id) { fd.append('responsaveis', id); });
             }
-            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + acaoId + '/responsaveis', { method: 'POST', body: fd })
-                .then(function (r) { return r.json(); })
+            if (v === 'empresa' || v === 'ambos') {
+                getSelectedIds(empTs, empSel).forEach(function (id) { fd.append('empresas', id); });
+            }
+            var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
+            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/responsaveis', { method: 'POST', body: fd })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('Erro HTTP: ' + r.status);
+                    return r.json();
+                })
                 .then(function (data) {
                     if (data.ok && data.html !== undefined) {
                         var disp = document.getElementById('resp-display-' + acaoId);
@@ -718,7 +986,13 @@
                     } else if (data.ok) {
                         if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
                         location.reload();
+                    } else {
+                        alert(data.erro || 'Não foi possível salvar os responsáveis.');
                     }
+                })
+                .catch(function (err) {
+                    console.error('Erro ao atualizar responsáveis:', err);
+                    alert('Erro ao salvar. Verifique sua conexão e tente novamente.');
                 });
         });
     });
@@ -729,15 +1003,25 @@
 <input type="hidden" id="csrfPlanos" value="{{ csrf_token() }}">
 <script>
 (function () {
+    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     document.querySelectorAll('.status-select').forEach(function (sel) {
         sel.addEventListener('change', function () {
+            var selEl = this;
+            var valorAnterior = selEl.dataset.valorAnterior || selEl.value;
+            selEl.dataset.valorAnterior = selEl.value;
+            
             var fd = new FormData();
             fd.append('csrf_token', document.getElementById('csrfPlanos').value);
             fd.append('status', this.value);
-            var selEl = this;
             var planoId = selEl.closest('tbody')?.dataset?.planoId;
-            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + this.dataset.id + '/status', { method: 'POST', body: fd })
-                .then(function (r) { return r.json(); })
+            
+            fetch(baseUrl + '/planejamentos/acoes/' + this.dataset.id + '/status', { method: 'POST', body: fd })
+                .then(function (r) {
+                    if (!r.ok) {
+                        throw new Error('Erro HTTP: ' + r.status);
+                    }
+                    return r.json();
+                })
                 .then(function (data) {
                     if (data.ok) {
                         var statusToBadge = { backlog: 'status-pendente', em_andamento: 'status-andamento', concluido: 'status-feito', cancelado: 'status-cancelado' };
@@ -755,18 +1039,12 @@
                             row.classList.add('row-' + badgeCls);
                         }
                         if (planoId && data.status_resumo && data.progresso_pct !== undefined) {
+                            // Atualiza apenas a barra de progresso; os badges de contagem por status foram removidos
                             var badgesWrap = document.getElementById('status-resumo-' + planoId);
                             if (badgesWrap) {
-                                var r = data.status_resumo;
                                 var minhasAcoes = badgesWrap.querySelector('.badge-minhas-acoes');
                                 var minhasHtml = minhasAcoes ? minhasAcoes.outerHTML : '';
-                                badgesWrap.innerHTML = 
-                                    (r.atrasadas ? '<span class="badge bg-danger" title="Atrasadas">Atraso ' + r.atrasadas + '</span>' : '') +
-                                    (r.em_andamento ? '<span class="badge" style="background:#2563eb;color:#fff;" title="Em andamento">Em and. ' + r.em_andamento + '</span>' : '') +
-                                    (r.pendentes ? '<span class="badge" style="background:#eab308;color:#422006;" title="Pendentes">Pend ' + r.pendentes + '</span>' : '') +
-                                    (r.concluidas ? '<span class="badge bg-success" title="Concluídas">Ok ' + r.concluidas + '</span>' : '') +
-                                    (r.canceladas ? '<span class="badge bg-secondary" title="Canceladas">Canc ' + r.canceladas + '</span>' : '') +
-                                    minhasHtml;
+                                badgesWrap.innerHTML = minhasHtml;
                             }
                             var card = document.getElementById('projeto-' + planoId)?.closest('.projeto-card');
                             if (card) {
@@ -779,13 +1057,78 @@
                                 if (progPct) progPct.textContent = (data.progresso_pct || 0) + '%';
                             }
                         }
+                        // Atualiza coluna de última atualização
+                        var atualizadoEl = document.getElementById('atualizado-' + selEl.dataset.id);
+                        if (atualizadoEl && data.atualizado_em) {
+                            atualizadoEl.textContent = data.atualizado_em;
+                            atualizadoEl.title = 'Última atualização';
+                        }
+                    } else {
+                        alert('Erro ao salvar status: ' + (data.erro || 'Erro desconhecido'));
+                        selEl.value = valorAnterior;
                     }
+                })
+                .catch(function(err) {
+                    console.error('Erro ao atualizar status:', err);
+                    alert('Erro ao salvar status. Tente novamente.');
+                    selEl.value = valorAnterior;
                 });
         });
     });
 })();
 </script>
 {% endif %}
+<script>
+// Definir prazo para ações que ainda não possuem data (permitido apenas uma vez)
+(function () {
+    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
+    var csrfEl = document.getElementById('csrfPlanos');
+    var csrf = csrfEl ? csrfEl.value : (document.querySelector('meta[name=csrf-token]')?.content || '');
+
+    document.querySelectorAll('.form-definir-prazo').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var acaoId = this.dataset.acaoId;
+            var input = this.querySelector('input[name=prazo]');
+            if (!input || !input.value) {
+                alert('Informe uma data de prazo.');
+                return;
+            }
+            var fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fd.append('prazo', input.value);
+
+            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/prazo', {
+                method: 'POST',
+                body: fd
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.ok) {
+                    var row = document.querySelector('.sortable-row[data-id="' + acaoId + '"]');
+                    if (row) {
+                        var prazoTd = row.querySelector('td:nth-child(5)');
+                        if (prazoTd) {
+                            var cls = '';
+                            if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Vence hoje') !== -1) cls = 'prazo-hoje';
+                            else if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Venceu há') !== -1) cls = 'prazo-vencido';
+                            var extra = data.prazo_dias_texto ? ' <small class="text-muted">(' + (data.prazo_dias_texto || '') + ')</small>' : '';
+                            prazoTd.innerHTML = '<span class="' + cls + '">' + (data.prazo || '') + extra + '</span>';
+                        }
+                    }
+                    var modalPrazo = form.closest('.modal');
+                    if (modalPrazo && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modalPrazo)?.hide();
+                } else {
+                    alert(data.erro || 'Não foi possível definir o prazo.');
+                }
+            })
+            .catch(function () {
+                alert('Erro ao definir prazo. Tente novamente.');
+            });
+        });
+    });
+})();
+</script>
 
 <script>
 (function () {
@@ -801,6 +1144,7 @@
         });
     });
     var csrf = document.querySelector('meta[name=csrf-token]')?.content || document.getElementById('csrfPlanos')?.value || '';
+    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     document.querySelectorAll('.form-add-obs').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -815,8 +1159,18 @@
             if (fileInput && fileInput.files.length) {
                 for (var i = 0; i < fileInput.files.length; i++) fd.append('anexos', fileInput.files[i]);
             }
-            fetch((window.APP_BASE || '') + '/planejamentos/acoes/' + acaoId + '/observacao', { method: 'POST', body: fd })
-                .then(function (r) { return r.json(); })
+            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/observacao', { method: 'POST', body: fd })
+                .then(function (r) {
+                    if (!r.ok) {
+                        return r.json()
+                            .catch(function () { return { ok: false, erro: 'Erro ao registrar (HTTP ' + r.status + ').' }; })
+                            .then(function (data) {
+                                var msg = (data && (data.erro || data.message)) ? (data.erro || data.message) : ('Erro ao registrar (HTTP ' + r.status + ').');
+                                throw new Error(msg);
+                            });
+                    }
+                    return r.json();
+                })
                 .then(function (data) {
                     if (data.ok) {
                         var list = document.getElementById('obs-list-' + acaoId);
@@ -832,8 +1186,15 @@
                         var anexosHtml = '';
                         if (data.anexos && data.anexos.length) {
                             data.anexos.forEach(function (a) {
-                                var icon = a.eh_imagem ? '<i class="bi bi-image text-success"></i>' : '<i class="bi bi-file-earmark-pdf text-danger"></i>';
-                                anexosHtml += '<a href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" class="obs-anexo">' + icon + ' ' + escapeHtml(a.original) + '</a>';
+                                var icon = a.icone_classe ? '<i class="' + escapeHtml(a.icone_classe) + '"></i>' : (a.eh_imagem ? '<i class="fas fa-image text-success"></i>' : (a.eh_audio ? '<i class="fas fa-file-audio text-info"></i>' : '<i class="fas fa-file-pdf text-danger"></i>'));
+                                var itemHtml = '<div class="obs-anexo">';
+                                if (a.eh_audio) {
+                                    itemHtml += '<audio controls preload="none" style="display:block; margin-top:.25rem; height:28px; max-width:260px;"><source src="' + escapeHtml(a.url) + '" type="' + escapeHtml(a.mime_type || 'audio/mpeg') + '">Seu navegador nao suporta audio.</audio>';
+                                } else {
+                                    itemHtml += '<a href="' + escapeHtml(a.url) + '" target="_blank" rel="noopener" download="' + escapeHtml(a.original) + '">' + icon + ' ' + escapeHtml(a.original) + '</a>';
+                                }
+                                itemHtml += '</div>';
+                                anexosHtml += itemHtml;
                             });
                             anexosHtml = '<div class="d-flex flex-wrap gap-1">' + anexosHtml + '</div>';
                         } else anexosHtml = '—';
@@ -858,7 +1219,12 @@
                         if (preview) preview.textContent = '';
                         var modalEl = form.closest('.modal');
                         if (modalEl && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modalEl)?.hide();
+                        return;
                     }
+                    alert((data && data.erro) ? data.erro : 'Não foi possível registrar a observação.');
+                })
+                .catch(function (err) {
+                    alert((err && err.message) ? err.message : 'Erro ao registrar a observação. Tente novamente.');
                 });
         });
     });
@@ -874,6 +1240,92 @@
         d.textContent = s;
         return d.innerHTML;
     }
+})();
+</script>
+<script>
+// Filtro em tempo real + URL sempre igual ao que está na tela (replaceState), para F5 não “trazer de volta” filtro apagado.
+(function () {
+    var inputBusca = document.getElementById('filtroPlanos');
+    var chkMinhas = document.getElementById('chkSomenteMinhasPendencias');
+    if (!inputBusca && !chkMinhas) return;
+
+    var urlDebounce = null;
+
+    function normalizarTexto(txt) {
+        return (txt || '').toLowerCase();
+    }
+
+    function aplicarFiltro() {
+        var termo = normalizarTexto(inputBusca ? inputBusca.value : '');
+        var somenteMinhas = chkMinhas ? chkMinhas.checked : false;
+        document.querySelectorAll('.projeto-card').forEach(function (card) {
+            var texto = normalizarTexto(card.innerText || card.textContent || '');
+            var ehMeu = card.dataset.minhas === '1';
+
+            var passaTexto = !termo || texto.indexOf(termo) !== -1;
+            var passaMinhas = !somenteMinhas || ehMeu;
+
+            card.style.display = (passaTexto && passaMinhas) ? '' : 'none';
+        });
+    }
+
+    function syncQueryNaUrl() {
+        try {
+            var u = new URL(window.location.href);
+            var t = inputBusca ? (inputBusca.value || '').trim() : '';
+            if (t) u.searchParams.set('filtro', t);
+            else u.searchParams.delete('filtro');
+            if (chkMinhas) u.searchParams.set('somente_minhas', chkMinhas.checked ? '1' : '0');
+            var qs = u.searchParams.toString();
+            var next = u.pathname + (qs ? '?' + qs : '');
+            var cur = window.location.pathname + window.location.search;
+            if (next !== cur) history.replaceState(null, '', next);
+        } catch (e) {}
+    }
+
+    function agendarSyncUrl(imediato) {
+        clearTimeout(urlDebounce);
+        if (imediato) {
+            syncQueryNaUrl();
+            return;
+        }
+        urlDebounce = setTimeout(syncQueryNaUrl, 320);
+    }
+
+    if (inputBusca) {
+        inputBusca.addEventListener('input', function () {
+            aplicarFiltro();
+            var vazio = !(inputBusca.value || '').trim();
+            agendarSyncUrl(vazio);
+        });
+    }
+    if (chkMinhas) {
+        chkMinhas.addEventListener('change', function () {
+            syncQueryNaUrl();
+            aplicarFiltro();
+        });
+    }
+    aplicarFiltro();
+})();
+</script>
+<script>
+// Abas: leva na URL o filtro e o checkbox atuais (sem localStorage).
+(function () {
+    document.querySelectorAll('.abas-planos a').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            var filtro = document.getElementById('filtroPlanos');
+            var chk = document.getElementById('chkSomenteMinhasPendencias');
+            if (!filtro && !chk) return;
+            try {
+                var u = new URL(a.getAttribute('href'), window.location.origin);
+                if (filtro && filtro.value) u.searchParams.set('filtro', filtro.value);
+                else u.searchParams.delete('filtro');
+                if (chk) u.searchParams.set('somente_minhas', chk.checked ? '1' : '0');
+                e.preventDefault();
+                window.location.href = u.pathname + u.search;
+            } catch (err) { /* fallback: navegação normal */ }
+        });
+    });
 })();
 </script>
 
@@ -915,9 +1367,10 @@
             });
         });
     });
+    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     function salvarOrdem(tbody, planoId) {
         var ids = [].slice.call(tbody.querySelectorAll('.sortable-row')).map(function (r) { return parseInt(r.dataset.id); });
-        fetch((window.APP_BASE || '') + '/planejamentos/' + planoId + '/acoes/reordenar', {
+        fetch(baseUrl + '/planejamentos/' + planoId + '/acoes/reordenar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': (document.querySelector('meta[name=csrf-token]') || {}).content || '' },
             body: JSON.stringify({ ids: ids })

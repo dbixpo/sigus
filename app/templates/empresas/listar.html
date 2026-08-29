@@ -9,10 +9,10 @@
     </ol>
 </nav>
 <div class="page-header">
-    <h1><i class="bi bi-building me-2"></i>Empresas</h1>
+    <h1><i class="fas fa-building me-2"></i>Empresas</h1>
     {% if current_user.pode('cadastrar_contrato') %}
     <a href="{{ url_for('empresas.novo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Nova Empresa
+        <i class="fas fa-plus-circle me-1"></i>Nova Empresa
     </a>
     {% endif %}
 </div>
@@ -77,12 +77,12 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-building"></i>
+            <i class="fas fa-building"></i>
             <h6>Nenhuma empresa cadastrada.</h6>
             <p class="text-muted small">Cadastre empresas contratadas para vincular às ações do planejamento.</p>
             {% if current_user.pode('cadastrar_contrato') %}
             <a href="{{ url_for('empresas.novo') }}" class="btn btn-primary btn-sm mt-2">
-                <i class="bi bi-plus-circle me-1"></i>Nova Empresa
+                <i class="fas fa-plus-circle me-1"></i>Nova Empresa
             </a>
             {% endif %}
         </div>

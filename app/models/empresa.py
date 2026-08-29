@@ -28,6 +28,10 @@ class EmpresaContratada(db.Model):
     email_suporte = db.Column(db.String(150))
     logo_filename = db.Column(db.String(200))  # em static/uploads/empresas/
     ativo = db.Column(db.Boolean, nullable=False, default=True)
+    # Tipos de CNPJ para seleção em vínculos
+    cnpj_estagio = db.Column(db.Boolean, nullable=False, default=False)
+    cnpj_residencia = db.Column(db.Boolean, nullable=False, default=False)
+    cnpj_vinculo_empregaticio_cpd = db.Column(db.Boolean, nullable=False, default=False)
     criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
     <span class="text-muted small">Visão geral da rede</span>
 </div>
 
@@ -27,7 +27,7 @@
                 </div>
                 <div class="fst-italic small mb-1" style="color:#92400e;" id="msgAniversario"></div>
                 <div class="small" style="color:#b45309;">
-                    <i class="bi bi-heart-fill me-1"></i>
+                    <i class="fas fa-heart-fill me-1"></i>
                     Com carinho, a equipe da Saúde Digital Sorocaba
                 </div>
             </div>
@@ -65,7 +65,7 @@
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-primary-soft"><i class="bi bi-hospital"></i></div>
+            <div class="stat-icon bg-primary-soft"><i class="fas fa-hospital"></i></div>
             <div>
                 <div class="stat-value">{{ total_unidades }}</div>
                 <div class="stat-label">Unidades Ativas</div>
@@ -74,7 +74,7 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-success-soft"><i class="bi bi-pc-display"></i></div>
+            <div class="stat-icon bg-success-soft"><i class="fas fa-desktop"></i></div>
             <div>
                 <div class="stat-value">{{ total_equipamentos }}</div>
                 <div class="stat-label">Equipamentos Ativos</div>
@@ -83,7 +83,7 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-warning-soft"><i class="bi bi-wrench"></i></div>
+            <div class="stat-icon bg-warning-soft"><i class="fas fa-wrench"></i></div>
             <div>
                 <div class="stat-value">{{ total_em_manutencao }}</div>
                 <div class="stat-label">Em Manutenção</div>
@@ -92,7 +92,7 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="bi bi-x-circle"></i></div>
+            <div class="stat-icon bg-danger-soft"><i class="fas fa-times-circle"></i></div>
             <div>
                 <div class="stat-value">{{ total_inserviveis }}</div>
                 <div class="stat-label">Inservíveis</div>
@@ -101,7 +101,7 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-icon bg-danger-soft"><i class="fas fa-exclamation-triangle"></i></div>
             <div>
                 <div class="stat-value">{{ chamados_abertos }}</div>
                 <div class="stat-label">Chamados Abertos</div>
@@ -110,7 +110,7 @@
     </div>
     <div class="col-6 col-md-4 col-xl-2">
         <div class="stat-card">
-            <div class="stat-icon bg-warning-soft"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-icon bg-warning-soft"><i class="fas fa-file-contract"></i></div>
             <div>
                 <div class="stat-value">{{ contratos_vencendo }}</div>
                 <div class="stat-label">Contratos a Vencer</div>
@@ -124,7 +124,7 @@
     <div class="col-lg-7">
         <div class="card h-100">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-wrench-adjustable me-2"></i>Chamados em Aberto / Andamento</span>
+                <span><i class="fas fa-wrench me-2"></i>Chamados em Aberto / Andamento</span>
                 <a href="{{ url_for('chamados.listar') }}" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
             <div class="card-body p-0">
@@ -155,7 +155,7 @@
                 </div>
                 {% else %}
                 <div class="empty-state">
-                    <i class="bi bi-check-circle-fill text-success"></i>
+                    <i class="fas fa-check-circle-fill text-success"></i>
                     <p>Nenhum chamado aberto no momento!</p>
                 </div>
                 {% endif %}
@@ -168,7 +168,7 @@
         {% if contratos_criticos %}
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-file-earmark-text me-2"></i>Contratos Críticos</span>
+                <span><i class="fas fa-file-contract me-2"></i>Contratos Críticos</span>
                 <a href="{{ url_for('contratos.listar') }}" class="btn btn-sm btn-outline-warning">Ver todos</a>
             </div>
             <div class="card-body p-0">
@@ -192,7 +192,7 @@
 
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-hospital me-2"></i>Unidades da Rede</span>
+                <span><i class="fas fa-hospital me-2"></i>Unidades da Rede</span>
                 <a href="{{ url_for('unidades.listar') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
             </div>
             <div class="card-body p-0">

@@ -13,7 +13,7 @@ contrato_financeiro_bp = Blueprint('contrato_financeiro', __name__, url_prefix='
 @contrato_financeiro_bp.route('/')
 @login_required
 def listar():
-    if not current_user.pode('cadastrar_contrato') and not current_user.pode('editar_contrato'):
+    if not current_user.pode('ver_controle_empenho') and not current_user.pode('editar_controle_empenho') and not current_user.pode('adicionar_controle_empenho'):
         abort(403)
     tipo_filtro = request.args.get('tipo', '')
     motivo_filtro = request.args.get('motivo', '')
@@ -31,7 +31,7 @@ def listar():
 @contrato_financeiro_bp.route('/novo', methods=['GET', 'POST'])
 @login_required
 def novo():
-    if not current_user.pode('cadastrar_contrato'):
+    if not current_user.pode('adicionar_controle_empenho'):
         abort(403)
     contratos = Contrato.query.order_by(Contrato.data_fim.desc()).all()
     contrato_id_pre = request.args.get('contrato_id', type=int)
@@ -49,7 +49,7 @@ def novo():
 @contrato_financeiro_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar(id):
-    if not current_user.pode('editar_contrato'):
+    if not current_user.pode('editar_controle_empenho'):
         abort(403)
     item = ContratoFinanceiro.query.get_or_404(id)
     contratos = Contrato.query.order_by(Contrato.data_fim.desc()).all()
@@ -66,7 +66,7 @@ def editar(id):
 @contrato_financeiro_bp.route('/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir(id):
-    if not current_user.pode('editar_contrato'):
+    if not current_user.pode('editar_controle_empenho'):
         abort(403)
     item = ContratoFinanceiro.query.get_or_404(id)
     db.session.delete(item)

@@ -1,0 +1,519 @@
+{% extends 'base.html' %}
+{% block title %}Regulação Médica — {{ ocorrencia.numero }}{% endblock %}
+
+{% block head %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+/* Avaliação: mesma altura (260px), sem redimensionar, scroll interno */
+#editorAvaliacaoWrap { height: 260px; overflow: hidden; resize: none; }
+#editorAvaliacaoWrap .ql-container { height: 210px; overflow-y: auto; }
+#editorAvaliacaoWrap .ql-editor { overflow-y: auto; }
+#historicoAvaliacao { height: 260px; overflow-y: auto; resize: none; }
+#historicoAvaliacao p { margin: 0; line-height: 1.35; }
+#historicoAvaliacao .mb-3 { margin-bottom: 0.5rem !important; padding-bottom: 0.4rem !important; }
+/* Motivo/queixa: compacto, sem espaço extra, altura igual à coluna endereço */
+.regulacao-motivo-endereco .row { align-items: stretch; }
+.regulacao-motivo-endereco .motivo-col,
+.regulacao-motivo-endereco .endereco-col { display: flex; flex-direction: column; }
+.motivo-queixa-exibicao { flex: 1; min-height: 0; overflow-y: auto; line-height: 1.35; }
+.motivo-queixa-exibicao p { margin: 0; line-height: 1.35; }
+/* Botões eSUS: tipo + prioridade */
+.decisao-esus-btn { min-width: 44px; height: 44px; font-weight: bold; display: flex; align-items: center; justify-content: center; padding: 0; border: 2px solid transparent; }
+.decisao-esus-btn.ativo { border-color: #000 !important; box-shadow: inset 0 0 0 1px #000; }
+.decisao-esus-painel { text-align: center; display: flex; flex-direction: column; align-items: center; }
+.decisao-esus-tipo { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.decisao-esus-tipo .tipo-sigla { font-weight: 600; min-width: 60px; text-align: left; }
+input.paciente-idade-numero::-webkit-outer-spin-button,
+input.paciente-idade-numero::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.paciente-idade-numero { -moz-appearance: textfield; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-heart-pulse text-danger"></i> Regulação Médica — {{ ocorrencia.numero }}</h1>
+</div>
+
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    {# Card: Telefone, Solicitante, Tipo/Origem #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">Dados da Ocorrência</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Telefone</label>
+                    <p class="mb-0 fw-semibold">
+                        {% if ocorrencia.telefone | wa_link %}
+                        <a href="{{ ocorrencia.telefone | wa_link }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none"><i class="bi bi-whatsapp me-1"></i>{{ ocorrencia.telefone | br_fone }}</a>
+                        {% elif ocorrencia.telefone %}{{ ocorrencia.telefone | br_fone }}{% else %}—{% endif %}
+                    </p>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Solicitante</label>
+                    <p class="mb-0">{{ ocorrencia.nome_solicitante or '—' }}</p>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small text-muted">Tipo / Origem</label>
+                    <p class="mb-0">{{ ocorrencia.tipo_ligacao.nome if ocorrencia.tipo_ligacao else '—' }} / {{ ocorrencia.origem_ligacao.nome if ocorrencia.origem_ligacao else '—' }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Motivo/Queixa (esq) + Endereço (dir) lado a lado, mesma altura #}
+    <div class="card shadow-sm mb-4 regulacao-motivo-endereco">
+        <div class="card-header bg-light fw-semibold">Motivo / Queixa e Endereço</div>
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <div class="col-12 col-lg-6 p-3 motivo-col border-lg-end">
+                    <label class="form-label small text-muted fw-semibold">Motivo / Queixa</label>
+                    <div class="border rounded p-2 bg-light small motivo-queixa-exibicao">{{ (ocorrencia.motivo_queixa or '')|colapsar_espacos_html|safe }}</div>
+                </div>
+                <div class="col-12 col-lg-6 p-3 endereco-col">
+                    <label class="form-label small text-muted fw-semibold">Endereço da Ocorrência</label>
+                    {% set _mostrar_unidade = ocorrencia.origem_ligacao and ocorrencia.origem_ligacao.preenche_endereco_unidade_saude %}
+                    {% if not _mostrar_unidade and ocorrencia.unidade_saude_id %}
+                    <input type="hidden" name="unidade_saude_id" value="{{ ocorrencia.unidade_saude_id }}">
+                    {% endif %}
+                    {% if _mostrar_unidade %}
+                    <div class="mb-2">
+                        <label class="form-label fw-semibold small">Unidade de Saúde</label>
+                        <select name="unidade_saude_id" class="form-select form-select-sm">
+                            <option value="">— Selecione a unidade —</option>
+                            {% for u in unidades_saude %}
+                            <option value="{{ u.id }}" {% if ocorrencia.unidade_saude_id == u.id %}selected{% endif %}>{{ u.nome }}{% if u.apelido %} ({{ u.apelido }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small">Logradouro</label>
+                            <input type="text" name="end_logradouro" class="form-control form-control-sm" value="{{ ocorrencia.end_logradouro or '' }}" placeholder="Rua, Avenida...">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label fw-semibold small">Nº</label>
+                            <input type="text" name="end_numero" class="form-control form-control-sm" value="{{ ocorrencia.end_numero or '' }}">
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <label class="form-label fw-semibold small">Complemento</label>
+                            <input type="text" name="end_complemento" class="form-control form-control-sm" value="{{ ocorrencia.end_complemento or '' }}">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold small">Bairro</label>
+                            <input type="text" name="end_bairro" class="form-control form-control-sm" value="{{ ocorrencia.end_bairro or '' }}">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold small">Cidade</label>
+                            <input type="text" name="end_cidade" class="form-control form-control-sm" value="{{ ocorrencia.end_cidade or '' }}">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label fw-semibold small">UF</label>
+                            <input type="text" name="end_uf" class="form-control form-control-sm" maxlength="2" value="{{ ocorrencia.end_uf or '' }}" placeholder="SP">
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <label class="form-label fw-semibold small">CEP</label>
+                            <input type="text" name="end_cep" class="form-control form-control-sm" value="{{ ocorrencia.end_cep or '' }}" placeholder="00000-000" maxlength="9">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Pacientes (igual registro-chamada) #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">Pacientes</div>
+        <div class="card-body">
+            <div id="pacientesLista">
+                {% set _pacientes = (ocorrencia.pacientes or [{}]) if ocorrencia else [{}] %}
+                {% for p in _pacientes %}
+                <div class="paciente-row mb-3" data-idx="{{ loop.index0 }}">
+                    <div class="row g-3 align-items-start">
+                        <div class="col-12 col-md-5">
+                            <label class="form-label fw-semibold">Nome completo</label>
+                            <input type="text" name="paciente_{{ loop.index0 }}_nome" class="form-control" placeholder="Nome completo" value="{{ p.get('nome', '') or '' }}">
+                            {% if loop.index0 == 0 %}
+                            <div class="form-check mt-1">
+                                <input class="form-check-input form-check-input-sm" type="checkbox" id="paciente0Mesmo" data-copy-solicitante>
+                                <label class="form-check-label text-muted" style="font-size:0.8rem;opacity:0.85;" for="paciente0Mesmo">O(A) Solicitante é o(a) paciente</label>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold">Sexo</label>
+                            <select name="paciente_{{ loop.index0 }}_sexo" class="form-select">
+                                <option value="">— Selecione —</option>
+                                <option value="M" {% if p.get('sexo') == 'M' %}selected{% endif %}>Masculino</option>
+                                <option value="F" {% if p.get('sexo') == 'F' %}selected{% endif %}>Feminino</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold">Idade</label>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <input type="number" name="paciente_{{ loop.index0 }}_idade" class="form-control paciente-idade-numero" min="0" max="999" value="{{ p.get('idade', '') or '' }}" style="width:70px;">
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_ano" value="ano" {% if (p.get('idade_unidade') or 'ano') == 'ano' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_ano">Ano(s)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_mes" value="mes" {% if p.get('idade_unidade') == 'mes' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_mes">Mês(es)</label>
+                                    </div>
+                                    <div class="form-check form-check-inline mb-0">
+                                        <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_dia" value="dia" {% if p.get('idade_unidade') == 'dia' %}checked{% endif %}>
+                                        <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_dia">Dia(s)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-auto d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-danger btn-remover-paciente {{ 'd-none' if loop.index0 == 0 and _pacientes|length == 1 else '' }}" title="Remover"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" class="btn btn-outline-secondary" id="btnAdicionarPaciente"><i class="bi bi-plus me-1"></i>Adicionar paciente</button>
+        </div>
+    </div>
+
+    {# Tipo e Motivo da Ocorrência #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">Tipo e Motivo da Ocorrência</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Tipo da Ocorrência</label>
+                    <select name="tipo_ocorrencia_id" id="selectTipoOcorrencia" class="form-select">
+                        <option value="">— Selecione —</option>
+                        {% for t in tipos_ocorrencia %}
+                        <option value="{{ t.id }}" {% if ocorrencia.tipo_ocorrencia_id == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Motivo da Ocorrência</label>
+                    <select name="motivo_ocorrencia_id" id="selectMotivoOcorrencia" class="form-select" data-singleselect data-placeholder="Digite para buscar motivo...">
+                        <option value=""></option>
+                        {% for m in motivos %}
+                        <option value="{{ m.id }}" data-tipo-id="{{ m.tipo_ocorrencia_id or '' }}" {% if ocorrencia.motivo_ocorrencia_id == m.id %}selected{% endif %}>{{ m.nome }}{% if m.tipo_ocorrencia %} ({{ m.tipo_ocorrencia.nome }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Decisão do Protocolo (info) #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">Decisão do Protocolo de Encaminhamento</div>
+        <div class="card-body">
+            <textarea name="decisao_protocolo" class="form-control" rows="3" placeholder="Preencha ou cole a decisão sugerida pelo protocolo...">{{ ocorrencia.decisao_protocolo or '' }}</textarea>
+        </div>
+    </div>
+
+    {# Avaliação e Decisão Técnica (por paciente) #}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold">Decisão Técnica — Avaliação e Recurso</div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Paciente</label>
+                    <select id="selectPacienteAval" class="form-select">
+                        <option value="">— Selecione —</option>
+                        {% for p in (ocorrencia.pacientes or []) %}
+                        <option value="{{ loop.index0 }}" data-nome="{{ (p.nome or 'Paciente ' ~ loop.index) | e }}" data-idade="{{ p.idade or '' }}{% if p.idade_unidade and p.idade_unidade != 'ano' %} {{ p.idade_unidade }}{% endif %}" {% if loop.first %}selected{% endif %}>{{ p.nome or 'Paciente ' ~ loop.index }}{% if p.idade %} ({{ p.idade }}{% if p.idade_unidade and p.idade_unidade != 'ano' %} {{ p.idade_unidade }}{% endif %}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg-6 mb-3">
+                    <label class="form-label small">Digite a avaliação</label>
+                    <div id="editorAvaliacaoWrap" class="border rounded overflow-hidden">
+                        <div id="editorAvaliacaoToolbar">
+                            <span class="ql-formats"><button type="button" class="ql-bold"></button><button type="button" class="ql-italic"></button><button type="button" class="ql-underline"></button></span>
+                            <span class="ql-formats"><select class="ql-color"></select><select class="ql-background"></select></span>
+                            <span class="ql-formats"><button type="button" class="ql-list" value="ordered"></button><button type="button" class="ql-list" value="bullet"></button></span>
+                        </div>
+                        <div id="editorAvaliacao"></div>
+                    </div>
+                    <button type="button" class="btn btn-samu-primary btn-sm mt-2" id="btnIncluirAvaliacao"><i class="bi bi-plus-circle me-1"></i>Incluir Avaliação</button>
+                </div>
+                <div class="col-12 col-lg-6">
+                    <label class="form-label small">Histórico de Avaliação Médica</label>
+                    <div id="historicoAvaliacao" class="border rounded p-3 bg-light" contenteditable="false" style="font-size:0.9rem;" data-profissional="{{ current_user.usuario | e if current_user.is_authenticated else '' }}"></div>
+                    <input type="hidden" name="avaliacao_medica_historico" id="inputHistoricoAvaliacao" value="{{ ocorrencia.avaliacao_medica_historico or '' }}">
+                </div>
+            </div>
+
+            {# Painel Recursos: botões estilo eSUS (tipos das unidades SAMU) #}
+            <hr class="my-4">
+            <div class="decisao-esus-painel">
+            <label class="form-label fw-semibold mb-1">Recurso a enviar</label>
+            <p class="small text-muted mb-3">Clique no botão com o número da prioridade (1=vermelho maior prioridade, 5=cinza menor).</p>
+                {% for t in tipos_unidade %}
+                <div class="decisao-esus-tipo mb-3">
+                    <span class="tipo-sigla"><i class="{{ (t.icon or 'fa-solid fa-ambulance') | icon_class }} me-1"></i>{{ t.sigla }}</span>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% for c in classificacoes %}
+                        <button type="button" class="btn btn-sm decisao-esus-btn decisao-btn" data-tipo="{{ t.id }}" data-class="{{ c.id }}"
+                            data-sigla="{{ t.sigla }}" data-class-nome="{{ (c.nome or '')|e }}" data-class-cor="{{ c.cor or '#6c757d' }}"
+                            style="background-color:{{ c.cor or '#6c757d' }}; color:white;"
+                            title="{{ t.sigla }} — {{ c.nome }}">{{ c.ordem }}</button>
+                        <input type="hidden" name="decisao_{{ t.id }}_{{ c.id }}" id="decisao_{{ t.id }}_{{ c.id }}" value="">
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-muted small">Cadastre viaturas em Unidades SAMU para os tipos aparecerem aqui.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mb-4">
+        <button type="submit" class="btn btn-samu-primary btn-lg" id="btnSubmit"><i class="bi bi-check2-circle me-1"></i>Concluir Regulação</button>
+        <a href="{{ url_for('atendimento.regulacao_medica') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block modals %}
+{{ super() }}
+<div class="modal fade" id="modalConfirmarRecurso" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar envio de recurso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalConfirmarRecursoBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-samu-primary" id="modalConfirmarRecursoBtn">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function() {
+    var quill = new Quill('#editorAvaliacao', { theme: 'snow', modules: { toolbar: '#editorAvaliacaoToolbar' } });
+    var historicoDiv = document.getElementById('historicoAvaliacao');
+    var historicoInput = document.getElementById('inputHistoricoAvaliacao');
+    historicoDiv.innerHTML = historicoInput.value || '';
+
+    document.getElementById('btnIncluirAvaliacao').addEventListener('click', function() {
+        var sel = document.getElementById('selectPacienteAval');
+        var opt = sel ? sel.selectedOptions[0] : null;
+        var pacienteNome = opt ? (opt.dataset.nome || '') : '';
+        var pacienteIdade = opt ? (opt.dataset.idade || '') : '';
+        var avaliacao = quill.root.innerHTML;
+        if (!avaliacao || avaliacao === '<p><br></p>') {
+            alert('Digite a avaliação antes de incluir.');
+            return;
+        }
+        var profissional = historicoDiv.dataset.profissional || '';
+        var dataStr = new Date().toLocaleString('pt-BR');
+        var cabecalho = '<strong>' + (profissional || 'Profissional') + '</strong> — ' + dataStr;
+        var linhaPaciente = '';
+        if (pacienteNome || pacienteIdade) {
+            var partes = [];
+            if (pacienteNome) partes.push('paciente: ' + pacienteNome);
+            if (pacienteIdade) partes.push('idade: ' + pacienteIdade);
+            linhaPaciente = '<div class="mt-1 small text-muted">' + partes.join(' ') + '</div>';
+        }
+        var bloco = '<div class="mb-3 pb-2 border-bottom"><small class="text-muted">' + cabecalho + '</small>' + linhaPaciente + '<div class="mt-1">' + avaliacao + '</div></div>';
+        historicoDiv.innerHTML = (historicoDiv.innerHTML || '') + bloco;
+        historicoInput.value = historicoDiv.innerHTML;
+        quill.setText('');
+        historicoDiv.scrollTop = historicoDiv.scrollHeight;
+    });
+
+    // Painel decisão: ao clicar para ADICIONAR, mostra modal; ao clicar para remover, desmarca
+    var decisoes = {{ (ocorrencia.decisoes_medicas or []) | tojson }};
+    var modalRecursoEl = document.getElementById('modalConfirmarRecurso');
+    var modalRecurso = modalRecursoEl ? bootstrap.Modal.getOrCreateInstance(modalRecursoEl) : null;
+    var btnConfirmarRecurso = document.getElementById('modalConfirmarRecursoBtn');
+    var modalBody = document.getElementById('modalConfirmarRecursoBody');
+    var btnPendente = null;
+    function getDecisoesAtivas() {
+        var r = [];
+        document.querySelectorAll('.decisao-btn.ativo').forEach(function(b) {
+            r.push({ sigla: b.dataset.sigla, nome: b.dataset.classNome });
+        });
+        return r;
+    }
+    document.querySelectorAll('.decisao-btn').forEach(function(btn) {
+        var tipo = parseInt(btn.dataset.tipo, 10);
+        var cls = parseInt(btn.dataset.class, 10);
+        var hidden = document.getElementById('decisao_' + tipo + '_' + cls);
+        if (!hidden) return;
+        var ativo = decisoes.some(function(d) { return d.tipo_unidade_id === tipo && d.classificacao_risco_id === cls; });
+        if (ativo) { btn.classList.add('ativo'); hidden.value = '1'; }
+        btn.addEventListener('click', function() {
+            if (btn.classList.contains('ativo')) {
+                btn.classList.remove('ativo');
+                hidden.value = '';
+                return;
+            }
+            btnPendente = btn;
+            var jaEnviados = getDecisoesAtivas();
+            var sigla = btn.dataset.sigla || '';
+            var classNome = btn.dataset.classNome || '';
+            var label = sigla + ' (' + classNome + ')';
+            if (jaEnviados.length > 0) {
+                var lista = jaEnviados.map(function(d) { return d.sigla + ' (' + d.nome + ')'; }).join(', ');
+                modalBody.innerHTML = '<p>Os seguintes recursos já foram enviados para essa ocorrência:</p><p class="fw-semibold">' + lista + '</p><p>Você tem certeza de que quer enviar <strong>' + label + '</strong>?</p>';
+            } else {
+                modalBody.innerHTML = '<p>Confirma o envio de <strong>' + label + '</strong>?</p>';
+            }
+            if (modalRecurso) modalRecurso.show();
+        });
+    });
+    btnConfirmarRecurso.addEventListener('click', function() {
+        if (!btnPendente) return;
+        var h = document.getElementById('decisao_' + btnPendente.dataset.tipo + '_' + btnPendente.dataset.class);
+        if (h) { h.value = '1'; btnPendente.classList.add('ativo'); }
+        btnPendente = null;
+        if (modalRecurso) modalRecurso.hide();
+    });
+    if (modalRecursoEl) modalRecursoEl.addEventListener('hidden.bs.modal', function() { btnPendente = null; });
+
+    // Pacientes: adicionar/remover (igual registro-chamada)
+    var cbMesmo = document.getElementById('paciente0Mesmo');
+    var listaPacientes = document.getElementById('pacientesLista');
+    var btnAddPaciente = document.getElementById('btnAdicionarPaciente');
+    if (listaPacientes && btnAddPaciente) {
+        btnAddPaciente.addEventListener('click', function() {
+            var rows = listaPacientes.querySelectorAll('.paciente-row');
+            var idx = rows.length;
+            var div = document.createElement('div');
+            div.className = 'paciente-row mb-3';
+            div.dataset.idx = idx;
+            div.innerHTML = '<div class="row g-3 align-items-start">' +
+                '<div class="col-12 col-md-5"><label class="form-label fw-semibold">Nome completo</label><input type="text" name="paciente_' + idx + '_nome" class="form-control" placeholder="Nome completo"></div>' +
+                '<div class="col-12 col-md-3"><label class="form-label fw-semibold">Sexo</label><select name="paciente_' + idx + '_sexo" class="form-select"><option value="">— Selecione —</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>' +
+                '<div class="col-12 col-md-4"><label class="form-label fw-semibold">Idade</label><div class="d-flex align-items-center gap-2 flex-wrap">' +
+                '<input type="number" name="paciente_' + idx + '_idade" class="form-control paciente-idade-numero" min="0" max="999" style="width:70px;">' +
+                '<div class="d-flex gap-2 flex-wrap"><div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="ano" checked><label class="form-check-label small">Ano(s)</label></div>' +
+                '<div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="mes"><label class="form-check-label small">Mês(es)</label></div>' +
+                '<div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="dia"><label class="form-check-label small">Dia(s)</label></div></div></div></div>' +
+                '<div class="col-12 col-md-auto d-flex align-items-end"><button type="button" class="btn btn-outline-danger btn-remover-paciente" title="Remover"><i class="bi bi-x-lg"></i></button></div></div>';
+            listaPacientes.appendChild(div);
+            div.querySelector('.btn-remover-paciente').addEventListener('click', function() {
+                div.remove();
+                reindexarPacientes();
+            });
+            if (rows.length >= 1) rows[0].querySelector('.btn-remover-paciente')?.classList.remove('d-none');
+            if (typeof atualizarSelectPacienteAval === 'function') atualizarSelectPacienteAval();
+        });
+        listaPacientes.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remover-paciente')) {
+                var row = e.target.closest('.paciente-row');
+                if (row && listaPacientes.querySelectorAll('.paciente-row').length > 1) {
+                    row.remove();
+                    reindexarPacientes();
+                }
+            }
+        });
+        function reindexarPacientes() {
+            listaPacientes.querySelectorAll('.paciente-row').forEach(function(row, i) {
+                row.dataset.idx = i;
+                row.querySelectorAll('[name^="paciente_"]').forEach(function(inp) {
+                    inp.name = inp.name.replace(/paciente_\d+_/, 'paciente_' + i + '_');
+                });
+                var btnRem = row.querySelector('.btn-remover-paciente');
+                if (btnRem) btnRem.classList.toggle('d-none', i === 0);
+            });
+            if (typeof atualizarSelectPacienteAval === 'function') atualizarSelectPacienteAval();
+        }
+    }
+
+    // Checkbox "Solicitante é paciente" - preenche com nome do solicitante
+    var nomeSolicitante = {{ (ocorrencia.nome_solicitante or '') | tojson }};
+    if (cbMesmo) {
+        var nomeInp0 = document.querySelector('[name="paciente_0_nome"]');
+        cbMesmo.addEventListener('change', function() {
+            if (nomeInp0) nomeInp0.value = this.checked ? nomeSolicitante : '';
+        });
+    }
+    // Atualizar select de pacientes ao adicionar/remover (para selectPacienteAval)
+    function atualizarSelectPacienteAval() {
+        var sel = document.getElementById('selectPacienteAval');
+        if (!sel || !listaPacientes) return;
+        var rows = listaPacientes.querySelectorAll('.paciente-row');
+        var opts = [];
+        rows.forEach(function(row, i) {
+            var nomeInp = row.querySelector('input[name="paciente_' + i + '_nome"]');
+            var idadeInp = row.querySelector('input[name="paciente_' + i + '_idade"]');
+            var unidadeRadio = row.querySelector('input[name="paciente_' + i + '_idade_unidade"]:checked');
+            var nome = nomeInp ? nomeInp.value.trim() : '';
+            var idade = idadeInp ? idadeInp.value : '';
+            var unidade = (unidadeRadio && unidadeRadio.value !== 'ano') ? unidadeRadio.value : 'ano';
+            var idadeStr = idade ? idade + (unidade !== 'ano' ? ' ' + unidade : '') : '';
+            var label = (nome || 'Paciente ' + (i + 1)) + (idade ? ' (' + idadeStr + ')' : '');
+            opts.push({ value: i, text: label, nome: nome || 'Paciente ' + (i + 1), idade: idadeStr });
+        });
+        var curVal = sel.value;
+        sel.innerHTML = '<option value="">— Selecione —</option>';
+        opts.forEach(function(o) {
+            var opt = document.createElement('option');
+            opt.value = o.value;
+            opt.textContent = o.text;
+            opt.dataset.nome = o.nome;
+            opt.dataset.idade = o.idade;
+            sel.appendChild(opt);
+        });
+        if (curVal && opts.some(function(o) { return String(o.value) === curVal; })) sel.value = curVal;
+    }
+
+    // Filtrar motivos por tipo (Tom Select)
+    var tipoSelect = document.getElementById('selectTipoOcorrencia');
+    var motivoSelect = document.getElementById('selectMotivoOcorrencia');
+    var motivoOpts = [];
+    if (motivoSelect) {
+        motivoSelect.querySelectorAll('option').forEach(function(opt) {
+            motivoOpts.push({ value: opt.value, text: opt.textContent, tipoId: (opt.dataset.tipoId || '').toString() });
+        });
+    }
+    function filtrarMotivos() {
+        if (!tipoSelect || !motivoSelect) return;
+        var tipoId = (tipoSelect.value || '').toString();
+        var ts = motivoSelect.tomselect;
+        if (ts) {
+            var curVal = ts.getValue();
+            var filtered = motivoOpts.filter(function(o) { return !o.value || !tipoId || o.tipoId === tipoId; });
+            ts.clearOptions();
+            filtered.forEach(function(o) { ts.addOption({ value: o.value, text: o.text }); });
+            ts.refreshOptions(false);
+            ts.setValue((curVal && filtered.some(function(o) { return o.value === curVal; })) ? curVal : '');
+        } else {
+            motivoSelect.querySelectorAll('option').forEach(function(opt) {
+                if (opt.value === '') { opt.style.display = ''; return; }
+                var dt = (opt.dataset.tipoId || '').toString();
+                opt.style.display = (!tipoId || dt === tipoId) ? '' : 'none';
+            });
+        }
+    }
+    if (tipoSelect) tipoSelect.addEventListener('change', filtrarMotivos);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', filtrarMotivos);
+    } else {
+        filtrarMotivos();
+    }
+
+    document.querySelector('form').addEventListener('submit', function() {
+        if (historicoInput) historicoInput.value = historicoDiv.innerHTML;
+    });
+})();
+</script>
+{% endblock %}

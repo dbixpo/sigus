@@ -10,13 +10,22 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-tag"></i> Marcas</h1>
+    <h1><i class="fas fa-tag"></i> Marcas</h1>
     <a href="{{ url_for('configuracoes.nova_marca2') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Nova Marca
+        <i class="fas fa-plus-circle me-1"></i>Nova Marca
     </a>
 </div>
 
 {% if marcas %}
+<div class="mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label mb-0 small text-muted">Buscar</label>
+            <input type="text" id="filtroMarcas" class="form-control form-control-sm"
+                   placeholder="Digite para filtrar por marca, tipo de equipamento...">
+        </div>
+    </div>
+</div>
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -32,21 +41,24 @@
                 </thead>
                 <tbody>
                     {% for m in marcas %}
-                    <tr>
+                    <tr class="linha-marca" data-marca-nome="{{ m.nome | lower }}" 
+                        data-tipos="{{ m.tipos.all() | map(attribute='nome') | join(' ') | lower }}"
+                        data-modelos="{{ m.modelos.count() }}"
+                        data-equipamentos="{{ m.equipamentos.count() }}">
                         <td class="fw-semibold">
-                            <i class="bi bi-tag me-2 text-primary"></i>{{ m.nome }}
+                            <i class="fas fa-tag me-2 text-primary"></i>{{ m.nome }}
                         </td>
                         <td>
                             {% set tipos_m = m.tipos.all() %}
                             {% if tipos_m %}
                                 {% for t in tipos_m %}
                                 <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">
-                                    <i class="bi {{ t.icone }} me-1"></i>{{ t.nome }}
+                                    <i class="{{ t.icone }} me-1"></i>{{ t.nome }}
                                 </span>
                                 {% endfor %}
                             {% else %}
                                 <span class="badge bg-warning text-dark">
-                                    <i class="bi bi-exclamation-triangle me-1"></i>Sem tipo vinculado
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Sem tipo vinculado
                                 </span>
                             {% endif %}
                         </td>
@@ -61,7 +73,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_marca2', id=m.id) }}"
                                class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             {% if m.equipamentos.count() == 0 and m.modelos.count() == 0 %}
                             <form method="POST" action="{{ url_for('configuracoes.excluir_marca2', id=m.id) }}"
@@ -69,7 +81,7 @@
                                   onsubmit="return confirm('Excluir a marca {{ m.nome }}?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash"></i>
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                             {% endif %}
@@ -83,12 +95,72 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <i class="bi bi-tag fs-1 text-muted d-block mb-3"></i>
+    <i class="fas fa-tag fs-1 text-muted d-block mb-3"></i>
     <h5>Nenhuma marca cadastrada</h5>
     <p class="text-muted">Cadastre marcas e vincule-as aos tipos de equipamento compatíveis.</p>
     <a href="{{ url_for('configuracoes.nova_marca2') }}" class="btn btn-primary mt-2">
-        <i class="bi bi-plus-circle me-1"></i>Cadastrar Primeira Marca
+        <i class="fas fa-plus-circle me-1"></i>Cadastrar Primeira Marca
     </a>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var inputBusca = document.getElementById('filtroMarcas');
+    if (!inputBusca) return;
+    
+    function normalizarTexto(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    
+    function aplicarFiltro() {
+        var termo = normalizarTexto(inputBusca.value);
+        var linhas = document.querySelectorAll('.linha-marca');
+        var totalVisiveis = 0;
+        
+        linhas.forEach(function(linha) {
+            var nome = normalizarTexto(linha.dataset.marcaNome || '');
+            var tipos = normalizarTexto(linha.dataset.tipos || '');
+            var modelos = linha.dataset.modelos || '';
+            var equipamentos = linha.dataset.equipamentos || '';
+            
+            var textoCompleto = nome + ' ' + tipos + ' ' + modelos + ' ' + equipamentos;
+            var passaFiltro = !termo || textoCompleto.indexOf(termo) !== -1;
+            
+            linha.style.display = passaFiltro ? '' : 'none';
+            if (passaFiltro) totalVisiveis++;
+        });
+        
+        // Mostra mensagem se não houver resultados
+        var tabela = document.querySelector('.table');
+        var mensagemSemResultados = document.getElementById('mensagemSemResultados');
+        if (termo && totalVisiveis === 0) {
+            if (!mensagemSemResultados) {
+                mensagemSemResultados = document.createElement('div');
+                mensagemSemResultados.id = 'mensagemSemResultados';
+                mensagemSemResultados.className = 'alert alert-info mt-3';
+                mensagemSemResultados.innerHTML = '<i class="fas fa-info-circle me-2"></i>Nenhuma marca encontrada com o termo "' + termo + '".';
+                tabela.parentElement.parentElement.appendChild(mensagemSemResultados);
+            }
+        } else {
+            if (mensagemSemResultados) {
+                mensagemSemResultados.remove();
+            }
+        }
+    }
+    
+    inputBusca.addEventListener('input', aplicarFiltro);
+    
+    // Limpa filtro com ESC
+    inputBusca.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            inputBusca.value = '';
+            aplicarFiltro();
+            inputBusca.focus();
+        }
+    });
+})();
+</script>
 {% endblock %}

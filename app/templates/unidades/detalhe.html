@@ -4,6 +4,7 @@
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
         <li class="breadcrumb-item active">{{ unidade.nome }}</li>
     </ol>
@@ -11,7 +12,7 @@
 
 <div class="page-header">
     <h1 class="flex-wrap">
-        <i class="bi bi-hospital"></i> {{ unidade.nome }}
+        <i class="fas fa-hospital"></i> {{ unidade.nome }}
         <span class="badge bg-{{ 'success' if unidade.status == 'ativa' else 'secondary' }} ms-2 fs-6">{{ unidade.status | title }}</span>
         <span class="badge bg-primary fs-6"
               title="{{ unidade.tipo_unidade.nome if unidade.tipo_unidade else unidade.tipo }}">
@@ -23,52 +24,52 @@
         {% if unidade.predio %}
         <a href="{{ url_for('predios.detalhe', id=unidade.predio_id) }}"
            class="badge bg-secondary fs-6 text-decoration-none" title="Ver prédio">
-            <i class="bi bi-buildings me-1"></i>{{ unidade.predio.nome }}
+            <i class="fas fa-building me-1"></i>{{ unidade.predio.nome }}
         </a>
         {% endif %}
     </h1>
     <div class="d-flex gap-2 flex-wrap">
         {% if current_user.pode('cadastrar_sala') %}
         <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i>Nova Sala/Setor
+            <i class="fas fa-plus-circle me-1"></i>Nova Sala/Setor
         </a>
         {% endif %}
         {% if current_user.pode('editar_unidade') %}
         <a href="{{ url_for('unidades.editar', id=unidade.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-pencil me-1"></i>Editar
+            <i class="fas fa-pencil-alt me-1"></i>Editar
         </a>
         {% endif %}
     </div>
 </div>
 
 <div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
-    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ unidade.criado_em | br_datetime }}</strong></span>
-    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ unidade.atualizado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-calendar-plus me-1"></i>Criado em: <strong>{{ unidade.criado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-clock-history me-1"></i>Última atualização: <strong>{{ unidade.atualizado_em | br_datetime }}</strong></span>
 </div>
 
 <!-- STATS -->
 <div class="row g-3 mb-3">
     <div class="col-md-3 col-6">
         <div class="stat-card">
-            <div class="stat-icon bg-primary-soft"><i class="bi bi-door-open"></i></div>
+            <div class="stat-icon bg-primary-soft"><i class="fas fa-door-open"></i></div>
             <div><div class="stat-value">{{ unidade.total_salas }}</div><div class="stat-label">Salas Ativas</div></div>
         </div>
     </div>
     <div class="col-md-3 col-6">
         <div class="stat-card">
-            <div class="stat-icon bg-success-soft"><i class="bi bi-pc-display"></i></div>
+            <div class="stat-icon bg-success-soft"><i class="fas fa-desktop"></i></div>
             <div><div class="stat-value">{{ unidade.total_equipamentos }}</div><div class="stat-label">Equipamentos</div></div>
         </div>
     </div>
     <div class="col-md-3 col-6">
         <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="bi bi-wrench"></i></div>
-            <div><div class="stat-value">{{ unidade.chamados_abertos }}</div><div class="stat-label">Chamados Abertos</div></div>
+            <div class="stat-icon bg-danger-soft"><i class="fas fa-wrench"></i></div>
+            <div><div class="stat-value">{{ chamados_abertos_count }}</div><div class="stat-label">Chamados em Aberto</div></div>
         </div>
     </div>
     <div class="col-md-3 col-6">
         <div class="stat-card">
-            <div class="stat-icon bg-info-soft"><i class="bi bi-people"></i></div>
+            <div class="stat-icon bg-info-soft"><i class="fas fa-users"></i></div>
             <div><div class="stat-value">{{ vinculos | length }}</div><div class="stat-label">Profissionais Ativos</div></div>
         </div>
     </div>
@@ -78,38 +79,38 @@
 <ul class="nav nav-tabs mb-3" id="tabsUnidade" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-chamados" type="button">
-            <i class="bi bi-wrench-adjustable me-1"></i>Chamados
-            <span class="badge bg-secondary ms-1">{{ unidade.chamados_abertos }}</span>
+            <i class="fas fa-wrench me-1"></i>Chamados
+            <span class="badge bg-secondary ms-1">{{ chamados_abertos_count }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-equipamentos" type="button">
-            <i class="bi bi-pc-display me-1"></i>Equipamentos
+            <i class="fas fa-desktop me-1"></i>Equipamentos
             <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas" type="button">
-            <i class="bi bi-door-open me-1"></i>Salas/Setores
+            <i class="fas fa-door-open me-1"></i>Salas/Setores
             <span class="badge bg-secondary ms-1">{{ salas | length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-profissionais" type="button">
-            <i class="bi bi-people me-1"></i>Profissionais
+            <i class="fas fa-users me-1"></i>Profissionais
             <span class="badge bg-primary ms-1">{{ vinculos | length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fichas" type="button">
-            <i class="bi bi-file-earmark-person me-1"></i>Fichas CNES
+            <i class="fas fa-file-earmark-person me-1"></i>Fichas CNES
             <span class="badge bg-secondary ms-1">{{ fichas | length }}</span>
         </button>
     </li>
     {% if current_user.pode('vincular_profissionais') %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-solicitacoes" type="button">
-            <i class="bi bi-person-plus me-1"></i>Solicitações
+            <i class="fas fa-user-plus me-1"></i>Solicitações de Vínculo (Cadastro Público)
             {% set _nsol = solicitacoes_pendentes | length %}
             {% if _nsol > 0 %}
             <span class="badge bg-danger ms-1">{{ _nsol }}</span>
@@ -119,7 +120,7 @@
     {% endif %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-info" type="button">
-            <i class="bi bi-info-circle me-1"></i>Informações
+            <i class="fas fa-info-circle me-1"></i>Informações
         </button>
     </li>
 </ul>
@@ -132,7 +133,7 @@
     <div class="tab-pane fade" id="tab-profissionais">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <span><i class="bi bi-people me-2"></i>Equipe da Unidade</span>
+                <span><i class="fas fa-users me-2"></i>Equipe da Unidade</span>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <div class="btn-group btn-group-sm" role="group" id="filtroVinculo">
                         <button type="button" class="btn btn-primary active" data-filtro="ativo">Ativos</button>
@@ -142,10 +143,14 @@
                     {% if current_user.pode('vincular_profissionais') %}
                     <button type="button" class="btn btn-primary btn-sm"
                             data-bs-toggle="modal" data-bs-target="#modalVincular">
-                        <i class="bi bi-person-plus me-1"></i>Vincular
+                        <i class="fas fa-user-plus me-1"></i>Vincular
                     </button>
                     {% endif %}
                 </div>
+            </div>
+            <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                <input type="text" id="filtroProfGeral" class="form-control form-control-sm"
+                       style="max-width:240px" placeholder="Buscar em qualquer coluna...">
             </div>
             <div class="card-body p-0">
                 {% if todos_vinculos %}
@@ -155,7 +160,7 @@
                             <tr>
                                 <th>Profissional</th>
                                 <th class="d-none d-md-table-cell">Matrícula</th>
-                                <th class="d-none d-md-table-cell"><i class="bi bi-whatsapp text-success me-1"></i>Telefone</th>
+                                <th class="d-none d-md-table-cell"><i class="fab fa-whatsapp text-success me-1"></i>Telefone</th>
                                 <th class="d-none d-lg-table-cell">E-mail</th>
                                 <th>CBO</th>
                                 <th class="d-none d-md-table-cell">Perfil</th>
@@ -166,8 +171,9 @@
                         <tbody>
                             {% for v in todos_vinculos %}
                             {% set uf = ultima_ficha_por_usuario.get(v.usuario_id) %}
-                            {% set cbo_cod = (uf.cbo if uf else None) or v.usuario.cbo %}
-                            {% set cbo_txt = (uf.cbo_label if uf else None) or v.usuario.cbo_label %}
+                            {# Prioriza CBO da ficha CNES (mais recente), não usa CBO do usuário que pode estar inativado #}
+                            {% set cbo_cod = uf.cbo if uf and uf.cbo else None %}
+                            {% set cbo_txt = uf.cbo_label if uf and uf.cbo else None %}
                             {% set ch = (uf.carga_horaria if uf else None) or v.usuario.carga_horaria %}
                             <tr data-status="{{ 'ativo' if v.ativo else 'inativo' }}"
                                 data-uid="{{ v.usuario_id }}"
@@ -200,7 +206,7 @@
                                     {% set _wdig = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                                     <a href="https://wa.me/55{{ _wdig }}" target="_blank"
                                        class="text-success text-decoration-none">
-                                        <i class="bi bi-whatsapp me-1"></i>{{ _fone | br_fone }}
+                                        <i class="fab fa-whatsapp me-1"></i>{{ _fone | br_fone }}
                                     </a>
                                     {% else %}<span class="text-muted">—</span>{% endif %}
                                 </td>
@@ -211,9 +217,24 @@
                                 </td>
                                 <td>
                                     {% if cbo_cod %}
+                                    {% if cbo_txt and cbo_txt != cbo_cod and '–' in cbo_txt %}
+                                    {# cbo_txt já tem formato "código – descrição" #}
                                     <span class="badge bg-light text-dark border" title="{{ cbo_txt }}">{{ cbo_cod }}</span>
-                                    {% if cbo_txt and cbo_txt != cbo_cod %}
-                                    <span class="d-none d-xl-inline text-muted small ms-1">{{ (cbo_txt | replace(cbo_cod + ' – ', '') | replace(cbo_cod + ' - ', '')) | trim }}</span>
+                                    <span class="d-none d-xl-inline text-muted small ms-1">{{ cbo_txt.split(' – ', 1)[1] if ' – ' in cbo_txt else (cbo_txt.split(' - ', 1)[1] if ' - ' in cbo_txt else cbo_txt) }}</span>
+                                    {% else %}
+                                    {# Busca descrição do banco usando a lista cbos passada para o template #}
+                                    {% set cbo_desc = '' %}
+                                    {% for cod, desc in cbos %}
+                                        {% if cod == cbo_cod %}
+                                            {% set cbo_desc = desc %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if cbo_desc %}
+                                    <span class="badge bg-light text-dark border" title="{{ cbo_cod }} – {{ cbo_desc }}">{{ cbo_cod }}</span>
+                                    <span class="d-none d-xl-inline text-muted small ms-1">{{ cbo_desc }}</span>
+                                    {% else %}
+                                    <span class="badge bg-light text-dark border" title="{{ cbo_cod }}">{{ cbo_cod }}</span>
+                                    {% endif %}
                                     {% endif %}
                                     {% else %}<span class="text-muted">—</span>{% endif %}
                                 </td>
@@ -229,14 +250,14 @@
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-info dropdown-toggle" type="button"
                                                 data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-three-dots-vertical me-1"></i>Mais opções
+                                            <i class="fas fa-three-dots-vertical me-1"></i>Mais opções
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             {# Editar perfil do profissional — apenas quem pode gerenciar usuários #}
                                             {% if current_user.pode('gerenciar_usuarios') %}
                                             <li>
                                                 <a class="dropdown-item" href="{{ url_for('usuarios.editar', id=v.usuario_id) }}">
-                                                    <i class="bi bi-shield-lock me-2 text-primary"></i>Editar perfil
+                                                    <i class="fas fa-shield-lock me-2 text-primary"></i>Editar perfil
                                                 </a>
                                             </li>
                                             <li><hr class="dropdown-divider"></li>
@@ -246,7 +267,7 @@
                                             <li>
                                                 <a class="dropdown-item" href="#" data-ficha-url="{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=uf.id) }}" data-ficha-titulo="Ficha CNES — {{ v.usuario.nome | e }}"
                                                    onclick="event.preventDefault(); abrirImpresso(this.dataset.fichaUrl, this.dataset.fichaTitulo); return false;">
-                                                    <i class="bi bi-file-earmark-person me-2 text-info"></i>Visualizar Última Ficha
+                                                    <i class="fas fa-file-earmark-person me-2 text-info"></i>Visualizar Última Ficha
                                                 </a>
                                             </li>
                                             {% endif %}
@@ -257,7 +278,7 @@
                                                         type="button"
                                                         data-uid="{{ v.usuario_id }}"
                                                         data-nome="{{ v.usuario.nome }}">
-                                                    <i class="bi bi-file-earmark-plus me-2 text-success"></i>Gerar Nova Ficha CNES
+                                                    <i class="fas fa-file-earmark-plus me-2 text-success"></i>Gerar Nova Ficha CNES
                                                 </button>
                                             </li>
                                             {# Alterar CBO no vínculo #}
@@ -273,7 +294,7 @@
                                                         data-tipo="{{ (uf.tipo_vinculo if uf else None) or v.usuario.tipo_vinculo or '' }}"
                                                         data-cns="{{ v.usuario.cns or '' }}"
                                                         data-action="{{ url_for('unidades.editar_cbo_vinculo', id=unidade.id, usuario_id=v.usuario_id) }}">
-                                                    <i class="bi bi-pencil-square me-2 text-warning"></i>Alterar CBO no Vínculo
+                                                    <i class="fas fa-pen-to-square me-2 text-warning"></i>Alterar CBO no Vínculo
                                                 </button>
                                             </li>
                                             {% endif %}
@@ -292,9 +313,9 @@
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <button type="submit" class="dropdown-item d-flex align-items-center gap-2">
                                                         {% if m.ativo %}
-                                                        <i class="bi bi-toggle-on text-success" style="font-size:1rem;"></i>
+                                                        <i class="fas fa-toggle-on text-success" style="font-size:1rem;"></i>
                                                         {% else %}
-                                                        <i class="bi bi-toggle-off text-secondary" style="font-size:1rem;"></i>
+                                                        <i class="fas fa-toggle-off text-secondary" style="font-size:1rem;"></i>
                                                         {% endif %}
                                                         <span class="small">
                                                             {{ m.numero }}
@@ -315,7 +336,7 @@
                                                         data-uid="{{ v.usuario_id }}"
                                                         data-nome="{{ v.usuario.nome }}"
                                                         data-action="{{ url_for('unidades.desvincular_usuario', id=unidade.id, usuario_id=v.usuario_id) }}">
-                                                    <i class="bi bi-person-dash me-2"></i>Desvincular
+                                                    <i class="fas fa-user-dash me-2"></i>Desvincular
                                                 </button>
                                             </li>
                                             {% endif %}
@@ -328,7 +349,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state"><i class="bi bi-people"></i><p>Nenhum profissional vinculado.</p></div>
+                <div class="empty-state"><i class="fas fa-users"></i><p>Nenhum profissional vinculado.</p></div>
                 {% endif %}
             </div>
         </div>
@@ -340,15 +361,15 @@
     <div class="tab-pane fade" id="tab-equipamentos">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <span><i class="bi bi-pc-display me-2"></i>Equipamentos da Unidade</span>
+                <span><i class="fas fa-desktop me-2"></i>Equipamentos da Unidade</span>
                 <div class="d-flex gap-2">
                     <button class="btn btn-sm btn-outline-success" id="btnExportarEquipamentos" title="Exportar CSV">
-                        <i class="bi bi-download me-1"></i>Exportar CSV
+                        <i class="fas fa-download me-1"></i>Exportar CSV
                     </button>
                     {% if current_user.pode('cadastrar_equipamento') %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
                        class="btn btn-sm btn-primary">
-                        <i class="bi bi-plus-circle me-1"></i>Novo Equipamento
+                        <i class="fas fa-plus-circle me-1"></i>Novo Equipamento
                     </a>
                     {% endif %}
                 </div>
@@ -359,7 +380,7 @@
                 {# Filtro rápido por tipo/status #}
                 <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
                     <input type="text" id="filtroEquip" class="form-control form-control-sm"
-                           style="max-width:220px" placeholder="Buscar patrimônio, tipo, marca...">
+                           style="max-width:220px" placeholder="Buscar em qualquer coluna...">
                     <select id="filtroSalaEquip" class="form-select form-select-sm" style="max-width:200px">
                         <option value="">Todas as salas</option>
                         {% for sala in salas %}
@@ -396,9 +417,9 @@
                                 </td>
                                 <td class="small text-muted text-nowrap">
                                     {% if e.numero_patrimonio %}
-                                    <i class="bi bi-tag me-1"></i>{{ e.numero_patrimonio }}
+                                    <i class="fas fa-tag me-1"></i>{{ e.numero_patrimonio }}
                                     {% elif e.numero_serie %}
-                                    <i class="bi bi-upc me-1"></i>{{ e.numero_serie }}
+                                    <i class="fas fa-upc me-1"></i>{{ e.numero_serie }}
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="d-none d-md-table-cell text-muted small">
@@ -407,13 +428,13 @@
                                 </td>
                                 <td class="d-none d-lg-table-cell small text-muted">
                                     {% if e.usuario_vinculado_nome %}
-                                    <i class="bi bi-person-circle me-1"></i>{{ e.usuario_vinculado_nome }}
+                                    <i class="fas fa-user-circle me-1"></i>{{ e.usuario_vinculado_nome }}
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="d-none d-md-table-cell text-muted small">
                                     <a href="{{ url_for('salas.detalhe', id=sala.id) }}"
                                        class="text-decoration-none text-muted">
-                                        <i class="bi bi-door-open me-1"></i>{{ sala.nome }}
+                                        <i class="fas fa-door-open me-1"></i>{{ sala.nome }}
                                     </a>
                                 </td>
                                 <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
@@ -421,7 +442,7 @@
                                 <td>
                                     <a href="{{ url_for('equipamentos.detalhe', id=e.id) }}"
                                        class="btn btn-xs btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i>
+                                        <i class="fas fa-eye"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -433,13 +454,13 @@
 
                 {% else %}
                 <div class="empty-state">
-                    <i class="bi bi-pc-display"></i>
+                    <i class="fas fa-desktop"></i>
                     <h6>Nenhum equipamento cadastrado nesta unidade</h6>
                     {% if current_user.pode('cadastrar_equipamento') %}
                     {% if salas %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
                        class="btn btn-primary mt-2">
-                        <i class="bi bi-plus-circle me-1"></i>Cadastrar Equipamento
+                        <i class="fas fa-plus-circle me-1"></i>Cadastrar Equipamento
                     </a>
                     {% else %}
                     <p class="text-muted small mt-2">
@@ -460,14 +481,20 @@
     <div class="tab-pane fade" id="tab-salas">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-door-open me-2"></i>Salas/Setores</span>
+                <span><i class="fas fa-door-open me-2"></i>Salas/Setores</span>
+                <div class="d-flex align-items-center gap-2">
                 {% if current_user.pode('cadastrar_sala') %}
                 <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus"></i>
+                    <i class="fas fa-plus"></i>
                 </a>
                 {% endif %}
+                </div>
             </div>
             <div class="card-body p-0">
+                <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                    <input type="text" id="filtroSalasGeral" class="form-control form-control-sm"
+                           style="max-width:240px" placeholder="Buscar em qualquer coluna...">
+                </div>
                 {% if salas %}
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
@@ -479,7 +506,7 @@
                                 <td><span class="text-muted small">{{ s.tipo_label }}</span></td>
                                 <td>
                                     {% if s.ramal %}
-                                    <span class="small"><i class="bi bi-telephone-plus me-1 text-secondary"></i>{{ s.ramal }}</span>
+                                    <span class="small"><i class="fas fa-telephone-plus me-1 text-secondary"></i>{{ s.ramal }}</span>
                                     {% else %}
                                     <span class="text-muted small">—</span>
                                     {% endif %}
@@ -489,7 +516,7 @@
                                     <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="btn btn-xs btn-outline-primary btn-sm">Ver</a>
                                     {% if current_user.pode('editar_sala') %}
                                     <a href="{{ url_for('salas.editar', id=s.id) }}" class="btn btn-xs btn-outline-secondary btn-sm">
-                                        <i class="bi bi-pencil"></i>
+                                        <i class="fas fa-pencil-alt"></i>
                                     </a>
                                     {% endif %}
                                 </td>
@@ -499,7 +526,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state"><i class="bi bi-door-open"></i><p>Nenhuma sala cadastrada.</p></div>
+                <div class="empty-state"><i class="fas fa-door-open"></i><p>Nenhuma sala cadastrada.</p></div>
                 {% endif %}
             </div>
         </div>
@@ -509,33 +536,55 @@
          ABA CHAMADOS
     ══════════════════════════════════════════════ -->
     <div class="tab-pane fade show active" id="tab-chamados">
+        <!-- chamados-tab-v2: prioridade + ultima atualizacao -->
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-wrench-adjustable me-2"></i>Chamados Recentes</span>
+                <span><i class="fas fa-wrench me-2"></i>Chamados Recentes</span>
+                <div class="d-flex align-items-center gap-2">
                 <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-plus"></i> Abrir Chamado
+                    <i class="fas fa-plus"></i> Abrir Chamado
                 </a>
+                </div>
             </div>
             <div class="card-body p-0">
+                <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                    <input type="text" id="filtroChamadosGeral" class="form-control form-control-sm"
+                           style="max-width:240px" placeholder="Buscar em qualquer coluna...">
+                </div>
                 {% if chamados_recentes %}
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead><tr><th>Número</th><th>Título</th><th>Tipo</th><th>Status</th><th>Data</th></tr></thead>
+                        <thead><tr>
+                            <th>Número</th>
+                            <th>Título</th>
+                            <th>Tipo</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                            <th>Abertura</th>
+                            <th>Última atualização</th>
+                        </tr></thead>
                         <tbody>
                             {% for c in chamados_recentes %}
                             <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
                                 <td class="small text-primary">{{ c.numero }}</td>
                                 <td class="small">{{ c.titulo | truncate(35) }}</td>
                                 <td class="small">{{ c.tipo_label }}</td>
+                                <td><span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span></td>
                                 <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
                                 <td class="small text-muted">{{ c.criado_em | br_date }}</td>
+                                <td class="small text-muted">
+                                    <div>{{ c.atualizado_em | br_datetime }}</div>
+                                    {% if c.ultimo_editor %}
+                                    <div class="text-body-secondary">{{ c.ultimo_editor.nome | truncate(28) }}</div>
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state"><i class="bi bi-check-circle-fill text-success"></i><p>Nenhum chamado aberto.</p></div>
+                <div class="empty-state"><i class="fas fa-check-circle-fill text-success"></i><p>Nenhum chamado aberto.</p></div>
                 {% endif %}
             </div>
         </div>
@@ -544,56 +593,31 @@
     <!-- ══════════════════════════════════════════════
          ABA FICHAS CNES
     ══════════════════════════════════════════════ -->
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+    </style>
     <div class="tab-pane fade" id="tab-fichas">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-file-earmark-person me-2"></i>Fichas CNES Geradas</span>
-                <span class="badge bg-secondary">{{ fichas | length }}</span>
-            </div>
-            {% if fichas %}
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 small align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Profissional</th>
-                                <th>Tipo</th>
-                                <th>CBO</th>
-                                <th>Vínculo</th>
-                                <th>CH/sem</th>
-                                <th>Gerado em</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for f in fichas %}
-                            <tr>
-                                <td class="fw-semibold">{{ f.usuario.nome }}</td>
-                                <td><span class="badge bg-{{ f.tipo_badge }}">{{ f.tipo_label }}</span></td>
-                                <td class="text-muted">{{ f.cbo or '—' }}</td>
-                                <td class="text-muted">{{ f.vinculo_label if f.vinculo else '—' }}</td>
-                                <td class="text-muted">{{ (f.carga_horaria | string + 'h') if f.carga_horaria else '—' }}</td>
-                                <td class="text-muted">{{ f.gerado_em | br_datetime }}</td>
-                                <td>
-                                    <button type="button" class="btn btn-xs btn-sm btn-outline-primary btn-abrir-ficha"
-                                            data-url="{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=f.id) }}"
-                                            data-titulo="Ficha CNES — {{ f.usuario.nome | e }}">
-                                        <i class="bi bi-eye me-1"></i>Abrir
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <span><i class="fas fa-file-earmark-person me-2"></i>Fichas CNES (última por profissional)</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-secondary" id="badge-fichas-count">{{ fichas | length }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-atualizar-fichas" title="Atualizar fichas">
+                        <i class="fas fa-arrow-clockwise"></i>
+                    </button>
                 </div>
             </div>
-            {% else %}
-            <div class="card-body">
-                <p class="text-muted small mb-0">
-                    <i class="bi bi-info-circle me-1"></i>Nenhuma ficha gerada ainda. Ao vincular um profissional a ficha é criada automaticamente.
-                </p>
+            <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                <input type="text" id="filtroFichasGeral" class="form-control form-control-sm"
+                       style="max-width:240px" placeholder="Buscar em qualquer coluna...">
             </div>
-            {% endif %}
+            <div id="conteudo-fichas-cnes">
+                {% include 'unidades/_fichas_cnes_tabela.html' %}
+            </div>
         </div>
     </div>
 
@@ -604,9 +628,9 @@
     <div class="tab-pane fade" id="tab-solicitacoes">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <span><i class="bi bi-person-plus me-2"></i>Solicitações de Vínculo Profissional</span>
+                <span><i class="fas fa-user-plus me-2"></i>Solicitações de Vínculo Profissional</span>
                 <a href="{{ url_for('solicitacoes.formulario') }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-link-45deg me-1"></i>Copiar link público
+                    <i class="fas fa-link me-1"></i>Copiar link público
                     <span class="badge bg-primary ms-1" style="font-size:.65rem;">compartilhar</span>
                 </a>
             </div>
@@ -614,7 +638,7 @@
 
                 {# Botão copiar link #}
                 <div class="alert alert-info m-3 py-2 px-3 small d-flex align-items-center gap-2">
-                    <i class="bi bi-info-circle"></i>
+                    <i class="fas fa-info-circle"></i>
                     Envie o link abaixo para o profissional preencher os dados:
                     <code id="linkSolicitacao">{{ request.host_url }}solicitar-vinculo-profissional/</code>
                     <button type="button" class="btn btn-xs btn-sm btn-outline-primary ms-auto"
@@ -623,13 +647,18 @@
                     </button>
                 </div>
 
+                <div class="px-3 py-2 border-bottom d-flex gap-2 flex-wrap align-items-center bg-light">
+                    <input type="text" id="filtroSolicitacoesGeral" class="form-control form-control-sm"
+                           placeholder="Buscar em qualquer coluna...">
+                </div>
+
                 {% set _sol_pend  = solicitacoes_pendentes %}
                 {% set _sol_hist  = solicitacoes_historico %}
 
                 {% if _sol_pend %}
                 <div class="px-3 pt-2 pb-1">
                     <div class="fw-semibold small text-danger mb-2">
-                        <i class="bi bi-hourglass-split me-1"></i>Pendentes de aprovação ({{ _sol_pend | length }})
+                        <i class="fas fa-hourglass-split me-1"></i>Pendentes de aprovação ({{ _sol_pend | length }})
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -660,7 +689,7 @@
                                 <button type="button" class="btn btn-xs btn-sm btn-outline-secondary"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalVerSol{{ s.id }}">
-                                    <i class="bi bi-eye"></i>
+                                    <i class="fas fa-eye"></i>
                                 </button>
                                 <form method="POST"
                                       action="{{ url_for('solicitacoes.aprovar', id=s.id) }}"
@@ -668,13 +697,13 @@
                                       onsubmit="return confirm('Aprovar solicitação de {{ s.nome }}?')">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-xs btn-sm btn-success">
-                                        <i class="bi bi-check-lg me-1"></i>Aprovar
+                                        <i class="fas fa-check-lg me-1"></i>Aprovar
                                     </button>
                                 </form>
                                 <button type="button" class="btn btn-xs btn-sm btn-outline-danger"
                                         data-bs-toggle="modal"
                                         data-bs-target="#modalRejeitarSol{{ s.id }}">
-                                    <i class="bi bi-x-lg me-1"></i>Rejeitar
+                                    <i class="fas fa-times-lg me-1"></i>Rejeitar
                                 </button>
                             </div>
                         </td>
@@ -685,7 +714,7 @@
                 </div>
                 {% else %}
                 <div class="text-center text-muted py-4 small">
-                    <i class="bi bi-person-check d-block fs-3 mb-2 opacity-40"></i>
+                    <i class="fas fa-user-check d-block fs-3 mb-2 opacity-40"></i>
                     Nenhuma solicitação pendente.
                 </div>
                 {% endif %}
@@ -693,7 +722,7 @@
                 {% if _sol_hist %}
                 <div class="px-3 pt-3 pb-1 border-top">
                     <div class="fw-semibold small text-muted mb-2">
-                        <i class="bi bi-clock-history me-1"></i>Histórico (últimas {{ _sol_hist | length }})
+                        <i class="fas fa-clock-history me-1"></i>Histórico (últimas {{ _sol_hist | length }})
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -734,35 +763,35 @@
                 <!-- Localização -->
                 <div class="card mb-3">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-geo-alt me-2"></i>Localização</span>
+                        <span><i class="fas fa-geo-alt me-2"></i>Localização</span>
                         {% if unidade.link_maps %}
                         <a href="{{ unidade.link_maps }}" target="_blank"
                            class="btn btn-xs btn-sm btn-outline-danger">
-                            <i class="bi bi-pin-map-fill me-1"></i>Maps
+                            <i class="fas fa-pin-map-fill me-1"></i>Maps
                         </a>
                         {% endif %}
                     </div>
                     <div class="card-body small">
-                        {% if unidade.endereco %}<p class="mb-1"><i class="bi bi-signpost me-1 text-muted"></i>{{ unidade.endereco }}{% if unidade.numero %}, {{ unidade.numero }}{% endif %}{% if unidade.complemento %} — {{ unidade.complemento }}{% endif %}</p>{% endif %}
+                        {% if unidade.endereco %}<p class="mb-1"><i class="fas fa-signpost me-1 text-muted"></i>{{ unidade.endereco }}{% if unidade.numero %}, {{ unidade.numero }}{% endif %}{% if unidade.complemento %} — {{ unidade.complemento }}{% endif %}</p>{% endif %}
                         {% if unidade.bairro %}<p class="mb-1 text-muted">{{ unidade.bairro }}</p>{% endif %}
                         {% if unidade.cidade %}<p class="mb-1 text-muted">{{ unidade.cidade }}/{{ unidade.uf }}</p>{% endif %}
                         {% if unidade.cep %}<p class="mb-1 text-muted">CEP: {{ unidade.cep }}</p>{% endif %}
                         {% if unidade.telefone %}
                         <p class="mb-1">
-                            <i class="bi bi-telephone me-1 text-muted"></i>{{ unidade.telefone }}
+                            <i class="fas fa-telephone me-1 text-muted"></i>{{ unidade.telefone }}
                             {% if unidade.ramal %}
                             <span class="badge bg-secondary ms-1">Ramal {{ unidade.ramal }}</span>
                             {% endif %}
                         </p>
                         {% elif unidade.ramal %}
                         <p class="mb-1">
-                            <i class="bi bi-telephone-plus me-1 text-muted"></i>Ramal {{ unidade.ramal }}
+                            <i class="fas fa-telephone-plus me-1 text-muted"></i>Ramal {{ unidade.ramal }}
                         </p>
                         {% endif %}
-                        {% if unidade.email %}<p class="mb-1"><i class="bi bi-envelope me-1 text-muted"></i>{{ unidade.email }}</p>{% endif %}
+                        {% if unidade.email %}<p class="mb-1"><i class="fas fa-envelope me-1 text-muted"></i>{{ unidade.email }}</p>{% endif %}
                         {% if unidade.numero_cnes %}
                         <p class="mb-0">
-                            <i class="bi bi-hospital me-1 text-muted"></i>CNES: <strong>{{ unidade.numero_cnes }}</strong>
+                            <i class="fas fa-hospital me-1 text-muted"></i>CNES: <strong>{{ unidade.numero_cnes }}</strong>
                             <a href="http://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search={{ unidade.numero_cnes }}"
                                target="_blank" class="ms-1 text-info small">ver no DATASUS</a>
                         </p>
@@ -772,19 +801,60 @@
 
                 <!-- Gerentes -->
                 <div class="card">
-                    <div class="card-header"><i class="bi bi-person-badge me-2"></i>Gerentes</div>
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <span><i class="fas fa-user-badge me-2"></i>Gestores da Unidade</span>
+                        {% if current_user.pode('editar_unidade') and unidade.gerentes %}
+                        <form method="POST" action="{{ url_for('unidades.definir_gestores_principais', id=unidade.id) }}" class="d-flex align-items-center gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="d-flex flex-column">
+                                <label class="form-label small mb-0">Contato principal</label>
+                                <select name="gestor_principal" class="form-select form-select-sm">
+                                    <option value="">— Selecionar —</option>
+                                    {% for v in unidade.gerentes %}
+                                    <option value="{{ v.usuario_id }}" {% if v.papel == 'gestor_principal' %}selected{% endif %}>
+                                        {{ v.usuario.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <label class="form-label small mb-0">Contato adicional</label>
+                                <select name="gestor_secundario" class="form-select form-select-sm">
+                                    <option value="">— Selecionar —</option>
+                                    {% for v in unidade.gerentes %}
+                                    <option value="{{ v.usuario_id }}" {% if v.papel == 'gestor_secundario' %}selected{% endif %}>
+                                        {{ v.usuario.nome }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary mt-3 mt-md-4">
+                                <i class="fas fa-check-circle me-1"></i>Salvar
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                     {% set gerentes = unidade.gerentes %}
                     {% if gerentes %}
                     <ul class="list-group list-group-flush">
                         {% for v in gerentes %}
-                        <li class="list-group-item py-2">
-                            <div class="fw-semibold small">{{ v.usuario.nome }}</div>
+                        <li class="list-group-item py-2 d-flex flex-column">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="fw-semibold small">
+                                    {{ v.usuario.nome }}
+                                    {% if v.papel == 'gestor_principal' %}
+                                    <span class="badge bg-primary ms-1">Contato principal</span>
+                                    {% elif v.papel == 'gestor_secundario' %}
+                                    <span class="badge bg-secondary ms-1">Contato adicional</span>
+                                    {% endif %}
+                                </div>
+                            </div>
                             {% set _fone2 = v.usuario.whatsapp or v.usuario.telefone %}
                             {% if _fone2 %}
                             {% set _wdig2 = _fone2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ _wdig2 }}"
                                target="_blank" class="text-success" style="font-size:0.75rem;">
-                                <i class="bi bi-whatsapp me-1"></i>{{ _fone2 | br_fone }}
+                                <i class="fab fa-whatsapp me-1"></i>{{ _fone2 | br_fone }}
                             </a>
                             {% endif %}
                         </li>
@@ -800,7 +870,7 @@
                 <!-- Observações -->
                 {% if unidade.observacoes %}
                 <div class="card">
-                    <div class="card-header"><i class="bi bi-chat-left-text me-2"></i>Observações</div>
+                    <div class="card-header"><i class="fas fa-chat-left-text me-2"></i>Observações</div>
                     <div class="card-body small">{{ unidade.observacoes }}</div>
                 </div>
                 {% endif %}
@@ -823,7 +893,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-person-plus me-2 text-primary"></i>Solicitação — {{ s.nome }}
+                    <i class="fas fa-user-plus me-2 text-primary"></i>Solicitação — {{ s.nome }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -860,7 +930,7 @@
                       onsubmit="return confirm('Aprovar solicitação de {{ s.nome }}?')">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-lg me-1"></i>Aprovar
+                        <i class="fas fa-check-lg me-1"></i>Aprovar
                     </button>
                 </form>
             </div>
@@ -875,7 +945,7 @@
             <form method="POST" action="{{ url_for('solicitacoes.rejeitar', id=s.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title"><i class="bi bi-x-circle me-2"></i>Rejeitar Solicitação</h5>
+                    <h5 class="modal-title"><i class="fas fa-times-circle me-2"></i>Rejeitar Solicitação</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -889,7 +959,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-x-lg me-1"></i>Rejeitar
+                        <i class="fas fa-times-lg me-1"></i>Rejeitar
                     </button>
                 </div>
             </form>
@@ -911,7 +981,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-plus me-2"></i>Vincular Profissional — {{ unidade.nome }}
+                        <i class="fas fa-user-plus me-2"></i>Vincular Profissional — {{ unidade.nome }}
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -935,7 +1005,7 @@
                     </div>
                     <hr>
                     <p class="text-muted small mb-3">
-                        <i class="bi bi-info-circle me-1"></i>
+                        <i class="fas fa-info-circle me-1"></i>
                         Preencha para gerar a <strong>Ficha de Cadastro CNES</strong> e o e-mail de <strong>acesso à Rede</strong>.
                         Os campos são pré-preenchidos com os dados do profissional.
                     </p>
@@ -943,21 +1013,20 @@
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">
                                 Matrícula
-                                <span class="text-danger">*</span>
                             </label>
-                            <select name="matricula_id" id="selectMatricula" class="form-select" required>
+                            <select name="matricula_id" id="selectMatricula" class="form-select">
                                 <option value="">— Selecione o profissional primeiro —</option>
                             </select>
                             <div class="form-text text-muted" id="infoMatricula"></div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">CNS do Profissional</label>
-                            <input type="text" name="cns_profissional" id="inputCNS" class="form-control"
+                            <label class="form-label fw-semibold">CNS do Profissional <span class="text-danger">*</span></label>
+                            <input type="text" name="cns_profissional" id="inputCNS" class="form-control" required
                                    placeholder="000 0000 0000 0000" maxlength="20">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Data de Entrada na Unidade</label>
-                            <input type="date" name="dt_entrada_unidade" class="form-control">
+                            <label class="form-label fw-semibold">Data de Entrada na Unidade <span class="text-danger">*</span></label>
+                            <input type="date" name="dt_entrada_unidade" class="form-control" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Vínculo <span class="text-danger">*</span></label>
@@ -970,16 +1039,18 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
-                            <select name="tipo_vinculo" class="form-select" required>
+                            <select name="tipo_vinculo" class="form-select" required id="selectTipoVinculo">
                                 <option value="">Selecione...</option>
                                 {% for k, v in tipos_vinculo.items() %}
                                 <option value="{{ k }}">{{ k }} – {{ v }}</option>
                                 {% endfor %}
                             </select>
+                            <!-- Campo hidden para garantir que o valor seja enviado mesmo quando o select está disabled -->
+                            <input type="hidden" name="tipo_vinculo_hidden" id="inputTipoVinculoHidden" value="">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Carga Horária (h/sem)</label>
-                            <input type="number" name="carga_horaria" id="inputCH"
+                            <label class="form-label fw-semibold">Carga Horária (h/sem) <span class="text-danger">*</span></label>
+                            <input type="number" name="carga_horaria" id="inputCH" required
                                    class="form-control" min="1" max="60" placeholder="40">
                         </div>
                         <div class="col-12">
@@ -990,12 +1061,51 @@
                             </select>
                         </div>
                         <div class="col-12" id="blocoResidenciaModal" style="display:none">
-                            <label class="form-label">
-                                Especialidade / Residência Médica
-                                <span class="badge bg-warning text-dark">Obrigatório para Residente</span>
+                            <label class="form-label fw-semibold">
+                                Especialidade / Residência Médica <span class="text-danger">*</span>
+                                <span class="badge bg-warning text-dark ms-2">Obrigatório para Residente</span>
                             </label>
-                            <input type="text" name="especialidade_residencia" class="form-control"
+                            <input type="text" name="especialidade_residencia" id="inputEspecialidadeResidencia" 
+                                   class="form-control" required
                                    placeholder="Ex: Clínica Médica, Pediatria...">
+                        </div>
+                        <!-- Bloco empresa — aparece para Contrato por Prazo Determinado (tipo=3) ou Estágio (vínculo=6) ou Residência (vínculo=5) -->
+                        <div class="col-12" id="blocoEmpresaModal" style="display:none">
+                            <div class="alert alert-info py-2 px-3 mb-2" style="font-size:.82rem;">
+                                <i class="fas fa-building me-1"></i>
+                                <span id="blocoEmpresaModalLabel">Informe os dados da empresa contratante.</span>
+                            </div>
+                            <!-- Selectbox de empresas (quando há empresas cadastradas) -->
+                            <div class="row g-2" id="blocoSelectEmpresaModal" style="display:none;">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Empresa Intermediadora <span class="text-danger">*</span></label>
+                                    <select name="empresa_id" id="selectEmpresaModal" class="form-select" required>
+                                        <option value="">Selecione uma empresa...</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="checkCNPJNaoListaModal">
+                                        <label class="form-check-label" for="checkCNPJNaoListaModal">
+                                            O CNPJ não consta na lista
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Campos de texto (quando não há empresas ou quando checkbox está marcado) -->
+                            <div class="row g-2" id="blocoInputEmpresaModal" style="display:none;">
+                                <div class="col-md-5">
+                                    <label class="form-label fw-semibold">CNPJ Empresa Intermediadora <span class="text-danger">*</span></label>
+                                    <input type="text" name="cnpj_empresa" id="inputCNPJModal" required
+                                           class="form-control" placeholder="00.000.000/0000-00"
+                                           maxlength="20">
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold">Razão Social da Empresa Intermediadora <span class="text-danger">*</span></label>
+                                    <input type="text" name="nome_empresa" id="inputNomeEmpresaModal" required
+                                           class="form-control" placeholder="Razão social da empresa...">
+                                </div>
+                            </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Observações</label>
@@ -1006,7 +1116,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-person-check me-1"></i>Vincular e Gerar Fichas
+                        <i class="fas fa-user-check me-1"></i>Vincular e Gerar Fichas
                     </button>
                 </div>
             </form>
@@ -1024,7 +1134,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-file-earmark-person me-2 text-info"></i>
+                        <i class="fas fa-file-earmark-person me-2 text-info"></i>
                         Gerar Ficha CNES — <span id="gfNome"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1115,7 +1225,7 @@
                         <!-- Bloco empresa — aparece para Contrato por Prazo Determinado (tipo=3) ou Estágio (vínculo=6) -->
                         <div class="col-12" id="gfBlocoEmpresa" style="display:none">
                             <div class="alert alert-info py-2 px-3 mb-2" style="font-size:.82rem;">
-                                <i class="bi bi-building me-1"></i>
+                                <i class="fas fa-building me-1"></i>
                                 <span id="gfBlocoEmpresaLabel">Informe os dados da empresa contratante.</span>
                             </div>
                             <div class="row g-2">
@@ -1141,7 +1251,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-info text-white">
-                        <i class="bi bi-file-earmark-check me-1"></i>Gerar Ficha
+                        <i class="fas fa-file-earmark-check me-1"></i>Gerar Ficha
                     </button>
                 </div>
             </form>
@@ -1159,13 +1269,13 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title">
-                        <i class="bi bi-pencil-square me-2"></i>Alterar CBO no Vínculo — <span id="acbNome"></span>
+                        <i class="fas fa-pen-to-square me-2"></i>Alterar CBO no Vínculo — <span id="acbNome"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info small py-2">
-                        <i class="bi bi-info-circle me-1"></i>
+                        <i class="fas fa-info-circle me-1"></i>
                         Esta alteração afeta <strong>somente o vínculo com esta unidade</strong>.
                         A matrícula original não é modificada. Uma <span class="badge bg-warning text-dark">Ficha de Alteração CNES</span> será gerada automaticamente.
                     </div>
@@ -1218,7 +1328,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-warning">
-                        <i class="bi bi-check-circle me-1"></i>Confirmar Alteração e Gerar Ficha
+                        <i class="fas fa-check-circle me-1"></i>Confirmar Alteração e Gerar Ficha
                     </button>
                 </div>
             </form>
@@ -1234,7 +1344,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-person-dash me-2"></i>Desvincular / Descadastrar do CNES
+                        <i class="fas fa-user-dash me-2"></i>Desvincular / Descadastrar do CNES
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -1256,7 +1366,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-person-dash me-1"></i>Confirmar Descadastro
+                        <i class="fas fa-user-dash me-1"></i>Confirmar Descadastro
                     </button>
                 </div>
             </form>
@@ -1278,6 +1388,230 @@ document.addEventListener('click', function (e) {
     }
 });
 
+// ── Atualizar tabela de fichas CNES via AJAX ────────────────────────────
+(function () {
+    const btnAtualizar = document.getElementById('btn-atualizar-fichas');
+    const conteudoFichas = document.getElementById('conteudo-fichas-cnes');
+    const badgeCount = document.getElementById('badge-fichas-count');
+    
+    if (!btnAtualizar || !conteudoFichas) return;
+    
+    btnAtualizar.addEventListener('click', async function () {
+        const icon = btnAtualizar.querySelector('i');
+        const originalClass = icon.className;
+        
+        // Mostra estado de carregamento
+        icon.className = 'fas fa-arrow-clockwise';
+        icon.style.animation = 'spin 1s linear infinite';
+        btnAtualizar.disabled = true;
+        
+        try {
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            const unidadeId = {{ unidade.id }};
+            const response = await fetch(baseUrl + '/unidades/' + unidadeId + '/fichas-cnes/atualizar');
+            
+            if (!response.ok) {
+                throw new Error('Erro ao atualizar fichas');
+            }
+            
+            const html = await response.text();
+            conteudoFichas.innerHTML = html;
+            document.dispatchEvent(new Event('sigus:fichas:updated'));
+            
+            // Atualiza o contador
+            const novasFichas = conteudoFichas.querySelectorAll('tbody tr');
+            if (badgeCount) {
+                badgeCount.textContent = novasFichas.length;
+            }
+            
+            // Reativa os botões "Abrir" após atualizar
+            const novosBotoes = conteudoFichas.querySelectorAll('.btn-abrir-ficha');
+            novosBotoes.forEach(function (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    if (typeof abrirImpresso === 'function') {
+                        abrirImpresso(btn.dataset.url || '', btn.dataset.titulo || 'Ficha CNES');
+                    }
+                });
+            });
+            
+        } catch (error) {
+            console.error('Erro ao atualizar fichas CNES:', error);
+            alert('Erro ao atualizar fichas CNES. Tente recarregar a página.');
+        } finally {
+            // Restaura estado normal
+            icon.className = originalClass;
+            icon.style.animation = '';
+            btnAtualizar.disabled = false;
+        }
+    });
+})();
+
+// ── Ordenação da tabela de equipamentos ───────────────────────────────
+(function () {
+    const tabela = document.getElementById('tabelaEquipamentos');
+    if (!tabela) return;
+    const tbody = tabela.tBodies && tabela.tBodies[0];
+    if (!tbody) return;
+
+    const headers = Array.from(tabela.querySelectorAll('thead th'));
+    if (!headers.length) return;
+
+    // Mapeia o índice do <th> para a coluna desejada.
+    // Obs: o último <th> é vazio (coluna de ações) e não recebe ordenação.
+    const ordenacaoPorTh = new Set([0, 1, 2, 3, 4, 5, 6]);
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    // dataset-export é: tipo|patrimonio_serie|marca|modelo|usuario|sala|status|condicao
+    function getExportArr(tr) {
+        return (tr.dataset.export || '').split('|');
+    }
+
+    function cmpText(a, b) {
+        // localeCompare lida bem com acentos e com números em string
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    function compareDefault(trA, trB) {
+        const A = getExportArr(trA);
+        const B = getExportArr(trB);
+
+        // Padrão solicitado:
+        // Tipo, Marca/Modelo, Usuário Vinculado, Status, Condição...
+        let res = cmpText(A[0], B[0]); // Tipo
+        if (res !== 0) return res;
+
+        res = cmpText(A[2], B[2]); // Marca
+        if (res !== 0) return res;
+
+        res = cmpText(A[3], B[3]); // Modelo
+        if (res !== 0) return res;
+
+        res = cmpText(A[4], B[4]); // Usuário Vinculado
+        if (res !== 0) return res;
+
+        res = cmpText(A[6], B[6]); // Status
+        if (res !== 0) return res;
+
+        res = cmpText(A[7], B[7]); // Condição
+        if (res !== 0) return res;
+
+        // Tie-breaks para deixar a ordenação determinística
+        res = cmpText(A[1], B[1]); // Patrimônio / Série
+        if (res !== 0) return res;
+        return cmpText(A[5], B[5]); // Sala
+    }
+
+    function compareByColumn(trA, trB, thIndex, dir) {
+        const A = getExportArr(trA);
+        const B = getExportArr(trB);
+        const mult = dir === 'desc' ? -1 : 1;
+
+        function withDir(res) {
+            return res * mult;
+        }
+
+        switch (thIndex) {
+            case 0: { // Tipo
+                let res = cmpText(A[0], B[0]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[1], B[1]); // tie-break: patrimônio/serie
+                return withDir(res);
+            }
+            case 1: { // Patrimônio / Série
+                let res = cmpText(A[1], B[1]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]);
+                return withDir(res);
+            }
+            case 2: { // Marca / Modelo (ordena por Marca e depois Modelo)
+                let res = cmpText(A[2], B[2]); // Marca
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[3], B[3]); // Modelo
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]); // tie-break: tipo
+                return withDir(res);
+            }
+            case 3: { // Usuário Vinculado
+                let res = cmpText(A[4], B[4]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]);
+                return withDir(res);
+            }
+            case 4: { // Sala
+                let res = cmpText(A[5], B[5]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]);
+                return withDir(res);
+            }
+            case 5: { // Status
+                let res = cmpText(A[6], B[6]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]);
+                return withDir(res);
+            }
+            case 6: { // Condição
+                let res = cmpText(A[7], B[7]);
+                if (res !== 0) return withDir(res);
+                res = cmpText(A[0], B[0]);
+                return withDir(res);
+            }
+        }
+        return 0;
+    }
+
+    function sortAndRender(compareFn) {
+        const rows = Array.from(tbody.rows);
+        const order = new Map(rows.map((r, i) => [r, i]));
+
+        rows.sort(function (a, b) {
+            const res = compareFn(a, b);
+            if (res !== 0) return res;
+            // Tie-break por posição original no DOM
+            return order.get(a) - order.get(b);
+        });
+
+        rows.forEach(function (tr) {
+            tbody.appendChild(tr);
+        });
+    }
+
+    const state = { sortMode: 'default', column: 0, dir: 'asc' };
+
+    // Ordenação inicial (padrão)
+    sortAndRender(compareDefault);
+
+    // Click para alternar asc/desc
+    headers.forEach(function (th, thIndex) {
+        if (!ordenacaoPorTh.has(thIndex)) return;
+        th.style.cursor = 'pointer';
+
+        th.addEventListener('click', function () {
+            if (state.sortMode === 'column' && state.column === thIndex) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.sortMode = 'column';
+                state.column = thIndex;
+                state.dir = 'asc';
+            }
+
+            sortAndRender(function (a, b) {
+                return compareByColumn(a, b, state.column, state.dir);
+            });
+
+            // Atualiza aria-sort para acessibilidade
+            headers.forEach(function (h) {
+                h.removeAttribute('aria-sort');
+            });
+            th.setAttribute('aria-sort', state.dir === 'asc' ? 'ascending' : 'descending');
+
+        });
+    });
+})();
+
 // ── Filtro da tabela de equipamentos ─────────────────────────────────
 (function () {
     const tabela  = document.getElementById('tabelaEquipamentos');
@@ -1289,7 +1623,8 @@ document.addEventListener('click', function (e) {
         const texto = (inpBusca ? inpBusca.value.toLowerCase() : '');
         const sala  = (selSala  ? selSala.value : '');
         tabela.querySelectorAll('tbody tr').forEach(function (tr) {
-            const matchTexto = !texto || (tr.dataset.texto || '').includes(texto);
+            const exportLower = (tr.dataset.export || '').toLowerCase();
+            const matchTexto = !texto || exportLower.includes(texto);
             const matchSala  = !sala  || tr.dataset.sala === sala;
             tr.style.display = (matchTexto && matchSala) ? '' : 'none';
         });
@@ -1333,24 +1668,489 @@ document.addEventListener('click', function (e) {
     });
 })();
 
+// ── Ordenação e busca (qualquer coluna) na tabela de profissionais ───
+(function () {
+    const tabela = document.getElementById('tabelaProfissionais');
+    if (!tabela) return;
+
+    const tbody = tabela.tBodies && tabela.tBodies[0];
+    if (!tbody) return;
+
+    const headers = Array.from(tabela.querySelectorAll('thead th'));
+    if (!headers.length) return;
+
+    const sortableIndices = headers
+        .map((th, idx) => ({ th, idx }))
+        .filter(({ th }) => {
+            const t = (th.textContent || '').trim().toLowerCase();
+            // Exclui coluna "Ações" (última)
+            return t !== 'ações' && t !== 'açoes' && t !== '';
+        })
+        .map(x => x.idx);
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    function cmpText(a, b) {
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    let state = { column: sortableIndices.length ? sortableIndices[0] : null, dir: 'asc' };
+
+    function getCellText(tr, thIndex) {
+        const td = tr.children[thIndex];
+        return td ? td.innerText : '';
+    }
+
+    function sortAndRender(columnIndex, dir) {
+        const rows = Array.from(tbody.rows);
+        const order = new Map(rows.map((r, i) => [r, i]));
+        const mult = dir === 'desc' ? -1 : 1;
+
+        rows.sort(function (a, b) {
+            const va = getCellText(a, columnIndex);
+            const vb = getCellText(b, columnIndex);
+            const res = cmpText(va, vb);
+            if (res !== 0) return res * mult;
+            return order.get(a) - order.get(b);
+        });
+
+        rows.forEach(tr => tbody.appendChild(tr));
+    }
+
+    // Ordenação inicial (1a coluna crescente)
+    if (state.column !== null) {
+        sortAndRender(state.column, state.dir);
+    }
+
+    headers.forEach(function (th, thIndex) {
+        if (!sortableIndices.includes(thIndex)) return;
+        th.style.cursor = 'pointer';
+
+        th.addEventListener('click', function () {
+            if (state.column === thIndex) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.column = thIndex;
+                state.dir = 'asc';
+            }
+
+            sortAndRender(state.column, state.dir);
+        });
+    });
+})();
+
 // ── Filtro de status na tabela de profissionais ────────────────────────
 (function () {
-    const rows = document.querySelectorAll('#tabelaProfissionais tbody tr');
-    document.querySelectorAll('#filtroVinculo button').forEach(function (btn) {
+    const tabela = document.getElementById('tabelaProfissionais');
+    if (!tabela) return;
+
+    const rows = tabela.querySelectorAll('tbody tr');
+    const inpBusca = document.getElementById('filtroProfGeral');
+    const btns = document.querySelectorAll('#filtroVinculo button');
+    if (!btns.length) return;
+
+    function getStatusFiltro() {
+        const btnAtivo = document.querySelector('#filtroVinculo button.active');
+        return (btnAtivo && btnAtivo.dataset && btnAtivo.dataset.filtro) ? btnAtivo.dataset.filtro : 'ativo';
+    }
+
+    function aplicarFiltro() {
+        const filtro = getStatusFiltro();
+        const q = inpBusca ? (inpBusca.value || '').toLowerCase().trim() : '';
+
+        rows.forEach(function (row) {
+            const matchStatus = (filtro === 'todos' || row.dataset.status === filtro);
+            const matchTexto = !q || (row.textContent || '').toLowerCase().includes(q);
+            row.style.display = (matchStatus && matchTexto) ? '' : 'none';
+        });
+    }
+
+    btns.forEach(function (btn) {
         btn.addEventListener('click', function () {
-            document.querySelectorAll('#filtroVinculo button').forEach(b => {
+            btns.forEach(b => {
                 b.classList.remove('active', 'btn-primary', 'btn-outline-secondary');
                 b.classList.add('btn-outline-secondary');
             });
             this.classList.remove('btn-outline-secondary');
             this.classList.add('active', 'btn-primary');
-            const filtro = this.dataset.filtro;
-            rows.forEach(function (row) {
-                row.style.display = (filtro === 'todos' || row.dataset.status === filtro) ? '' : 'none';
+            aplicarFiltro();
             });
         });
+
+    inpBusca && inpBusca.addEventListener('input', aplicarFiltro);
+
+    // Aplica estado inicial (Ativos/Inativos) com busca vazia
+    aplicarFiltro();
+})();
+
+// ── Ordenação e busca (qualquer coluna) na aba Salas/Setores ───────
+(function () {
+    const tab = document.getElementById('tab-salas');
+    if (!tab) return;
+
+    const tabela = tab.querySelector('table.table');
+    if (!tabela) return;
+
+    const tbody = tabela.tBodies && tabela.tBodies[0];
+    if (!tbody) return;
+
+    const headers = Array.from(tabela.querySelectorAll('thead th'));
+    if (!headers.length) return;
+
+    const sortableIndices = headers
+        .map((th, idx) => ({ th, idx }))
+        .filter(({ th }) => (th.textContent || '').trim() !== '')
+        .map(x => x.idx);
+
+    const inp = document.getElementById('filtroSalasGeral');
+    let state = { column: sortableIndices.length ? sortableIndices[0] : null, dir: 'asc' };
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    function cmpText(a, b) {
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    function getCellText(tr, thIndex) {
+        const td = tr.children[thIndex];
+        return td ? td.innerText : '';
+    }
+
+    function sortAndRender() {
+        if (state.column === null) return;
+
+        const rows = Array.from(tbody.rows);
+        const order = new Map(rows.map((r, i) => [r, i]));
+        const mult = state.dir === 'desc' ? -1 : 1;
+
+        rows.sort(function (a, b) {
+            const res = cmpText(getCellText(a, state.column), getCellText(b, state.column));
+            if (res !== 0) return res * mult;
+            return order.get(a) - order.get(b);
+        });
+
+        rows.forEach(tr => tbody.appendChild(tr));
+    }
+
+    function applySearch() {
+        const q = inp ? (inp.value || '').toLowerCase().trim() : '';
+        const rows = Array.from(tbody.rows);
+        rows.forEach(function (tr) {
+            const match = !q || (tr.textContent || '').toLowerCase().includes(q);
+            tr.style.display = match ? '' : 'none';
+        });
+    }
+
+    // Inicializa (ordena pela 1a coluna crescente)
+    if (state.column !== null) sortAndRender();
+
+    headers.forEach(function (th, thIndex) {
+        if (!sortableIndices.includes(thIndex)) return;
+        th.style.cursor = 'pointer';
+
+        th.addEventListener('click', function () {
+            if (state.column === thIndex) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.column = thIndex;
+                state.dir = 'asc';
+            }
+
+            sortAndRender();
+            applySearch();
+        });
     });
-    rows.forEach(r => { if (r.dataset.status === 'inativo') r.style.display = 'none'; });
+
+    inp && inp.addEventListener('input', applySearch);
+    applySearch();
+})();
+
+// ── Ordenação e busca (qualquer coluna) na aba Chamados ─────────────
+(function () {
+    const tab = document.getElementById('tab-chamados');
+    if (!tab) return;
+
+    const tabela = tab.querySelector('table.table');
+    if (!tabela) return;
+
+    const tbody = tabela.tBodies && tabela.tBodies[0];
+    if (!tbody) return;
+
+    const headers = Array.from(tabela.querySelectorAll('thead th'));
+    if (!headers.length) return;
+
+    const sortableIndices = headers.map((_, idx) => idx);
+
+    const inp = document.getElementById('filtroChamadosGeral');
+    let state = { column: sortableIndices.length ? sortableIndices[0] : null, dir: 'asc' };
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    function cmpText(a, b) {
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    function getCellText(tr, thIndex) {
+        const td = tr.children[thIndex];
+        return td ? td.innerText : '';
+    }
+
+    function sortAndRender() {
+        if (state.column === null) return;
+
+        const rows = Array.from(tbody.rows);
+        const order = new Map(rows.map((r, i) => [r, i]));
+        const mult = state.dir === 'desc' ? -1 : 1;
+
+        rows.sort(function (a, b) {
+            const res = cmpText(getCellText(a, state.column), getCellText(b, state.column));
+            if (res !== 0) return res * mult;
+            return order.get(a) - order.get(b);
+        });
+
+        rows.forEach(tr => tbody.appendChild(tr));
+    }
+
+    function applySearch() {
+        const q = inp ? (inp.value || '').toLowerCase().trim() : '';
+        const rows = Array.from(tbody.rows);
+        rows.forEach(function (tr) {
+            const match = !q || (tr.textContent || '').toLowerCase().includes(q);
+            tr.style.display = match ? '' : 'none';
+        });
+    }
+
+    if (state.column !== null) sortAndRender();
+
+    headers.forEach(function (th, thIndex) {
+        th.style.cursor = 'pointer';
+        th.addEventListener('click', function () {
+            if (state.column === thIndex) {
+                state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+            } else {
+                state.column = thIndex;
+                state.dir = 'asc';
+            }
+
+            sortAndRender();
+            applySearch();
+        });
+    });
+
+    inp && inp.addEventListener('input', applySearch);
+    applySearch();
+})();
+
+// ── Ordenação e busca (qualquer coluna) na aba Fichas CNES ──────────
+(function () {
+    const input = document.getElementById('filtroFichasGeral');
+    if (!input) return;
+
+    let state = { column: null, dir: 'asc' };
+    let tbody = null;
+    let headers = [];
+    let sortableIndices = [];
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    function cmpText(a, b) {
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    function getCellText(tr, thIndex) {
+        const td = tr.children[thIndex];
+        return td ? td.innerText : '';
+    }
+
+    function sortAndRender() {
+        if (!tbody || state.column === null) return;
+
+        const rows = Array.from(tbody.rows);
+        const order = new Map(rows.map((r, i) => [r, i]));
+        const mult = state.dir === 'desc' ? -1 : 1;
+
+        rows.sort(function (a, b) {
+            const res = cmpText(getCellText(a, state.column), getCellText(b, state.column));
+            if (res !== 0) return res * mult;
+            return order.get(a) - order.get(b);
+        });
+
+        rows.forEach(tr => tbody.appendChild(tr));
+    }
+
+    function applySearch() {
+        if (!tbody) return;
+        const q = (input.value || '').toLowerCase().trim();
+        const rows = Array.from(tbody.rows);
+        rows.forEach(function (tr) {
+            const match = !q || (tr.textContent || '').toLowerCase().includes(q);
+            tr.style.display = match ? '' : 'none';
+        });
+    }
+
+    function setup() {
+        const container = document.getElementById('conteudo-fichas-cnes');
+        if (!container) return;
+
+        const table = container.querySelector('table');
+        if (!table) return;
+
+        const newTbody = table.tBodies && table.tBodies[0];
+        if (!newTbody) return;
+
+        tbody = newTbody;
+        headers = Array.from(table.querySelectorAll('thead th'));
+
+        sortableIndices = headers
+            .map((th, idx) => ({ th, idx }))
+            .filter(({ th }) => (th.textContent || '').trim() !== '')
+            .map(x => x.idx);
+
+        // Ordenação inicial (1a coluna crescente)
+        state.column = sortableIndices.length ? sortableIndices[0] : null;
+        state.dir = 'asc';
+
+        // Attacha clique via onclick para evitar duplicar quando a tabela é recriada
+        headers.forEach(function (th, thIndex) {
+            if (!sortableIndices.includes(thIndex)) return;
+            th.style.cursor = 'pointer';
+            th.onclick = function () {
+                if (state.column === thIndex) {
+                    state.dir = state.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    state.column = thIndex;
+                    state.dir = 'asc';
+                }
+
+                sortAndRender();
+                applySearch();
+            };
+        });
+
+        sortAndRender();
+        applySearch();
+    }
+
+    // Uma vez só: reage ao texto digitado
+    if (!input.dataset.sigusSearchBound) {
+        input.dataset.sigusSearchBound = '1';
+        input.addEventListener('input', function () {
+            applySearch();
+        });
+    }
+
+    setup();
+    document.addEventListener('sigus:fichas:updated', function () {
+        setup();
+    });
+})();
+
+// ── Ordenação e busca (qualquer coluna) na aba Solicitações ────────
+(function () {
+    const tab = document.getElementById('tab-solicitacoes');
+    const input = document.getElementById('filtroSolicitacoesGeral');
+    if (!tab || !input) return;
+
+    const tables = Array.from(tab.querySelectorAll('table.table'));
+    if (!tables.length) return;
+
+    const states = new Map();
+
+    function normalize(v) {
+        return (v === undefined || v === null) ? '' : String(v).trim();
+    }
+
+    function cmpText(a, b) {
+        return normalize(a).localeCompare(normalize(b), 'pt-BR', { sensitivity: 'base', numeric: true });
+    }
+
+    function getCellText(tr, thIndex) {
+        const td = tr.children[thIndex];
+        return td ? td.innerText : '';
+    }
+
+    function isAcoesHeader(text) {
+        const t = normalize(text).toLowerCase();
+        return t === 'ações' || t === 'açoes' || t === 'acoes' || t.includes('ações') || t.includes('açoes') || t.includes('acoes');
+    }
+
+    function applySearchAll() {
+        const q = (input.value || '').toLowerCase().trim();
+        tab.querySelectorAll('tbody tr').forEach(function (tr) {
+            const match = !q || (tr.textContent || '').toLowerCase().includes(q);
+            tr.style.display = match ? '' : 'none';
+        });
+    }
+
+    tables.forEach(function (table) {
+        const tbody = table.tBodies && table.tBodies[0];
+        if (!tbody) return;
+
+        const headers = Array.from(table.querySelectorAll('thead th'));
+        if (!headers.length) return;
+
+        const sortableIndices = headers
+            .map((th, idx) => ({ th, idx }))
+            .filter(({ th }) => {
+                const txt = th.textContent || '';
+                return txt.trim() !== '' && !isAcoesHeader(txt);
+            })
+            .map(x => x.idx);
+
+        if (!sortableIndices.length) return;
+
+        states.set(table, { column: sortableIndices[0] || null, dir: 'asc', tbody, headers, sortableIndices });
+
+        function sortAndRender() {
+            const state = states.get(table);
+            if (!state || state.column === null) return;
+
+            const rows = Array.from(state.tbody.rows);
+            const order = new Map(rows.map((r, i) => [r, i]));
+            const mult = state.dir === 'desc' ? -1 : 1;
+
+            rows.sort(function (a, b) {
+                const res = cmpText(getCellText(a, state.column), getCellText(b, state.column));
+                if (res !== 0) return res * mult;
+                return order.get(a) - order.get(b);
+            });
+
+            rows.forEach(tr => state.tbody.appendChild(tr));
+        }
+
+        // Inicial: ordena pela 1a coluna
+        sortAndRender();
+
+        headers.forEach(function (th, thIndex) {
+            if (!sortableIndices.includes(thIndex)) return;
+            th.style.cursor = 'pointer';
+            th.onclick = function () {
+                const st = states.get(table);
+                if (!st) return;
+
+                if (st.column === thIndex) {
+                    st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+                } else {
+                    st.column = thIndex;
+                    st.dir = 'asc';
+                }
+
+                sortAndRender();
+                applySearchAll();
+            };
+        });
+    });
+
+    input.addEventListener('input', applySearchAll);
+    applySearchAll();
 })();
 
 // ── Helpers para pré-preencher selects ───────────────────────────────
@@ -1367,58 +2167,95 @@ function selecionarOpcao(sel, val) {
 }
 
 // ── Modal Vincular: pré-preencher com dados do profissional ───────────
-document.getElementById('selectProfissional')?.addEventListener('change', async function () {
-    const opt      = this.options[this.selectedIndex];
-    const uid      = this.value;
-    const selMat   = document.getElementById('selectMatricula');
-    const infoMat  = document.getElementById('infoMatricula');
+const selectProfissional = document.getElementById('selectProfissional');
+if (selectProfissional) {
+    selectProfissional.addEventListener('change', async function () {
+        const opt      = this.options[this.selectedIndex];
+        const uid      = this.value;
+        const selMat   = document.getElementById('selectMatricula');
+        const infoMat  = document.getElementById('infoMatricula');
 
-    // Limpa seleção anterior de matrículas
-    selMat.innerHTML = '<option value="">— carregando... —</option>';
-    selMat.disabled = true;
-    infoMat.textContent = '';
+        if (!selMat || !infoMat) {
+            console.error('Elementos selectMatricula ou infoMatricula não encontrados');
+            return;
+        }
+
+        // Limpa seleção anterior de matrículas
+        selMat.innerHTML = '<option value="">— carregando... —</option>';
+        selMat.disabled = true;
+        infoMat.textContent = '';
 
     if (uid) {
-        const resp = await fetch(`/usuarios/${uid}/matriculas/json`);
-        const data = await resp.json();
-        selMat.innerHTML = '<option value="">Selecione a matrícula...</option>';
-        if (data.matriculas && data.matriculas.length) {
+        try {
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            const url = `${baseUrl}/usuarios/${uid}/matriculas/json`;
+            console.log('Carregando matrículas de:', url);
+            const resp = await fetch(url);
+            if (!resp.ok) {
+                throw new Error(`Erro ${resp.status}: ${resp.statusText}`);
+            }
+            const data = await resp.json();
+            console.log('Matrículas recebidas:', data);
+            selMat.innerHTML = '<option value="">Selecione a matrícula...</option>';
+        
+        if (data.matriculas && data.matriculas.length > 0) {
+            // Mostra TODAS as matrículas, incluindo "Sem Matrícula"
             data.matriculas.forEach(m => {
                 const o = document.createElement('option');
                 o.value = m.id;
                 const cboDesc = m.cbo_label
                     ? m.cbo_label.replace(/^\S+\s*[–-]\s*/, '')  // remove "225125 – " do início
                     : (m.cbo || 'CBO não definido');
-                o.textContent = `${m.numero} — ${cboDesc}`;
+                o.textContent = `${m.numero || 'Sem Matrícula'} — ${cboDesc}`;
                 o.dataset.cbo      = m.cbo          || '';
                 o.dataset.cboLabel = m.cbo_label    || '';
                 o.dataset.vinculo  = m.vinculo       || '';
                 o.dataset.tipo     = m.tipo_vinculo  || '';
                 o.dataset.conselho = m.reg_conselho  || '';
+                o.dataset.numero   = m.numero        || '';
                 selMat.appendChild(o);
             });
-            // Se só tem uma, já seleciona automaticamente
+            // Se só tem UMA matrícula, já seleciona automaticamente
             if (data.matriculas.length === 1) {
                 selMat.selectedIndex = 1;
                 selMat.dispatchEvent(new Event('change'));
+                // Quando há matrículas, torna o campo obrigatório
+                selMat.setAttribute('required', 'required');
+            } else {
+                // Se tem 2 ou mais matrículas, deixa como "Selecione..." e torna obrigatório
+                selMat.selectedIndex = 0; // Mantém "Selecione a matrícula..."
+                selMat.setAttribute('required', 'required');
             }
         } else {
-            selMat.innerHTML = '<option value="">Nenhuma matrícula ativa cadastrada</option>';
-            infoMat.textContent = 'Cadastre uma matrícula no perfil do profissional antes de vincular.';
-            infoMat.className = 'form-text text-warning';
+            // Sem matrículas: deixa vazio e remove obrigatoriedade
+            selMat.innerHTML = '<option value=""></option>';
+            selMat.removeAttribute('required');
+            selMat.disabled = false;
+            infoMat.textContent = 'Profissional sem matrícula cadastrada. Selecione "Tipo 3 - Contrato por Prazo Determinado" para vincular sem matrícula e escolher o CBO diretamente.';
+            infoMat.className = 'form-text text-info';
         }
         selMat.disabled = false;
+        } catch (error) {
+            console.error('Erro ao carregar matrículas:', error);
+            selMat.innerHTML = '<option value="">Erro ao carregar matrículas</option>';
+            selMat.disabled = false;
+            infoMat.textContent = 'Erro ao carregar matrículas. Tente novamente.';
+            infoMat.className = 'form-text text-danger';
+        }
     } else {
         selMat.innerHTML = '<option value="">— Selecione o profissional primeiro —</option>';
         selMat.disabled = false;
     }
 
+    // Preenche apenas CNS e Carga Horária (dados únicos do profissional)
     document.getElementById('inputCNS').value = opt.dataset.cns || '';
     document.getElementById('inputCH').value  = opt.dataset.ch  || '';
-    selecionarOpcao(document.getElementById('selectVinculo'), opt.dataset.vinculo);
-    document.getElementById('blocoResidenciaModal').style.display =
-        opt.dataset.vinculo === '5' ? '' : 'none';
-});
+    
+    // Vínculo e Tipo devem sempre ficar como "Selecione..." para o usuário escolher
+    // Não preenche automaticamente
+    atualizarBlocosModal();
+    });
+}
 
 // Ao selecionar matrícula, restringe CBO às duas opções permitidas
 document.getElementById('selectMatricula')?.addEventListener('change', function () {
@@ -1430,15 +2267,38 @@ document.getElementById('selectMatricula')?.addEventListener('change', function 
     if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
 
     if (!opt || !opt.value) {
-        // Sem matrícula: reseta o select de CBO vazio
-        selCBO.innerHTML = '<option value="">Selecione a matrícula primeiro...</option>';
+        // Sem matrícula selecionada: verifica se é Contrato por Prazo Determinado
+        const tipoVinculo = document.getElementById('selectTipoVinculo')?.value;
+        if (tipoVinculo === '3') {
+            // Tipo 3 (Contrato por Prazo Determinado): permite selecionar qualquer CBO
+            const cbosCompletos = [
+                {% for cod, desc in cbos %}
+                { value: '{{ cod }}', text: '{{ cod }} – {{ desc }}' },
+                {% endfor %}
+            ];
+            selCBO.innerHTML = '<option value="">Selecione...</option>' +
+                cbosCompletos.map(c => `<option value="${c.value}">${c.text}</option>`).join('');
+            
+            // Reinicia Tom Select com lista completa
+            if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
+            new TomSelect(selCBO, {
+                allowEmptyOption: true,
+                placeholder: 'Digite para buscar CBO...',
+                maxOptions: null,
+            });
+        } else {
+            // Outros tipos: precisa selecionar matrícula primeiro
+            selCBO.innerHTML = '<option value="">Selecione a matrícula primeiro...</option>';
+            if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
+        }
     } else {
+        // Matrícula selecionada: usa o CBO da matrícula normalmente (igual para todas as matrículas)
         const cboCod  = opt.dataset.cbo  || '';
         const cboDesc = opt.dataset.cboLabel
             ? opt.dataset.cboLabel.replace(/^\S+\s*[–-]\s*/, '')
             : cboCod;
 
-        // Monta as duas únicas opções permitidas
+        // Monta as duas únicas opções permitidas (CBO da matrícula + Gerente)
         const opcoes = [];
         if (cboCod && cboCod !== '131210') {
             opcoes.push({ value: cboCod, text: `${cboCod} – ${cboDesc}` });
@@ -1459,16 +2319,428 @@ document.getElementById('selectMatricula')?.addEventListener('change', function 
         maxOptions: null,
     });
 
+    // Vínculo e Tipo não são preenchidos automaticamente ao selecionar matrícula
+    // O usuário deve escolher manualmente
     if (opt && opt.value) {
-        selecionarOpcao(document.getElementById('selectVinculo'), opt.dataset.vinculo);
-        document.getElementById('blocoResidenciaModal').style.display =
-            opt.dataset.vinculo === '5' ? '' : 'none';
+        atualizarBlocosModal();
     }
 });
 
-document.getElementById('selectVinculo')?.addEventListener('change', function () {
-    document.getElementById('blocoResidenciaModal').style.display = this.value === '5' ? '' : 'none';
+    // Ao alterar Tipo de Vínculo, controla disponibilidade do CBO
+    document.getElementById('selectTipoVinculo')?.addEventListener('change', function () {
+        const tipoVinculo = this.value;
+        const selMat = document.getElementById('selectMatricula');
+        const selCBO = document.getElementById('selectCBO');
+        
+        if (!selCBO || !selMat) return;
+        
+        // Verifica se há matrícula selecionada (qualquer matrícula, incluindo "Sem Matrícula")
+        const optMat = selMat.options[selMat.selectedIndex];
+        const temMatriculaSelecionada = optMat && optMat.value && optMat.value.trim() !== '';
+
+        // Se for Tipo 3 (Contrato por Prazo Determinado) e NÃO houver matrícula selecionada
+        if (tipoVinculo === '3' && !temMatriculaSelecionada) {
+            // Permite selecionar qualquer CBO da lista completa
+            const cbosCompletos = [
+                {% for cod, desc in cbos %}
+                { value: '{{ cod }}', text: '{{ cod }} – {{ desc }}' },
+                {% endfor %}
+            ];
+            selCBO.innerHTML = '<option value="">Selecione...</option>' +
+                cbosCompletos.map(c => `<option value="${c.value}">${c.text}</option>`).join('');
+            selCBO.disabled = false;
+            
+            // Reinicia Tom Select com lista completa
+            if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
+            new TomSelect(selCBO, {
+                allowEmptyOption: true,
+                placeholder: 'Digite para buscar CBO...',
+                maxOptions: null,
+            });
+        } else if (!temMatriculaSelecionada) {
+            // Outros tipos sem matrícula: precisa selecionar matrícula primeiro
+            selCBO.innerHTML = '<option value="">Selecione a matrícula primeiro...</option>';
+            selCBO.disabled = true;
+            if (selCBO.tomselect) { selCBO.tomselect.destroy(); }
+        } else {
+            // Se há matrícula selecionada (mesmo que "Sem Matrícula"), dispara evento change para atualizar CBO
+            selMat.dispatchEvent(new Event('change'));
+        }
+    });
+
+// Função para atualizar visibilidade dos blocos condicionais no modal de vincular
+async function atualizarBlocosModal() {
+    const vinculo = document.getElementById('selectVinculo')?.value || '';
+    const tipoVinculo = document.getElementById('selectTipoVinculo')?.value || '';
+    const selectTipoVinculo = document.getElementById('selectTipoVinculo');
+    const blocoResidencia = document.getElementById('blocoResidenciaModal');
+    const blocoEmpresa = document.getElementById('blocoEmpresaModal');
+    const labelEmpresa = document.getElementById('blocoEmpresaModalLabel');
+    const blocoSelectEmpresa = document.getElementById('blocoSelectEmpresaModal');
+    const blocoInputEmpresa = document.getElementById('blocoInputEmpresaModal');
+    const selectEmpresa = document.getElementById('selectEmpresaModal');
+    const checkCNPJNaoLista = document.getElementById('checkCNPJNaoListaModal');
+    const inputCNPJ = document.getElementById('inputCNPJModal');
+    const inputNomeEmpresa = document.getElementById('inputNomeEmpresaModal');
+    
+    // Residência
+    const inputEspecialidadeResidencia = document.getElementById('inputEspecialidadeResidencia');
+    if (blocoResidencia) {
+        const isVisible = vinculo === '5';
+        blocoResidencia.style.display = isVisible ? '' : 'none';
+        // Torna obrigatório quando visível
+        if (inputEspecialidadeResidencia) {
+            if (isVisible) {
+                inputEspecialidadeResidencia.setAttribute('required', 'required');
+            } else {
+                inputEspecialidadeResidencia.removeAttribute('required');
+            }
+        }
+    }
+    
+    // Fixar tipo quando necessário
+    const inputTipoVinculoHidden = document.getElementById('inputTipoVinculoHidden');
+    if (vinculo === '5' || vinculo === '6') {
+        // Residência ou Estágio: fixa tipo em "3 - Contrato por Prazo Determinado"
+        if (selectTipoVinculo) {
+            selectTipoVinculo.value = '3';
+            selectTipoVinculo.disabled = true;
+            // Garante que o valor seja enviado mesmo quando disabled
+            if (inputTipoVinculoHidden) {
+                inputTipoVinculoHidden.value = '3';
+            }
+        }
+    } else if (vinculo === '1' && tipoVinculo === '3') {
+        // Empregatício + Contrato por Prazo Determinado: permite alterar tipo
+        if (selectTipoVinculo) {
+            selectTipoVinculo.disabled = false;
+            if (inputTipoVinculoHidden) {
+                inputTipoVinculoHidden.value = '';
+            }
+        }
+    } else {
+        // Outros casos: permite alterar tipo
+        if (selectTipoVinculo) {
+            selectTipoVinculo.disabled = false;
+            if (inputTipoVinculoHidden) {
+                inputTipoVinculoHidden.value = '';
+            }
+        }
+    }
+    
+    // Empresa: Estágio (vínculo=6), Residência (vínculo=5) OU Empregatício + Contrato por Prazo Determinado (vínculo=1 e tipo=3)
+    const precisaEmpresa = vinculo === '6' || vinculo === '5' || (vinculo === '1' && tipoVinculo === '3');
+    
+    if (blocoEmpresa) {
+        blocoEmpresa.style.display = precisaEmpresa ? '' : 'none';
+    }
+    
+    if (!precisaEmpresa) {
+        // Limpa campos quando não precisa empresa
+        if (selectEmpresa) {
+            selectEmpresa.value = '';
+            selectEmpresa.removeAttribute('required');
+        }
+        if (inputCNPJ) {
+            inputCNPJ.value = '';
+            inputCNPJ.removeAttribute('required');
+        }
+        if (inputNomeEmpresa) {
+            inputNomeEmpresa.value = '';
+            inputNomeEmpresa.removeAttribute('required');
+        }
+        if (checkCNPJNaoLista) checkCNPJNaoLista.checked = false;
+        return;
+    }
+    
+    // Determina tipo de CNPJ a buscar
+    let tipoCNPJ = null;
+    if (vinculo === '5') {
+        tipoCNPJ = 'residencia';
+        if (labelEmpresa) labelEmpresa.textContent = 'Selecione a empresa intermediadora (Residência).';
+    } else if (vinculo === '6') {
+        tipoCNPJ = 'estagio';
+        if (labelEmpresa) labelEmpresa.textContent = 'Selecione a empresa intermediadora (Estágio).';
+    } else if (vinculo === '1' && tipoVinculo === '3') {
+        tipoCNPJ = 'empregaticio_cpd';
+        if (labelEmpresa) labelEmpresa.textContent = 'Selecione a empresa intermediadora (Vínculo Empregatício - Contrato por Prazo Determinado).';
+    }
+    
+    // Busca empresas via AJAX
+    if (tipoCNPJ && blocoSelectEmpresa && blocoInputEmpresa && selectEmpresa) {
+        try {
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            const response = await fetch(`${baseUrl}/empresas/por-tipo-cnpj/${tipoCNPJ}`);
+            const data = await response.json();
+            
+            if (data.empresas && data.empresas.length > 0) {
+                // Há empresas cadastradas: mostra selectbox
+                selectEmpresa.innerHTML = '<option value="">Selecione uma empresa...</option>';
+                data.empresas.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = emp.label;
+                    option.dataset.cnpj = emp.cnpj;
+                    option.dataset.razaoSocial = emp.razao_social;
+                    selectEmpresa.appendChild(option);
+                });
+                
+                blocoSelectEmpresa.style.display = '';
+                const mostraInputs = checkCNPJNaoLista?.checked;
+                blocoInputEmpresa.style.display = mostraInputs ? '' : 'none';
+                
+                // Gerencia obrigatoriedade: se checkbox marcado, inputs são obrigatórios; senão, select é obrigatório
+                if (selectEmpresa) {
+                    if (mostraInputs) {
+                        selectEmpresa.removeAttribute('required');
+                    } else {
+                        selectEmpresa.setAttribute('required', 'required');
+                    }
+                }
+                if (inputCNPJ) {
+                    if (mostraInputs) {
+                        inputCNPJ.setAttribute('required', 'required');
+                    } else {
+                        inputCNPJ.removeAttribute('required');
+                    }
+                }
+                if (inputNomeEmpresa) {
+                    if (mostraInputs) {
+                        inputNomeEmpresa.setAttribute('required', 'required');
+                    } else {
+                        inputNomeEmpresa.removeAttribute('required');
+                    }
+                }
+            } else {
+                // Não há empresas: mostra apenas campos de texto (obrigatórios)
+                blocoSelectEmpresa.style.display = 'none';
+                blocoInputEmpresa.style.display = '';
+                if (selectEmpresa) selectEmpresa.removeAttribute('required');
+                if (inputCNPJ) inputCNPJ.setAttribute('required', 'required');
+                if (inputNomeEmpresa) inputNomeEmpresa.setAttribute('required', 'required');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar empresas:', error);
+            // Em caso de erro, mostra campos de texto (obrigatórios)
+            blocoSelectEmpresa.style.display = 'none';
+            blocoInputEmpresa.style.display = '';
+            if (selectEmpresa) selectEmpresa.removeAttribute('required');
+            if (inputCNPJ) inputCNPJ.setAttribute('required', 'required');
+            if (inputNomeEmpresa) inputNomeEmpresa.setAttribute('required', 'required');
+        }
+    }
+    
+    // Atualiza campos quando empresa é selecionada
+    // Remove listener anterior se existir para evitar duplicação
+    if (selectEmpresa) {
+        const oldHandler = selectEmpresa._empresaChangeHandler;
+        if (oldHandler) {
+            selectEmpresa.removeEventListener('change', oldHandler);
+        }
+        const handler = function() {
+            if (this.value && !checkCNPJNaoLista?.checked) {
+                const option = this.options[this.selectedIndex];
+                // CNPJ já vem sem máscara do backend (só dígitos), mas formatamos para exibição
+                const cnpjFormatado = option.dataset.cnpj ? formatarCNPJ(option.dataset.cnpj) : '';
+                if (inputCNPJ) inputCNPJ.value = cnpjFormatado;
+                if (inputNomeEmpresa) inputNomeEmpresa.value = option.dataset.razaoSocial || '';
+            }
+        };
+        selectEmpresa._empresaChangeHandler = handler;
+        selectEmpresa.addEventListener('change', handler);
+    }
+    
+    // Função auxiliar para formatar CNPJ
+    function formatarCNPJ(cnpj) {
+        if (!cnpj || cnpj.length !== 14) return cnpj;
+        return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+    }
+    
+    // Alterna entre selectbox e campos de texto baseado no checkbox
+    if (checkCNPJNaoLista) {
+        // Remove listener anterior se existir
+        const oldCheckHandler = checkCNPJNaoLista._checkChangeHandler;
+        if (oldCheckHandler) {
+            checkCNPJNaoLista.removeEventListener('change', oldCheckHandler);
+        }
+        const checkHandler = function() {
+            if (this.checked) {
+                // Mostra campos de texto e torna obrigatórios
+                blocoInputEmpresa.style.display = '';
+                if (selectEmpresa) {
+                    selectEmpresa.value = '';
+                    selectEmpresa.removeAttribute('required');
+                }
+                if (inputCNPJ) {
+                    inputCNPJ.value = '';
+                    inputCNPJ.setAttribute('required', 'required');
+                }
+                if (inputNomeEmpresa) {
+                    inputNomeEmpresa.value = '';
+                    inputNomeEmpresa.setAttribute('required', 'required');
+                }
+            } else {
+                // Esconde campos de texto e torna select obrigatório
+                blocoInputEmpresa.style.display = 'none';
+                if (selectEmpresa) {
+                    selectEmpresa.value = '';
+                    selectEmpresa.setAttribute('required', 'required');
+                }
+                if (inputCNPJ) {
+                    inputCNPJ.removeAttribute('required');
+                }
+                if (inputNomeEmpresa) {
+                    inputNomeEmpresa.removeAttribute('required');
+                }
+            }
+        };
+        checkCNPJNaoLista._checkChangeHandler = checkHandler;
+        checkCNPJNaoLista.addEventListener('change', checkHandler);
+    }
+}
+
+// Atualiza blocos quando o modal de vincular é aberto
+const modalVincular = document.getElementById('modalVincular');
+if (modalVincular) {
+    modalVincular.addEventListener('shown.bs.modal', function() {
+        // Reseta campos para valores padrão quando o modal é aberto
+        const selectVinculo = document.getElementById('selectVinculo');
+        const selectTipoVinculo = document.getElementById('selectTipoVinculo');
+        const selectProfissional = document.getElementById('selectProfissional');
+        const selectMatricula = document.getElementById('selectMatricula');
+        const selectCBO = document.getElementById('selectCBO');
+        const inputCNS = document.getElementById('inputCNS');
+        const inputCH = document.getElementById('inputCH');
+        const blocoResidencia = document.getElementById('blocoResidenciaModal');
+        const blocoEmpresa = document.getElementById('blocoEmpresaModal');
+        const selectEmpresa = document.getElementById('selectEmpresaModal');
+        const checkCNPJNaoLista = document.getElementById('checkCNPJNaoListaModal');
+        const inputCNPJ = document.getElementById('inputCNPJModal');
+        const inputNomeEmpresa = document.getElementById('inputNomeEmpresaModal');
+        
+        // Reseta selects para "Selecione..."
+        if (selectVinculo) selectVinculo.value = '';
+        if (selectTipoVinculo) {
+            selectTipoVinculo.value = '';
+            selectTipoVinculo.disabled = false;
+        }
+        const inputTipoVinculoHidden = document.getElementById('inputTipoVinculoHidden');
+        if (inputTipoVinculoHidden) inputTipoVinculoHidden.value = '';
+        if (selectProfissional) selectProfissional.value = '';
+        if (selectMatricula) {
+            selectMatricula.innerHTML = '<option value="">— Selecione o profissional primeiro —</option>';
+            selectMatricula.required = false;
+        }
+        if (selectCBO) {
+            selectCBO.innerHTML = '<option value="">Selecione a matrícula primeiro...</option>';
+        }
+        if (inputCNS) inputCNS.value = '';
+        if (inputCH) inputCH.value = '';
+        
+        // Limpa e esconde blocos condicionais
+        if (blocoResidencia) {
+            blocoResidencia.style.display = 'none';
+            const inputEspecialidadeResidencia = document.getElementById('inputEspecialidadeResidencia');
+            if (inputEspecialidadeResidencia) inputEspecialidadeResidencia.removeAttribute('required');
+        }
+        if (blocoEmpresa) blocoEmpresa.style.display = 'none';
+        if (selectEmpresa) {
+            selectEmpresa.value = '';
+            selectEmpresa.removeAttribute('required');
+        }
+        if (checkCNPJNaoLista) checkCNPJNaoLista.checked = false;
+        if (inputCNPJ) {
+            inputCNPJ.value = '';
+            inputCNPJ.removeAttribute('required');
+        }
+        if (inputNomeEmpresa) {
+            inputNomeEmpresa.value = '';
+            inputNomeEmpresa.removeAttribute('required');
+        }
+        
+        // Atualiza blocos após reset
+        atualizarBlocosModal();
+    });
+    modalVincular.addEventListener('hidden.bs.modal', function() {
+        // Limpa campos de empresa quando o modal é fechado
+        const inputCNPJ = document.getElementById('inputCNPJModal');
+        const inputNomeEmpresa = document.getElementById('inputNomeEmpresaModal');
+        if (inputCNPJ) inputCNPJ.value = '';
+        if (inputNomeEmpresa) inputNomeEmpresa.value = '';
+    });
+}
+
+document.getElementById('selectVinculo')?.addEventListener('change', atualizarBlocosModal);
+document.getElementById('selectTipoVinculo')?.addEventListener('change', function() {
+    // Atualiza o campo hidden quando o tipo é alterado manualmente
+    const inputTipoVinculoHidden = document.getElementById('inputTipoVinculoHidden');
+    if (inputTipoVinculoHidden && !this.disabled) {
+        inputTipoVinculoHidden.value = this.value || '';
+    }
+    atualizarBlocosModal();
 });
+
+// Máscara de CNPJ no modal de vincular profissional
+(function() {
+    const inputCNPJ = document.getElementById('inputCNPJModal');
+    if (!inputCNPJ) return;
+    
+    inputCNPJ.addEventListener('input', function() {
+        let v = this.value.replace(/\D/g, '');
+        if (v.length <= 14) {
+            if (v.length <= 2) {
+                this.value = v.replace(/^(\d{0,2})/, '$1');
+            } else if (v.length <= 5) {
+                this.value = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+            } else if (v.length <= 8) {
+                this.value = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+            } else if (v.length <= 12) {
+                this.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+            } else {
+                this.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+            }
+        }
+    });
+    
+    // Limpa máscara antes de submeter
+    const formVincular = inputCNPJ.closest('form');
+    if (formVincular) {
+        formVincular.addEventListener('submit', function() {
+            // Limpa máscara do CNPJ antes de enviar
+            if (inputCNPJ) {
+                inputCNPJ.value = inputCNPJ.value.replace(/\D/g, '');
+            }
+            
+            // Garante que o tipo seja enviado mesmo quando o select está disabled
+            const selectTipoVinculo = document.getElementById('selectTipoVinculo');
+            const inputTipoVinculoHidden = document.getElementById('inputTipoVinculoHidden');
+            if (selectTipoVinculo && selectTipoVinculo.disabled && inputTipoVinculoHidden && inputTipoVinculoHidden.value) {
+                // Cria um input hidden com o valor do tipo para garantir que seja enviado
+                const tipoHidden = document.createElement('input');
+                tipoHidden.type = 'hidden';
+                tipoHidden.name = 'tipo_vinculo';
+                tipoHidden.value = inputTipoVinculoHidden.value;
+                formVincular.appendChild(tipoHidden);
+            }
+            
+            // Se empresa foi selecionada, garante que cnpj_empresa e nome_empresa sejam preenchidos
+            const selectEmpresa = document.getElementById('selectEmpresaModal');
+            if (selectEmpresa && selectEmpresa.value) {
+                const option = selectEmpresa.options[selectEmpresa.selectedIndex];
+                const inputCNPJHidden = document.createElement('input');
+                inputCNPJHidden.type = 'hidden';
+                inputCNPJHidden.name = 'cnpj_empresa';
+                inputCNPJHidden.value = option.dataset.cnpj || '';
+                formVincular.appendChild(inputCNPJHidden);
+                const inputNomeEmpresaHidden = document.createElement('input');
+                inputNomeEmpresaHidden.type = 'hidden';
+                inputNomeEmpresaHidden.name = 'nome_empresa';
+                inputNomeEmpresaHidden.value = option.dataset.razaoSocial || '';
+                formVincular.appendChild(inputNomeEmpresaHidden);
+            }
+        }, { capture: true });
+    }
+})();
 
 // ── Modal Gerar Ficha CNES: aberto pelo dropdown ───────────────────────
 document.addEventListener('click', function (e) {

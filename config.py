@@ -17,6 +17,7 @@ def _normalizar_database_url(url):
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'sigus-dev-key-insegura')
+    # Mapa abrangência (KMZ): SIGUS_ABRANG_KMZ_OFFSET_LNG / _LAT (graus); vazio = padrão no código.
     SQLALCHEMY_DATABASE_URI = _normalizar_database_url(
         os.environ.get('DATABASE_URL', 'postgresql://postgres@localhost/sigus')
     )

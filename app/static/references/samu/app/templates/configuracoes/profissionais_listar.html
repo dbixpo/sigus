@@ -1,0 +1,413 @@
+{% extends 'base.html' %}
+{% block title %}Profissionais{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1>Profissionais</h1>
+    <div class="d-flex gap-2">
+        {% if itens %}
+        <a href="{{ url_for('configuracoes.profissionais_export') }}" id="btnExportar" class="btn btn-outline-success" title="Exportar para Excel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+        </a>
+        {% endif %}
+        <a href="{{ url_for('configuracoes.profissional_form') }}" class="btn btn-samu-primary">Novo Profissional</a>
+    </div>
+</div>
+
+{% if itens %}
+<div class="filtros-mobile-wrap">
+    <button class="btn btn-outline-secondary btn-sm btn-filtros-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosProfissionaisCollapse" aria-expanded="false">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+    <div class="collapse filtros-panel" id="filtrosProfissionaisCollapse">
+<div class="card shadow-sm mb-0">
+    <div class="card-body py-3">
+        <div class="row g-2 g-md-3 align-items-end" id="filtrosProfissionais">
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Nome</label>
+                <input type="text" class="form-control form-control-sm" id="filtroNome" placeholder="Buscar por nome...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Perfil</label>
+                <select id="filtroPerfil" multiple placeholder="Todos">
+                    {% for k, v in perfis.items() %}
+                    <option value="{{ k }}">{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Matrícula</label>
+                <input type="text" class="form-control form-control-sm" id="filtroMatricula" placeholder="Número da matrícula...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">CBO</label>
+                <select id="filtroCbo" multiple placeholder="Todos">
+                    {% for cod, desc in cbos %}
+                    <option value="{{ cod }}">{{ cod }} – {{ desc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Ativo</label>
+                <select class="form-select form-select-sm" id="filtroAtivo">
+                    <option value="">Todos</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="listagem-cards" id="cardsProfissionais">
+        {% for u in itens %}
+        {% set mats = u.matriculas.all() %}
+        {% set ns_cbo = namespace(list=[]) %}
+        {% for m in mats %}{% if m.cbo and m.cbo not in ns_cbo.list %}{% set _ = ns_cbo.list.append(m.cbo) %}{% endif %}{% endfor %}
+        {% if not ns_cbo.list and u.cbo %}{% set _ = ns_cbo.list.append(u.cbo) %}{% endif %}
+        {% set matriculas_str = (mats | map(attribute='numero') | list | join(' ')) | lower %}
+        <div class="listagem-card" data-nome="{{ (u.nome or '') | lower }}" data-perfis="{{ u.perfis_list | join(' ') }}" data-matriculas="{{ matriculas_str }}" data-cbos="{{ ns_cbo.list | join(' ') }}" data-ativo="{{ '1' if u.ativo else '0' }}">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                {% if u.foto_url %}
+                <img src="{{ u.foto_url }}" alt="" class="avatar-tabela">
+                {% else %}
+                <span class="avatar-tabela-placeholder">{{ u.inicial }}</span>
+                {% endif %}
+                <div>
+                    <div class="card-titulo mb-0">{{ u.nome }}</div>
+                    <div class="card-meta mb-0">{{ u.perfil_label }} · {{ u.usuario }}</div>
+                </div>
+            </div>
+            {% set _fone = u.whatsapp or u.telefone %}
+            {% if u.email or _fone %}
+            <div class="card-meta small">
+                {% if u.email %}<a href="mailto:{{ u.email }}" class="link-discreto text-decoration-none">{{ u.email }}</a>{% endif %}
+                {% if u.email and _fone %} · {% endif %}
+                {% if _fone %}<a href="https://wa.me/55{{ _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}" target="_blank" class="text-success text-decoration-none"><i class="bi bi-whatsapp"></i> {{ _fone | br_fone }}</a>{% endif %}
+            </div>
+            {% endif %}
+            <div class="card-rodape">
+                <span>{% if u.ativo %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}</span>
+                <div class="card-acoes">
+                    <a href="{{ url_for('configuracoes.profissional_form', id=u.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                    {% if u.id != current_user.id and (matriculas_por_usuario.get(u.id) or u.cbo) %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary btn-ficha-cnes" title="Ficha CNES" data-id="{{ u.id }}" data-nome="{{ u.nome }}" data-url-base="{{ url_for('configuracoes.profissional_ficha_cnes', id=u.id) }}"><i class="bi bi-file-earmark-person"></i></button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle table-profissionais">
+            <thead>
+                <tr>
+                    <th class="col-nowrap">Nome</th>
+                    <th class="d-none d-md-table-cell">E-mail</th>
+                    <th class="d-none d-md-table-cell col-nowrap"><i class="bi bi-whatsapp text-success me-1"></i>WhatsApp</th>
+                    <th class="col-perfil">Perfil</th>
+                    <th class="col-nowrap">Usuário</th>
+                    <th class="d-none d-lg-table-cell col-matricula-cbo">Matrícula(s) | CBO</th>
+                    <th class="d-none d-md-table-cell">Nº Conselho</th>
+                    <th>Ativo</th>
+                    <th style="width:90px"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyProfissionais">
+                {% for u in itens %}
+                {% set mats = u.matriculas.all() %}
+                {% set ns_cbo = namespace(list=[]) %}
+                {% for m in mats %}{% if m.cbo and m.cbo not in ns_cbo.list %}{% set _ = ns_cbo.list.append(m.cbo) %}{% endif %}{% endfor %}
+                {% if not ns_cbo.list and u.cbo %}{% set _ = ns_cbo.list.append(u.cbo) %}{% endif %}
+                {% set matriculas_str = (mats | map(attribute='numero') | list | join(' ')) | lower %}
+                <tr data-nome="{{ (u.nome or '') | lower }}" data-perfis="{{ u.perfis_list | join(' ') }}" data-matriculas="{{ matriculas_str }}" data-cbos="{{ ns_cbo.list | join(' ') }}" data-ativo="{{ '1' if u.ativo else '0' }}">
+                    <td class="col-nowrap">
+                        <div class="d-flex align-items-center gap-2">
+                            {% if u.foto_url %}
+                            <img src="{{ u.foto_url }}" alt="" class="avatar-tabela">
+                            {% else %}
+                            <span class="avatar-tabela-placeholder">{{ u.inicial }}</span>
+                            {% endif %}
+                            <span class="fw-semibold">{{ u.nome }}</span>
+                        </div>
+                    </td>
+                    <td class="small text-muted d-none d-md-table-cell">
+                        {% if u.email %}<a href="mailto:{{ u.email }}" class="link-discreto">{{ u.email }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="small d-none d-md-table-cell col-nowrap">
+                        {% set _fone = u.whatsapp or u.telefone %}
+                        {% if _fone %}
+                        <a href="https://wa.me/55{{ _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}" target="_blank" class="text-success text-decoration-none">
+                            <i class="bi bi-whatsapp"></i> {{ _fone | br_fone }}
+                        </a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="col-perfil"><span class="badge bg-danger">{{ u.perfil_label }}</span></td>
+                    <td class="col-nowrap">{{ u.usuario }}</td>
+                    <td class="col-matricula-cbo d-none d-lg-table-cell">
+                        {% if mats %}
+                        <div class="d-flex flex-column gap-1">
+                            {% for m in mats %}
+                            <span class="{{ 'text-muted' if not m.ativo else '' }}">
+                                <span class="fw-semibold">{{ m.numero }}</span>
+                                {% if m.cbo %}<span class="text-muted mx-1">|</span><span>{{ m.cbo_label }}</span>{% endif %}
+                                {% if not m.ativo %}<span class="badge bg-light text-secondary ms-1" style="font-size:.7rem">inativa</span>{% endif %}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% elif u.cbo %}
+                        <span class="text-muted fst-italic">Sem matrícula</span> <span class="text-muted mx-1">|</span> {{ u.cbo_label }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="small d-none d-md-table-cell">
+                        {% if mats %}
+                        {% set m0 = mats[0] %}
+                        {% if m0.orgao_emissor or m0.reg_conselho %}{{ (m0.orgao_emissor or '') ~ (' ' if m0.orgao_emissor and m0.reg_conselho else '') ~ (m0.reg_conselho or '') }}{% else %}—{% endif %}
+                        {% elif u.orgao_emissor or u.reg_conselho %}{{ (u.orgao_emissor or '') ~ (' ' if u.orgao_emissor and u.reg_conselho else '') ~ (u.reg_conselho or '') }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if u.ativo %}<span class="badge bg-success">Sim</span>
+                        {% else %}<span class="badge bg-secondary">Não</span>{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuracoes.profissional_form', id=u.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+                        {% if u.id != current_user.id and (matriculas_por_usuario.get(u.id) or u.cbo) %}
+                        <button type="button" class="btn btn-sm btn-outline-secondary btn-ficha-cnes" title="Ficha CNES"
+                                data-id="{{ u.id }}" data-nome="{{ u.nome }}"
+                                data-url-base="{{ url_for('configuracoes.profissional_ficha_cnes', id=u.id) }}">
+                            <i class="bi bi-file-earmark-person"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <p class="mb-0">Nenhum profissional cadastrado.</p>
+        <a href="{{ url_for('configuracoes.profissional_form') }}" class="btn btn-samu-primary btn-sm mt-2">Cadastrar o primeiro</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted">Voltar ao Dashboard</a>
+</div>
+<script id="dadosMatriculasFicha" type="application/json">{{ matriculas_por_usuario | tojson }}</script>
+{% endblock %}
+
+{% block modals %}
+<div class="modal fade" id="modalFichaCnes" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-person me-2"></i>Ficha CNES — <span id="fcNomeProf"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Preencha os dados complementares antes de gerar a ficha para impressão.</p>
+                <div class="mb-3" id="blocoMatricula">
+                    <label class="form-label fw-semibold">Matrícula e CBO <span class="text-danger">*</span></label>
+                    <select class="form-select" id="fcMatricula">
+                        <option value="">— Selecione —</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Unidade SAMU <span class="text-danger">*</span></label>
+                    <select class="form-select" id="fcUnidade" required>
+                        <option value="">— Selecione —</option>
+                        {% for u in unidades_samu %}
+                        <option value="{{ u.id }}">{{ u.nome_exibicao }}{% if u.e_viatura and u.tipo_label %} ({{ u.tipo_label }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Carga Horária (h/semana)</label>
+                    <input type="number" class="form-control" id="fcCargaHoraria" min="1" max="60" placeholder="Ex: 44">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-semibold">Data de Entrada na Unidade</label>
+                    <input type="date" class="form-control" id="fcDtEntrada">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-samu-primary" id="fcBtnConfirmar">
+                    <i class="bi bi-printer me-1"></i>Gerar Ficha
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var urlBase = '';
+    var nomeProf = '';
+
+    // Filtros profissionais
+    var tbody = document.getElementById('tbodyProfissionais');
+    var filtroNome = document.getElementById('filtroNome');
+    var filtroMatricula = document.getElementById('filtroMatricula');
+    var filtroAtivo = document.getElementById('filtroAtivo');
+    var filtroPerfilSel, filtroCboSel, btnExportar = document.getElementById('btnExportar');
+
+    function aplicarFiltros() {
+        if (!tbody) return;
+        var nome = (filtroNome && filtroNome.value || '').toLowerCase().trim();
+        var matricula = (filtroMatricula && filtroMatricula.value || '').toLowerCase().trim();
+        var ativo = filtroAtivo && filtroAtivo.value || '';
+        var pv = filtroPerfilSel ? filtroPerfilSel.getValue() : [];
+        var cv = filtroCboSel ? filtroCboSel.getValue() : [];
+        var perfisSel = Array.isArray(pv) ? pv : (pv ? [pv] : []);
+        var cbosSel = Array.isArray(cv) ? cv : (cv ? [cv] : []);
+
+        function filtragem(el) {
+            var dn = (el.getAttribute('data-nome') || '');
+            var dm = (el.getAttribute('data-matriculas') || '');
+            var da = el.getAttribute('data-ativo') || '';
+            var dps = (el.getAttribute('data-perfis') || '').split(/\s+/).filter(Boolean);
+            var dcs = (el.getAttribute('data-cbos') || '').split(/\s+/).filter(Boolean);
+            var ok = true;
+            if (nome && dn.indexOf(nome) === -1) ok = false;
+            if (matricula && dm.indexOf(matricula) === -1) ok = false;
+            if (ativo && da !== ativo) ok = false;
+            if (perfisSel.length && !perfisSel.some(function(p) { return dps.indexOf(p) !== -1; })) ok = false;
+            if (cbosSel.length && !cbosSel.some(function(c) { return dcs.indexOf(c) !== -1; })) ok = false;
+            el.style.display = ok ? '' : 'none';
+        }
+        Array.from(tbody.querySelectorAll('tr')).forEach(filtragem);
+        var cards = document.getElementById('cardsProfissionais');
+        if (cards) cards.querySelectorAll('.listagem-card').forEach(filtragem);
+
+        if (btnExportar) {
+            var q = [];
+            if (nome) q.push('nome=' + encodeURIComponent(filtroNome.value));
+            if (matricula) q.push('matricula=' + encodeURIComponent(filtroMatricula.value));
+            if (ativo) q.push('ativo=' + ativo);
+            if (perfisSel.length) q.push('perfil=' + perfisSel.map(encodeURIComponent).join(','));
+            if (cbosSel.length) q.push('cbo=' + cbosSel.map(encodeURIComponent).join(','));
+            btnExportar.href = btnExportar.getAttribute('data-base-href') + (q.length ? '?' + q.join('&') : '');
+        }
+    }
+
+    if (tbody) {
+        if (filtroNome) filtroNome.addEventListener('input', aplicarFiltros);
+        if (filtroMatricula) filtroMatricula.addEventListener('input', aplicarFiltros);
+        if (filtroAtivo) filtroAtivo.addEventListener('change', aplicarFiltros);
+
+        var selPerfil = document.getElementById('filtroPerfil');
+        var selCbo = document.getElementById('filtroCbo');
+        if (selPerfil && typeof TomSelect !== 'undefined') {
+            filtroPerfilSel = new TomSelect(selPerfil, {
+                placeholder: 'Todos',
+                allowEmptyOption: true,
+                plugins: { remove_button: { title: 'Remover' } }
+            });
+            filtroPerfilSel.on('change', aplicarFiltros);
+        }
+        if (selCbo && typeof TomSelect !== 'undefined') {
+            filtroCboSel = new TomSelect(selCbo, {
+                placeholder: 'Todos',
+                allowEmptyOption: true,
+                plugins: { remove_button: { title: 'Remover' } },
+                maxOptions: 500
+            });
+            filtroCboSel.on('change', aplicarFiltros);
+        }
+
+        if (btnExportar) {
+            btnExportar.setAttribute('data-base-href', btnExportar.getAttribute('href'));
+            aplicarFiltros();
+        }
+    }
+
+    document.querySelectorAll('.btn-ficha-cnes').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+            urlBase = this.dataset.urlBase;
+            nomeProf = this.dataset.nome;
+            document.getElementById('fcNomeProf').textContent = nomeProf;
+            var userId = this.dataset.id;
+            var sel = document.getElementById('fcMatricula');
+            sel.innerHTML = '<option value="">Carregando...</option>';
+            sel.disabled = true;
+            var mats = [];
+            try {
+                var el = document.getElementById('dadosMatriculasFicha');
+                if (el) {
+                    var dadosMatriculas = JSON.parse(el.textContent || '{}');
+                    mats = dadosMatriculas[userId] || dadosMatriculas[String(userId)] || [];
+                }
+                if (!mats || mats.length === 0) {
+                    var resp = await fetch('/configuracoes/profissionais/' + userId + '/matriculas-json', {
+                        headers: { 'X-CSRFToken': document.querySelector('[name=csrf_token]')?.value || '' }
+                    });
+                    if (resp.ok) mats = await resp.json();
+                }
+            } catch (e) {}
+            if (typeof mats === 'string') mats = [];
+            sel.innerHTML = '';
+            sel.disabled = false;
+            if (!mats || mats.length === 0) {
+                var opt = document.createElement('option');
+                opt.value = '0';
+                opt.textContent = 'Sem matrícula cadastrada — usa dados do profissional';
+                sel.appendChild(opt);
+            } else {
+                mats.forEach(function(m) {
+                    var opt = document.createElement('option');
+                    opt.value = String(m.id);
+                    var conselho = [];
+                    if (m.orgao_emissor) conselho.push(m.orgao_emissor);
+                    if (m.reg_conselho) conselho.push(m.reg_conselho);
+                    var conselhoStr = conselho.length ? ' — ' + conselho.join(' ') : '';
+                    opt.textContent = (m.numero || '') + (m.cbo_label ? ' — ' + m.cbo_label : '') + conselhoStr;
+                    sel.appendChild(opt);
+                });
+                if (mats.length === 1) {
+                    sel.value = String(mats[0].id);
+                }
+            }
+            document.getElementById('fcUnidade').value = '';
+            document.getElementById('fcCargaHoraria').value = '';
+            var hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('fcDtEntrada').value = hoje;
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalFichaCnes')).show();
+        });
+    });
+
+    document.getElementById('fcBtnConfirmar').addEventListener('click', function() {
+        var matId = document.getElementById('fcMatricula').value;
+        var unidadeId = document.getElementById('fcUnidade').value;
+        if (!matId) {
+            alert('Selecione a Matrícula e CBO.');
+            return;
+        }
+        if (!unidadeId) {
+            alert('Selecione a Unidade SAMU.');
+            return;
+        }
+        var params = new URLSearchParams();
+        params.set('matricula_id', matId);
+        params.set('unidade_id', unidadeId);
+        var ch = document.getElementById('fcCargaHoraria').value;
+        if (ch) params.set('carga_horaria', ch);
+        var dt = document.getElementById('fcDtEntrada').value;
+        if (dt) params.set('dt_entrada', dt);
+        var url = urlBase + (urlBase.includes('?') ? '&' : '?') + params.toString();
+        bootstrap.Modal.getInstance(document.getElementById('modalFichaCnes')).hide();
+        abrirImpresso(url, 'Ficha CNES — ' + nomeProf);
+    });
+})();
+</script>
+{% endblock %}

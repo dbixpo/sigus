@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-cpu"></i> {{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</h1>
+    <h1><i class="fas fa-microchip"></i> {{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -22,7 +22,7 @@
                 {# Resumo contextual quando vem de uma marca pré-selecionada #}
                 {% if pre_tipo_id or pre_marca_id %}
                 <div class="alert alert-info py-2 small mb-3">
-                    <i class="bi bi-info-circle me-1"></i>
+                    <i class="fas fa-info-circle me-1"></i>
                     {% if pre_tipo_id %}
                         {% for t in tipos if t.id == pre_tipo_id %}
                         Tipo: <strong>{{ t.nome }}</strong>
@@ -49,7 +49,7 @@
                             {% for t in tipos %}
                             <option value="{{ t.id }}"
                                 {{ 'selected' if (modelo and modelo.tipo_equipamento_id == t.id) or pre_tipo_id == t.id }}>
-                                <i class="bi {{ t.icone }}"></i> {{ t.nome }}
+                                {{ t.nome }}
                             </option>
                             {% endfor %}
                         </select>
@@ -73,13 +73,42 @@
                             {% endif %}
                         </select>
                         <div id="aviso-sem-marca" class="form-text text-warning d-none">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
                             Nenhuma marca cadastrada para este tipo.
                             <a href="{{ url_for('configuracoes.nova_marca2') }}" target="_blank">Cadastrar marca</a>
                         </div>
                     </div>
 
-                    {# 3. Nome do modelo #}
+                    {# 3. Nome do modelo - múltiplos modelos #}
+                    {% if not modelo %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Modelos <span class="text-danger">*</span>
+                        </label>
+                        <div id="container-modelos">
+                            <div class="input-group mb-2">
+                                <input type="text" name="nomes[]" class="form-control campo-modelo" 
+                                       placeholder="Ex.: OptiPlex 3000" required>
+                                <button type="button" class="btn btn-outline-danger btn-remover-modelo" style="display:none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-2 d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-adicionar-modelo">
+                                <i class="fas fa-plus-circle me-1"></i>Adicionar outro modelo
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-colar-lista">
+                                <i class="fas fa-clipboard me-1"></i>Colar lista (vírgula ou ponto e vírgula)
+                            </button>
+                        </div>
+                        <div class="form-text text-muted">
+                            Você pode adicionar vários modelos de uma vez para a mesma marca e tipo. 
+                            Ou cole uma lista separada por vírgula ou ponto e vírgula.
+                        </div>
+                    </div>
+                    {% else %}
+                    {# Edição: apenas um campo #}
                     <div class="mb-4">
                         <label class="form-label fw-semibold">
                             Nome do Modelo <span class="text-danger">*</span>
@@ -91,10 +120,11 @@
                             O nome deve ser único para a combinação de tipo + marca.
                         </div>
                     </div>
+                    {% endif %}
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if modelo else 'Cadastrar' }}
+                            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar' if modelo else 'Cadastrar' }}
                         </button>
                         <a href="{{ url_for('configuracoes.listar_modelos') }}" class="btn btn-outline-secondary">
                             Cancelar
@@ -147,4 +177,114 @@
     }
 })();
 </script>
+{% if not modelo %}
+<script>
+(function() {
+    var container = document.getElementById('container-modelos');
+    var btnAdicionar = document.getElementById('btn-adicionar-modelo');
+    var btnColarLista = document.getElementById('btn-colar-lista');
+    
+    function criarCampoModelo(valor) {
+        var div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.name = 'nomes[]';
+        input.className = 'form-control campo-modelo';
+        input.placeholder = 'Ex.: OptiPlex 3000';
+        input.required = true;
+        if (valor) input.value = valor.trim();
+        
+        var btnRemover = document.createElement('button');
+        btnRemover.type = 'button';
+        btnRemover.className = 'btn btn-outline-danger btn-remover-modelo';
+        btnRemover.innerHTML = '<i class="fas fa-times"></i>';
+        btnRemover.onclick = function() {
+            div.remove();
+            atualizarBotoesRemover();
+        };
+        
+        div.appendChild(input);
+        div.appendChild(btnRemover);
+        return div;
+    }
+    
+    function atualizarBotoesRemover() {
+        var campos = container.querySelectorAll('.campo-modelo');
+        var botoes = container.querySelectorAll('.btn-remover-modelo');
+        if (campos.length > 1) {
+            botoes.forEach(function(btn) { btn.style.display = ''; });
+        } else {
+            botoes.forEach(function(btn) { btn.style.display = 'none'; });
+        }
+    }
+    
+    btnAdicionar.addEventListener('click', function() {
+        var novoCampo = criarCampoModelo('');
+        container.appendChild(novoCampo);
+        novoCampo.querySelector('.campo-modelo').focus();
+        atualizarBotoesRemover();
+    });
+    
+    btnColarLista.addEventListener('click', function() {
+        var texto = prompt('Cole a lista de modelos separados por vírgula (,) ou ponto e vírgula (;):');
+        if (!texto) return;
+        
+        // Divide por vírgula ou ponto e vírgula
+        var modelos = texto.split(/[,;]/).map(function(m) {
+            return m.trim();
+        }).filter(function(m) {
+            return m.length > 0;
+        });
+        
+        if (modelos.length === 0) {
+            alert('Nenhum modelo válido encontrado na lista.');
+            return;
+        }
+        
+        // Limpa campos existentes vazios
+        var camposExistentes = container.querySelectorAll('.campo-modelo');
+        camposExistentes.forEach(function(campo) {
+            if (!campo.value.trim()) {
+                campo.closest('.input-group').remove();
+            }
+        });
+        
+        // Adiciona novos campos com os valores
+        modelos.forEach(function(nome) {
+            var novoCampo = criarCampoModelo(nome);
+            container.appendChild(novoCampo);
+        });
+        
+        atualizarBotoesRemover();
+        alert(modelos.length + ' modelo(s) adicionado(s)!');
+    });
+    
+    // Validação no submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var campos = container.querySelectorAll('.campo-modelo');
+        var valores = Array.from(campos).map(function(c) {
+            return c.value.trim();
+        }).filter(function(v) {
+            return v.length > 0;
+        });
+        
+        if (valores.length === 0) {
+            e.preventDefault();
+            alert('Adicione pelo menos um modelo.');
+            return false;
+        }
+        
+        // Remove campos vazios antes de enviar
+        campos.forEach(function(campo) {
+            if (!campo.value.trim()) {
+                campo.closest('.input-group').remove();
+            }
+        });
+    });
+    
+    atualizarBotoesRemover();
+})();
+</script>
+{% endif %}
 {% endblock %}

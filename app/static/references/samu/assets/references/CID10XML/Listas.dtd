@@ -1,0 +1,12 @@
+<!ELEMENT document (listas)>
+
+<!ELEMENT listas (lista+)>
+	<!ELEMENT lista (nome, tipo?, item+)>
+		<!ELEMENT item (nome, codigos+, item*)>
+		<!ATTLIST item seq NMTOKEN #REQUIRED>
+
+<!ELEMENT nome (#PCDATA)>
+
+<!ELEMENT tipo (#PCDATA)>
+
+<!ELEMENT codigos (#PCDATA)>

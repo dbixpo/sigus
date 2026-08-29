@@ -57,24 +57,44 @@
     text-align: center; padding: 3rem 1rem; color: #9ca3af;
 }
 .empty-fila i { font-size: 3rem; display: block; margin-bottom: .75rem; }
+
+/* Dropdown de unidades — altura limitada para abrir pra baixo */
+.ts-dropdown .ts-dropdown-content { max-height: 300px; overflow-y: auto; }
+
+.gestao-table-wrap { overflow-x: auto; }
+.gestao-table { min-width: 1320px; }
+.col-atualizado { font-size: .78rem; line-height: 1.35; max-width: 150px; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-kanban me-2"></i>Gestão de Chamados</h1>
+    <div>
+        <h1><i class="fas fa-columns me-2"></i>Gestão de Chamados</h1>
+        {% if gestao_unidade %}
+        <p class="text-muted small mb-0">
+            <i class="fas fa-hospital me-1"></i>Fila de <strong>{{ gestao_unidade.nome }}</strong>
+            — chamados demandados para esta unidade
+        </p>
+        {% endif %}
+    </div>
     {% if current_user.pode('abrir_chamado') %}
     <a href="{{ url_for('chamados.escolha_tipo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Chamado
+        <i class="fas fa-plus-circle me-1"></i>Novo Chamado
     </a>
     {% endif %}
 </div>
 
 {# ── Totalizadores ───────────────────────────────────────────── #}
-{% set sc = {'aberto':'#dc3545','em_andamento':'#ffc107','aguardando_peca':'#17a2b8','concluido':'#198754','cancelado':'#6c757d'} %}
 <div class="totais-bar">
+    <a href="{{ url_for('chamados.gestao') }}"
+       class="total-card {{ 'ativo' if not status_filtro else '' }}"
+       style="background:#374151;">
+        <div class="tc-num">{{ total_geral }}</div>
+        <div class="tc-lbl">Total de Chamados</div>
+    </a>
     {% for s, lbl in status_opts.items() %}
-    {% set cor = sc.get(s, '#6c757d') %}
+    {% set cor = status_cores.get(s, '#6c757d') %}
     <a href="{{ url_for('chamados.gestao', status=s) }}"
        class="total-card {{ 'ativo' if status_filtro == [s] else '' }}"
        style="background:{{ cor }};">
@@ -101,10 +121,29 @@
         {% elif setores|length == 1 %}
         <div class="col-sm-auto d-flex align-items-end">
             <span class="badge bg-primary px-3 py-2" style="font-size:.82rem">
-                <i class="bi bi-tools me-1"></i>{{ setores[0].nome }}
+                <i class="fas fa-tools me-1"></i>{{ setores[0].nome }}
             </span>
         </div>
         {% endif %}
+
+        <div class="col-sm-auto">
+            <label class="form-label form-label-sm">Unidade que abriu</label>
+            <select name="unidade_abriu" id="selUnidadeAbriu" class="form-select form-select-sm" style="min-width:180px" onchange="this.form.submit()">
+                <option value="">Todas</option>
+                {% for u in unidades_ativas %}
+                <option value="{{ u.id }}" {{ 'selected' if unidade_abriu_filtro == u.id }}>{{ u.nome | truncate(35, true, '…') }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="col-sm-auto d-flex align-items-end">
+            <div>
+                <label class="form-label form-label-sm d-block">Demandados para</label>
+                <span class="badge bg-primary px-3 py-2" style="font-size:.82rem">
+                    <i class="fas fa-hospital me-1"></i>{{ gestao_unidade.nome | truncate(32, true, '…') }}
+                </span>
+            </div>
+        </div>
 
         <div class="col-sm-auto">
             <label class="form-label form-label-sm">Status</label>
@@ -138,10 +177,10 @@
 
         <div class="col-sm-auto d-flex gap-2">
             <button type="submit" class="btn btn-primary btn-sm">
-                <i class="bi bi-funnel me-1"></i>Filtrar
+                <i class="fas fa-funnel me-1"></i>Filtrar
             </button>
             <a href="{{ url_for('chamados.gestao') }}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-x me-1"></i>Limpar
+                <i class="fas fa-times me-1"></i>Limpar
             </a>
         </div>
     </div>
@@ -152,26 +191,29 @@
 <div class="card shadow-sm">
     <div class="card-header d-flex align-items-center justify-content-between py-2">
         <span class="small fw-semibold">
-            <i class="bi bi-list-check me-1"></i>
+            <i class="fas fa-bars-check me-1"></i>
             {{ chamados|length }} chamado{{ 's' if chamados|length != 1 else '' }}
         </span>
         <span class="text-muted small">Ordenado por urgência · mais antigo primeiro</span>
     </div>
-    <div class="table-responsive">
+    <div class="table-responsive gestao-table-wrap">
         <table class="table gestao-table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th style="width:110px">Nº Chamado</th>
-                    <th>Equipamento / Assunto</th>
-                    <th class="d-none d-md-table-cell">Unidade</th>
-                    <th class="d-none d-lg-table-cell">Setor</th>
-                    <th style="width:90px">Status</th>
-                    <th class="d-none d-md-table-cell" style="width:90px">Aberto em</th>
-                    <th style="width:140px">Ações</th>
+                    <th style="width:100px">Nº</th>
+                    <th style="min-width:200px">Assunto</th>
+                    <th class="d-none d-xl-table-cell">Unidade solicitante</th>
+                    <th class="d-none d-lg-table-cell">Aberto por</th>
+                    <th class="d-none d-xl-table-cell">Setor</th>
+                    <th style="width:95px">Prioridade</th>
+                    <th style="width:95px">Status</th>
+                    <th style="width:95px">Aberto em</th>
+                    <th style="min-width:130px">Atualizado em</th>
+                    <th style="width:130px">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                {% set pc = {'urgente':'#dc3545','alta':'#fd7e14','media':'#0d6efd','baixa':'#6c757d'} %}
+                {% set pc = {'alta':'#dc3545','urgente':'#dc3545','media':'#fd7e14','baixa':'#198754'} %}
                 {% set pl = {'urgente':'danger','alta':'warning','media':'primary','baixa':'secondary'} %}
                 {% for c in chamados %}
                 <tr class="chamado-row">
@@ -180,16 +222,8 @@
                             <span class="prio-strip"
                                   style="background:{{ pc.get(c.prioridade,'#ccc') }}"
                                   title="{{ c.prioridade_label }}"></span>
-                            <div>
-                                <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
-                                   class="fw-semibold text-decoration-none">{{ c.numero }}</a>
-                                <div>
-                                    <span class="prio-chip"
-                                          style="background:{{ pc.get(c.prioridade,'#ccc') }}22;color:{{ pc.get(c.prioridade,'#555') }}">
-                                        {{ c.prioridade_label }}
-                                    </span>
-                                </div>
-                            </div>
+                            <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
+                               class="fw-semibold text-decoration-none">{{ c.numero }}</a>
                         </div>
                     </td>
                     <td>
@@ -198,45 +232,62 @@
                             <span class="tipo-chip">{{ c.tipo_label }}</span>
                             {% if c.equipamento %}
                             <span class="tipo-chip" style="background:#e0f2fe;color:#0369a1">
-                                <i class="bi bi-tag me-1"></i>{{ c.equipamento.tipo_equipamento.nome if c.equipamento.tipo_equipamento else '' }}
+                                <i class="fas fa-tag me-1"></i>{{ c.equipamento.tipo_equipamento.nome if c.equipamento.tipo_equipamento else '' }}
                             </span>
                             {% endif %}
                             {% if c.sala %}
                             <span class="tipo-chip" style="background:#f0fdf4;color:#15803d">
-                                <i class="bi bi-door-open me-1"></i>{{ c.sala.nome }}
+                                <i class="fas fa-door-open me-1"></i>{{ c.sala.nome }}
                             </span>
                             {% endif %}
                             {% if c.bp_rechamado %}
                             <span class="tipo-chip" style="background:#fef3c7;color:#92400e">
-                                <i class="bi bi-arrow-repeat me-1"></i>Rechamado
+                                <i class="fas fa-arrow-repeat me-1"></i>Rechamado
                             </span>
                             {% endif %}
                         </div>
                     </td>
-                    <td class="d-none d-md-table-cell">
+                    <td class="d-none d-xl-table-cell">
                         <div style="font-size:.83rem">{{ c.unidade.nome | truncate(28, true, '…') }}</div>
                         {% if c.unidade.telefone %}
                         <div class="text-muted" style="font-size:.72rem">
-                            <i class="bi bi-telephone me-1"></i>{{ c.unidade.telefone }}
+                            <i class="fas fa-telephone me-1"></i>{{ c.unidade.telefone | br_fone }}
                         </div>
                         {% endif %}
                     </td>
                     <td class="d-none d-lg-table-cell">
+                        <div style="font-size:.83rem">{{ c.solicitante_nome | truncate(28, true, '…') }}</div>
+                        {% if c.aberto_por_externo %}
+                        <div class="text-muted" style="font-size:.72rem">
+                            <i class="fas fa-user-clock me-1"></i>Solicitante externo
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-xl-table-cell">
                         <span class="text-muted" style="font-size:.82rem">
                             {{ c.setor.nome if c.setor else '—' }}
                         </span>
                     </td>
+                    <td class="text-nowrap">
+                        <span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span>
+                    </td>
                     <td>
                         <span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span>
                     </td>
-                    <td class="d-none d-md-table-cell text-muted" style="font-size:.78rem">
+                    <td class="text-muted" style="font-size:.78rem">
                         {{ c.criado_em | br_date }}
+                    </td>
+                    <td class="col-atualizado text-muted">
+                        <div>{{ c.atualizado_em | br_datetime }}</div>
+                        {% if c.ultimo_editor %}
+                        <div class="text-body-secondary">{{ c.ultimo_editor.nome | truncate(28, true, '…') }}</div>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="acoes">
                             <a href="{{ url_for('chamados.detalhe', id=c.id) }}"
                                class="btn btn-outline-primary btn-sm" title="Ver detalhes">
-                                <i class="bi bi-eye"></i>
+                                <i class="fas fa-eye"></i>
                             </a>
                             {% if c.status not in ['concluido', 'cancelado'] %}
                             <button type="button"
@@ -247,14 +298,15 @@
                                     data-id="{{ c.id }}"
                                     data-numero="{{ c.numero }}"
                                     data-status="{{ c.status }}"
-                                    data-setor="{{ c.setor_id or '' }}">
-                                <i class="bi bi-arrow-repeat"></i>
+                                    data-tipo-chamado="{{ c.tipo_chamado }}"
+                                    data-unidade-resp="{{ c.unidade_responsavel_id or '' }}">
+                                <i class="fas fa-arrows-rotate"></i>
                             </button>
                             {% endif %}
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary" title="Imprimir"
                                     onclick="abrirImpresso('{{ url_for('chamados.imprimir', id=c.id) }}', 'Chamado {{ c.numero }}')">
-                                <i class="bi bi-printer"></i>
+                                <i class="fas fa-print"></i>
                             </button>
                         </div>
                     </td>
@@ -267,9 +319,9 @@
 
 {% else %}
 <div class="empty-fila">
-    <i class="bi bi-check2-all text-success"></i>
+    <i class="fas fa-check-all text-success"></i>
     <div class="fw-semibold" style="font-size:1.1rem">Nenhum chamado encontrado</div>
-    <div class="small mt-1">Ajuste os filtros ou aguarde novos chamados.</div>
+    <div class="small mt-1">Nenhum chamado demandado para {{ gestao_unidade.nome if gestao_unidade else 'sua unidade' }} no momento.</div>
 </div>
 {% endif %}
 
@@ -284,7 +336,7 @@
 
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalAtualizarLabel">
-                        <i class="bi bi-arrow-repeat me-2 text-primary"></i>
+                        <i class="fas fa-arrows-rotate me-2 text-primary"></i>
                         Atualizar — <span id="maNumero" class="text-muted fw-normal"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -301,13 +353,15 @@
                             </select>
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label">Setor</label>
-                            <select name="setor_id" id="maSetor" class="form-select">
-                                <option value="">— Manter atual —</option>
-                                {% for s in setores %}
-                                <option value="{{ s.id }}">{{ s.nome }}</option>
+                            <label class="form-label">Unidade responsável</label>
+                            <select name="unidade_responsavel_id" id="maUnidadeResp" class="form-select">
+                                <option value="0">— Nenhuma —</option>
+                                {% for u in unidades_ativas %}
+                                <option value="{{ u.id }}"
+                                        data-tipos='{{ (u.tipos_chamado_recebe or []) | tojson }}'>{{ u.nome }}</option>
                                 {% endfor %}
                             </select>
+                            <div class="form-text">Somente unidades que tratam o tipo deste chamado.</div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Observação</label>
@@ -321,7 +375,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm"
                             data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-check-circle me-1"></i>Salvar
+                        <i class="fas fa-check-circle me-1"></i>Salvar
                     </button>
                 </div>
             </form>
@@ -334,13 +388,36 @@
 {% block scripts %}
 <script>
 (function () {
-    /* ── Tom Select nos filtros múltiplos ──────────────────── */
+    /* ── Tom Select nos filtros ─────────────────────────────── */
     ['selStatus', 'selTipo', 'selPrio'].forEach(id => {
         const el = document.getElementById(id);
         if (el && window.TomSelect) {
             new TomSelect(el, { plugins: ['remove_button'], maxOptions: null });
         }
     });
+    /* Unidade que abriu — dropdown com altura limitada */
+    const selAbriu = document.getElementById('selUnidadeAbriu');
+    if (selAbriu && window.TomSelect) {
+        new TomSelect(selAbriu, {
+            onChange: function() { if (this.input?.form) this.input.form.submit(); }
+        });
+    }
+    /* Unidade responsável no modal — filtrada pelo tipo de chamado */
+    const maUnidade = document.getElementById('maUnidadeResp');
+
+    function filtrarUnidadesRespModal(tipoChamado, valorAtual) {
+        if (!maUnidade) return;
+        let selecionado = valorAtual || '0';
+        maUnidade.querySelectorAll('option[data-tipos]').forEach(opt => {
+            let tipos = [];
+            try { tipos = JSON.parse(opt.dataset.tipos || '[]'); } catch (e) {}
+            const ok = tipos.includes(tipoChamado) || opt.value === String(valorAtual);
+            opt.hidden = !ok;
+            opt.disabled = !ok;
+        });
+        const optOk = maUnidade.querySelector(`option[value="${selecionado}"]:not([disabled])`);
+        maUnidade.value = optOk ? selecionado : '0';
+    }
 
     /* ── Modal de atualização rápida ───────────────────────── */
     const modal = document.getElementById('modalAtualizar');
@@ -349,13 +426,15 @@
         const id     = btn.dataset.id;
         const numero = btn.dataset.numero;
         const status = btn.dataset.status;
-        const setor  = btn.dataset.setor;
+        const tipoChamado = btn.dataset.tipoChamado || '';
+        const unidadeResp = btn.dataset.unidadeResp || '0';
 
         document.getElementById('maNumero').textContent = numero;
         document.getElementById('maStatus').value       = status;
-        document.getElementById('maSetor').value        = setor || '';
+        filtrarUnidadesRespModal(tipoChamado, unidadeResp);
+        const base = window.SIGUS_BASE_URL || '';
         document.getElementById('formAtualizar').action =
-            `/chamados/gestao/${id}/atualizar-rapido`;
+            `${base}/chamados/gestao/${id}/atualizar-rapido`;
     });
 })();
 </script>

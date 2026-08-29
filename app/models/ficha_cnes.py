@@ -1,6 +1,8 @@
 from datetime import datetime
 from app import db
+from app.utils import agora_local_callable
 from app.models.usuario import CBOS, VINCULOS, TIPOS_VINCULO
+from app.models.cbo import CBO
 
 
 class FichaCnesVinculo(db.Model):
@@ -28,7 +30,7 @@ class FichaCnesVinculo(db.Model):
     nome_empresa             = db.Column(db.String(200))  # razão social da empresa contratante/estágio
     observacoes              = db.Column(db.Text)
     gerado_por               = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    gerado_em                = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    gerado_em                = db.Column(db.DateTime, nullable=False, default=agora_local_callable)
     emails_enviados          = db.Column(db.Boolean, nullable=False, default=False)
 
     usuario   = db.relationship('Usuario', foreign_keys=[usuario_id], backref=db.backref('fichas_cnes', lazy='dynamic'))
@@ -45,6 +47,13 @@ class FichaCnesVinculo(db.Model):
 
     @property
     def cbo_label(self):
+        if not self.cbo:
+            return '—'
+        # Busca do banco de dados primeiro
+        cbo_obj = CBO.query.filter_by(codigo=self.cbo).first()
+        if cbo_obj:
+            return f'{cbo_obj.codigo} – {cbo_obj.descricao}'
+        # Fallback para a lista hardcoded (caso o CBO não esteja no banco ainda)
         for cod, desc in CBOS:
             if cod == self.cbo:
                 return f'{cod} – {desc}'

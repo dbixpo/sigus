@@ -67,7 +67,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (selectEquip) selectEquip.innerHTML = '<option value="">Selecione um equipamento...</option>';
 
             if (!unidadeId) return;
-            fetch(`/chamados/api/salas/${unidadeId}`)
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            fetch(`${baseUrl}/chamados/api/salas/${unidadeId}`)
                 .then(r => r.json())
                 .then(data => {
                     // Suporte ao novo formato {predio_id, salas} e ao antigo array
@@ -94,7 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const salaId = this.value;
             selectEquip.innerHTML = '<option value="">Selecione um equipamento...</option>';
             if (!salaId) return;
-            fetch(`/chamados/api/equipamentos/${salaId}`)
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            fetch(`${baseUrl}/chamados/api/equipamentos/${salaId}`)
                 .then(r => r.json())
                 .then(equips => {
                     equips.forEach(e => {
@@ -116,7 +118,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const marcaId = this.value;
             selectModelo.innerHTML = '<option value="">Selecione o modelo...</option>';
             if (!marcaId) return;
-            fetch(`/equipamentos/api/modelos/${marcaId}`)
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            fetch(`${baseUrl}/equipamentos/api/modelos/${marcaId}`)
                 .then(r => r.json())
                 .then(modelos => {
                     modelos.forEach(m => {
@@ -138,7 +141,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const tipoId = this.value;
             camposContainer.innerHTML = '';
             if (!tipoId) return;
-            fetch(`/equipamentos/api/campos/${tipoId}`)
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            fetch(`${baseUrl}/equipamentos/api/campos/${tipoId}`)
                 .then(r => r.json())
                 .then(campos => {
                     if (campos.length === 0) return;

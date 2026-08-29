@@ -10,7 +10,7 @@
     </ol>
 </nav>
 <div class="page-header">
-    <h1><i class="bi bi-currency-dollar me-2"></i>{{ 'Editar' if item else 'Novo' }} Registro (FINANCEIRO - DAG)</h1>
+    <h1><i class="fas fa-dollar-sign me-2"></i>{{ 'Editar' if item else 'Novo' }} Registro (FINANCEIRO - DAG)</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -154,7 +154,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if item else 'Cadastrar' }}
+                    <i class="fas fa-check-circle me-1"></i>{{ 'Salvar' if item else 'Cadastrar' }}
                 </button>
                 <a href="{{ url_for('contrato_financeiro.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
                 {% if item and current_user.pode('editar_contrato') %}

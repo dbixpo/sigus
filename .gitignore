@@ -19,12 +19,8 @@ env/
 logs/
 *.log
 
-# Backups / dumps de banco (PII)
-database/*.sql
-database/sigus_dump.sql
-
-# Uploads de usuários (fotos, anexos)
-app/static/uploads/
+# Backups de banco (gerados por scripts/clone_banco.py)
+database/sigus_backup_*.sql
 
 # IDE / Editor
 .idea/

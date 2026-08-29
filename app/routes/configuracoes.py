@@ -11,13 +11,19 @@ from app.models.status_chamado import StatusChamado, BADGE_CORES
 from app.models.auditoria import Auditoria, ACAO_OPCOES, MODULO_OPCOES
 from app.models.chamado import Divisao, SetorManutencao, TIPOS_CHAMADO_LABELS
 from app.models.perfil_permissao import PerfilPermissao, SECOES
+from app.models.cbo import CBO
+from app.models.unidade import Unidade
+from app.models.predio import Predio
 
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
 
 def _exigir_admin():
-    """Acesso à página inicial de configurações (tipos, marcas, etc.)."""
-    if not current_user.pode('gerenciar_tipos_equipamento') and not current_user.pode('gerenciar_perfis'):
+    """Acesso à página inicial de configurações (tipos, marcas, unidades, prédios, etc.)."""
+    if (not current_user.pode('ver_configuracoes') and not current_user.pode('gerenciar_tipos_equipamento') 
+        and not current_user.pode('gerenciar_perfis') and not current_user.pode('ver_todas_unidades') 
+        and not current_user.pode('cadastrar_unidade') and not current_user.pode('ver_predios') 
+        and not current_user.pode('cadastrar_predio')):
         abort(403)
 
 
@@ -25,6 +31,40 @@ def _exigir_auditoria():
     """Apenas perfil administrador pode acessar auditoria."""
     if not current_user.pode('ver_auditoria'):
         abort(403)
+
+
+def _normalizar_icone_fontawesome(valor):
+    """Normaliza o ícone do Font Awesome, adicionando prefixo 'fas' se necessário."""
+    if not valor:
+        return ''
+    valor = valor.strip()
+    if not valor:
+        return ''
+    
+    # Compatibilidade com ícones antigos em Bootstrap Icons (bi / bi-*)
+    if valor.startswith('bi '):
+        partes = valor.split()
+        if len(partes) > 1 and partes[1].startswith('bi-'):
+            return 'fas fa-' + partes[1][3:]
+    if valor.startswith('bi-'):
+        return 'fas fa-' + valor[3:]
+
+    # Se já tem prefixo (fas, far, fab, fal, fad), retorna como está
+    import re
+    if re.match(r'^(fas|far|fab|fal|fad)\s+fa-', valor):
+        return valor
+    
+    # Se começa com fa- mas não tem prefixo, adiciona fas
+    if valor.startswith('fa-'):
+        return 'fas ' + valor
+    
+    # Se não começa com fa- e não tem prefixo, adiciona fas fa-
+    if not re.match(r'^(fas|far|fab|fal|fad)\s+', valor):
+        # Remove fa- se já existir no início
+        nome_icone = re.sub(r'^fa-', '', valor)
+        return 'fas fa-' + nome_icone
+    
+    return valor
 
 
 def _exigir_gerenciar_perfis():
@@ -41,6 +81,8 @@ def _exigir_gerenciar_perfis():
 @login_required
 def index():
     _exigir_admin()
+    total_unidades       = Unidade.query.filter_by(status='ativa').count()
+    total_predios        = Predio.query.filter_by(ativo=True).count()
     total_tipos_unidade  = TipoUnidade.query.count()
     total_tipos_sala     = TipoSala.query.count()
     total_tipos_equip    = TipoEquipamento.query.count()
@@ -52,7 +94,10 @@ def index():
     total_status_chamado = StatusChamado.query.filter_by(ativo=True).count()
     total_divisoes = Divisao.query.filter_by(ativo=True).count()
     total_setores = SetorManutencao.query.count()
+    total_cbos = CBO.query.count()
     return render_template('configuracoes/index.html',
+                           total_unidades=total_unidades,
+                           total_predios=total_predios,
                            total_tipos_unidade=total_tipos_unidade,
                            total_tipos_sala=total_tipos_sala,
                            total_tipos_equip=total_tipos_equip,
@@ -63,7 +108,8 @@ def index():
                            total_tipos_link=total_tipos_link,
                            total_status_chamado=total_status_chamado,
                            total_divisoes=total_divisoes,
-                           total_setores=total_setores)
+                           total_setores=total_setores,
+                           total_cbos=total_cbos)
 
 
 # ══════════════════════════════════════════════════════════
@@ -270,6 +316,8 @@ def editar_setor(id):
 def tipos_sala():
     _exigir_admin()
     tipos = TipoSala.query.order_by(TipoSala.nome).all()
+    for t in tipos:
+        t.icone = _normalizar_icone_fontawesome(t.icone) or 'fas fa-door-open'
     return render_template('configuracoes/tipos_sala/listar.html', tipos=tipos)
 
 
@@ -285,7 +333,7 @@ def novo_tipo_sala():
         tipo = TipoSala(
             nome=nome,
             descricao=request.form.get('descricao', '').strip() or None,
-            icone=request.form.get('icone', 'bi-door-open').strip(),
+            icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-door-open')),
             ativo=request.form.get('ativo') == 'on',
         )
         db.session.add(tipo)
@@ -308,11 +356,12 @@ def editar_tipo_sala(id):
             return render_template('configuracoes/tipos_sala/form.html', tipo=tipo)
         tipo.nome = novo_nome
         tipo.descricao = request.form.get('descricao', '').strip() or None
-        tipo.icone = request.form.get('icone', 'bi-door-open').strip()
+        tipo.icone = _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-door-open'))
         tipo.ativo = request.form.get('ativo') == 'on'
         db.session.commit()
         flash('Tipo de sala atualizado!', 'success')
         return redirect(url_for('configuracoes.tipos_sala'))
+    tipo.icone = _normalizar_icone_fontawesome(tipo.icone) or 'fas fa-door-open'
     return render_template('configuracoes/tipos_sala/form.html', tipo=tipo)
 
 
@@ -357,7 +406,7 @@ def novo_tipo_equipamento():
             nome=nome,
             descricao=request.form.get('descricao', '').strip(),
             tem_patrimonio=request.form.get('tem_patrimonio') == 'on',
-            icone=request.form.get('icone', 'bi-box').strip(),
+            icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-box')),
         )
         db.session.add(tipo)
         db.session.commit()
@@ -385,7 +434,7 @@ def editar_tipo_equipamento(id):
         tipo.nome = novo_nome
         tipo.descricao = request.form.get('descricao', '').strip()
         tipo.tem_patrimonio = request.form.get('tem_patrimonio') == 'on'
-        tipo.icone = request.form.get('icone', 'bi-box').strip()
+        tipo.icone = _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-box'))
         db.session.commit()
         flash('Tipo de equipamento atualizado!', 'success')
         return redirect(url_for('configuracoes.tipos_equipamento'))
@@ -808,21 +857,69 @@ def novo_modelo2():
     if request.method == 'POST':
         tipo_id  = request.form.get('tipo_equipamento_id', type=int)
         marca_id = request.form.get('marca_id', type=int)
-        nome     = request.form.get('nome', '').strip()
-        if not tipo_id or not marca_id or not nome:
-            flash('Preencha tipo de equipamento, marca e nome do modelo.', 'danger')
+        
+        # Suporta múltiplos modelos (nomes[]) ou modelo único (nome)
+        nomes_lista = request.form.getlist('nomes[]')
+        nome_unico = request.form.get('nome', '').strip()
+        
+        # Prepara lista de nomes para processar
+        nomes = []
+        if nomes_lista:
+            nomes = [n.strip() for n in nomes_lista if n.strip()]
+        elif nome_unico:
+            nomes = [nome_unico]
+        
+        if not tipo_id or not marca_id or not nomes:
+            flash('Preencha tipo de equipamento, marca e pelo menos um nome de modelo.', 'danger')
             return render_template('configuracoes/modelos/form.html',
                                    modelo=None, tipos=tipos, marcas_todas=marcas_todas,
                                    pre_tipo_id=tipo_id, pre_marca_id=marca_id)
-        if Modelo.query.filter_by(tipo_equipamento_id=tipo_id, marca_id=marca_id, nome=nome).first():
-            flash(f'Já existe o modelo "{nome}" para este tipo e marca.', 'danger')
+        
+        # Processa cada modelo
+        modelos_criados = []
+        modelos_duplicados = []
+        modelos_invalidos = []
+        
+        for nome in nomes:
+            nome = nome.strip()
+            if not nome:
+                continue
+            
+            # Verifica se já existe
+            if Modelo.query.filter_by(tipo_equipamento_id=tipo_id, marca_id=marca_id, nome=nome).first():
+                modelos_duplicados.append(nome)
+                continue
+            
+            try:
+                modelo = Modelo(tipo_equipamento_id=tipo_id, marca_id=marca_id, nome=nome)
+                db.session.add(modelo)
+                modelos_criados.append(nome)
+            except Exception as e:
+                modelos_invalidos.append(nome)
+        
+        if modelos_criados:
+            db.session.commit()
+            if len(modelos_criados) == 1:
+                flash(f'Modelo "{modelos_criados[0]}" cadastrado!', 'success')
+            else:
+                flash(f'{len(modelos_criados)} modelo(s) cadastrado(s): {", ".join(modelos_criados[:5])}{"..." if len(modelos_criados) > 5 else ""}', 'success')
+        
+        if modelos_duplicados:
+            if len(modelos_duplicados) == 1:
+                flash(f'Modelo "{modelos_duplicados[0]}" já existe e foi ignorado.', 'warning')
+            else:
+                flash(f'{len(modelos_duplicados)} modelo(s) já existiam e foram ignorados: {", ".join(modelos_duplicados[:3])}{"..." if len(modelos_duplicados) > 3 else ""}', 'warning')
+        
+        if modelos_invalidos:
+            flash(f'Erro ao cadastrar {len(modelos_invalidos)} modelo(s).', 'danger')
+        
+        if modelos_criados:
+            return redirect(url_for('configuracoes.listar_modelos'))
+        else:
+            # Se nenhum foi criado, volta ao formulário
             return render_template('configuracoes/modelos/form.html',
                                    modelo=None, tipos=tipos, marcas_todas=marcas_todas,
                                    pre_tipo_id=tipo_id, pre_marca_id=marca_id)
-        db.session.add(Modelo(tipo_equipamento_id=tipo_id, marca_id=marca_id, nome=nome))
-        db.session.commit()
-        flash(f'Modelo "{nome}" cadastrado!', 'success')
-        return redirect(url_for('configuracoes.listar_modelos'))
 
     return render_template('configuracoes/modelos/form.html',
                            modelo=None, tipos=tipos, marcas_todas=marcas_todas,
@@ -968,7 +1065,7 @@ def editar_perfil(codigo):
         return redirect(url_for('configuracoes.perfis'))
 
     if request.method == 'POST':
-        for secao_key, _label, _icon in SECOES:
+        for secao_key, _label, _icon, _pai in SECOES:
             row = PerfilPermissao.query.filter_by(perfil=codigo, secao=secao_key).first()
             if not row:
                 row = PerfilPermissao(perfil=codigo, secao=secao_key)
@@ -989,6 +1086,88 @@ def editar_perfil(codigo):
                           secoes=SECOES,
                           perm_map=perm_map,
                       )
+
+# ══════════════════════════════════════════════════════════
+#  CBOs (Códigos Brasileiros de Ocupação)
+# ══════════════════════════════════════════════════════════
+
+@configuracoes_bp.route('/cbos')
+@login_required
+def cbos():
+    _exigir_admin()
+    cbos_list = CBO.query.order_by(CBO.codigo).all()
+    return render_template('configuracoes/cbos/listar.html', cbos=cbos_list)
+
+
+@configuracoes_bp.route('/cbos/novo', methods=['GET', 'POST'])
+@login_required
+def novo_cbo():
+    _exigir_admin()
+    if request.method == 'POST':
+        codigo = request.form['codigo'].strip()
+        descricao = request.form['descricao'].strip()
+
+        if not codigo or not descricao:
+            flash('Código e descrição são obrigatórios.', 'danger')
+            return render_template('configuracoes/cbos/form.html', cbo=None)
+
+        if CBO.query.filter_by(codigo=codigo).first():
+            flash(f'Já existe um CBO com o código "{codigo}".', 'danger')
+            return render_template('configuracoes/cbos/form.html', cbo=None)
+
+        cbo = CBO(
+            codigo=codigo,
+            descricao=descricao,
+            ativo=request.form.get('ativo') == 'on',
+        )
+        db.session.add(cbo)
+        db.session.commit()
+        flash(f'CBO "{cbo.codigo} — {cbo.descricao}" cadastrado com sucesso!', 'success')
+        return redirect(url_for('configuracoes.cbos'))
+    return render_template('configuracoes/cbos/form.html', cbo=None)
+
+
+@configuracoes_bp.route('/cbos/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_cbo(id):
+    _exigir_admin()
+    cbo = CBO.query.get_or_404(id)
+    if request.method == 'POST':
+        novo_codigo = request.form['codigo'].strip()
+        descricao = request.form['descricao'].strip()
+
+        if not novo_codigo or not descricao:
+            flash('Código e descrição são obrigatórios.', 'danger')
+            return render_template('configuracoes/cbos/form.html', cbo=cbo)
+
+        conflito = CBO.query.filter(
+            CBO.codigo == novo_codigo,
+            CBO.id != id
+        ).first()
+        if conflito:
+            flash(f'Já existe outro CBO com o código "{novo_codigo}".', 'danger')
+            return render_template('configuracoes/cbos/form.html', cbo=cbo)
+
+        cbo.codigo = novo_codigo
+        cbo.descricao = descricao
+        cbo.ativo = request.form.get('ativo') == 'on'
+        db.session.commit()
+        flash('CBO atualizado!', 'success')
+        return redirect(url_for('configuracoes.cbos'))
+    return render_template('configuracoes/cbos/form.html', cbo=cbo)
+
+
+@configuracoes_bp.route('/cbos/<int:id>/alternar-status', methods=['POST'])
+@login_required
+def alternar_status_cbo(id):
+    _exigir_admin()
+    cbo = CBO.query.get_or_404(id)
+    cbo.ativo = not cbo.ativo
+    db.session.commit()
+    estado = 'ativado' if cbo.ativo else 'desativado'
+    flash(f'CBO "{cbo.codigo}" {estado}.', 'info')
+    return redirect(url_for('configuracoes.cbos'))
+
 
 # ══════════════════════════════════════════════════════════
 #  STATUS DE CHAMADOS

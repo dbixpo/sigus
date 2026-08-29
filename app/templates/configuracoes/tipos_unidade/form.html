@@ -16,7 +16,7 @@
 
 <div class="page-header">
     <h1>
-        <i class="bi bi-hospital"></i>
+        <i class="fas fa-hospital"></i>
         {{ 'Editar Tipo de Unidade' if tipo else 'Novo Tipo de Unidade' }}
     </h1>
 </div>
@@ -64,7 +64,7 @@
 
                 <div class="d-flex gap-2 mt-4">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-1"></i>
+                        <i class="fas fa-check-circle me-1"></i>
                         {{ 'Salvar Alterações' if tipo else 'Cadastrar Tipo' }}
                     </button>
                     <a href="{{ url_for('configuracoes.tipos_unidade') }}"
@@ -76,7 +76,7 @@
         {% if tipo %}
         <div class="card mt-3">
             <div class="card-header">
-                <i class="bi bi-info-circle me-2"></i>Unidades com este tipo
+                <i class="fas fa-info-circle me-2"></i>Unidades com este tipo
             </div>
             <div class="card-body p-0">
                 {% set unidades = tipo.unidades.all() %}

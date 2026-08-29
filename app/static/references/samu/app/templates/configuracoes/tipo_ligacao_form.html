@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Tipo de Ligação — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-pencil-square"></i> Tipo de Ligação — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Descrição</label>
+                <textarea name="descricao" class="form-control" rows="2">{{ item.descricao if item and item.descricao else '' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="permite_encerrar_direto" id="permite_encerrar_direto" {% if item and item.permite_encerrar_direto %}checked{% endif %}>
+                    <label class="form-check-label" for="permite_encerrar_direto">Permite encerrar ocorrência direto</label>
+                </div>
+                <div class="form-text">Quando marcado, o botão "Finalizar Atendimento" será exibido ao registrar chamadas com este tipo de ligação.</div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="eh_trote" id="eh_trote" {% if item and item.eh_trote %}checked{% endif %}>
+                    <label class="form-check-label" for="eh_trote">É trote</label>
+                </div>
+                <div class="form-text">Quando marcado, ligações com este tipo serão contabilizadas como trotes no dashboard.</div>
+            </div>
+            <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Ativo</label>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.tipos_ligacao') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

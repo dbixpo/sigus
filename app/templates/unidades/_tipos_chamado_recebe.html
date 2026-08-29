@@ -1,0 +1,28 @@
+{# Partial: checkboxes tipos que a unidade recebe na gestão — unidade-form-chamados-v1 #}
+<div class="form-section mb-0">
+    <div class="form-section-title">
+        <i class="fas fa-columns me-1 text-primary"></i>Gestão de Chamados
+    </div>
+    <p class="text-muted small mb-3">
+        Tipos de chamado que esta unidade <strong>recebe e trata</strong> na fila de gestão.
+        Sem seleção, usuários logados aqui não verão a aba &quot;Gestão de Chamados&quot;.
+    </p>
+    <div class="row g-2">
+        {% for k, v in (tipos_chamado_labels or {}).items() %}
+        <div class="col-md-6 col-lg-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="tipos_chamado_recebe"
+                       value="{{ k }}" id="tcr_{{ k }}_{{ suffix|default('form') }}"
+                       {% if unidade and k in (unidade.tipos_chamado_recebe or []) %}checked{% endif %}>
+                <label class="form-check-label" for="tcr_{{ k }}_{{ suffix|default('form') }}">{{ v }}</label>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning mb-0 py-2 small">
+                Lista de tipos indisponível. Reinicie o servidor da aplicação.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

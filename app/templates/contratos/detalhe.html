@@ -21,25 +21,25 @@
     </ol>
 </nav>
 <div class="page-header">
-    <h1><i class="bi bi-file-earmark-text"></i> {{ contrato.identificador }}
+    <h1><i class="fas fa-file-contract"></i> {{ contrato.identificador }}
         <span class="badge bg-{{ contrato.status_badge }} ms-2 fs-6">{{ contrato.status_label }}</span>
     </h1>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-primary btn-sm"
                 onclick="abrirImpresso('{{ url_for('contratos.imprimir', id=contrato.id) }}', 'Resumo — {{ contrato.identificador | e }}')">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
         {% if current_user.pode('editar_contrato') %}
         <a href="{{ url_for('contratos.editar', id=contrato.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-pencil me-1"></i>Editar
+            <i class="fas fa-pencil-alt me-1"></i>Editar
         </a>
         {% endif %}
     </div>
 </div>
 
 <div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
-    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ contrato.criado_em | br_datetime }}</strong></span>
-    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ contrato.atualizado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-calendar-plus me-1"></i>Criado em: <strong>{{ contrato.criado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-clock-history me-1"></i>Última atualização: <strong>{{ contrato.atualizado_em | br_datetime }}</strong></span>
 </div>
 
 <div class="row g-3">
@@ -51,7 +51,7 @@
                 <div class="mb-2"><strong>CPL:</strong>
                     {% if contrato.cpl_url_transparencia %}
                     <a href="{{ contrato.cpl_url_transparencia }}" target="_blank" rel="noopener">{{ contrato.cpl }}</a>
-                    <i class="bi bi-box-arrow-up-right text-muted" style="font-size:.7rem;"></i>
+                    <i class="fas fa-box-arrow-up-right text-muted" style="font-size:.7rem;"></i>
                     {% else %}
                     {{ contrato.cpl }}
                     {% endif %}
@@ -59,7 +59,7 @@
                 {% endif %}
                 <div class="mb-2"><strong>Nº do Processo SEI:</strong> {{ contrato.numero_sei or '—' }}</div>
                 {% if contrato.link_sei %}
-                <div class="mb-2"><strong>Link SEI:</strong> <a href="{{ contrato.link_sei }}" target="_blank" rel="noopener">Acessar processo <i class="bi bi-box-arrow-up-right"></i></a></div>
+                <div class="mb-2"><strong>Link SEI:</strong> <a href="{{ contrato.link_sei }}" target="_blank" rel="noopener">Acessar processo <i class="fas fa-box-arrow-up-right"></i></a></div>
                 {% endif %}
                 {% if contrato.modalidade %}
                 <div class="mb-2"><strong>Modalidade:</strong> {{ contrato.modalidade }}</div>
@@ -108,7 +108,7 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-pc-display me-2"></i>Equipamentos Cobertos ({{ itens | length }})</span>
+                <span><i class="fas fa-desktop me-2"></i>Equipamentos Cobertos ({{ itens | length }})</span>
             </div>
             <div class="card-body p-0">
                 {% if itens %}
@@ -126,7 +126,7 @@
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
                                                 data-confirm="Remover este item do contrato?">
-                                            <i class="bi bi-x"></i>
+                                            <i class="fas fa-times"></i>
                                         </button>
                                     </form>
                                     {% endif %}
@@ -137,7 +137,7 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="empty-state py-3"><i class="bi bi-pc-display"></i><p class="small">Nenhum item vinculado.</p></div>
+                <div class="empty-state py-3"><i class="fas fa-desktop"></i><p class="small">Nenhum item vinculado.</p></div>
                 {% endif %}
             </div>
             {% if current_user.pode('editar_contrato') %}
@@ -183,16 +183,16 @@
 
         <div class="card mt-3">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <span><i class="bi bi-clock-history me-2"></i>Histórico ({{ historico | length }})</span>
+                <span><i class="fas fa-clock-history me-2"></i>Histórico ({{ historico | length }})</span>
                 <div class="d-flex gap-2">
                     {% if current_user.pode('cadastrar_contrato') %}
                     <a href="{{ url_for('contrato_financeiro.novo') }}?contrato_id={{ contrato.id }}" class="btn btn-sm btn-outline-info">
-                        <i class="bi bi-currency-dollar me-1"></i>Cadastrar empenho
+                        <i class="fas fa-dollar-sign me-1"></i>Cadastrar empenho
                     </a>
                     {% endif %}
                     {% if current_user.pode('editar_contrato') %}
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#formAcao">
-                        <i class="bi bi-plus-circle me-1"></i>Adicionar ação
+                        <i class="fas fa-plus-circle me-1"></i>Adicionar ação
                     </button>
                     {% endif %}
                 </div>
@@ -296,7 +296,7 @@
                                     {% if a.novo_valor_total %}Novo total: {{ a.novo_valor_total | br_currency }}{% endif %}
                                     {% if a.tipo == 'termo_encerramento' %}<em>Contrato encerrado</em>{% endif %}
                                     {% if a.anexo_url %}
-                                        <a href="{{ a.anexo_url }}" target="_blank" class="ms-1"><i class="bi bi-paperclip"></i> Anexo</a>
+                                        <a href="{{ a.anexo_url }}" target="_blank" class="ms-1"><i class="fas fa-paperclip"></i> Anexo</a>
                                     {% endif %}
                                     {% if a.observacao %}
                                     <div class="observacao-html mt-1 text-muted">{{ a.observacao | safe }}</div>
@@ -343,7 +343,8 @@
             vinculoMarca.innerHTML = '<option value="">Todas</option>';
             vinculoModelo.innerHTML = '<option value="">Todos</option>';
             if (!tid) return;
-            fetch('/contratos/api/marcas-por-tipo/' + tid)
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            fetch(baseUrl + '/contratos/api/marcas-por-tipo/' + tid)
                 .then(function(r){ return r.json(); })
                 .then(function(arr){
                     arr.forEach(function(m){
@@ -361,7 +362,8 @@
             var tid = vinculoTipo && vinculoTipo.value;
             vinculoModelo.innerHTML = '<option value="">Todos</option>';
             if (!mid) return;
-            var url = '/contratos/api/modelos?marca_id=' + mid;
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            var url = baseUrl + '/contratos/api/modelos?marca_id=' + mid;
             if (tid) url += '&tipo_id=' + tid;
             fetch(url)
                 .then(function(r){ return r.json(); })

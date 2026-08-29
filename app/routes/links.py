@@ -19,7 +19,51 @@ _IMG_SIZE   = (200, 200)
 
 
 def _pode_gerir():
+    return current_user.pode('editar_links_uteis') or current_user.pode('adicionar_links_uteis')
     return current_user.perfil in ('administrador', 'gestor_secretaria')
+
+
+def _normalizar_icone_fontawesome(valor):
+    """Normaliza o ícone para Font Awesome (fas fa-xxx). Converte bi- (Bootstrap) para fa-."""
+    if not valor:
+        return ''
+    valor = valor.strip()
+    if not valor:
+        return ''
+    
+    import re
+    # Converter Bootstrap Icons (bi-xxx) para Font Awesome
+    if valor.startswith('bi-'):
+        biv = valor[3:].replace('-fill', '')
+        mapa = {'folder': 'folder', 'link': 'link', 'link-45deg': 'link', 'gear': 'gear',
+                'house': 'house', 'envelope': 'envelope', 'people': 'users', 'globe': 'globe',
+                'file-earmark': 'file', 'calendar': 'calendar', 'star': 'star',
+                'bookmark': 'bookmark', 'graph-up': 'chart-line', 'briefcase': 'briefcase',
+                'collection': 'folder', 'box': 'box', 'cpu': 'microchip'}
+        return 'fas fa-' + mapa.get(biv, biv.split('-')[0] if '-' in biv else biv)
+    
+    # Se já tem prefixo (fas, far, fab, fal, fad), retorna como está
+    if re.match(r'^(fas|far|fab|fal|fad)\s+fa-', valor):
+        return valor
+    
+    # Ícones de marca (Font Awesome Brands) — precisam de fab
+    icones_marca = {'wpforms', 'google', 'facebook', 'facebook-f', 'whatsapp', 'youtube',
+                    'twitter', 'instagram', 'linkedin', 'github', 'wikipedia-w', 'wordpress',
+                    'chrome', 'firefox', 'microsoft', 'apple', 'android'}
+    nome_sem_prefixo = valor.replace('fa-', '', 1) if valor.startswith('fa-') else valor
+    if nome_sem_prefixo in icones_marca:
+        return 'fab fa-' + nome_sem_prefixo
+    
+    # Se começa com fa- mas não tem prefixo, adiciona fas
+    if valor.startswith('fa-'):
+        return 'fas ' + valor
+    
+    # Se não começa com fa- e não tem prefixo, adiciona fas fa-
+    if not re.match(r'^(fas|far|fab|fal|fad)\s+', valor):
+        nome_icone = re.sub(r'^fa-', '', valor)
+        return 'fas fa-' + nome_icone
+    
+    return valor
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -73,7 +117,7 @@ def _processar_form_link(item: LinkUtil | None) -> dict:
         'url':          request.form.get('url', '').strip() or None,
         'imagem_url':   request.form.get('imagem_url', '').strip() or None,
         'imagem_path':  imagem_path,
-        'icone':        request.form.get('icone', 'bi-link-45deg').strip() or 'bi-link-45deg',
+        'icone':        _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-link')) or 'fas fa-link',
         'nova_aba':     request.form.get('nova_aba') == 'on',
         'ativo':        request.form.get('ativo') == 'on',
         'perfis_acesso': perfis,
@@ -86,6 +130,8 @@ def _processar_form_link(item: LinkUtil | None) -> dict:
 @links_bp.route('/')
 @login_required
 def index():
+    if not current_user.pode('ver_links_uteis'):
+        abort(403)
     tipos = (TipoLink.query
              .filter_by(ativo=True)
              .order_by(TipoLink.ordem)
@@ -217,7 +263,7 @@ def novo_tipo():
         t = TipoLink(
             nome=request.form['nome'].strip(),
             descricao=request.form.get('descricao', '').strip() or None,
-            icone=request.form.get('icone', 'bi-folder').strip() or 'bi-folder',
+            icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-folder')) or 'fas fa-folder',
             cor=request.form.get('cor', '#1a6abf').strip() or '#1a6abf',
             ativo=request.form.get('ativo') == 'on',
             ordem=(ultimo.ordem + 1 if ultimo else 0),
@@ -238,7 +284,7 @@ def editar_tipo(id):
     if request.method == 'POST':
         t.nome      = request.form['nome'].strip()
         t.descricao = request.form.get('descricao', '').strip() or None
-        t.icone     = request.form.get('icone', 'bi-folder').strip() or 'bi-folder'
+        t.icone     = _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-folder')) or 'fas fa-folder'
         t.cor       = request.form.get('cor', '#1a6abf').strip() or '#1a6abf'
         t.ativo     = request.form.get('ativo') == 'on'
         db.session.commit()

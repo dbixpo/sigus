@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+{% block title %}Despacho — {{ ocorrencia.numero }}{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+.despacho-motivo-endereco .row { align-items: stretch; }
+.despacho-motivo-endereco .motivo-col, .despacho-motivo-endereco .endereco-col { display: flex; flex-direction: column; }
+.motivo-queixa-exibicao { flex: 1; min-height: 0; overflow-y: auto; line-height: 1.35; }
+.motivo-queixa-exibicao p { margin: 0; line-height: 1.35; }
+.endereco-mapa-preview { height: 280px; background: #e9ecef; }
+.endereco-mapa-preview.leaflet-container { font: 12px/1.5 "Inter", sans-serif; }
+.decisao-badge { display: inline-block; padding: 4px 10px; border-radius: 6px; color: white; font-size: 0.85rem; margin: 2px; }
+.equipe-membro-linha { padding: 6px 0; border-bottom: 1px solid #eee; }
+.equipe-membro-linha:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-broadcast-pin text-primary"></i> Despacho — {{ ocorrencia.numero }}</h1>
+    <a href="{{ url_for('atendimento.despacho_viaturas') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Ver todas
+    </a>
+    <a href="{{ url_for('atendimento.despacho_viaturas') }}" class="btn btn-samu-primary btn-sm">
+        <i class="bi bi-people me-1"></i>Montar Equipes
+    </a>
+</div>
+
+{# Tabelas Aguardando | Em Ocorrência (contexto mantido) #}
+<div class="row mb-4">
+    <div class="col-12 col-lg-6 mb-3 mb-lg-0">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-semibold py-2">
+                <i class="bi bi-clock-history me-2"></i>Aguardando Atendimento
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Nº</th>
+                                <th>Paciente</th>
+                                <th>Apelido</th>
+                                <th>Origem</th>
+                                <th>Cidade/UF</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in aguardando_rows %}
+                            {% set _p = (r.ocorrencia.pacientes or [{}])[0] %}
+                            {% set _nome = (_p.get('nome') or '')|trim %}
+                            {% set _palavra = ((_nome.split() + [''])|first) if _nome else '' %}
+                            {% set _primeiro = (_palavra[0]|upper + _palavra[1:]|lower) if _palavra else '' %}
+                            {% set _idade = _p.get('idade') %}
+                            {% set _un = (_p.get('idade_unidade') or 'ano') %}
+                            {% set _un_label = 'ANOS' if _un == 'ano' else ('MESES' if _un == 'mes' else 'DIAS') %}
+                            <tr class="{{ 'table-warning' if r.ocorrencia.id == ocorrencia.id else '' }}">
+                                <td class="fw-semibold">
+                                    <a href="{{ url_for('atendimento.despacho_viaturas_atender', numero_ocorrencia=r.ocorrencia.numero) }}" class="text-decoration-none {{ 'fw-bold' if r.ocorrencia.id == ocorrencia.id else 'link-primary' }}">{{ r.ocorrencia.numero[-6:] if r.ocorrencia.numero and r.ocorrencia.numero|length >= 6 else r.ocorrencia.numero }}</a>
+                                </td>
+                                <td class="text-break small">{% if _primeiro or _idade %}{{ _primeiro or '—' }}{% if _idade %} ({{ _idade }} {{ _un_label }}){% endif %}{% else %}—{% endif %}</td>
+                                <td class="text-break small">{{ r.ocorrencia.apelido or '—' }}</td>
+                                <td class="small">{{ r.ocorrencia.origem_ligacao.nome if r.ocorrencia.origem_ligacao else '—' }}</td>
+                                <td class="small">{{ (r.ocorrencia.end_cidade or '—') }}{% if r.ocorrencia.end_cidade and r.ocorrencia.end_uf %}/{{ r.ocorrencia.end_uf }}{% elif r.ocorrencia.end_uf %}{{ r.ocorrencia.end_uf }}{% endif %}</td>
+                                <td><span class="badge" style="background-color:{{ r.classificacao.cor or '#6c757d' }}; color:white; font-size:0.7rem;">{{ r.tipo.sigla }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-muted text-center py-3 small">Nenhum recurso aguardando.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light fw-semibold py-2">
+                <i class="bi bi-truck me-2"></i>Em Ocorrência
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                    <table class="table table-hover table-sm mb-0 align-middle">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>Nº</th>
+                                <th>Apelido</th>
+                                <th>Viatura</th>
+                                <th style="width:80px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for o in em_ocorrencia_list %}
+                            <tr class="{{ 'table-warning' if o.id == ocorrencia.id else '' }}">
+                                <td class="fw-semibold">{{ o.numero[-6:] if o.numero and o.numero|length >= 6 else o.numero }}</td>
+                                <td class="text-break small">{{ o.apelido or '—' }}</td>
+                                <td class="small">{{ o.unidade_samu.apelido or o.unidade_samu.nome if o.unidade_samu else '—' }}</td>
+                                <td><a href="{{ url_for('atendimento.despacho_viaturas_atender', numero_ocorrencia=o.numero) }}" class="btn btn-sm btn-outline-primary py-0 px-1">Registrar</a></td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="text-muted text-center py-3 small">Nenhuma em andamento.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="POST" id="formEnviarViatura" class="{{ 'd-none' if em_ocorrencia else '' }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+{# Card: Dados da Ocorrência #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Dados da Ocorrência</div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Telefone</label>
+                <p class="mb-0 fw-semibold">
+                    {% if ocorrencia.telefone | wa_link %}
+                    <a href="{{ ocorrencia.telefone | wa_link }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none"><i class="bi bi-whatsapp me-1"></i>{{ ocorrencia.telefone | br_fone }}</a>
+                    {% elif ocorrencia.telefone %}{{ ocorrencia.telefone | br_fone }}{% else %}—{% endif %}
+                </p>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Solicitante</label>
+                <p class="mb-0">{{ ocorrencia.nome_solicitante or '—' }}</p>
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label small text-muted">Tipo / Origem</label>
+                <p class="mb-0">{{ ocorrencia.tipo_ligacao.nome if ocorrencia.tipo_ligacao else '—' }} / {{ ocorrencia.origem_ligacao.nome if ocorrencia.origem_ligacao else '—' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Motivo/Queixa + Botão Decisão Técnica #}
+<div class="card shadow-sm mb-4 despacho-motivo-endereco">
+    <div class="card-header bg-light fw-semibold d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span>Motivo / Queixa</span>
+        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalDecisaoTecnica">
+            <i class="bi bi-clipboard2-pulse me-1"></i>Ver decisão técnica do médico
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="border rounded p-2 bg-light small motivo-queixa-exibicao" style="min-height: 80px;">{{ (ocorrencia.motivo_queixa or '—')|colapsar_espacos_html|safe }}</div>
+    </div>
+</div>
+
+{# Endereço estruturado (como regulação médica) + Mapa #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Endereço da Ocorrência</div>
+    <div class="card-body p-0">
+        <div class="row g-0">
+            <div class="col-12 col-lg-6 p-3 endereco-col border-lg-end">
+                <div class="row g-2">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold small">Logradouro</label>
+                        <p class="mb-0">{{ ocorrencia.end_logradouro or '—' }}</p>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label fw-semibold small">Nº</label>
+                        <p class="mb-0">{{ ocorrencia.end_numero or '—' }}</p>
+                    </div>
+                    <div class="col-6 col-md-4">
+                        <label class="form-label fw-semibold small">Complemento</label>
+                        <p class="mb-0">{{ ocorrencia.end_complemento or '—' }}</p>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small">Bairro</label>
+                        <p class="mb-0">{{ ocorrencia.end_bairro or '—' }}</p>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label fw-semibold small">Cidade</label>
+                        <p class="mb-0">{{ ocorrencia.end_cidade or '—' }}</p>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label fw-semibold small">UF</label>
+                        <p class="mb-0">{{ ocorrencia.end_uf or '—' }}</p>
+                    </div>
+                    <div class="col-6 col-md-2">
+                        <label class="form-label fw-semibold small">CEP</label>
+                        <p class="mb-0">{{ ocorrencia.end_cep or '—' }}</p>
+                    </div>
+                </div>
+                {% if ocorrencia.google_maps_url %}
+                <a href="{{ ocorrencia.google_maps_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-link btn-sm mt-2 p-0">
+                    <i class="bi bi-geo-alt me-1"></i>Abrir no Google Maps
+                </a>
+                {% endif %}
+            </div>
+            <div class="col-12 col-lg-6 p-3">
+                <div id="mapaOcorrencia" class="endereco-mapa-preview"></div>
+                <div id="mapaLoading" class="text-muted text-center py-4 small d-none">
+                    <span class="spinner-border spinner-border-sm me-2"></span>Carregando localização...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Pacientes (somente leitura) #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">Pacientes</div>
+    <div class="card-body">
+        {% set _pacientes = (ocorrencia.pacientes or [{}]) if ocorrencia else [{}] %}
+        {% for p in _pacientes %}
+        <div class="d-flex flex-wrap gap-3 align-items-center mb-2 pb-2 {{ 'border-bottom' if not loop.last else '' }}">
+            <span class="fw-semibold">{{ p.get('nome') or '—' }}</span>
+            <span class="text-muted">{{ p.get('sexo') == 'M' and 'Masculino' or (p.get('sexo') == 'F' and 'Feminino' or '—') }}</span>
+            <span>{% if p.get('idade') %}{{ p.get('idade') }} {% if (p.get('idade_unidade') or 'ano') == 'ano' %}ano(s){% elif p.get('idade_unidade') == 'mes' %}mês(es){% else %}dia(s){% endif %}{% else %}—{% endif %}</span>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Nenhum paciente cadastrado.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{# Bloco: Equipe + Botões de horários / Redirecionar / Cancelar #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light fw-semibold">
+        <i class="bi bi-truck me-2"></i>Enviar viatura
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            {# Coluna esquerda: Select (aguardando) ou Equipe (em ocorrência ou após selecionar) #}
+            <div class="col-12 col-lg-6">
+                {% if em_ocorrencia and equipe_dados %}
+                <h6 class="fw-semibold mb-2">Equipe</h6>
+                <p class="mb-1 fw-semibold">Veículo Prefixo {{ equipe_dados.veiculo_prefixo }}</p>
+                <hr class="my-2">
+                {% for m in equipe_dados.membros %}
+                <div class="equipe-membro-linha d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span><strong>{{ m.nome }}</strong> <span class="text-muted">({{ m.perfil_nome }})</span></span>
+                    <span>
+                        {% if m.whatsapp and (m.whatsapp | wa_link) %}
+                        <a href="{{ m.whatsapp | wa_link }}" target="_blank" rel="noopener" class="text-success text-decoration-none">{{ m.whatsapp | br_fone }}</a>
+                        {% else %}{{ m.whatsapp | br_fone if m.whatsapp else '—' }}{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+                {% if ocorrencia.google_maps_url %}
+                <div class="mt-2">
+                    <a href="{{ ocorrencia.google_maps_url }}" target="_blank" rel="noopener" class="btn btn-link btn-sm p-0">
+                        <i class="bi bi-map me-1"></i>Abrir no Google Maps
+                    </a>
+                </div>
+                {% endif %}
+                {% elif not em_ocorrencia %}
+                <p class="text-muted small mb-3">Selecione qualquer viatura com equipe montada.</p>
+                <label class="form-label fw-semibold">Viatura</label>
+                <select id="selectViatura" class="form-select form-select-lg" form="formEnviarViatura" name="unidade_samu_id" {{ 'required' if viaturas_com_equipe else '' }}>
+                    <option value="">— Selecione a viatura —</option>
+                    {% for v in viaturas_com_equipe %}
+                    <option value="{{ v.id }}">{{ v.apelido or v.nome }}{% if v.tipo_unidade %} ({{ v.tipo_unidade.sigla }}){% endif %}</option>
+                    {% else %}
+                    <option value="" disabled>Nenhuma viatura com equipe montada disponível</option>
+                    {% endfor %}
+                </select>
+                <div id="equipePreviewWrap" class="mt-3 d-none">
+                    <h6 class="fw-semibold mb-2">Equipe</h6>
+                    <p class="mb-1 fw-semibold" id="equipeVeiculoPrefixo">Veículo Prefixo —</p>
+                    <hr class="my-2">
+                    <div id="equipeMembrosLista"></div>
+                </div>
+                {% endif %}
+            </div>
+            {# Coluna direita: Botões de horários, Redirecionar, Cancelar #}
+            <div class="col-12 col-lg-6">
+                {% if em_ocorrencia %}
+                <div class="mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge bg-success">Envio</span>
+                        <small class="text-muted" id="ev-envio">—</small>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 btn-evento" data-evento="saida_base">Saída da Base</button>
+                            <small class="d-block text-muted mt-1" id="ev-saida_base">—</small>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 btn-evento" data-evento="chegada_local">Chegada ao Local</button>
+                            <small class="d-block text-muted mt-1" id="ev-chegada_local">—</small>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 btn-evento" data-evento="saida_local">Saída do Local</button>
+                            <small class="d-block text-muted mt-1" id="ev-saida_local">—</small>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 btn-evento" data-evento="chegada_destino">Chegada no destino</button>
+                            <small class="d-block text-muted mt-1" id="ev-chegada_destino">—</small>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-success w-100 btn-evento" data-evento="equipe_liberada">Equipe Liberada</button>
+                            <small class="d-block text-muted mt-1" id="ev-equipe_liberada">—</small>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <button type="button" class="btn btn-outline-secondary w-100 btn-evento" data-evento="chegada_base">Chegada à base</button>
+                            <small class="d-block text-muted mt-1" id="ev-chegada_base">—</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="fw-semibold mb-2">Redirecionar viatura</h6>
+                <div class="row g-2 mb-4">
+                    <div class="col-md-8">
+                        <select id="selectRedirecionar" class="form-select">
+                            <option value="">— Selecione nova ocorrência —</option>
+                            {% for id, num, ap in ocorrencias_para_redirecionar %}
+                            <option value="{{ id }}">{{ num }} — {{ ap or '—' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-primary w-100" id="btnRedirecionar">Redirecionar</button>
+                    </div>
+                </div>
+                <hr>
+                <h6 class="fw-semibold mb-2">Cancelamento do envio</h6>
+                <div class="row g-2">
+                    <div class="col-md-5">
+                        <select id="selectCancelamentoIntercorrencia" class="form-select">
+                            <option value="">— Intercorrência —</option>
+                            {% for i in intercorrencias_cancelamento %}
+                            <option value="{{ i.id }}">{{ i.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" id="inputCancelamentoObs" class="form-control" placeholder="Observação">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-danger w-100" id="btnCancelarEnvio">Cancelar envio</button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="d-flex gap-2">
+                    <button type="submit" form="formEnviarViatura" class="btn btn-samu-primary btn-lg" id="btnEnviar" {{ 'disabled' if not viaturas_com_equipe else '' }}>
+                        <i class="bi bi-send me-1"></i>Enviar viatura
+                    </button>
+                    <a href="{{ url_for('atendimento.despacho_viaturas') }}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <a href="{{ url_for('atendimento.despacho_viaturas') }}" class="btn btn-link text-muted"><i class="bi bi-arrow-left me-1"></i>Voltar ao Despacho</a>
+</div>
+{% endblock %}
+
+{% block modals %}
+{{ super() }}
+<div class="modal fade" id="modalDecisaoTecnica" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i>Decisão Técnica do Médico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if ocorrencia.decisoes_medicas %}
+                <h6 class="fw-semibold mb-2">Recursos definidos</h6>
+                <div class="mb-4">
+                    {% for d in ocorrencia.decisoes_medicas %}
+                    {% set t = tipos_map.get(d.get('tipo_unidade_id')) %}
+                    {% set c = classes_map.get(d.get('classificacao_risco_id')) %}
+                    {% if t and c %}
+                    <span class="decisao-badge" style="background-color: {{ c.cor or '#6c757d' }};">
+                        {{ t.sigla }} — {{ c.nome }}
+                    </span>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% if ocorrencia.avaliacao_medica_historico %}
+                <h6 class="fw-semibold mb-2">Histórico de Avaliação Médica</h6>
+                <div class="border rounded p-3 bg-light" style="max-height: 400px; overflow-y: auto; font-size: 0.9rem;">{{ ocorrencia.avaliacao_medica_historico|safe }}</div>
+                {% else %}
+                <p class="text-muted mb-0">Nenhuma avaliação médica registrada.</p>
+                {% endif %}
+                {% if ocorrencia.decisao_protocolo %}
+                <h6 class="fw-semibold mb-2 mt-4">Decisão do Protocolo</h6>
+                <div class="border rounded p-2 bg-light small" style="white-space: pre-wrap;">{{ ocorrencia.decisao_protocolo }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+(function() {
+    var endereco = {{ (ocorrencia.endereco_formatado or '') | tojson }};
+    var map = null;
+    var marker = null;
+    function initMapa() {
+        var div = document.getElementById('mapaOcorrencia');
+        if (!div || map) return;
+        map = L.map('mapaOcorrencia').setView([-22.12, -51.38], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+    }
+    if (endereco && endereco.length >= 5) {
+        var loading = document.getElementById('mapaLoading');
+        if (loading) loading.classList.remove('d-none');
+        initMapa();
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(endereco) + '&limit=1', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (loading) loading.classList.add('d-none');
+            if (data && data[0] && map) {
+                var lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                marker = L.marker([lat, lon]).addTo(map);
+                map.setView([lat, lon], 15);
+            }
+        })
+        .catch(function() { if (loading) loading.classList.add('d-none'); });
+    } else {
+        initMapa();
+    }
+
+    {# JS para aguardando: carregar equipe ao selecionar viatura #}
+    var selectViatura = document.getElementById('selectViatura');
+    var equipePreviewWrap = document.getElementById('equipePreviewWrap');
+    var equipeVeiculoPrefixo = document.getElementById('equipeVeiculoPrefixo');
+    var equipeMembrosLista = document.getElementById('equipeMembrosLista');
+    var API_EQUIPES_GET = "{{ url_for('atendimento.despacho_api_equipes_get') }}";
+    if (selectViatura) {
+        selectViatura.addEventListener('change', function() {
+            var vid = this.value;
+            if (!vid) {
+                if (equipePreviewWrap) equipePreviewWrap.classList.add('d-none');
+                return;
+            }
+            fetch(API_EQUIPES_GET + '?unidade_samu_id=' + vid, { credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!equipePreviewWrap || !equipeVeiculoPrefixo || !equipeMembrosLista) return;
+                    var eq = data.equipe;
+                    if (!eq) {
+                        equipePreviewWrap.classList.add('d-none');
+                        return;
+                    }
+                    equipeVeiculoPrefixo.textContent = 'Veículo Prefixo ' + (eq.veiculo_prefixo || '—');
+                    var html = '';
+                    (eq.membros || []).forEach(function(m) {
+                        var tel = (m.whatsapp || '').replace(/\D/g, '');
+                        var fone = m.whatsapp || '—';
+                        if (tel.length >= 10) {
+                            var wa = '55' + tel.replace(/^0/, '');
+                            var fmt = tel.length === 11 ? '(' + tel.slice(0,2) + ') ' + tel.slice(2,7) + '-' + tel.slice(7) : '(' + tel.slice(0,2) + ') ' + tel.slice(2,6) + '-' + tel.slice(6);
+                            fone = '<a href="https://wa.me/' + wa + '" target="_blank" rel="noopener" class="text-success text-decoration-none">' + fmt + '</a>';
+                        }
+                        html += '<div class="equipe-membro-linha d-flex justify-content-between align-items-center"><span><strong>' + (m.nome || '—') + '</strong> <span class="text-muted">(' + (m.perfil_nome || '') + ')</span></span><span>' + fone + '</span></div>';
+                    });
+                    equipeMembrosLista.innerHTML = html || '<p class="text-muted small mb-0">Sem membros.</p>';
+                    equipePreviewWrap.classList.remove('d-none');
+                });
+        });
+    }
+
+    {# JS para em ocorrência: eventos, redirecionar, cancelar #}
+    var emOcorrencia = {{ 'true' if em_ocorrencia else 'false' }};
+    if (emOcorrencia) {
+        var ocorrenciaId = {{ ocorrencia.id }};
+        var API_OCORRENCIA = "{{ url_for('atendimento.despacho_api_ocorrencia', ocorrencia_id=0) }}".replace('/0', '/');
+        var API_EVENTO = "{{ url_for('atendimento.despacho_api_registrar_evento') }}";
+        var API_REDIRECIONAR = "{{ url_for('atendimento.despacho_api_redirecionar') }}";
+        var API_CANCELAR = "{{ url_for('atendimento.despacho_api_cancelar') }}";
+        var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        fetch(API_OCORRENCIA + ocorrenciaId, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : {}; })
+            .then(function(data) {
+                ['envio','saida_base','chegada_local','saida_local','chegada_destino','equipe_liberada','chegada_base'].forEach(function(ev) {
+                    var el = document.getElementById('ev-' + ev);
+                    if (el) el.textContent = (data && data[ev]) || '—';
+                });
+            });
+
+        document.querySelectorAll('.btn-evento').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var ev = this.dataset.evento;
+                if (!ev) return;
+                var fd = new FormData();
+                fd.append('csrf_token', csrfToken);
+                fd.append('ocorrencia_id', ocorrenciaId);
+                fd.append('evento', ev);
+                fetch(API_EVENTO, { method: 'POST', body: fd, credentials: 'same-origin' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.ok) {
+                            var el = document.getElementById('ev-' + ev);
+                            if (el) el.textContent = data.valor;
+                            if (ev === 'equipe_liberada') location.reload();
+                        }
+                    });
+            });
+        });
+
+        document.getElementById('btnRedirecionar')?.addEventListener('click', function() {
+            var nid = document.getElementById('selectRedirecionar').value;
+            if (!nid) { alert('Selecione a ocorrência de destino.'); return; }
+            var fd = new FormData();
+            fd.append('csrf_token', csrfToken);
+            fd.append('ocorrencia_atual_id', ocorrenciaId);
+            fd.append('nova_ocorrencia_id', nid);
+            fetch(API_REDIRECIONAR, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.ok) location.reload();
+                    else alert(data.erro || 'Erro');
+                });
+        });
+
+        document.getElementById('btnCancelarEnvio')?.addEventListener('click', function() {
+            var iid = document.getElementById('selectCancelamentoIntercorrencia').value;
+            var obs = document.getElementById('inputCancelamentoObs').value;
+            if (!confirm('Confirmar cancelamento do envio desta viatura?')) return;
+            var fd = new FormData();
+            fd.append('csrf_token', csrfToken);
+            fd.append('ocorrencia_id', ocorrenciaId);
+            if (iid) fd.append('intercorrencia_id', iid);
+            if (obs) fd.append('observacao', obs);
+            fetch(API_CANCELAR, { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.ok) location.reload();
+                    else alert(data.erro || 'Erro');
+                });
+        });
+    }
+})();
+</script>
+{% endblock %}

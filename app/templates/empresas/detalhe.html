@@ -9,10 +9,10 @@
     </ol>
 </nav>
 <div class="page-header">
-    <h1><i class="bi bi-building me-2"></i>{{ empresa.razao_social }}</h1>
+    <h1><i class="fas fa-building me-2"></i>{{ empresa.razao_social }}</h1>
     {% if current_user.pode('editar_contrato') %}
     <a href="{{ url_for('empresas.editar', id=empresa.id) }}" class="btn btn-primary">
-        <i class="bi bi-pencil me-1"></i>Editar
+        <i class="fas fa-pencil-alt me-1"></i>Editar
     </a>
     {% endif %}
 </div>
@@ -48,7 +48,7 @@
     </div>
     <div class="col-lg-8">
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-building me-1"></i>Dados da Empresa (Administrativo)</div>
+            <div class="card-header"><i class="fas fa-building me-1"></i>Dados da Empresa (Administrativo)</div>
             <div class="card-body">
                 <table class="table table-borderless mb-0">
                     <tr>
@@ -79,7 +79,7 @@
             </div>
         </div>
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-headset me-1"></i>Dados da Empresa (Local)</div>
+            <div class="card-header"><i class="fas fa-headset me-1"></i>Dados da Empresa (Local)</div>
             <div class="card-body">
                 <table class="table table-borderless mb-0">
                     <tr>
@@ -97,8 +97,39 @@
                 </table>
             </div>
         </div>
+        <div class="card mb-3">
+            <div class="card-header"><i class="fas fa-tags me-1"></i>Tipos de CNPJ</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Esta empresa pode ser selecionada nos seguintes tipos de vínculo:</p>
+                <div class="d-flex flex-wrap gap-3">
+                    {% if empresa.cnpj_estagio %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle-fill text-success"></i>
+                        <span><strong>CNPJ de Estágio</strong><br><small class="text-muted">Aparece quando vínculo = "6 - Estágio"</small></span>
+                    </div>
+                    {% endif %}
+                    {% if empresa.cnpj_residencia %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle-fill text-success"></i>
+                        <span><strong>CNPJ de Residência</strong><br><small class="text-muted">Aparece quando vínculo = "5 - Residência"</small></span>
+                    </div>
+                    {% endif %}
+                    {% if empresa.cnpj_vinculo_empregaticio_cpd %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle-fill text-success"></i>
+                        <span><strong>CNPJ de Vínculo Empregatício de Contrato por Prazo Determinado</strong><br><small class="text-muted">Aparece quando vínculo = "1 - Empregatício" e tipo = "3 - Contrato por Prazo Determinado"</small></span>
+                    </div>
+                    {% endif %}
+                    {% if not empresa.cnpj_estagio and not empresa.cnpj_residencia and not empresa.cnpj_vinculo_empregaticio_cpd %}
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>Nenhum tipo de CNPJ configurado. Esta empresa não aparecerá nos selectboxes de empresas intermediadoras.
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
         <div class="card">
-            <div class="card-header"><i class="bi bi-file-earmark-text me-1"></i>Histórico de Contratações</div>
+            <div class="card-header"><i class="fas fa-file-contract me-1"></i>Histórico de Contratações</div>
             <div class="card-body">
                 {% if contratos %}
                 <div class="table-responsive">
@@ -125,7 +156,7 @@
                 </div>
                 {% else %}
                 <p class="text-muted mb-0 small">
-                    <i class="bi bi-info-circle me-1"></i>Nenhum contrato vinculado. Ao cadastrar contratos e selecionar esta empresa, eles aparecerão aqui.
+                    <i class="fas fa-info-circle me-1"></i>Nenhum contrato vinculado. Ao cadastrar contratos e selecionar esta empresa, eles aparecerão aqui.
                 </p>
                 <a href="{{ url_for('contratos.novo') }}" class="btn btn-sm btn-outline-primary mt-2">Cadastrar contrato</a>
                 {% endif %}

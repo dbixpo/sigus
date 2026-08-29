@@ -1,0 +1,51 @@
+<script>
+
+(function () {
+
+    var niveis = [
+
+        { min: 81, max: 125, texto: 'Alta prioridade', cls: 'bg-danger' },
+
+        { min: 21, max: 80, texto: 'Prioridade média', cls: 'bg-warning text-dark' },
+
+        { min: 1, max: 20, texto: 'Baixa prioridade', cls: 'bg-success' }
+
+    ];
+
+    function atualizarGUT() {
+
+        var g = parseInt(document.getElementById('selGravidade')?.value || 1, 10);
+
+        var u = parseInt(document.getElementById('selUrgencia')?.value || 1, 10);
+
+        var t = parseInt(document.getElementById('selTendencia')?.value || 1, 10);
+
+        var score = g * u * t;
+
+        var el = document.getElementById('gutResultado');
+
+        if (!el) return;
+
+        var item = niveis.find(function (n) { return score >= n.min && score <= n.max; }) || niveis[niveis.length - 1];
+
+        el.textContent = item.texto;
+
+        var compacto = el.classList.contains('w-100') || el.classList.contains('gut-badge-resultado');
+        el.className = 'badge ' + (compacto ? 'w-100 py-2 gut-badge-resultado ' : 'fs-6 px-3 py-2 ') + item.cls;
+
+    }
+
+    ['selGravidade', 'selUrgencia', 'selTendencia'].forEach(function (id) {
+
+        var sel = document.getElementById(id);
+
+        if (sel) sel.addEventListener('change', atualizarGUT);
+
+    });
+
+    atualizarGUT();
+
+})();
+
+</script>
+

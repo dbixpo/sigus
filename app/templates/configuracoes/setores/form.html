@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-people"></i> {{ 'Editar Setor' if setor else 'Novo Setor' }}</h1>
+    <h1><i class="fas fa-users"></i> {{ 'Editar Setor' if setor else 'Novo Setor' }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -65,7 +65,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>{{ 'Salvar Alterações' if setor else 'Cadastrar' }}
+                            <i class="fas fa-check-lg me-1"></i>{{ 'Salvar Alterações' if setor else 'Cadastrar' }}
                         </button>
                         <a href="{{ url_for('configuracoes.setores') }}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>

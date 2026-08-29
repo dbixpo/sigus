@@ -4,38 +4,38 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-pc-display"></i> Inventário de Equipamentos</h1>
+    <h1><i class="fas fa-desktop"></i> Inventário de Equipamentos</h1>
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
         {% set qs = request.query_string.decode() %}
         <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Exportar
+                <i class="fas fa-download me-1"></i>Exportar
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">Selecione o formato</h6></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                    <i class="fas fa-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                    <i class="fas fa-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_inventario', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+                    <i class="fas fa-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
             </ul>
         </div>
     </div>
 </div>
 
 <div class="filter-bar mb-2">
-    <form method="GET" class="row g-2 align-items-end mb-2" id="filtroForm">
+    <form method="GET" action="{{ url_for('relatorios.inventario') }}" class="row g-2 align-items-end mb-2" id="filtroForm">
         <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
         <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
         <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_labels, filtro_status_list, 'Todos') }}</div>
         <div class="col-md-2">{{ filtro_multiselect('Condição', 'condicao', condicao_labels, filtro_condicao_list, 'Todas') }}</div>
         <div class="col-md-3 d-flex gap-1 align-items-end">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Buscar</button>
-            <a href="{{ url_for('relatorios.inventario') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search me-1"></i>Buscar</button>
+            <a href="{{ url_for('relatorios.inventario') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
         </div>
     </form>
     <div class="row g-2">
@@ -94,7 +94,7 @@
             </table>
         </div>
         {% else %}
-        <div class="empty-state"><i class="bi bi-pc-display"></i><h6>Nenhum item encontrado com estes filtros.</h6></div>
+        <div class="empty-state"><i class="fas fa-desktop"></i><h6>Nenhum item encontrado com estes filtros.</h6></div>
         {% endif %}
     </div>
 </div>

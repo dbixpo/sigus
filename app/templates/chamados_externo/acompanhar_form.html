@@ -1,0 +1,50 @@
+{% extends 'chamados/base_externo.html' %}
+{% block title %}Acompanhar Chamado{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <div class="form-card-header">
+        <h4><i class="fas fa-search me-2"></i>Acompanhar Chamado</h4>
+        <p>Informe o número do chamado e a unidade onde ele foi aberto.</p>
+    </div>
+    <div class="form-body">
+        <form method="POST" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="secao">
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Número do chamado <span class="text-danger">*</span></label>
+                        <input type="text" name="numero" class="form-control text-uppercase" required
+                               maxlength="20" placeholder="Ex: CE202506070001"
+                               value="{{ form_data.get('numero', numero_prefill or '') }}">
+                        <div class="form-text">Está na confirmação após abrir a solicitação.</div>
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label">Unidade <span class="text-danger">*</span></label>
+                        <select name="unidade_id" class="form-select" required>
+                            <option value="">Selecione a unidade...</option>
+                            {% for u in unidades %}
+                            <option value="{{ u.id }}"
+                                {% if form_data.get('unidade_id')|string == u.id|string %}selected{% endif %}>
+                                {{ u.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">A mesma unidade informada na abertura do chamado.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4">
+                <a href="{{ url_for('chamados_externo.identificacao') }}" class="btn btn-link text-muted px-0">
+                    <i class="fas fa-arrow-left me-1"></i>Abrir novo chamado
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg">
+                    Ver andamento <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

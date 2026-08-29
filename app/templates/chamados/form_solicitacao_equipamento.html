@@ -1,0 +1,575 @@
+{% extends 'chamados/base_externo.html' if chamado_externo else 'base.html' %}
+{% block title %}Novo Chamado — Solicitação de Equipamento{% endblock %}
+
+{% block head %}
+<style>
+.se-form { max-width: 860px; margin: 0 auto; }
+
+.se-steps { display: flex; gap: 0; margin-bottom: 1.5rem; }
+.se-step {
+    flex: 1; text-align: center; padding: .5rem .3rem;
+    font-size: .78rem; color: #9ca3af;
+    border-bottom: 3px solid #e5e7eb;
+    transition: color .2s, border-color .2s;
+}
+.se-step.active { color: #059669; border-color: #059669; font-weight: 600; }
+.se-step.done   { color: #16a34a; border-color: #16a34a; }
+.se-step .sn {
+    display: inline-block; width: 20px; height: 20px; border-radius: 50%;
+    background: #e5e7eb; color: #6b7280; font-size: .7rem; line-height: 20px;
+    margin-right: .3rem;
+}
+.se-step.active .sn { background: #059669; color: #fff; }
+.se-step.done   .sn { background: #16a34a; color: #fff; }
+
+.unidade-info-card {
+    background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+    padding: .75rem 1rem; font-size: .84rem; display: none; flex-wrap: wrap; gap: .6rem 1.4rem;
+}
+.unidade-info-card.visible { display: flex; }
+.unidade-info-card .inf { display: flex; align-items: center; gap: .4rem; }
+.unidade-info-card .inf i { color: #059669; }
+
+.tipos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: .5rem;
+}
+.tipo-card {
+    border: 2px solid #e5e7eb; border-radius: 10px;
+    padding: .6rem .5rem; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s; user-select: none; font-size: .82rem;
+}
+.tipo-card:hover { border-color: #059669; background: #f0fdf4; }
+.tipo-card.selected { border-color: #059669; background: #f0fdf4; font-weight: 600; }
+.tipo-card i { font-size: 1.3rem; display: block; margin-bottom: .3rem; color: #059669; }
+.tipo-card.tipo-livre { border-style: dashed; }
+.tipo-livre-input { margin-top: .5rem; display: none; }
+.tipo-livre-input.visible { display: block; }
+
+.itens-lista { margin-top: 1rem; width: 100%; }
+.item-linha {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    align-items: center;
+    padding: .6rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: .5rem;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+}
+.item-linha .item-sala { flex: 0 0 200px; min-width: 200px; }
+.item-linha .item-motivo { flex: 0 0 140px; min-width: 140px; }
+.item-linha .item-equip-wrap { flex: 0 0 200px; min-width: 200px; }
+.item-linha .item-equip-wrap:empty { flex: 0 0 0; min-width: 0; width: 0; overflow: hidden; }
+.item-linha .item-obs {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+}
+.item-linha .item-rm { flex: 0 0 32px; min-width: 32px; }
+.item-linha .form-select,
+.item-linha .form-control {
+    font-size: 1rem !important;
+    height: 38px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+.item-linha .item-rm {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 32px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    line-height: 1 !important;
+    font-size: .75rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-width: 1px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+.item-linha .item-rm i { line-height: 1; font-size: inherit; }
+@media (max-width: 992px) {
+    .item-linha .item-sala { flex: 0 0 180px; min-width: 180px; }
+    .item-linha .item-motivo { flex: 0 0 120px; min-width: 120px; }
+    .item-linha .item-equip-wrap { flex: 0 0 180px; min-width: 180px; }
+    .item-linha .item-equip-wrap:empty { flex: 0 0 0; min-width: 0; width: 0; }
+}
+.btn-add-item { margin-top: .5rem; }
+.resumo-confirmacao { background: #f8fafc; font-size: .9rem; }
+.resumo-confirmacao .resumo-secao { margin-bottom: 1rem; }
+.resumo-confirmacao .resumo-secao:last-child { margin-bottom: 0; }
+.resumo-confirmacao .resumo-titulo { font-size: .75rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: .35rem; }
+.resumo-confirmacao .resumo-tabela { font-size: .85rem; }
+.resumo-confirmacao .resumo-tabela th { font-weight: 600; color: #475569; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="se-form">
+    {% if chamado_externo %}{% include 'chamados/_externo_banner.html' %}{% endif %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            {% if not chamado_externo %}
+            <li class="breadcrumb-item"><a href="{{ url_for('chamados.listar') }}">Chamados</a></li>
+            {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for(abrir_chamado_bp ~ '.escolha_tipo') }}">Novo Chamado</a></li>
+            <li class="breadcrumb-item active">Solicitação de Equipamento</li>
+        </ol>
+    </nav>
+
+    <div class="page-header mb-3">
+        <h1><i class="fas fa-plus-circle me-2"></i>Chamado — Solicitação de Equipamento</h1>
+    </div>
+
+    <div class="se-steps" id="seSteps">
+        <div class="se-step active" data-step="1"><span class="sn">1</span>Unidade</div>
+        <div class="se-step" data-step="2"><span class="sn">2</span>Tipo</div>
+        <div class="se-step" data-step="3"><span class="sn">3</span>Itens</div>
+        <div class="se-step" data-step="4"><span class="sn">4</span>Confirmação</div>
+    </div>
+
+    <form method="POST" id="formSE" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="tipo_equipamento_id" id="hiddenTipoId">
+        <input type="hidden" name="num_itens" id="hiddenNumItens" value="0">
+
+        {# ═══ PASSO 1 — Unidade ═══ #}
+        <div class="form-section se-passo" id="passo1">
+            <div class="form-section-title">
+                <i class="fas fa-hospital me-2"></i>1. Unidade de Saúde
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label">Unidade <span class="text-danger">*</span></label>
+                    {% if unidade_presetada and unidades|length == 1 %}
+                    <input type="hidden" name="unidade_id" value="{{ unidade_presetada.id }}">
+                    <div class="form-control" style="background:#f9fafb;">
+                        <i class="fas fa-hospital me-2 text-success"></i>{{ unidade_presetada.nome }}
+                    </div>
+                    <select id="selUnidade" class="d-none" data-value="{{ unidade_presetada.id }}"></select>
+                    {% else %}
+                    <select name="unidade_id" id="selUnidade" class="form-select" required>
+                        <option value="">Selecione a unidade...</option>
+                        {% for u in unidades %}
+                        <option value="{{ u.id }}" {{ 'selected' if unidade_presetada and unidade_presetada.id == u.id }}>
+                            {{ u.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mt-3">
+                {% with gravidade_sel=form_data.get('gravidade', 1) if form_data else 1, urgencia_sel=form_data.get('urgencia', 1) if form_data else 1, tendencia_sel=form_data.get('tendencia', 1) if form_data else 1, required=true %}
+                {% include 'shared/_gut_priorizacao.html' %}
+                {% endwith %}
+            </div>
+
+            <div class="unidade-info-card mt-3" id="uInfoCard">
+                <div class="inf"><i class="fas fa-geo-alt-fill"></i><span id="uiEnd">—</span></div>
+                <div class="inf"><i class="fas fa-telephone-fill"></i><span id="uiTel">—</span></div>
+                <div class="inf"><i class="fas fa-envelope-fill"></i><span id="uiEmail">—</span></div>
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between">
+                <a href="{{ url_for(abrir_chamado_bp ~ '.escolha_tipo') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+                <button type="button" class="btn btn-primary" id="btnPasso1" onclick="irPasso(2)" disabled>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══ PASSO 2 — Tipo de equipamento ═══ #}
+        <div class="form-section se-passo" id="passo2" style="display:none">
+            <div class="form-section-title">
+                <i class="fas fa-tag me-2"></i>2. Tipo de Equipamento
+            </div>
+            <p class="text-muted small mb-2">Selecione o tipo de equipamento desejado. Use "Tipo não listado" para itens como mouse, teclado etc. que não possuem patrimônio.</p>
+            <div id="tiposGrid" class="tipos-grid mb-3">
+                {% for t in tipos_equipamento %}
+                <div class="tipo-card" data-id="{{ t.id }}">
+                    <i class="{{ t.icone or 'fas fa-box' }}"></i>{{ t.nome }}
+                </div>
+                {% endfor %}
+                <div class="tipo-card tipo-livre" data-id="nao_listado">
+                    <i class="fas fa-question-circle"></i>Tipo não listado
+                </div>
+            </div>
+            <div class="tipo-livre-input" id="tipoLivreWrap">
+                <label class="form-label">Informe o item</label>
+                <input type="text" name="se_tipo_livre" id="inputTipoLivre" class="form-control" placeholder="Ex: Mouse, Teclado, Suporte de monitor...">
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(1)">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnPasso2" onclick="irPasso(3)" disabled>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══ PASSO 3 — Itens da Solicitação ═══ #}
+        <div class="form-section se-passo" id="passo3" style="display:none">
+            <div class="form-section-title">
+                <i class="fas fa-list me-2"></i>3. Itens da Solicitação
+            </div>
+            <p class="text-muted small">Para cada necessidade: sala, motivo (ampliação ou substituição) e, se substituição, qual equipamento será trocado.</p>
+
+            <div class="itens-lista" id="itensContainer"></div>
+            <button type="button" class="btn btn-outline-primary btn-sm btn-add-item" id="btnAddItem">
+                <i class="fas fa-plus me-1"></i>Adicionar item
+            </button>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(2)">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="button" class="btn btn-primary" id="btnPasso3" onclick="irPasso(4)" disabled>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ═══ PASSO 4 — Confirmação ═══ #}
+        <div class="form-section se-passo" id="passo4" style="display:none">
+            <div class="form-section-title">
+                <i class="fas fa-clipboard-check me-2"></i>4. Confirmar e Abrir Chamado
+            </div>
+            <p class="text-muted small mb-3">Revise os dados abaixo antes de abrir o chamado.</p>
+            <div class="resumo-confirmacao border rounded p-3 mb-3" id="resumoChamado"></div>
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="irPasso(3)">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </button>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-check-circle me-1"></i>Abrir Chamado
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% include 'shared/_gut_priorizacao_script.html' %}
+<script>
+(function () {
+    const chamadosApi = (window.SIGUS_BASE_URL || '') + {{ chamados_api_prefix|tojson }};
+    let salasCache = {};
+    let equipamentosCache = {};
+    let tipoEquipId = null;
+    let isTipoNaoListado = false;
+    let contadorItens = 0;
+    let passoAtual = 1;
+    const selUnidade = document.getElementById('selUnidade');
+    const formSE = document.getElementById('formSE');
+
+    function getUnidadeId() {
+        const hid = document.querySelector('input[name="unidade_id"]');
+        if (hid && hid.value) return hid.value;
+        if (selUnidade) return selUnidade.value;
+        return null;
+    }
+
+    function atualizarSteps(passo) {
+        document.querySelectorAll('.se-step').forEach(el => {
+            const n = parseInt(el.dataset.step);
+            el.classList.remove('active', 'done');
+            if (n === passo) el.classList.add('active');
+            else if (n < passo) el.classList.add('done');
+        });
+    }
+
+    window.irPasso = function (passo) {
+        if (passo === 2) {
+            if (!getUnidadeId()) { if (selUnidade) selUnidade.classList.add('is-invalid'); return; }
+            if (selUnidade) selUnidade.classList.remove('is-invalid');
+        }
+        if (passo === 3) {
+            if (!tipoEquipId) { alert('Selecione um tipo de equipamento.'); return; }
+            if (isTipoNaoListado) {
+                const inp = document.getElementById('inputTipoLivre');
+                if (!inp || !inp.value.trim()) {
+                    alert('Informe o item para "Tipo não listado".');
+                    if (inp) inp.focus();
+                    return;
+                }
+            }
+        }
+        if (passo === 4) {
+            let temSala = 0;
+            document.querySelectorAll('.item-linha select[name^="itens_sala_id"]').forEach(s => {
+                if (s.value) temSala++;
+            });
+            if (temSala === 0) {
+                alert('Adicione pelo menos um item com sala selecionada.');
+                return;
+            }
+        }
+
+        passoAtual = passo;
+        document.querySelectorAll('.se-passo').forEach(el => el.style.display = 'none');
+        document.getElementById('passo' + passo).style.display = '';
+        atualizarSteps(passo);
+
+        if (passo === 2) initTipoCards();
+        if (passo === 4) montarResumo();
+    };
+
+    formSE.addEventListener('submit', function (e) {
+        if (passoAtual < 4) {
+            e.preventDefault();
+            irPasso(passoAtual + 1);
+        }
+    });
+
+    formSE.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && passoAtual < 4) {
+            const target = e.target;
+            if (target.tagName === 'TEXTAREA') return;
+            e.preventDefault();
+            irPasso(passoAtual + 1);
+        }
+    });
+
+    if (selUnidade && selUnidade.tagName === 'SELECT') {
+        selUnidade.addEventListener('change', function () {
+            this.classList.remove('is-invalid');
+            const uid = this.value;
+            document.getElementById('btnPasso1').disabled = !uid;
+            if (uid) carregarInfoUnidade(uid);
+            else document.getElementById('uInfoCard').classList.remove('visible');
+        });
+    }
+
+    if (getUnidadeId()) {
+        document.getElementById('btnPasso1').disabled = false;
+        carregarInfoUnidade(getUnidadeId());
+    }
+
+    function carregarInfoUnidade(uid) {
+        fetch(`${chamadosApi}/unidade-info/${uid}`)
+            .then(r => r.json())
+            .then(d => {
+                const card = document.getElementById('uInfoCard');
+                card.classList.add('visible');
+                document.getElementById('uiEnd').textContent = d.endereco || '—';
+                document.getElementById('uiTel').textContent = d.telefone || '—';
+                document.getElementById('uiEmail').textContent = d.email || '—';
+            });
+    }
+
+    function initTipoCards() {
+        document.querySelectorAll('.tipo-card').forEach(el => {
+            el.addEventListener('click', function () {
+                document.querySelectorAll('.tipo-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                tipoEquipId = this.dataset.id;
+                document.getElementById('hiddenTipoId').value = tipoEquipId === 'nao_listado' ? '' : tipoEquipId;
+                isTipoNaoListado = (tipoEquipId === 'nao_listado');
+                const wrap = document.getElementById('tipoLivreWrap');
+                if (wrap) wrap.classList.toggle('visible', isTipoNaoListado);
+                const inp = document.getElementById('inputTipoLivre');
+                if (inp) { inp.value = ''; inp.required = isTipoNaoListado; }
+                document.getElementById('btnPasso2').disabled = !isTipoNaoListado;
+                if (isTipoNaoListado) document.getElementById('btnPasso2').disabled = false;
+                else document.getElementById('btnPasso2').disabled = false;
+            });
+        });
+    }
+
+    function carregarSalas(uid, cb) {
+        if (salasCache[uid]) { cb(salasCache[uid]); return; }
+        fetch(`${chamadosApi}/salas/${uid}`)
+            .then(r => r.json())
+            .then(data => {
+                const salas = data.salas || [];
+                salasCache[uid] = salas;
+                cb(salas);
+            })
+            .catch(() => { salasCache[uid] = []; cb([]); });
+    }
+
+    function carregarEquipamentos(uid, tipoId, cb) {
+        if (!tipoId || tipoId === 'nao_listado') { cb([]); return; }
+        const key = uid + '_' + tipoId;
+        if (equipamentosCache[key]) { cb(equipamentosCache[key]); return; }
+        fetch(`${chamadosApi}/equipamentos-da-unidade/${uid}?tipo_id=${tipoId}`)
+            .then(r => r.json())
+            .then(eqs => { equipamentosCache[key] = eqs; cb(eqs); })
+            .catch(() => { equipamentosCache[key] = []; cb([]); });
+    }
+
+    function criarSelectSalas(uid, nome) {
+        const sel = document.createElement('select');
+        sel.name = nome;
+        sel.className = 'form-select form-select-sm item-sala';
+        sel.innerHTML = '<option value="">Sala...</option>';
+        sel.addEventListener('change', verificarBtnPasso3);
+        carregarSalas(uid, salas => {
+            salas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.nome;
+                sel.appendChild(opt);
+            });
+        });
+        return sel;
+    }
+
+    function criarSelectEquipamentos(uid, tipoId, nome) {
+        const sel = document.createElement('select');
+        sel.name = nome;
+        sel.className = 'form-select form-select-sm item-equip';
+        sel.innerHTML = '<option value="">Equipamento a substituir...</option>';
+        sel.style.display = 'none';
+        carregarEquipamentos(uid, tipoId, eqs => {
+            eqs.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = (e.patrimonio ? e.patrimonio + ' — ' : '') + e.nome;
+                sel.appendChild(opt);
+            });
+        });
+        return sel;
+    }
+
+    function addItem() {
+        const uid = getUnidadeId();
+        if (!uid) return;
+        const idx = contadorItens++;
+        const div = document.createElement('div');
+        div.className = 'item-linha';
+        div.dataset.idx = idx;
+
+        const salaSel = criarSelectSalas(uid, `itens_sala_id_${idx}`);
+        salaSel.required = true;
+
+        const motivoSel = document.createElement('select');
+        motivoSel.name = `itens_motivo_${idx}`;
+        motivoSel.className = 'form-select form-select-sm item-motivo';
+        motivoSel.innerHTML = '<option value="">Motivo</option><option value="ampliacao">Ampliação</option><option value="substituicao">Substituição</option>';
+        motivoSel.addEventListener('change', function () {
+            const eqWrap = div.querySelector('.item-equip-wrap');
+            if (eqWrap) eqWrap.style.display = (!isTipoNaoListado && this.value === 'substituicao') ? '' : 'none';
+        });
+
+        const equipWrap = document.createElement('div');
+        equipWrap.className = 'item-equip-wrap';
+        equipWrap.style.display = 'none';
+        if (!isTipoNaoListado) {
+            const equipSel = criarSelectEquipamentos(uid, tipoEquipId, `itens_equipamento_id_${idx}`);
+            equipWrap.appendChild(equipSel);
+        }
+
+        const obsInp = document.createElement('input');
+        obsInp.type = 'text';
+        obsInp.name = `itens_observacao_${idx}`;
+        obsInp.className = 'form-control form-control-sm item-obs';
+        obsInp.placeholder = 'Justificativa';
+
+        const rmBtn = document.createElement('button');
+        rmBtn.type = 'button';
+        rmBtn.className = 'btn btn-outline-danger btn-sm item-rm';
+        rmBtn.innerHTML = '<i class="fas fa-trash"></i>';
+        rmBtn.title = 'Excluir item';
+        rmBtn.addEventListener('click', () => { div.remove(); atualizarNumItens(); verificarBtnPasso3(); });
+
+        div.appendChild(salaSel);
+        div.appendChild(motivoSel);
+        div.appendChild(equipWrap);
+        div.appendChild(obsInp);
+        div.appendChild(rmBtn);
+
+        document.getElementById('itensContainer').appendChild(div);
+        atualizarNumItens();
+        verificarBtnPasso3();
+    }
+
+    function atualizarNumItens() {
+        const n = document.querySelectorAll('.item-linha').length;
+        document.getElementById('hiddenNumItens').value = n;
+    }
+
+    function verificarBtnPasso3() {
+        const n = document.querySelectorAll('.item-linha').length;
+        let comSala = 0;
+        document.querySelectorAll('.item-linha select[name^="itens_sala_id"]').forEach(s => {
+            if (s.value) comSala++;
+        });
+        document.getElementById('btnPasso3').disabled = comSala === 0;
+    }
+
+    document.getElementById('btnAddItem').addEventListener('click', function () {
+        addItem();
+    });
+
+    function montarResumo() {
+        let tipoNome = '—';
+        if (isTipoNaoListado) {
+            const inp = document.getElementById('inputTipoLivre');
+            tipoNome = inp ? inp.value.trim() : '—';
+        } else {
+            const sel = document.querySelector('.tipo-card.selected');
+            if (sel) tipoNome = sel.textContent.trim();
+        }
+        let unidadeNome = '—';
+        if (selUnidade && selUnidade.tagName === 'SELECT') {
+            const opt = selUnidade.querySelector('option:checked');
+            if (opt) unidadeNome = opt.textContent;
+        } else {
+            const div = document.querySelector('.form-control i.fa-hospital');
+            if (div && div.parentNode) unidadeNome = div.parentNode.textContent.trim();
+        }
+        const prioridadeLabel = document.getElementById('gutResultado')?.textContent || '—';
+
+        let html = '<div class="resumo-secao">';
+        html += '<div class="resumo-titulo"><i class="fas fa-hospital me-1"></i>1. Unidade</div>';
+        html += '<div><strong>' + unidadeNome + '</strong></div>';
+        html += '<div class="text-muted small mt-1">Prioridade: ' + prioridadeLabel + '</div></div>';
+
+        html += '<div class="resumo-secao">';
+        html += '<div class="resumo-titulo"><i class="fas fa-tag me-1"></i>2. Tipo de Equipamento</div>';
+        html += '<div><strong>' + tipoNome + '</strong></div></div>';
+
+        html += '<div class="resumo-secao">';
+        html += '<div class="resumo-titulo"><i class="fas fa-list me-1"></i>3. Itens da Solicitação</div>';
+        html += '<table class="table table-sm resumo-tabela mb-0"><thead><tr><th>Sala</th><th>Motivo</th><th>Substituir</th><th>Justificativa</th></tr></thead><tbody>';
+        document.querySelectorAll('.item-linha').forEach(row => {
+            const sala = row.querySelector('.item-sala option:checked');
+            const motivo = row.querySelector('.item-motivo option:checked');
+            const equip = row.querySelector('.item-equip option:checked');
+            const obs = row.querySelector('input[name^="itens_observacao"]');
+            const salaTxt = sala && sala.value ? sala.textContent : '—';
+            const motivoTxt = motivo && motivo.value ? motivo.textContent : '—';
+            const equipTxt = (equip && equip.value) ? equip.textContent : '—';
+            const obsTxt = obs && obs.value ? obs.value.trim() : '—';
+            html += '<tr><td>' + salaTxt + '</td><td>' + motivoTxt + '</td><td>' + equipTxt + '</td><td>' + obsTxt + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        document.getElementById('resumoChamado').innerHTML = html;
+    }
+
+    document.getElementById('passo2').addEventListener('click', function(e) {
+        const sel = document.querySelector('.tipo-card.selected');
+        if (sel) {
+            tipoEquipId = sel.dataset.id;
+            isTipoNaoListado = (tipoEquipId === 'nao_listado');
+        }
+    }, true);
+})();
+</script>
+{% endblock %}

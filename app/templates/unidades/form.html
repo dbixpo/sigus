@@ -4,13 +4,14 @@
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
         <li class="breadcrumb-item active">{{ 'Editar' if unidade else 'Nova Unidade' }}</li>
     </ol>
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-hospital"></i> {{ 'Editar Unidade' if unidade else 'Nova Unidade' }}</h1>
+    <h1><i class="fas fa-hospital"></i> {{ 'Editar Unidade' if unidade else 'Nova Unidade' }}</h1>
 </div>
 
 <form method="POST" id="formUnidade">
@@ -58,7 +59,7 @@
                     {% if predios %}
                     <div class="col-12">
                         <label class="form-label">
-                            <i class="bi bi-buildings me-1 text-primary"></i>
+                            <i class="fas fa-building me-1 text-primary"></i>
                             Prédio / Endereço compartilhado
                             <span class="text-muted small">(opcional)</span>
                         </label>
@@ -97,7 +98,7 @@
             <div class="form-section" id="secao-endereco">
                 <div class="form-section-title">Endereço</div>
                 <div class="alert alert-info py-2 small d-none" id="aviso-endereco-predio">
-                    <i class="bi bi-buildings me-1"></i>
+                    <i class="fas fa-building me-1"></i>
                     Endereço preenchido automaticamente do prédio selecionado.
                 </div>
                 <div class="row g-3">
@@ -142,25 +143,44 @@
                     <!-- Link Google Maps -->
                     <div class="col-12">
                         <label class="form-label">
-                            <i class="bi bi-pin-map me-1 text-danger"></i>Link do Google Maps
+                            <i class="fas fa-pin-map me-1 text-danger"></i>Link do Google Maps
                             <span class="text-muted small">(opcional)</span>
                         </label>
                         <div class="input-group">
-                            <span class="input-group-text text-danger"><i class="bi bi-geo-alt-fill"></i></span>
+                            <span class="input-group-text text-danger"><i class="fas fa-geo-alt-fill"></i></span>
                             <input type="url" name="link_maps" id="inp-link-maps" class="form-control"
                                    value="{{ unidade.link_maps or '' if unidade else '' }}"
                                    placeholder="https://maps.app.goo.gl/...">
                             <a href="#" target="_blank" id="btn-abrir-maps"
                                class="btn btn-outline-danger {% if not (unidade and unidade.link_maps) %}d-none{% endif %}">
-                                <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
+                                <i class="fas fa-box-arrow-up-right me-1"></i>Abrir
                             </a>
                         </div>
                         <div class="form-text">
                             Cole aqui o link compartilhado do Google Maps para facilitar a localização.
                         </div>
                     </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Latitude</label>
+                        <input type="number" name="latitude" id="inp-latitude" class="form-control"
+                               step="any"
+                               value="{{ unidade.latitude if unidade and unidade.latitude is not none else '' }}"
+                               placeholder="-23.50">
+                        <div class="form-text text-muted small">Se vazio e houver prédio selecionado, herda do prédio.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Longitude</label>
+                        <input type="number" name="longitude" id="inp-longitude" class="form-control"
+                               step="any"
+                               value="{{ unidade.longitude if unidade and unidade.longitude is not none else '' }}"
+                               placeholder="-47.45">
+                    </div>
                 </div>
             </div>
+
+            <!-- GESTÃO DE CHAMADOS -->
+            {% include 'unidades/_tipos_chamado_recebe.html' %}
 
         </div>
 
@@ -174,7 +194,7 @@
                     <input type="text" name="telefone" id="inp-telefone" class="form-control"
                            value="{{ unidade.telefone if unidade else '' }}" placeholder="(00) 00000-0000">
                     <div class="form-text text-muted small d-none" id="hint-telefone-predio">
-                        <i class="bi bi-buildings me-1"></i>Preenchido com o telefone do prédio.
+                        <i class="fas fa-building me-1"></i>Preenchido com o telefone do prédio.
                     </div>
                 </div>
 
@@ -184,7 +204,7 @@
                         <span class="text-muted small">(opcional)</span>
                     </label>
                     <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+                        <span class="input-group-text"><i class="fas fa-telephone-plus"></i></span>
                         <input type="text" name="ramal" id="inp-ramal" class="form-control"
                                value="{{ unidade.ramal or '' if unidade else '' }}"
                                placeholder="Ex.: 212">
@@ -206,7 +226,7 @@
 
     <div class="d-flex gap-2 mt-2">
         <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if unidade else 'Cadastrar Unidade' }}
+            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar Alterações' if unidade else 'Cadastrar Unidade' }}
         </button>
         <a href="{{ url_for('unidades.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
     </div>
@@ -233,6 +253,8 @@
     const inpCidade     = document.getElementById('inp-cidade');
     const inpUf         = document.getElementById('inp-uf');
     const inpLinkMaps   = document.getElementById('inp-link-maps');
+    const inpLat        = document.getElementById('inp-latitude');
+    const inpLng        = document.getElementById('inp-longitude');
     const btnAbrirMaps  = document.getElementById('btn-abrir-maps');
     const avisoEndereco = document.getElementById('aviso-endereco-predio');
 
@@ -247,6 +269,8 @@
         cidade:    inpCidade    ? inpCidade.value     : '',
         uf:        inpUf        ? inpUf.value         : '',
         link_maps: inpLinkMaps  ? inpLinkMaps.value   : '',
+        latitude:  inpLat       ? inpLat.value        : '',
+        longitude: inpLng       ? inpLng.value        : '',
     };
 
     function setField(el, val, lock) {
@@ -268,7 +292,8 @@
         }
     }
 
-    function aplicarPredio(pid) {
+    function aplicarPredio(pid, forceCoordsFromPredio) {
+        forceCoordsFromPredio = !!forceCoordsFromPredio;
         if (pid && prediosData[pid]) {
             const p = prediosData[pid];
             const temEndereco = !!(p.endereco || p.numero || p.bairro || p.cidade || p.cep);
@@ -293,6 +318,18 @@
             setField(inpLinkMaps, p.link_maps, !!p.link_maps);
             atualizarBotaoMaps(p.link_maps);
 
+            // Coordenadas: ao trocar o prédio no select, sempre puxa do novo; na carga inicial, só se vazio
+            if (inpLat && p.latitude != null) {
+                if (forceCoordsFromPredio || !inpLat.value || !String(inpLat.value).trim()) {
+                    inpLat.value = p.latitude;
+                }
+            }
+            if (inpLng && p.longitude != null) {
+                if (forceCoordsFromPredio || !inpLng.value || !String(inpLng.value).trim()) {
+                    inpLng.value = p.longitude;
+                }
+            }
+
             if (temEndereco && avisoEndereco) avisoEndereco.classList.remove('d-none');
             else if (avisoEndereco)           avisoEndereco.classList.add('d-none');
 
@@ -307,6 +344,8 @@
             setField(inpCidade,   original.cidade,    false);
             setField(inpUf,       original.uf,        false);
             setField(inpLinkMaps, original.link_maps, false);
+            if (inpLat) inpLat.value = original.latitude;
+            if (inpLng) inpLng.value = original.longitude;
             if (lblTelefone) lblTelefone.textContent = 'Telefone';
             hintTelefone  && hintTelefone.classList.add('d-none');
             avisoEndereco && avisoEndereco.classList.add('d-none');
@@ -316,7 +355,7 @@
 
     if (selPredio) {
         selPredio.addEventListener('change', function () {
-            aplicarPredio(this.value ? parseInt(this.value) : null);
+            aplicarPredio(this.value ? parseInt(this.value) : null, true);
         });
         // Ao carregar em modo edição com prédio já selecionado: aplica sem guardar como original
         const pidAtual = selPredio.value ? parseInt(selPredio.value) : null;

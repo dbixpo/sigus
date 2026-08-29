@@ -79,7 +79,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-link-45deg me-2"></i>{{ 'Editar Link' if item else 'Novo Link / Cabeçalho' }}</h1>
+    <h1><i class="fas fa-link me-2"></i>{{ 'Editar Link' if item else 'Novo Link / Cabeçalho' }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -105,7 +105,7 @@
                     </select>
                     <div class="form-text">
                         <a href="{{ url_for('links.admin_tipos') }}" target="_blank">
-                            <i class="bi bi-tags me-1"></i>Gerenciar tipos
+                            <i class="fas fa-tags me-1"></i>Gerenciar tipos
                         </a>
                     </div>
                 </div>
@@ -132,7 +132,7 @@
                     <div class="mb-3">
                         <label class="form-label">URL <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-globe"></i></span>
+                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
                             <input type="url" name="url" id="inputUrl" class="form-control"
                                    value="{{ item.url or '' if item else '' }}"
                                    placeholder="https://...">
@@ -152,7 +152,7 @@
                             <div>
                                 <div class="small text-muted mb-1">Imagem atual</div>
                                 <button type="button" class="btn btn-outline-danger btn-sm" id="btnRemoverImg">
-                                    <i class="bi bi-trash me-1"></i>Remover
+                                    <i class="fas fa-trash me-1"></i>Remover
                                 </button>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                         {# Zona de upload #}
                         <div class="upload-zone" id="uploadZone">
                             <input type="file" id="inputArquivo" accept="image/*">
-                            <i class="bi bi-cloud-arrow-up fs-2 text-muted d-block mb-2"></i>
+                            <i class="fas fa-cloud-upload-alt fs-2 text-muted d-block mb-2"></i>
                             <div class="fw-semibold text-muted">Clique ou arraste uma imagem aqui</div>
                             <div class="small text-muted mt-1">PNG, JPG, WEBP — será cortada em quadrado</div>
                         </div>
@@ -168,19 +168,19 @@
                         {# Ícone como fallback quando não há imagem #}
                         <div class="row g-3 mt-1" id="blocoIcone">
                             <div class="col-md-6">
-                                <label class="form-label small">Ícone Bootstrap Icons
+                                <label class="form-label small">Ícone Font Awesome
                                     <span class="text-muted">(se sem imagem)</span>
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text" id="previewIcone">
-                                        <i class="bi {{ item.icone if item else 'bi-link-45deg' }}" id="iconePreviewEl"></i>
+                                        <i class="{{ item.icone_fa if item else 'fas fa-link' }}" id="iconePreviewEl"></i>
                                     </span>
                                     <input type="text" name="icone" id="inputIcone" class="form-control"
-                                           value="{{ item.icone if item else 'bi-link-45deg' }}"
-                                           placeholder="bi-link-45deg">
+                                           value="{{ item.icone_fa if item else 'fas fa-link' }}"
+                                           placeholder="fas fa-link">
                                 </div>
                                 <div class="form-text">
-                                    <a href="https://icons.getbootstrap.com/" target="_blank">Ver ícones</a>
+                                    <a href="https://fontawesome.com/icons" target="_blank">Ver ícones</a>
                                 </div>
                             </div>
                         </div>
@@ -232,7 +232,7 @@
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if item else 'Adicionar' }}
+                    <i class="fas fa-check-circle me-1"></i>{{ 'Salvar' if item else 'Adicionar' }}
                 </button>
                 <a href="{{ url_for('links.admin') }}" class="btn btn-outline-secondary">Cancelar</a>
             </div>
@@ -245,7 +245,7 @@
             <div class="form-section-title">Preview</div>
             <a href="#" class="link-card text-decoration-none" id="previewCard">
                 <div class="link-card-icon" id="previewIconeDiv">
-                    <i class="bi {{ item.icone if item else 'bi-link-45deg' }}" id="previewIconeCard"></i>
+                    <i class="{{ item.icone_fa if item else 'fas fa-link' }}" id="previewIconeCard"></i>
                 </div>
                 <div class="link-card-body">
                     <div class="link-card-nome" id="previewNome">{{ item.nome if item else 'Nome do link' }}</div>
@@ -262,7 +262,7 @@
         <div class="modal-content">
             <div class="modal-header bg-dark text-white">
                 <h5 class="modal-title">
-                    <i class="bi bi-crop me-2"></i>Cortar imagem
+                    <i class="fas fa-crop me-2"></i>Cortar imagem
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -273,7 +273,7 @@
             </div>
             <div class="modal-footer bg-dark justify-content-between">
                 <div class="text-white small opacity-75">
-                    <i class="bi bi-info-circle me-1"></i>
+                    <i class="fas fa-info-circle me-1"></i>
                     Arraste para posicionar · Scroll para zoom
                 </div>
                 <div class="d-flex gap-2">
@@ -281,7 +281,7 @@
                         Cancelar
                     </button>
                     <button type="button" class="btn btn-primary btn-sm" id="btnConfirmarCrop">
-                        <i class="bi bi-check2 me-1"></i>Usar este recorte
+                        <i class="fas fa-check me-1"></i>Usar este recorte
                     </button>
                 </div>
             </div>
@@ -411,14 +411,14 @@
 
     function setPreviewIcone() {
         if (!prevIconeDiv) return;
-        var icone = (inpIcone ? inpIcone.value.trim() : '') || 'bi-link-45deg';
+        var icone = (inpIcone ? inpIcone.value.trim() : '') || 'fas fa-link';
         var temImg = (imagemCropped && imagemCropped.value) ||
                      (previewAtualWrap && previewAtualWrap.style.display !== 'none');
         if (!temImg) {
             prevIconeDiv.className = 'link-card-icon';
-            prevIconeDiv.innerHTML = '<i class="bi ' + icone + '"></i>';
+            prevIconeDiv.innerHTML = '<i class="' + icone + '"></i>';
         }
-        if (iconeEl) iconeEl.className = 'bi ' + icone;
+        if (iconeEl) iconeEl.className = icone;
     }
 
     if (inpNome)   inpNome.addEventListener('input',  function () { if (prevNome) prevNome.textContent = this.value || 'Nome do link'; });

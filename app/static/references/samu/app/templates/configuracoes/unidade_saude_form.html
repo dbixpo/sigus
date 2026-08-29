@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Unidade de Saúde — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-hospital"></i> Unidade de Saúde — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" id="formUnidadeSaude">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">CNES</label>
+                    <input type="text" name="cnes" class="form-control" value="{{ (item.cnes or '') if item else '' }}" maxlength="7" placeholder="Ex: 1234567">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Nome da Unidade <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ (item.nome or '') if item else '' }}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Tipo da Unidade</label>
+                    <select name="tipo_unidade_id" class="form-select">
+                        <option value="">— Selecione —</option>
+                        {% for t in tipos %}
+                        <option value="{{ t.id }}" {% if item and item.tipo_unidade_id == t.id %}selected{% endif %}>{{ t.sigla }} – {{ t.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3"><i class="bi bi-geo-alt me-1"></i> Endereço</h6>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Logradouro</label>
+                    <input type="text" name="logradouro" class="form-control" value="{{ (item.logradouro or '') if item else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Nº</label>
+                    <input type="text" name="numero" class="form-control" value="{{ (item.numero or '') if item else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Complemento</label>
+                    <input type="text" name="complemento" class="form-control" value="{{ (item.complemento or '') if item else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Bairro</label>
+                    <input type="text" name="bairro" class="form-control" value="{{ (item.bairro or '') if item else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Cidade</label>
+                    <input type="text" name="cidade" class="form-control" value="{{ (item.cidade or item.municipio or '') if item else '' }}">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">UF</label>
+                    <select name="uf" class="form-select">
+                        <option value="">—</option>
+                        {% for uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'] %}
+                        <option value="{{ uf }}" {% if item and item.uf == uf %}selected{% endif %}>{{ uf }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">CEP</label>
+                    <input type="text" name="cep" id="inputCep" class="form-control" value="{{ (item.cep or '') if item else '' }}" maxlength="9" placeholder="00000-000">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Telefone</label>
+                    <input type="tel" name="telefone" id="inputTelefone" class="form-control"
+                           value="{{ item.telefone | br_fone if item and item.telefone else '' }}" placeholder="(15) 99999-9999" maxlength="15">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="{{ (item.email or '') if item else '' }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Link Google Maps</label>
+                    <input type="url" name="link_google_maps" class="form-control" value="{{ (item.link_google_maps or '') if item else '' }}" placeholder="https://maps.google.com/...">
+                </div>
+                <div class="col-12">
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3"><i class="bi bi-clock me-1"></i> Horário de Funcionamento</h6>
+                </div>
+                <div class="col-12">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="funcionamento_24h" id="funcionamento24h" {% if item and item.funcionamento_24h %}checked{% endif %}>
+                        <label class="form-check-label" for="funcionamento24h">Unidade 24 horas</label>
+                    </div>
+                </div>
+                <div class="col-md-3" id="blocoHoraInicio">
+                    <label class="form-label fw-semibold">Hora inicial</label>
+                    <input type="time" name="hora_inicio" class="form-control" value="{{ item.hora_inicio.strftime('%H:%M') if item and item.hora_inicio else '' }}">
+                </div>
+                <div class="col-md-3" id="blocoHoraFim">
+                    <label class="form-label fw-semibold">Hora final</label>
+                    <input type="time" name="hora_fim" class="form-control" value="{{ item.hora_fim.strftime('%H:%M') if item and item.hora_fim else '' }}">
+                </div>
+                <div class="col-12">
+                    <hr>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.unidades_saude') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var inpCep = document.getElementById('inputCep');
+    if (inpCep) {
+        function formatarCep(v) {
+            var d = String(v || '').replace(/\D/g, '').slice(0, 8);
+            return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+        }
+        if (inpCep.value) inpCep.value = formatarCep(inpCep.value);
+        inpCep.addEventListener('input', function() { this.value = formatarCep(this.value); });
+    }
+    var inpTel = document.getElementById('inputTelefone');
+    if (inpTel) {
+        function mascarar(v) {
+            var d = String(v || '').replace(/\D/g, '').slice(0, 11);
+            if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+            var isCell = d.length > 2 && d[2] === '9';
+            if (isCell) {
+                if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+            } else {
+                if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            }
+        }
+        inpTel.addEventListener('input', function() { this.value = mascarar(this.value); });
+    }
+    var form = document.getElementById('formUnidadeSaude');
+    if (form) {
+        form.addEventListener('submit', function() {
+            if (inpCep && inpCep.value) inpCep.value = inpCep.value.replace(/\D/g, '');
+            if (inpTel && inpTel.value) inpTel.value = inpTel.value.replace(/\D/g, '');
+        });
+    }
+    var cb24 = document.getElementById('funcionamento24h');
+    var blocoInicio = document.getElementById('blocoHoraInicio');
+    var blocoFim = document.getElementById('blocoHoraFim');
+    if (cb24 && blocoInicio && blocoFim) {
+        function toggleHorario() {
+            var is24 = cb24.checked;
+            blocoInicio.style.display = is24 ? 'none' : 'block';
+            blocoFim.style.display = is24 ? 'none' : 'block';
+        }
+        cb24.addEventListener('change', toggleHorario);
+        toggleHorario();
+    }
+});
+</script>
+{% endblock %}

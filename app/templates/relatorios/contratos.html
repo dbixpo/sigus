@@ -4,44 +4,44 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-file-earmark-text"></i> Situação de Contratos</h1>
+    <h1><i class="fas fa-file-contract"></i> Situação de Contratos</h1>
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
         {% set qs = request.query_string.decode() %}
         <div class="btn-group btn-group-sm" role="group">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Exportar
+                <i class="fas fa-download me-1"></i>Exportar
             </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">Selecione o formato</h6></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                    <i class="fas fa-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                    <i class="fas fa-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+                    <i class="fas fa-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li><h6 class="dropdown-header">Planilha CONTRATOS ATUAL</h6></li>
                 <li><a class="dropdown-item fw-semibold" href="{{ url_for('relatorios.exportar_contratos_planilha', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-table me-2 text-success"></i>Exportar formato planilha (.xlsx)</a></li>
+                    <i class="fas fa-table me-2 text-success"></i>Exportar formato planilha (.xlsx)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_contratos_planilha', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-table me-2 text-success"></i>Formato planilha (.xls)</a></li>
+                    <i class="fas fa-table me-2 text-success"></i>Formato planilha (.xls)</a></li>
             </ul>
         </div>
     </div>
 </div>
 
 <div class="filter-bar mb-2">
-    <form method="GET" class="row g-2 align-items-end mb-2">
+    <form method="GET" action="{{ url_for('relatorios.contratos') }}" class="row g-2 align-items-end mb-2">
         <div class="col-md-3">
             {% set status_opts = {'vigente': 'Vigente', 'a_vencer': 'A Vencer', 'vencido': 'Vencido'} %}
             {{ filtro_multiselect('Status', 'status', status_opts, filtro_status_list, 'Todos') }}
         </div>
         <div class="col-auto d-flex gap-1 align-items-end">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filtrar</button>
-            <a href="{{ url_for('relatorios.contratos') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="{{ url_for('relatorios.contratos') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
         </div>
     </form>
     <div class="row g-2">
@@ -96,7 +96,7 @@
             </table>
         </div>
         {% else %}
-        <div class="empty-state"><i class="bi bi-file-earmark-text"></i><h6>Nenhum contrato encontrado.</h6></div>
+        <div class="empty-state"><i class="fas fa-file-contract"></i><h6>Nenhum contrato encontrado.</h6></div>
         {% endif %}
     </div>
 </div>

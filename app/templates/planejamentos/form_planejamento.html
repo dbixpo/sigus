@@ -2,9 +2,52 @@
 {% block title %}{{ 'Editar' if planejamento else 'Novo' }} Planejamento{% endblock %}
 
 {% block head %}
-<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <style>
-.ql-container { min-height: 120px; font-size: .95rem; }
+/* Barra de formatação do editor de descrição */
+.descricao-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 6px 10px;
+    background: #f8fafc;
+    border: 1px solid #ced4da;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+}
+.descricao-toolbar button {
+    width: 32px;
+    height: 28px;
+    border: 1px solid #dee2e6;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #495057;
+    font-size: 0.9rem;
+}
+.descricao-toolbar button:hover { background: #e9ecef; }
+.descricao-toolbar button.active { background: #1A82B8; color: #fff; border-color: #1A82B8; }
+.descricao-toolbar .separator { width: 1px; background: #dee2e6; margin: 2px 6px; }
+#editorDescricaoArea {
+    min-height: 150px;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 0 0 6px 6px;
+    background: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    overflow-y: auto;
+}
+#editorDescricaoArea:focus { border-color: #1A82B8; box-shadow: 0 0 0 2px rgba(26,130,184,.15); }
+#editorDescricaoArea:empty::before { content: attr(data-placeholder); color: #999; }
+.plano-descricao-conteudo { word-wrap: break-word; }
+.plano-descricao-conteudo p { margin-bottom: 0.5rem; }
+.plano-descricao-conteudo p:last-child { margin-bottom: 0; }
+.plano-descricao-conteudo ul, .plano-descricao-conteudo ol { margin-left: 1.5rem; margin-bottom: 0.5rem; }
+.plano-descricao-conteudo a { color: #1A82B8; text-decoration: underline; }
 .upload-zona {
     border: 2px dashed #d1d5db; border-radius: 12px;
     padding: 1rem; text-align: center; cursor: pointer;
@@ -21,6 +64,25 @@
     margin-bottom: .3rem; font-size: .85rem;
 }
 .anexo-item a { color: #1A82B8; }
+
+/* ========== Mobile UX (apenas para telas < 768px) ========== */
+@media (max-width: 767px) {
+    .page-header h1 { font-size: 1.35rem; }
+    .card-body { padding: 1rem !important; }
+    .mb-3, .mb-4 { margin-bottom: 1rem !important; }
+    .descricao-toolbar { flex-wrap: wrap; }
+    .descricao-toolbar button { width: 30px; height: 26px; font-size: 0.85rem; }
+    #editorDescricaoArea { min-height: 120px; padding: 10px 12px; font-size: 16px; }
+    #painelCompartilhar { max-width: 100% !important; }
+    #painelCompartilhar .row { flex-direction: column; }
+    #painelCompartilhar .col-md-5, #painelCompartilhar .col-md-7 { max-width: 100%; }
+    #listaUnidadesCompartilhar { max-height: 180px !important; }
+    .gut-row-mobile .col-md-3 { width: 100%; }
+    .gut-row-mobile .col-md-3.d-flex { justify-content: center; margin-top: 0.5rem; }
+    .upload-zona { padding: 0.85rem; font-size: 0.9rem; }
+    .upload-zona .form-text { font-size: 0.75rem; }
+    .d-flex.gap-2 .btn { flex: 1; min-width: 0; }
+}
 </style>
 {% endblock %}
 
@@ -33,7 +95,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-clipboard2-plus me-2"></i>{{ 'Editar' if planejamento else 'Novo' }} Planejamento</h1>
+    <h1><i class="fas fa-clipboard-plus me-2"></i>{{ 'Editar' if planejamento else 'Novo' }} Planejamento</h1>
 </div>
 
 <div class="card">
@@ -48,75 +110,98 @@
             </div>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Descrição</label>
-                <div id="editorDescricao" style="background:#fff; border:1px solid #ced4da; border-radius:6px;"></div>
+                <div class="descricao-editor-wrapper">
+                    <div class="descricao-toolbar" id="descricaoToolbar">
+                        <button type="button" title="Negrito" data-cmd="bold"><i class="fas fa-bold"></i></button>
+                        <button type="button" title="Itálico" data-cmd="italic"><i class="fas fa-italic"></i></button>
+                        <button type="button" title="Sublinhado" data-cmd="underline"><i class="fas fa-underline"></i></button>
+                        <button type="button" title="Tachado" data-cmd="strikeThrough"><i class="fas fa-strikethrough"></i></button>
+                        <span class="separator"></span>
+                        <button type="button" title="Lista com marcadores" data-cmd="insertUnorderedList"><i class="fas fa-list-ul"></i></button>
+                        <button type="button" title="Lista numerada" data-cmd="insertOrderedList"><i class="fas fa-list-ol"></i></button>
+                        <span class="separator"></span>
+                        <button type="button" title="Hiperlink" data-cmd="link"><i class="fas fa-link"></i></button>
+                        <button type="button" title="Remover link" data-cmd="unlink"><i class="fas fa-unlink"></i></button>
+                        <span class="separator"></span>
+                        <button type="button" title="Citação" data-cmd="formatBlock" data-value="blockquote"><i class="fas fa-quote-right"></i></button>
+                    </div>
+                    <div id="editorDescricaoArea" contenteditable="true" data-placeholder="Descreva o objetivo do planejamento..."></div>
+                </div>
                 <input type="hidden" name="descricao" id="inputDescricao">
+                <div class="form-text small text-muted mt-1">Descreva o objetivo e contexto do planejamento. Use a barra acima para negrito, itálico, listas, hiperlink e outras formatações.</div>
             </div>
-            {% if not planejamento %}
             <div class="mb-3">
-                <label class="form-label fw-semibold">Unidade <span class="text-danger">*</span></label>
-                <select name="unidade_id" class="form-select" required>
-                    {% for u in unidades %}
-                    <option value="{{ u.id }}">{{ u.nome }}</option>
-                    {% endfor %}
-                </select>
+                <label class="form-label fw-semibold">Unidade Origem <span class="text-danger">*</span></label>
+                {% if unidade_origem %}
+                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-light">
+                    <i class="fas fa-hospital text-primary"></i>
+                    <span class="flex-grow-1">{{ unidade_origem.nome }}</span>
+                    <span class="badge bg-primary">Origem</span>
+                </div>
+                <input type="hidden" name="unidade_id" id="inputUnidadeOrigem" value="{{ unidade_origem.id }}">
+                {% endif %}
             </div>
-            {% endif %}
-            <div class="mb-4">
-                <label class="form-label fw-semibold">GUT — Priorização</label>
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Gravidade</label>
-                        <select name="gravidade" id="selGravidade" class="form-select">
-                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.gravidade == 1) else '' }}>Muito baixo (impacto insignificante)</option>
-                            <option value="2" {{ 'selected' if planejamento and planejamento.gravidade == 2 else '' }}>Baixo</option>
-                            <option value="3" {{ 'selected' if planejamento and planejamento.gravidade == 3 else '' }}>Médio</option>
-                            <option value="4" {{ 'selected' if planejamento and planejamento.gravidade == 4 else '' }}>Alto (impacto relevante)</option>
-                            <option value="5" {{ 'selected' if planejamento and planejamento.gravidade == 5 else '' }}>Crítico (impacto severo)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Urgência</label>
-                        <select name="urgencia" id="selUrgencia" class="form-select">
-                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.urgencia == 1) else '' }}>Pode esperar</option>
-                            <option value="2" {{ 'selected' if planejamento and planejamento.urgencia == 2 else '' }}>Pouco urgente</option>
-                            <option value="3" {{ 'selected' if planejamento and planejamento.urgencia == 3 else '' }}>Urgente</option>
-                            <option value="4" {{ 'selected' if planejamento and planejamento.urgencia == 4 else '' }}>Muito urgente</option>
-                            <option value="5" {{ 'selected' if planejamento and planejamento.urgencia == 5 else '' }}>Imediato</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label small text-muted">Tendência</label>
-                        <select name="tendencia" id="selTendencia" class="form-select">
-                            <option value="1" {{ 'selected' if (not planejamento) or (planejamento and planejamento.tendencia == 1) else '' }}>Estável (não piora)</option>
-                            <option value="2" {{ 'selected' if planejamento and planejamento.tendencia == 2 else '' }}>Leve piora</option>
-                            <option value="3" {{ 'selected' if planejamento and planejamento.tendencia == 3 else '' }}>Piora moderada</option>
-                            <option value="4" {{ 'selected' if planejamento and planejamento.tendencia == 4 else '' }}>Piora rápida</option>
-                            <option value="5" {{ 'selected' if planejamento and planejamento.tendencia == 5 else '' }}>Piora iminente</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3 d-flex align-items-center">
-                        <span class="badge fs-6 px-3 py-2" id="gutResultado">—</span>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Compartilhar Planejamento</label>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="btnCompartilhar" data-bs-toggle="collapse" data-bs-target="#painelCompartilhar" aria-expanded="false" aria-controls="painelCompartilhar">
+                    <i class="fas fa-share-nodes me-1"></i>Compartilhar planejamento
+                </button>
+                <div id="painelCompartilhar" class="collapse mt-3" style="max-width: 900px;">
+                    <div class="card card-body border">
+                        <p class="form-text small text-muted mb-3">Selecione o tipo de unidade para ver as unidades disponíveis. Escolha "Compartilhar com todas" ou unidades específicas.</p>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label small fw-semibold">Tipo de unidade</label>
+                                <select id="selTipoCompartilhar" class="form-select">
+                                    <option value="">Selecione um tipo...</option>
+                                    {% for t in tipos_unidade %}
+                                    <option value="{{ t.id }}">{{ t.nome }} ({{ t.sigla }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label small fw-semibold">Unidades do tipo selecionado</label>
+                                <input type="text" id="filtroUnidadesCompartilhar" class="form-control form-control-sm mb-2" placeholder="Filtrar unidades..." style="display: none;">
+                                <div id="listaUnidadesCompartilhar" class="border rounded p-2" style="max-height: 220px; overflow-y: auto; background: #f8fafc;">
+                                    <p class="text-muted small mb-0">Selecione um tipo à esquerda para carregar as unidades.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2 border-top">
+                            <div class="small fw-semibold text-muted mb-1">Selecionados para compartilhar:</div>
+                            <div id="resumoCompartilhar" class="d-flex flex-wrap gap-1"></div>
+                        </div>
                     </div>
                 </div>
+                <input type="hidden" name="tipos_unidade_ids" id="inputTiposUnidadeIds" value="">
+                <input type="hidden" name="unidades_ids" id="inputUnidadesIds" value="">
+            </div>
+            <div class="mb-4">
+                {% with gravidade_sel=(planejamento.gravidade if planejamento else 1), urgencia_sel=(planejamento.urgencia if planejamento else 1), tendencia_sel=(planejamento.tendencia if planejamento else 1) %}
+                {% include 'shared/_gut_priorizacao.html' %}
+                {% endwith %}
             </div>
             <div class="mb-4">
                 <label class="form-label fw-semibold">Anexos</label>
                 <div class="upload-zona" id="uploadZona">
                     <input type="file" name="anexos" id="inputAnexos" multiple
-                           accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,image/*,application/pdf">
-                    <i class="bi bi-cloud-arrow-up fs-3 text-muted d-block mb-1"></i>
+                           accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.ogg,.oga,.opus,.mp3,image/*,audio/*,application/pdf,application/ogg,
+.doc,.docx,.xls,.xlsx,.ods,.odt,.ppt,.pptx,.odp,.txt,.csv,.zip,.rar,.eml,message/rfc822,text/csv,application/csv,application/zip,application/x-zip-compressed,application/vnd.rar,application/x-rar-compressed">
+                    <i class="fas fa-cloud-upload-alt fs-3 text-muted d-block mb-1"></i>
                     <span class="text-muted small">Arraste arquivos aqui ou clique para selecionar</span>
-                    <div class="form-text mt-1">PDF ou fotos (JPG, PNG, etc.). Até 20 MB por arquivo.</div>
+                    <div class="form-text mt-1">
+                        PDF, imagens, áudio (OGG/OPUS/MP3), e-mail (.eml), documentos comuns (Word, Excel, PowerPoint, ODF, TXT), compactados (.zip/.rar) e CSV. Até 100 MB por arquivo.
+                    </div>
                 </div>
                 {% if planejamento and planejamento.anexos.count() %}
                 <div class="anexos-lista mt-2">
                     <div class="small fw-semibold text-muted mb-1">Anexos atuais:</div>
                     {% for a in planejamento.anexos %}
                     <div class="anexo-item">
-                        {% if a.eh_imagem %}
-                        <i class="bi bi-image text-success"></i>
-                        {% else %}
-                        <i class="bi bi-file-earmark-pdf text-danger"></i>
+                        {% if a.eh_imagem %}<i class="fas fa-image text-success"></i>
+                        {% elif a.eh_pdf %}<i class="fas fa-file-pdf text-danger"></i>
+                        {% elif a.eh_audio %}<i class="fas fa-file-audio text-info"></i>
+                        {% else %}<i class="fas fa-file text-muted"></i>
                         {% endif %}
                         <a href="{{ a.url }}" target="_blank">{{ a.original }}</a>
                     </div>
@@ -126,7 +211,7 @@
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check2 me-1"></i>{{ 'Salvar' if planejamento else 'Criar' }}
+                    <i class="fas fa-check me-1"></i>{{ 'Salvar' if planejamento else 'Criar' }}
                 </button>
                 <a href="{{ url_for('planejamentos.listar', expand=planejamento.id, unidade_id=planejamento.unidade_id) if planejamento else url_for('planejamentos.listar') }}"
                    class="btn btn-outline-secondary">Cancelar</a>
@@ -137,81 +222,71 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
 (function () {
     var conteudoInicial = {{ (planejamento.descricao if planejamento and planejamento.descricao else '') | tojson }};
-    var editorEl = document.getElementById('editorDescricao');
-    var inputEl = document.getElementById('inputDescricao');
-    if (editorEl && inputEl && typeof Quill !== 'undefined') {
-        var Link = Quill.import('formats/link');
-        var LinkCustom = Link.extend({
-            create: function (value) {
-                var node = Link.create.call(this, value);
-                node.setAttribute('target', '_blank');
-                node.setAttribute('rel', 'noopener noreferrer');
-                return node;
-            }
-        });
-        Quill.register(LinkCustom, true);
-        var quill = new Quill(editorEl, {
-            theme: 'snow',
-            placeholder: 'Descreva o objetivo do planejamento...',
-            modules: {
-                toolbar: [
-                    [{ 'header': [2, 3, false] }],
-                    ['bold', 'italic', 'underline', 'strike'],
-                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                    [{ 'indent': '-1'}, { 'indent': '+1' }],
-                    ['link'],
-                    ['clean']
-                ]
-            }
-        });
-        if (conteudoInicial) quill.root.innerHTML = conteudoInicial;
-        quill.root.querySelectorAll('a').forEach(function (a) {
+    var area = document.getElementById('editorDescricaoArea');
+    var inputHidden = document.getElementById('inputDescricao');
+    var toolbar = document.getElementById('descricaoToolbar');
+    
+    if (!area || !inputHidden) return;
+    
+    // Conteúdo inicial (ao editar)
+    if (conteudoInicial && conteudoInicial.trim()) {
+        area.innerHTML = conteudoInicial;
+        area.querySelectorAll('a').forEach(function (a) {
             a.setAttribute('target', '_blank');
             a.setAttribute('rel', 'noopener noreferrer');
         });
-        var form = editorEl.closest('form');
-        if (form) {
-            form.addEventListener('submit', function () {
-                quill.root.querySelectorAll('a').forEach(function (a) {
-                    a.setAttribute('target', '_blank');
-                    a.setAttribute('rel', 'noopener noreferrer');
-                });
-                inputEl.value = quill.root.innerHTML;
-            });
-        }
     }
-})();
-</script>
-<script>
-(function () {
-    var niveis = [
-        { min: 81, max: 125, texto: 'Prioridade crítica', cls: 'bg-danger' },
-        { min: 51, max: 80, texto: 'Alta prioridade', cls: 'bg-warning text-dark' },
-        { min: 21, max: 50, texto: 'Prioridade moderada', cls: 'bg-info text-dark' },
-        { min: 1, max: 20, texto: 'Baixa prioridade', cls: 'bg-success' }
-    ];
-    function atualizarGUT() {
-        var g = parseInt(document.getElementById('selGravidade')?.value || 1, 10);
-        var u = parseInt(document.getElementById('selUrgencia')?.value || 1, 10);
-        var t = parseInt(document.getElementById('selTendencia')?.value || 1, 10);
-        var score = g * u * t;
-        var el = document.getElementById('gutResultado');
-        if (!el) return;
-        var item = niveis.find(function (n) { return score >= n.min && score <= n.max; }) || niveis[niveis.length - 1];
-        el.textContent = item.texto;
-        el.className = 'badge fs-6 px-3 py-2 ' + item.cls;
+    
+    function syncParaInput() {
+        var html = area.innerHTML;
+        area.querySelectorAll('a').forEach(function (a) {
+            a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'noopener noreferrer');
+        });
+        inputHidden.value = area.innerHTML;
     }
-    ['selGravidade', 'selUrgencia', 'selTendencia'].forEach(function (id) {
-        var sel = document.getElementById(id);
-        if (sel) sel.addEventListener('change', atualizarGUT);
+    
+    area.addEventListener('input', syncParaInput);
+    area.addEventListener('paste', function () { setTimeout(syncParaInput, 10); });
+    
+    // Toolbar: execCommand
+    toolbar.querySelectorAll('button[data-cmd]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            area.focus();
+            var cmd = this.dataset.cmd;
+            var value = this.dataset.value || null;
+            if (cmd === 'link') {
+                var url = prompt('Digite a URL do link:', 'https://');
+                if (url) {
+                    document.execCommand('createLink', false, url);
+                    area.querySelectorAll('a').forEach(function (a) {
+                        a.setAttribute('target', '_blank');
+                        a.setAttribute('rel', 'noopener noreferrer');
+                    });
+                }
+            } else if (cmd === 'formatBlock' && value) {
+                document.execCommand('formatBlock', false, value);
+            } else {
+                document.execCommand(cmd, false, null);
+            }
+            syncParaInput();
+        });
     });
-    atualizarGUT();
+    
+    // Submit: garante que o valor seja enviado
+    var form = area.closest('form');
+    if (form) {
+        form.addEventListener('submit', function () {
+            syncParaInput();
+        });
+    }
 })();
 </script>
+{% include 'shared/_gut_priorizacao_script.html' %}
 <script>
 (function () {
     var zona = document.getElementById('uploadZona');
@@ -231,6 +306,169 @@
             }
         });
     }
+})();
+</script>
+<script>
+(function() {
+    // Dados disponíveis
+    var tiposUnidade = [
+        {% for t in tipos_unidade %}
+        { id: {{ t.id }}, nome: {{ t.nome | tojson }}, sigla: {{ t.sigla | tojson }} },
+        {% endfor %}
+    ];
+    var unidades = [
+        {% for u in unidades %}
+        { id: {{ u.id }}, nome: {{ u.nome | tojson }}, tipo_unidade_id: {{ u.tipo_unidade_id or 'null' }} },
+        {% endfor %}
+    ];
+    
+    // Unidade origem (sempre presente, fixa; não aparece no dropdown)
+    var unidadeOrigemId = {{ unidade_origem.id if unidade_origem else 'null' }};
+    var idsUnidadesUsuario = {{ (ids_unidades_usuario | tojson) if ids_unidades_usuario is defined else '[]' }};
+    var tiposSelecionados = {{ (tipos_selecionados if tipos_selecionados is defined and tipos_selecionados else []) | tojson }};
+    var unidadesSelecionadas = {{ (unidades_selecionadas if unidades_selecionadas is defined and unidades_selecionadas else []) | tojson }};
+    
+    var inputTiposIds = document.getElementById('inputTiposUnidadeIds');
+    var inputUnidadesIds = document.getElementById('inputUnidadesIds');
+    var selTipo = document.getElementById('selTipoCompartilhar');
+    var listaUnidadesDiv = document.getElementById('listaUnidadesCompartilhar');
+    var resumoDiv = document.getElementById('resumoCompartilhar');
+    var filtroInput = document.getElementById('filtroUnidadesCompartilhar');
+
+    var tiposSelecionadosSet = {};
+    var unidadesSelecionadasSet = {};
+
+    function atualizarInputs() {
+        inputTiposIds.value = Object.keys(tiposSelecionadosSet).filter(function(k) { return tiposSelecionadosSet[k]; }).join(',');
+        var outrasIds = Object.keys(unidadesSelecionadasSet).filter(function(k) { return unidadesSelecionadasSet[k]; }).map(Number);
+        var todosIds = unidadeOrigemId ? [unidadeOrigemId].concat(outrasIds) : outrasIds;
+        inputUnidadesIds.value = todosIds.join(',');
+    }
+
+    function renderResumo() {
+        var html = [];
+        tiposUnidade.forEach(function(t) {
+            if (tiposSelecionadosSet[t.id]) {
+                html.push('<span class="badge bg-info text-dark me-1 mb-1">' + t.nome + ' (todas) ' +
+                    '<button type="button" class="btn-close btn-close-white btn-close-sm ms-1" style="font-size:.6rem" data-remover-tipo="' + t.id + '" aria-label="Remover"></button></span>');
+            }
+        });
+        unidades.forEach(function(u) {
+            if (u.id !== unidadeOrigemId && unidadesSelecionadasSet[u.id]) {
+                html.push('<span class="badge bg-secondary me-1 mb-1">' + (u.nome || '') + ' ' +
+                    '<button type="button" class="btn-close btn-close-white btn-close-sm ms-1" style="font-size:.6rem" data-remover-unidade="' + u.id + '" aria-label="Remover"></button></span>');
+            }
+        });
+        if (html.length === 0) html.push('<span class="text-muted small">Nenhum compartilhamento adicional</span>');
+        resumoDiv.innerHTML = html.join(' ');
+        resumoDiv.querySelectorAll('[data-remover-tipo]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                tiposSelecionadosSet[parseInt(this.dataset.removerTipo)] = false;
+                atualizarInputs();
+                renderResumo();
+                carregarUnidadesDoTipo(parseInt(selTipo.value));
+            });
+        });
+        resumoDiv.querySelectorAll('[data-remover-unidade]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                unidadesSelecionadasSet[parseInt(this.dataset.removerUnidade)] = false;
+                atualizarInputs();
+                renderResumo();
+                var tid = parseInt(selTipo.value);
+                if (tid) carregarUnidadesDoTipo(tid);
+            });
+        });
+    }
+
+    function carregarUnidadesDoTipo(tipoId) {
+        if (!tipoId || isNaN(tipoId)) {
+            if (filtroInput) { filtroInput.style.display = 'none'; filtroInput.value = ''; }
+            listaUnidadesDiv.innerHTML = '<p class="text-muted small mb-0">Selecione um tipo à esquerda para carregar as unidades.</p>';
+            return;
+        }
+        var tipo = tiposUnidade.find(function(t) { return t.id === tipoId; });
+        if (!tipo) {
+            if (filtroInput) filtroInput.style.display = 'none';
+            listaUnidadesDiv.innerHTML = '<p class="text-muted small mb-0">Tipo não encontrado.</p>';
+            return;
+        }
+        if (filtroInput) filtroInput.style.display = 'block';
+        var termo = (filtroInput && filtroInput.value ? filtroInput.value : '').trim().toLowerCase();
+        var unidadesDoTipoFull = unidades.filter(function(u) { return u.tipo_unidade_id === tipoId && u.id !== unidadeOrigemId; });
+        var unidadesDoTipo = unidadesDoTipoFull;
+        if (termo) {
+            unidadesDoTipo = unidadesDoTipo.filter(function(u) { return (u.nome || '').toLowerCase().indexOf(termo) >= 0; });
+        }
+        var todasSelecionado = tiposSelecionadosSet[tipoId];
+
+        var html = '<div class="form-check mb-2 p-2 border-bottom">' +
+            '<input class="form-check-input" type="checkbox" id="chkTodas' + tipoId + '" ' + (todasSelecionado ? 'checked' : '') + '>' +
+            '<label class="form-check-label fw-semibold" for="chkTodas' + tipoId + '">Compartilhar com todas</label>' +
+            '</div>';
+        if (todasSelecionado) {
+            html += '<p class="text-muted small mb-2">Todas as ' + unidadesDoTipoFull.length + ' unidades de ' + tipo.sigla + ' terão acesso.</p>';
+        }
+        unidadesDoTipo.forEach(function(u) {
+            var sel = unidadesSelecionadasSet[u.id];
+            var disabled = todasSelecionado ? ' disabled' : '';
+            html += '<div class="form-check">' +
+                '<input class="form-check-input" type="checkbox" id="chkU' + u.id + '" data-unidade-id="' + u.id + '"' + (sel ? ' checked' : '') + disabled + '>' +
+                '<label class="form-check-label" for="chkU' + u.id + '">' + (u.nome || '') + '</label>' +
+                '</div>';
+        });
+        if (unidadesDoTipo.length === 0) {
+            html += '<p class="text-muted small mb-0">' + (termo ? 'Nenhuma unidade corresponde ao filtro.' : 'Nenhuma unidade deste tipo (exceto a origem).') + '</p>';
+        }
+        listaUnidadesDiv.innerHTML = html;
+
+        document.getElementById('chkTodas' + tipoId)?.addEventListener('change', function() {
+            tiposSelecionadosSet[tipoId] = this.checked;
+            if (this.checked) {
+                unidadesDoTipo.forEach(function(u) { unidadesSelecionadasSet[u.id] = false; });
+            }
+            carregarUnidadesDoTipo(tipoId);
+            atualizarInputs();
+            renderResumo();
+        });
+
+        listaUnidadesDiv.querySelectorAll('[data-unidade-id]').forEach(function(chk) {
+            chk.addEventListener('change', function() {
+                var uid = parseInt(this.dataset.unidadeId);
+                unidadesSelecionadasSet[uid] = this.checked;
+                if (this.checked) tiposSelecionadosSet[tipoId] = false;
+                carregarUnidadesDoTipo(tipoId);
+                atualizarInputs();
+                renderResumo();
+            });
+        });
+    }
+
+    selTipo.addEventListener('change', function() {
+        var tipoId = parseInt(this.value);
+        if (filtroInput) filtroInput.value = '';
+        carregarUnidadesDoTipo(tipoId);
+    });
+    if (filtroInput) {
+        filtroInput.addEventListener('input', function() {
+            var tipoId = parseInt(selTipo.value);
+            if (tipoId) carregarUnidadesDoTipo(tipoId);
+        });
+    }
+
+    tiposSelecionados.forEach(function(tipoId) { tiposSelecionadosSet[tipoId] = true; });
+    unidadesSelecionadas.forEach(function(uid) { unidadesSelecionadasSet[uid] = true; });
+    atualizarInputs();
+    renderResumo();
+    
+    // Validação no submit (origem já está garantida; unidades_ids sempre inclui a origem)
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var unidadesIds = inputUnidadesIds.value.split(',').filter(function(id) { return id; });
+        if (unidadesIds.length === 0) {
+            e.preventDefault();
+            alert('É necessário uma unidade origem. Verifique os dados do formulário.');
+            return false;
+        }
+    });
 })();
 </script>
 {% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-journal-medical"></i> {{ titulo }}</h1>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('configuracoes.cid10_export') }}" id="btnExportar" class="btn btn-outline-success" title="Exportar para Excel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+        </a>
+        <a href="{{ url_for('configuracoes.cid10_form') }}" class="btn btn-samu-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info mb-4">
+    <h6 class="alert-heading"><i class="bi bi-info-circle me-2"></i>IMPORTANTE: Importação a partir do arquivo oficial</h6>
+    <p class="mb-0">Os dados do CID-10 foram importados do arquivo XML disponibilizado pelo DATASUS em
+    <a href="http://www2.datasus.gov.br/cid10/V2008/cid10.htm" target="_blank" rel="noopener noreferrer" class="alert-link">http://www2.datasus.gov.br/cid10/V2008/cid10.htm</a></p>
+</div>
+
+{% if tem_registros %}
+<div class="filtros-mobile-wrap">
+    <button class="btn btn-outline-secondary btn-sm btn-filtros-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCid10" aria-expanded="false">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+    <div class="collapse filtros-panel" id="filtrosCid10">
+<div class="card shadow-sm mb-0">
+    <div class="card-body py-3">
+        <div class="row g-2 g-md-3 align-items-end filtros-listagem">
+            <div class="col-12 col-md-6 col-lg-5">
+                <label class="form-label small mb-1">Buscar por código ou descrição</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="filtroBusca" placeholder="Ex: A09, J469, cólera, diabetes..." autocomplete="off">
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+                <label class="form-label small mb-1">Ativo</label>
+                <select class="form-select form-select-sm" id="filtroAtivo">
+                    <option value="">Todos</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-text small mt-1">Digite 3+ caracteres para filtrar por código ou descrição.</div>
+    </div>
+</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    {% if tem_registros %}
+    <div class="listagem-cards" id="cardsCid10"></div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:90px">Código</th>
+                    <th>Descrição</th>
+                    <th style="width:80px">Ativo</th>
+                    <th style="width:90px"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyCid10">
+                <tr id="linhaPlaceholder">
+                    <td colspan="4" class="text-center text-muted py-5">
+                        <i class="bi bi-search fs-2 d-block mb-2 opacity-50"></i>
+                        Carregando...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-journal-medical fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhum código CID-10 cadastrado.</p>
+        <a href="{{ url_for('configuracoes.cid10_form') }}" class="btn btn-samu-primary btn-sm mt-2">
+            <i class="bi bi-plus-circle me-1"></i>Cadastrar manualmente
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if tem_registros %}
+<script>
+(function() {
+    var tbody = document.getElementById('tbodyCid10');
+    var placeholder = document.getElementById('linhaPlaceholder');
+    var btnExportar = document.getElementById('btnExportar');
+    var baseHref = btnExportar ? btnExportar.getAttribute('href') : '';
+    var buscaUrl = "{{ url_for('configuracoes.cid10_api_buscar') }}";
+    var editarUrl = "{{ url_for('configuracoes.cid10_form', id=0) }}".replace('/0', '/');
+    var debounceTimer = null;
+    var minChars = 3;
+
+    function atualizarExportHref() {
+        if (!btnExportar) return;
+        var q = [];
+        var busca = document.getElementById('filtroBusca')?.value?.trim();
+        var ativo = document.getElementById('filtroAtivo')?.value;
+        if (busca) q.push('busca=' + encodeURIComponent(busca));
+        if (ativo) q.push('ativo=' + ativo);
+        btnExportar.href = baseHref + (q.length ? '?' + q.join('&') : '');
+    }
+
+    function renderLinhas(itens) {
+        placeholder.style.display = 'none';
+        var exists = tbody.querySelector('tr[data-id]');
+        while (exists) { exists.remove(); exists = tbody.querySelector('tr[data-id]'); }
+        var cardsEl = document.getElementById('cardsCid10');
+        if (cardsEl) cardsEl.innerHTML = '';
+        if (!itens.length) {
+            placeholder.innerHTML = '<td colspan="4" class="text-center text-muted py-4">Nenhum resultado encontrado</td>';
+            placeholder.style.display = '';
+            if (cardsEl) cardsEl.innerHTML = '<div class="text-center text-muted py-4 small">Nenhum resultado encontrado</div>';
+            return;
+        }
+        itens.forEach(function(i) {
+            var tr = document.createElement('tr');
+            tr.setAttribute('data-id', i.id);
+            tr.innerHTML = 
+                '<td class="fw-semibold">' + (i.codigo || '—') + '</td>' +
+                '<td class="small">' + (i.descricao || '—') + '</td>' +
+                '<td>' + (i.ativo ? '<span class="badge bg-success">Sim</span>' : '<span class="badge bg-secondary">Não</span>') + '</td>' +
+                '<td><a href="' + editarUrl + i.id + '" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a></td>';
+            tbody.appendChild(tr);
+            if (cardsEl) {
+                var card = document.createElement('div');
+                card.className = 'listagem-card';
+                card.innerHTML = 
+                    '<div class="card-titulo">' + (i.codigo || '—') + '</div>' +
+                    '<div class="card-meta">' + (i.descricao || '—') + '</div>' +
+                    '<div class="card-rodape">' +
+                    '<span>' + (i.ativo ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>') + '</span>' +
+                    '<a href="' + editarUrl + i.id + '" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>' +
+                    '</div>';
+                cardsEl.appendChild(card);
+            }
+        });
+    }
+
+    function buscar() {
+        var busca = (document.getElementById('filtroBusca')?.value || '').trim();
+        var ativo = document.getElementById('filtroAtivo')?.value || '';
+        if (busca.length > 0 && busca.length < minChars) {
+            placeholder.innerHTML = '<td colspan="4" class="text-center text-muted py-5"><i class="bi bi-search fs-2 d-block mb-2 opacity-50"></i>Digite ao menos 3 caracteres para filtrar</td>';
+            placeholder.style.display = '';
+            tbody.querySelectorAll('tr[data-id]').forEach(function(r) { r.remove(); });
+            atualizarExportHref();
+            return;
+        }
+        placeholder.innerHTML = '<td colspan="4" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>' + (busca ? 'Buscando...' : 'Carregando...') + '</td>';
+        placeholder.style.display = '';
+        tbody.querySelectorAll('tr[data-id]').forEach(function(r) { r.remove(); });
+        var url = buscaUrl + '?limit=' + (busca ? '500' : '20000');
+        if (busca) url += '&q=' + encodeURIComponent(busca);
+        if (ativo) url += '&ativo=' + encodeURIComponent(ativo);
+        fetch(url, { headers: { 'Accept': 'application/json' } })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                renderLinhas(data);
+                atualizarExportHref();
+            })
+            .catch(function() {
+                placeholder.innerHTML = '<td colspan="4" class="text-center text-danger py-4">Erro ao buscar. Tente novamente.</td>';
+                placeholder.style.display = '';
+            })
+            .finally(function() {});
+    }
+
+    function agendarBusca() {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(buscar, 300);
+    }
+
+    document.getElementById('filtroBusca')?.addEventListener('input', agendarBusca);
+    document.getElementById('filtroAtivo')?.addEventListener('change', buscar);
+    buscar();
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,6 +1,7 @@
 from datetime import datetime
 from app import db
 from app.models.usuario import VINCULOS, TIPOS_VINCULO, CBOS
+from app.models.cbo import CBO
 
 
 class MatriculaProfissional(db.Model):
@@ -13,7 +14,7 @@ class MatriculaProfissional(db.Model):
 
     id              = db.Column(db.Integer, primary_key=True)
     usuario_id      = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
-    numero          = db.Column(db.String(50), nullable=False)
+    numero          = db.Column(db.String(50), nullable=True)  # Nullable para permitir Contrato por Prazo Determinado sem matrícula
     vinculo         = db.Column(db.String(1))       # 1=Empregatício, 5=Residência, 6=Estágio
     tipo_vinculo    = db.Column(db.String(1))       # 1=Estatutário, 3=Determinado, 0=Sem tipo
     cbo             = db.Column(db.String(10))
@@ -28,6 +29,13 @@ class MatriculaProfissional(db.Model):
 
     @property
     def cbo_label(self):
+        if not self.cbo:
+            return '—'
+        # Busca do banco de dados primeiro
+        cbo_obj = CBO.query.filter_by(codigo=self.cbo).first()
+        if cbo_obj:
+            return f'{cbo_obj.codigo} – {cbo_obj.descricao}'
+        # Fallback para a lista hardcoded (caso o CBO não esteja no banco ainda)
         for cod, desc in CBOS:
             if cod == self.cbo:
                 return f'{cod} – {desc}'
@@ -35,6 +43,13 @@ class MatriculaProfissional(db.Model):
 
     @property
     def cbo_desc(self):
+        if not self.cbo:
+            return '—'
+        # Busca do banco de dados primeiro
+        cbo_obj = CBO.query.filter_by(codigo=self.cbo).first()
+        if cbo_obj:
+            return cbo_obj.descricao
+        # Fallback para a lista hardcoded (caso o CBO não esteja no banco ainda)
         for cod, desc in CBOS:
             if cod == self.cbo:
                 return desc

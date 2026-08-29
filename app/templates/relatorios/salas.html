@@ -4,31 +4,31 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-door-open"></i> Relatório de Salas</h1>
+    <h1><i class="fas fa-door-open"></i> Relatório de Salas</h1>
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
         {% set qs = request.query_string.decode() %}
         <div class="btn-group btn-group-sm">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Exportar
+                <i class="fas fa-download me-1"></i>Exportar
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">Selecione o formato</h6></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_salas', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                    <i class="fas fa-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_salas', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                    <i class="fas fa-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_salas', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
-                    <i class="bi bi-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+                    <i class="fas fa-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
             </ul>
         </div>
     </div>
 </div>
 
 <div class="filter-bar mb-2">
-    <form method="GET" class="row g-2 align-items-end mb-2">
+    <form method="GET" action="{{ url_for('relatorios.salas') }}" class="row g-2 align-items-end mb-2">
         <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
         <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
         <div class="col-md-3">{{ filtro_multiselect('Tipo de Sala', 'tipo_sala', tipos_sala, filtro_tipo_salas, 'Todos os tipos de sala') }}</div>
@@ -41,8 +41,8 @@
             </select>
         </div>
         <div class="col-md-2 d-flex gap-1 align-items-end">
-            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i></button>
-            <a href="{{ url_for('relatorios.salas') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="bi bi-x-circle"></i></a>
+            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="fas fa-search"></i></button>
+            <a href="{{ url_for('relatorios.salas') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
         </div>
     </form>
     <div class="row g-2">
@@ -66,10 +66,9 @@
             <table class="table table-sm table-hover mb-0 align-middle" id="tblSalas">
                 <thead class="table-light">
                     <tr>
-                        <th>Unidade</th><th>Sala</th><th>Tipo</th><th>Ramal</th>
-                        <th class="text-center" title="Equipamentos ativos"><i class="bi bi-pc-display"></i></th>
-                        <th class="text-center"><i class="bi bi-wrench text-danger"></i> Abertos</th>
-                        <th class="text-center"><i class="bi bi-clipboard-check"></i> Total</th>
+                        <th>Unidade</th><th>Sala</th><th>Tipo</th><th>Ramal</th><th class="text-center" title="Máximo de profissionais na sala">Máx. prof.</th>
+                        <th class="text-center" title="Equipamentos ativos"><i class="fas fa-desktop"></i></th>
+                        <th>Obs.</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -80,7 +79,7 @@
                         {% set ns.unidade_atual = row.unidade_nome %}
                         <tr class="table-secondary" data-skip="1">
                             <td colspan="8" class="fw-semibold small py-1 px-3">
-                                <i class="bi bi-hospital me-1"></i>{{ row.unidade_nome }}
+                                <i class="fas fa-hospital me-1"></i>{{ row.unidade_nome }}
                             </td>
                         </tr>
                     {% endif %}
@@ -88,27 +87,23 @@
                         <td class="small text-muted">{{ row.unidade_nome | truncate(25) }}</td>
                         <td class="fw-semibold small">
                             <a href="{{ url_for('salas.detalhe', id=row.sala_id) }}" class="text-decoration-none">
-                                <i class="bi {{ row.icone }} me-1 text-warning"></i>{{ row.nome }}
+                                <i class="{{ row.icone }} me-1 text-warning"></i>{{ row.nome }}
                             </a>
                         </td>
                         <td class="small">{{ row.tipo }}</td>
                         <td class="small text-muted">{{ row.ramal or '—' }}</td>
+                        <td class="text-center small text-muted">{{ row.capacidade_maxima }}</td>
                         <td class="text-center">
                             <span class="badge bg-{{ 'primary' if row.equip_ativos > 0 else 'light text-dark' }}">{{ row.equip_ativos }}</span>
                         </td>
-                        <td class="text-center">
-                            {% if row.chamados_abertos > 0 %}
-                            <span class="badge bg-danger">{{ row.chamados_abertos }}</span>
-                            {% else %}<span class="text-muted small">—</span>{% endif %}
-                        </td>
-                        <td class="text-center"><span class="badge bg-secondary">{{ row.chamados_total }}</span></td>
+                        <td class="small text-muted" title="{{ row.observacoes or '' }}">{{ (row.observacoes or '') | truncate(60) }}</td>
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{{ url_for('salas.detalhe', id=row.sala_id) }}" class="btn btn-sm btn-outline-primary">Ver</a>
                                 {% if current_user.pode('abrir_chamado') %}
                                 <a href="{{ url_for('chamados.novo') }}?sala_id={{ row.sala_id }}&tipo_chamado=sala"
                                    class="btn btn-sm btn-outline-warning" title="Abrir chamado">
-                                    <i class="bi bi-wrench"></i>
+                                    <i class="fas fa-wrench"></i>
                                 </a>
                                 {% endif %}
                             </div>
@@ -120,7 +115,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="bi bi-door-open fs-1 text-muted d-block mb-3"></i>
+            <i class="fas fa-door-open fs-1 text-muted d-block mb-3"></i>
             <h6>Nenhuma sala encontrada com estes filtros.</h6>
         </div>
         {% endif %}

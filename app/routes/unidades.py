@@ -1,17 +1,30 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 from urllib.parse import quote
+import re
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, make_response
 from flask_login import login_required, current_user
 from app import db
 from app.models.unidade import Unidade, UsuarioUnidade
+from app.models.chamado import Chamado, TIPOS_CHAMADO, TIPOS_CHAMADO_LABELS
 from app.models.tipo_unidade import TipoUnidade
 from app.models.predio import Predio
 from app.models.usuario import Usuario, CBOS, VINCULOS, TIPOS_VINCULO
+from app.models.cbo import CBO
 from app.models.ficha_cnes import FichaCnesVinculo
-from app.utils import _montar_corpo_email_ficha, _montar_corpo_email_rede
+from app.utils import _montar_corpo_email_ficha, _montar_corpo_email_rede, agora_local
 
 _CNES_DEST = 'cnes@sorocaba.sp.gov.br,suportesis.sorocaba@sorocaba.sp.gov.br'
 _REDE_DEST = 'suportesis.sorocaba@sorocaba.sp.gov.br'
+
+
+def _cnpj_limpo(val):
+    """Remove caracteres não numéricos do CNPJ."""
+    return re.sub(r'\D', '', val or '')
+
+
+def _tipos_chamado_recebe_from_form():
+    tipos = request.form.getlist('tipos_chamado_recebe')
+    return [t for t in tipos if t in TIPOS_CHAMADO]
 
 
 def _links_email_ficha(ficha):
@@ -31,13 +44,16 @@ def _links_email_ficha(ficha):
         'rede': f'mailto:{_REDE_DEST}?subject={assunto_rede}&body={corpo_rede}',
     }
 
-unidades_bp = Blueprint('unidades', __name__, url_prefix='/unidades')
+unidades_bp = Blueprint('unidades', __name__, url_prefix='/configuracoes/unidades')
 
 
 @unidades_bp.route('/')
 @login_required
 def listar():
-    if current_user.pode('ver_todas_unidades'):
+    # Perfis que devem ver apenas unidades às quais estão vinculados,
+    # mesmo que tenham permissão de "ver_todas_unidades".
+    perf_restritos = {'coordenador', 'administrativo', 'profissional'}
+    if current_user.pode('ver_todas_unidades') and current_user.perfil not in perf_restritos:
         unidades = Unidade.query.order_by(Unidade.nome).all()
     else:
         ids = [uu.unidade_id for uu in current_user.unidades.filter_by(ativo=True).all()]
@@ -66,6 +82,8 @@ def nova():
         'uf':          p.uf or '',
         'cep':         p.cep or '',
         'link_maps':   p.link_maps or '',
+        'latitude':    p.latitude,
+        'longitude':   p.longitude,
     } for p in predios}
     gerentes_disponiveis = Usuario.query.filter(
         Usuario.perfil.in_(['coordenador', 'administrador']),
@@ -91,22 +109,33 @@ def nova():
             ramal=request.form.get('ramal', '').strip() or None,
             email=request.form.get('email', '').strip(),
             link_maps=request.form.get('link_maps', '').strip() or None,
+            latitude=request.form.get('latitude', type=float),
+            longitude=request.form.get('longitude', type=float),
             numero_cnes=request.form.get('numero_cnes', '').strip() or None,
             observacoes=request.form.get('observacoes', '').strip(),
+            tipos_chamado_recebe=_tipos_chamado_recebe_from_form(),
         )
+        if u.predio_id and (u.latitude is None or u.longitude is None):
+            p = Predio.query.get(u.predio_id)
+            if p and p.latitude is not None and p.longitude is not None:
+                u.latitude = p.latitude
+                u.longitude = p.longitude
         db.session.add(u)
         db.session.flush()
         for gid in request.form.getlist('gerentes[]'):
             gid = int(gid)
             db.session.add(UsuarioUnidade(usuario_id=gid, unidade_id=u.id, papel='gerente'))
         db.session.commit()
+        from app.routes.relatorios import invalidate_mapa_saude_payload_cache
+        invalidate_mapa_saude_payload_cache()
         flash(f'Unidade "{u.nome}" cadastrada com sucesso!', 'success')
         return redirect(url_for('unidades.detalhe', id=u.id))
     return render_template('unidades/form.html', unidade=None, tipos=tipos,
                            predios=predios, predios_data=predios_data,
                            predio_id_pre=predio_id_pre,
                            gerentes_disponiveis=gerentes_disponiveis,
-                           gerentes_atuais=[])
+                           gerentes_atuais=[],
+                           tipos_chamado_labels=TIPOS_CHAMADO_LABELS)
 
 
 @unidades_bp.route('/<int:id>')
@@ -123,24 +152,34 @@ def detalhe(id):
     vinculos_ativos = [v for v in todos_vinculos if v.ativo]
     ids_vinculados  = [v.usuario_id for v in vinculos_ativos]
 
-    # Última ficha de cadastro por profissional (para CBO/CH/Vínculo na tabela)
+    # Última ficha por profissional (para CBO/CH/Vínculo na tabela e para a aba "Fichas CNES")
+    # Pega sempre a ficha mais recente (cadastro/alteração/descadastro) de cada profissional.
     ultima_ficha_por_usuario = {}
     fichas = (FichaCnesVinculo.query
               .filter_by(unidade_id=id)
               .order_by(FichaCnesVinculo.gerado_em.desc())
               .all())
+    # Pega a primeira ficha de cada usuário (que é a mais recente devido ao order_by desc)
     for f in fichas:
-        if f.usuario_id not in ultima_ficha_por_usuario or f.tipo == 'cadastro':
+        if f.usuario_id not in ultima_ficha_por_usuario:
             ultima_ficha_por_usuario[f.usuario_id] = f
+
+    # Para a UI: mostramos apenas a última ficha de cada profissional (sem histórico)
+    fichas_ultimas = list(ultima_ficha_por_usuario.values())
+    fichas_ultimas.sort(key=lambda x: x.gerado_em or x.id, reverse=True)
 
     # Links de e-mail por vínculo (a partir da última ficha)
     links_email_vinculo = {}
     for uid, f in ultima_ficha_por_usuario.items():
         links_email_vinculo[uid] = _links_email_ficha(f)
 
-    chamados_recentes = unidade.chamados.filter(
-        db.text("status NOT IN ('cancelado', 'concluido')")
-    ).order_by(db.text('criado_em desc')).limit(10).all()
+    # Chamados: abertos pela unidade OU atribuídos para a unidade tratar
+    q_chamados = Chamado.query.filter(
+        Chamado.status.notin_(['cancelado', 'concluido']),
+        db.or_(Chamado.unidade_id == id, Chamado.unidade_responsavel_id == id)
+    )
+    chamados_recentes = q_chamados.order_by(Chamado.atualizado_em.desc()).limit(10).all()
+    chamados_abertos_count = q_chamados.count()
 
     usuarios_disponiveis = Usuario.query.filter(
         Usuario.ativo == True,
@@ -173,17 +212,54 @@ def detalhe(id):
                            todos_vinculos=todos_vinculos,
                            vinculos=vinculos_ativos,
                            chamados_recentes=chamados_recentes,
+                           chamados_abertos_count=chamados_abertos_count,
                            usuarios_disponiveis=usuarios_disponiveis,
-                           fichas=fichas,
+                           fichas=fichas_ultimas,
                            ultima_ficha_por_usuario=ultima_ficha_por_usuario,
                            links_email_vinculo=links_email_vinculo,
-                           cbos=CBOS,
+                           cbos=[(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()],
                            vinculos_cnes=VINCULOS,
                            tipos_vinculo=TIPOS_VINCULO,
                            equipamentos_por_sala=equipamentos_por_sala,
                            total_equipamentos_unidade=total_equipamentos_unidade,
                            solicitacoes_pendentes=solicitacoes_pendentes,
                            solicitacoes_historico=solicitacoes_historico)
+
+
+@unidades_bp.route('/<int:id>/gestores-principais', methods=['POST'])
+@login_required
+def definir_gestores_principais(id):
+    """Define até dois gestores principais da unidade (para contato/relatórios)."""
+    unidade = Unidade.query.get_or_404(id)
+    _verificar_acesso(unidade)
+
+    # Apenas quem pode editar a unidade deve poder alterar gestores principais
+    if not current_user.pode('editar_unidade'):
+        abort(403)
+
+    gestor_principal_id = request.form.get('gestor_principal', type=int)
+    gestor_secundario_id = request.form.get('gestor_secundario', type=int)
+
+    # Evita duplicar o mesmo profissional nos dois campos
+    if gestor_principal_id and gestor_secundario_id and gestor_principal_id == gestor_secundario_id:
+        gestor_secundario_id = None
+
+    # Limpa marcações anteriores
+    vinculos = unidade.usuarios.filter_by(ativo=True).all()
+    for v in vinculos:
+        if v.papel in ('gestor_principal', 'gestor_secundario'):
+            v.papel = None
+
+    # Aplica novas marcações
+    for v in vinculos:
+        if gestor_principal_id and v.usuario_id == gestor_principal_id:
+            v.papel = 'gestor_principal'
+        elif gestor_secundario_id and v.usuario_id == gestor_secundario_id:
+            v.papel = 'gestor_secundario'
+
+    db.session.commit()
+    flash('Gestores de referência da unidade atualizados.', 'success')
+    return redirect(url_for('unidades.detalhe', id=unidade.id))
 
 
 @unidades_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
@@ -205,6 +281,8 @@ def editar(id):
         'uf':          p.uf or '',
         'cep':         p.cep or '',
         'link_maps':   p.link_maps or '',
+        'latitude':    p.latitude,
+        'longitude':   p.longitude,
     } for p in predios}
     gerentes_disponiveis = Usuario.query.filter(
         Usuario.perfil.in_(['coordenador', 'administrador']),
@@ -213,6 +291,7 @@ def editar(id):
     gerentes_atuais = [v.usuario_id for v in unidade.usuarios.filter_by(ativo=True).all()
                        if v.usuario and v.usuario.perfil in ('coordenador', 'administrador')]
     if request.method == 'POST':
+        old_predio_id = unidade.predio_id
         tipo_id = request.form.get('tipo_unidade_id', type=int)
         tipo_obj = TipoUnidade.query.get(tipo_id) if tipo_id else None
         unidade.nome = request.form['nome'].strip()
@@ -230,18 +309,36 @@ def editar(id):
         unidade.ramal    = request.form.get('ramal', '').strip() or None
         unidade.email = request.form.get('email', '').strip()
         unidade.link_maps   = request.form.get('link_maps', '').strip() or None
+        unidade.latitude = request.form.get('latitude', type=float)
+        unidade.longitude = request.form.get('longitude', type=float)
         unidade.numero_cnes = request.form.get('numero_cnes', '').strip() or None
         unidade.status = request.form.get('status', 'ativa')
         unidade.observacoes = request.form.get('observacoes', '').strip()
+        unidade.tipos_chamado_recebe = _tipos_chamado_recebe_from_form()
+
+        predio_changed = old_predio_id != unidade.predio_id
+        if predio_changed and unidade.predio_id:
+            p = Predio.query.get(unidade.predio_id)
+            if p and p.latitude is not None and p.longitude is not None:
+                unidade.latitude = p.latitude
+                unidade.longitude = p.longitude
+        elif unidade.predio_id and (unidade.latitude is None or unidade.longitude is None):
+            p = Predio.query.get(unidade.predio_id)
+            if p and p.latitude is not None and p.longitude is not None:
+                unidade.latitude = p.latitude
+                unidade.longitude = p.longitude
 
         db.session.commit()
+        from app.routes.relatorios import invalidate_mapa_saude_payload_cache
+        invalidate_mapa_saude_payload_cache()
         flash('Unidade atualizada com sucesso!', 'success')
         return redirect(url_for('unidades.detalhe', id=unidade.id))
     return render_template('unidades/form.html', unidade=unidade, tipos=tipos,
                            predios=predios, predios_data=predios_data,
                            predio_id_pre=None,
                            gerentes_disponiveis=gerentes_disponiveis,
-                           gerentes_atuais=gerentes_atuais)
+                           gerentes_atuais=gerentes_atuais,
+                           tipos_chamado_labels=TIPOS_CHAMADO_LABELS)
 
 
 @unidades_bp.route('/<int:id>/vincular', methods=['POST'])
@@ -271,19 +368,47 @@ def vincular_usuario(id):
     # Gravar ficha CNES de cadastro com os dados do modal
     dt_str = request.form.get('dt_entrada_unidade', '')
     ch_str = request.form.get('carga_horaria', '')
+    
+    # Se empresa_id foi selecionado, busca dados da empresa
+    empresa_id = request.form.get('empresa_id', type=int)
+    if empresa_id:
+        from app.models.empresa import EmpresaContratada
+        empresa = EmpresaContratada.query.get(empresa_id)
+        if empresa:
+            cnpj_empresa = empresa.cnpj
+            nome_empresa = empresa.razao_social
+        else:
+            cnpj_empresa = request.form.get('cnpj_empresa', '').strip() or None
+            nome_empresa = request.form.get('nome_empresa', '').strip() or None
+    else:
+        cnpj_empresa = _cnpj_limpo(request.form.get('cnpj_empresa', '')) or None
+        nome_empresa = request.form.get('nome_empresa', '').strip() or None
+    
+    # Obtém vínculo e tipo do formulário
+    vinculo = request.form.get('vinculo') or None
+    # Verifica primeiro o campo hidden (quando o select está disabled) e depois o select normal
+    tipo_vinculo = request.form.get('tipo_vinculo_hidden') or request.form.get('tipo_vinculo') or None
+    
+    # Se vínculo é Residência (5) ou Estágio (6), tipo deve ser automaticamente "3 - Contrato por Prazo Determinado"
+    if vinculo in ('5', '6'):
+        tipo_vinculo = '3'
+    
     ficha = FichaCnesVinculo(
         usuario_id=usuario_id,
         unidade_id=id,
         tipo='cadastro',
-        vinculo=request.form.get('vinculo') or None,
-        tipo_vinculo=request.form.get('tipo_vinculo') or None,
+        vinculo=vinculo,
+        tipo_vinculo=tipo_vinculo,
         carga_horaria=int(ch_str) if ch_str.isdigit() else None,
         cbo=request.form.get('cbo') or None,
         especialidade_residencia=request.form.get('especialidade_residencia', '').strip() or None,
         dt_entrada_unidade=date.fromisoformat(dt_str) if dt_str else None,
         cns_profissional=request.form.get('cns_profissional', '').strip() or None,
+        cnpj_empresa=cnpj_empresa,
+        nome_empresa=nome_empresa,
         observacoes=request.form.get('observacoes', '').strip() or None,
         gerado_por=current_user.id,
+        gerado_em=agora_local(),  # Usa função centralizada para garantir hora consistente com o relógio da navbar
     )
     db.session.add(ficha)
     db.session.flush()
@@ -462,6 +587,29 @@ def ficha_cnes_vinculo(ficha_id):
     return resp
 
 
+@unidades_bp.route('/<int:id>/fichas-cnes/atualizar')
+@login_required
+def atualizar_fichas_cnes(id):
+    """Retorna apenas o HTML da tabela de fichas CNES para atualização via AJAX."""
+    unidade = Unidade.query.get_or_404(id)
+    _verificar_acesso(unidade)
+    
+    fichas_all = (FichaCnesVinculo.query
+              .filter_by(unidade_id=id)
+              .order_by(FichaCnesVinculo.gerado_em.desc())
+              .all())
+
+    ultima_por_usuario = {}
+    for f in fichas_all:
+        if f.usuario_id not in ultima_por_usuario:
+            ultima_por_usuario[f.usuario_id] = f
+
+    fichas = list(ultima_por_usuario.values())
+    fichas.sort(key=lambda x: x.gerado_em or x.id, reverse=True)
+
+    return render_template('unidades/_fichas_cnes_tabela.html', fichas=fichas)
+
+
 @unidades_bp.route('/<int:id>/gerar-ficha/<int:usuario_id>', methods=['POST'])
 @login_required
 def gerar_ficha(id, usuario_id):
@@ -478,22 +626,47 @@ def gerar_ficha(id, usuario_id):
 
     dt_str = request.form.get('dt_entrada_unidade', '')
     ch_str = request.form.get('carga_horaria', '')
+    
+    # Se empresa_id foi selecionado, busca dados da empresa
+    empresa_id = request.form.get('empresa_id', type=int)
+    if empresa_id:
+        from app.models.empresa import EmpresaContratada
+        empresa = EmpresaContratada.query.get(empresa_id)
+        if empresa:
+            cnpj_empresa = empresa.cnpj  # Já está sem máscara no banco
+            nome_empresa = empresa.razao_social
+        else:
+            cnpj_empresa = _cnpj_limpo(request.form.get('cnpj_empresa', '')) or None
+            nome_empresa = request.form.get('nome_empresa', '').strip() or None
+    else:
+        cnpj_empresa = _cnpj_limpo(request.form.get('cnpj_empresa', '')) or None
+        nome_empresa = request.form.get('nome_empresa', '').strip() or None
+
+    # Obtém vínculo e tipo do formulário
+    vinculo = request.form.get('vinculo') or None
+    # Verifica primeiro o campo hidden (quando o select está disabled) e depois o select normal
+    tipo_vinculo = request.form.get('tipo_vinculo_hidden') or request.form.get('tipo_vinculo') or None
+    
+    # Se vínculo é Residência (5) ou Estágio (6), tipo deve ser automaticamente "3 - Contrato por Prazo Determinado"
+    if vinculo in ('5', '6'):
+        tipo_vinculo = '3'
 
     ficha = FichaCnesVinculo(
         usuario_id=usuario_id,
         unidade_id=id,
         tipo=tipo,
-        vinculo=request.form.get('vinculo') or None,
-        tipo_vinculo=request.form.get('tipo_vinculo') or None,
+        vinculo=vinculo,
+        tipo_vinculo=tipo_vinculo,
         carga_horaria=int(ch_str) if ch_str.isdigit() else None,
         cbo=request.form.get('cbo') or None,
         especialidade_residencia=request.form.get('especialidade_residencia', '').strip() or None,
         dt_entrada_unidade=date.fromisoformat(dt_str) if dt_str else None,
         cns_profissional=request.form.get('cns_profissional', '').strip() or None,
-        cnpj_empresa=request.form.get('cnpj_empresa', '').strip() or None,
-        nome_empresa=request.form.get('nome_empresa', '').strip() or None,
+        cnpj_empresa=cnpj_empresa,
+        nome_empresa=nome_empresa,
         observacoes=request.form.get('observacoes', '').strip() or None,
         gerado_por=current_user.id,
+        gerado_em=agora_local(),  # Usa função centralizada para garantir hora consistente com o relógio da navbar
     )
     db.session.add(ficha)
     db.session.commit()

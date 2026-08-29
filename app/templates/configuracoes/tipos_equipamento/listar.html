@@ -10,9 +10,9 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-tags"></i> Tipos de Equipamento</h1>
+    <h1><i class="fas fa-tags"></i> Tipos de Equipamento</h1>
     <a href="{{ url_for('configuracoes.novo_tipo_equipamento') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
     </a>
 </div>
 
@@ -64,7 +64,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_tipo_equipamento', id=t.id) }}"
                                class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil me-1"></i>Editar
+                                <i class="fas fa-pencil-alt me-1"></i>Editar
                             </a>
                             <form method="POST"
                                   action="{{ url_for('configuracoes.alternar_status_tipo_equipamento', id=t.id) }}"
@@ -73,7 +73,7 @@
                                 <button type="submit"
                                         class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
                                         data-confirm="{{ 'Desativar' if t.ativo else 'Ativar' }} o tipo {{ t.nome }}?">
-                                    <i class="bi bi-{{ 'pause-circle' if t.ativo else 'play-circle' }}"></i>
+                                    <i class="{{ 'fas fa-pause-circle' if t.ativo else 'fas fa-play-circle' }}"></i>
                                 </button>
                             </form>
                         </td>
@@ -84,7 +84,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-tags"></i>
+            <i class="fas fa-tags"></i>
             <h6>Nenhum tipo de equipamento cadastrado.</h6>
         </div>
         {% endif %}

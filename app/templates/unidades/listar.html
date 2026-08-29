@@ -2,21 +2,27 @@
 {% block title %}Unidades{% endblock %}
 
 {% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Unidades de Saúde</li>
+    </ol>
+</nav>
 <div class="page-header">
     {% if current_user.pode('ver_todas_unidades') %}
-    <h1><i class="bi bi-hospital"></i> Unidades de Saúde</h1>
+    <h1><i class="fas fa-hospital"></i> Unidades de Saúde</h1>
     {% else %}
-    <h1><i class="bi bi-hospital"></i> Selecionar Unidade</h1>
+    <h1><i class="fas fa-hospital"></i> Selecionar Unidade</h1>
     {% endif %}
     {% if current_user.pode('cadastrar_unidade') %}
     <a href="{{ url_for('unidades.nova') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Nova Unidade
+        <i class="fas fa-plus-circle me-1"></i>Nova Unidade
     </a>
     {% endif %}
 </div>
 {% if not current_user.pode('ver_todas_unidades') and unidades | length > 1 %}
 <p class="text-muted mb-3">
-    <i class="bi bi-info-circle me-1"></i>
+    <i class="fas fa-info-circle me-1"></i>
     Você tem acesso a <strong>{{ unidades | length }}</strong> unidades. Clique em uma para entrar.
 </p>
 {% endif %}
@@ -44,7 +50,7 @@
                 </div>
                 {% if u.endereco %}
                 <p class="text-muted small mb-2">
-                    <i class="bi bi-geo-alt me-1"></i>{{ u.endereco }}{% if u.numero %}, {{ u.numero }}{% endif %}{% if u.complemento %} — {{ u.complemento }}{% endif %}
+                    <i class="fas fa-geo-alt me-1"></i>{{ u.endereco }}{% if u.numero %}, {{ u.numero }}{% endif %}{% if u.complemento %} — {{ u.complemento }}{% endif %}
                     {% if u.bairro %} — {{ u.bairro }}{% endif %}
                 </p>
                 {% endif %}
@@ -65,11 +71,11 @@
             </div>
             <div class="card-footer bg-transparent d-flex gap-2">
                 <a href="{{ url_for('unidades.detalhe', id=u.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
-                    <i class="bi bi-eye me-1"></i>Ver
+                    <i class="fas fa-eye me-1"></i>Ver
                 </a>
                 {% if current_user.pode('editar_unidade') %}
                 <a href="{{ url_for('unidades.editar', id=u.id) }}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-pencil"></i>
+                    <i class="fas fa-pencil-alt"></i>
                 </a>
                 {% endif %}
             </div>
@@ -79,7 +85,7 @@
 </div>
 {% else %}
 <div class="empty-state">
-    <i class="bi bi-hospital"></i>
+    <i class="fas fa-hospital"></i>
     <h5>Nenhuma unidade cadastrada</h5>
     {% if current_user.pode('cadastrar_unidade') %}
     <a href="{{ url_for('unidades.nova') }}" class="btn btn-primary mt-2">Cadastrar Primeira Unidade</a>

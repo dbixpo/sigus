@@ -11,18 +11,18 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-tags me-2"></i>Tipos de Link</h1>
+    <h1><i class="fas fa-tags me-2"></i>Tipos de Link</h1>
     <a href="{{ url_for('links.novo_tipo') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
     </a>
 </div>
 
 {% if tipos %}
 <div class="alert alert-info alert-sm py-2 px-3 mb-3 d-flex align-items-center gap-2">
-    <i class="bi bi-grip-vertical fs-5"></i>
+    <i class="fas fa-grip-vertical fs-5"></i>
     <span>Arraste as linhas para reorganizar a ordem de exibição.</span>
     <span id="statusSalvo" class="ms-auto text-success small d-none">
-        <i class="bi bi-check-circle me-1"></i>Ordem salva
+        <i class="fas fa-check-circle me-1"></i>Ordem salva
     </span>
 </div>
 
@@ -43,7 +43,7 @@
                 {% for t in tipos %}
                 <tr data-id="{{ t.id }}" class="sortable-row" style="cursor:grab">
                     <td class="text-muted ps-3">
-                        <i class="bi bi-grip-vertical fs-5"></i>
+                        <i class="fas fa-grip-vertical fs-5"></i>
                     </td>
                     <td>
                         <span class="d-inline-flex align-items-center gap-2">
@@ -51,7 +51,7 @@
                                          background:{{ t.cor }};
                                          display:inline-flex;align-items:center;justify-content:center;
                                          color:#fff;font-size:.9rem;">
-                                <i class="bi {{ t.icone }}"></i>
+                                <i class="{{ t.icone_fa }}"></i>
                             </span>
                             <span class="fw-semibold">{{ t.nome }}</span>
                         </span>
@@ -60,7 +60,7 @@
                         {% endif %}
                     </td>
                     <td class="d-none d-md-table-cell">
-                        <code class="small">{{ t.icone }}</code>
+                        <code class="small">{{ t.icone_fa }}</code>
                         <span class="ms-2 badge rounded-pill" style="background:{{ t.cor }}">{{ t.cor }}</span>
                     </td>
                     <td class="d-none d-md-table-cell">
@@ -77,14 +77,14 @@
                         <div class="d-flex justify-content-end gap-1">
                             <a href="{{ url_for('links.editar_tipo', id=t.id) }}"
                                class="btn btn-outline-primary btn-sm" title="Editar">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             <form method="POST"
                                   action="{{ url_for('links.excluir_tipo', id=t.id) }}"
                                   onsubmit="return confirm('Excluir tipo \'{{ t.nome }}\' ? Os links perderão a categoria.')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
-                                    <i class="bi bi-trash"></i>
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                         </div>
@@ -97,10 +97,10 @@
 </div>
 {% else %}
 <div class="empty-state py-5">
-    <i class="bi bi-tags fs-1 text-muted d-block mb-3"></i>
+    <i class="fas fa-tags fs-1 text-muted d-block mb-3"></i>
     <h6>Nenhum tipo cadastrado.</h6>
     <a href="{{ url_for('links.novo_tipo') }}" class="btn btn-primary mt-2">
-        <i class="bi bi-plus-circle me-1"></i>Criar primeiro tipo
+        <i class="fas fa-plus-circle me-1"></i>Criar primeiro tipo
     </a>
 </div>
 {% endif %}

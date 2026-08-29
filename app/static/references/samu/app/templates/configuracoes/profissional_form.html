@@ -1,0 +1,470 @@
+{% extends 'base.html' %}
+{% block title %}Profissional — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block head %}
+<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" rel="stylesheet">
+<style>
+.avatar-wrap-prof { position: relative; width: 96px; height: 96px; margin: 0 auto 1rem; }
+.avatar-wrap-prof img, .avatar-inicial-prof { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; display: block; border: 3px solid var(--samu-vermelho); }
+.avatar-inicial-prof { background: var(--samu-vermelho); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.4rem; font-weight: 700; }
+.avatar-edit-btn-prof { position: absolute; bottom: 2px; right: 2px; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2px solid var(--samu-vermelho); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: .75rem; color: var(--samu-vermelho); }
+.avatar-wrap-prof.disabled { opacity: 0.6; pointer-events: none; }
+#cropModalProf .img-container { max-height: 70vh; min-height: 200px; }
+#cropModalProf .img-container img { max-width: 100%; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Início</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.profissionais') }}">Profissionais</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header mb-4">
+    <h1><i class="bi bi-person-badge"></i> Profissional — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<form method="POST" id="formProfissional" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto" id="tabsProfissional" role="tablist" style="-webkit-overflow-scrolling:touch;">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-dados" type="button">
+                <i class="bi bi-person me-1"></i>Dados
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-matriculas" type="button">
+                <i class="bi bi-card-list me-1"></i>Matrículas e CBO
+                {% if item %}<span class="badge bg-secondary ms-1" id="badgeMatriculas">{{ matriculas|length }}</span>{% endif %}
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="tabsProfissionalContent">
+
+        <!-- ABA DADOS -->
+        <div class="tab-pane fade show active" id="tab-dados">
+            <div class="row g-3">
+                {# Foto do profissional #}
+                <div class="col-12 col-md-3 col-lg-2">
+                    <div class="card text-center {{ 'disabled' if not item else '' }}">
+                        <div class="card-body pt-3 pb-2">
+                            <div class="avatar-wrap-prof {{ 'disabled' if not item else '' }}">
+                                {% if item and item.foto_url %}
+                                <img src="{{ item.foto_url }}" alt="{{ item.nome }}" id="avatarPreviewProf">
+                                {% else %}
+                                <div class="avatar-inicial-prof" id="avatarInicialProf">{{ (item.nome[0] if item and item.nome else '?') | upper }}</div>
+                                {% endif %}
+                                {% if item %}
+                                <label class="avatar-edit-btn-prof" title="Alterar foto" for="inputFotoProf"><i class="bi bi-camera"></i></label>
+                                {% endif %}
+                            </div>
+                            <div class="small fw-semibold">{{ item.nome if item else '—' }}</div>
+                            {% if item %}
+                            <input type="file" id="inputFotoProf" accept="image/*" class="d-none">
+                            {% if item.foto_url %}
+                            <form method="POST" action="{{ url_for('configuracoes.profissional_remover_foto', id=item.id) }}" class="mt-1">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0" style="font-size:.7rem;"><i class="bi bi-trash me-1"></i>Remover</button>
+                            </form>
+                            {% endif %}
+                            {% else %}
+                            <div class="text-muted small mt-1" style="font-size:.75rem;">Salve primeiro para adicionar foto</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-9 col-lg-10">
+                <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Nome completo <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ (item.nome or '') if item else '' }}" required placeholder="Nome completo">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Data de Nascimento</label>
+                    <input type="date" name="data_nasc" class="form-control" value="{{ item.data_nasc.isoformat() if item and item.data_nasc else '' }}">
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Nome da Mãe</label>
+                    <input type="text" name="nome_mae" class="form-control" value="{{ (item.nome_mae or '') if item else '' }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">CPF</label>
+                    <input type="text" name="cpf" class="form-control" value="{{ (item.cpf or '') if item else '' }}" maxlength="14" id="campoCPF" placeholder="000.000.000-00">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Apelido
+                        <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip" title="Utilize o Apelido no caso de haver profissionais com os mesmos primeiros nomes."></i>
+                    </label>
+                    <input type="text" name="apelido" class="form-control" value="{{ (item.apelido or '') if item else '' }}" placeholder="Nome curto na barra">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold"><i class="bi bi-whatsapp text-success me-1"></i>WhatsApp</label>
+                    <input type="tel" name="whatsapp" id="inputWhatsapp" class="form-control"
+                           value="{{ item.whatsapp | br_fone if item and item.whatsapp else '' }}" placeholder="(15) 99999-9999" maxlength="15">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="{{ (item.email or '') if item else '' }}" placeholder="email@exemplo.com">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Usuário de acesso <span class="text-danger">*</span></label>
+                    <input type="text" name="usuario" class="form-control" value="{{ (item.usuario or '') if item else '' }}"
+                           placeholder="Ex.: joao.silva" required {% if item %}readonly{% endif %}>
+                    <div class="form-text">Para login no sistema.</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Perfis de Acesso <span class="text-danger">*</span></label>
+                    <div class="d-flex flex-wrap gap-3">
+                        {% for k, v in perfis.items() %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="perfis" value="{{ k }}" id="perfil_{{ k }}"
+                                {% if item and k in item.perfis_list %}checked{% elif not item and k == 'tarm' %}checked{% endif %}>
+                            <label class="form-check-label" for="perfil_{{ k }}">{{ v }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="form-text">Marque um ou mais perfis que o usuário poderá utilizar.</div>
+                </div>
+                {% if item %}
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Nova senha</label>
+                    <input type="password" name="nova_senha" class="form-control" minlength="1" placeholder="Deixe em branco para manter">
+                </div>
+                {% else %}
+                <div class="col-12 col-md-4 d-flex align-items-end">
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="bi bi-key me-1"></i>Senha padrão: <strong>senha</strong>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Usuário ativo</label>
+                    </div>
+                </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA MATRÍCULAS E CBO -->
+        <div class="tab-pane fade" id="tab-matriculas">
+            {% if item %}
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Matrículas e CBO</h6>
+                <button type="button" class="btn btn-sm btn-samu-primary" data-bs-toggle="modal" data-bs-target="#modalNovaMatricula">
+                    <i class="bi bi-plus-circle me-1"></i>Adicionar Matrícula
+                </button>
+            </div>
+            <div class="alert alert-info py-2 small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Cadastre as matrículas do profissional (número, vínculo, CBO, registro no conselho de classe).
+            </div>
+            <div id="listaMatriculas">
+                {% if matriculas %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Matrícula</th>
+                                <th>Vínculo</th>
+                                <th>Tipo</th>
+                                <th>CBO</th>
+                                <th>Conselho</th>
+                                <th>Órgão</th>
+                                <th>Situação</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for m in matriculas %}
+                            <tr id="row-mat-{{ m.id }}" class="{{ '' if m.ativo else 'text-muted' }}">
+                                <td class="fw-semibold">{{ m.numero }}</td>
+                                <td class="small">{{ m.vinculo_label }}</td>
+                                <td class="small">{{ m.tipo_vinculo_label }}</td>
+                                <td class="small">{{ m.cbo_label }}</td>
+                                <td class="small">{{ m.reg_conselho or '—' }}</td>
+                                <td class="small text-muted">{{ m.orgao_emissor or '—' }}</td>
+                                <td>
+                                    {% if m.ativo %}<span class="badge bg-success">Ativa</span>
+                                    {% else %}<span class="badge bg-secondary">Inativa</span>{% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            onclick="editarMatricula({{ m.id }}, {{ m.numero | tojson }}, {{ (m.vinculo or '') | tojson }}, {{ (m.tipo_vinculo or '') | tojson }}, {{ (m.cbo or '') | tojson }}, {{ (m.reg_conselho or '') | tojson }}, {{ (m.orgao_emissor or '') | tojson }}, {{ 'true' if m.ativo else 'false' }})">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4 text-center text-muted">
+                    <i class="bi bi-card-list fs-2 d-block mb-2"></i>
+                    Nenhuma matrícula cadastrada. Clique em "Adicionar Matrícula" para cadastrar.
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="alert alert-secondary py-4 text-center">
+                <i class="bi bi-info-circle fs-2 d-block mb-2"></i>
+                <p class="mb-0">Salve o cadastro primeiro para adicionar matrículas e CBO.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <hr>
+    <div class="d-flex gap-2 mt-2 flex-wrap">
+        <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+        <a href="{{ url_for('configuracoes.profissionais') }}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block modals %}
+{% if item %}
+<div class="modal fade" id="cropModalProf" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-crop me-2"></i>Recortar foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="img-container mx-auto">
+                    <img id="cropImageProf" src="" alt="">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-samu-primary" id="btnAplicarCropProf"><i class="bi bi-check-lg me-1"></i>Aplicar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalNovaMatricula" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalMatricula">Nova Matrícula</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="matId" value="">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Número da Matrícula <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="matNumero" required maxlength="50">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Vínculo</label>
+                        <select class="form-select" id="matVinculo">
+                            <option value="">Selecione...</option>
+                            {% for k, v in vinculos.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Tipo de Vínculo</label>
+                        <select class="form-select" id="matTipoVinculo">
+                            <option value="">Selecione...</option>
+                            {% for k, v in tipos_vinculo.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">CBO</label>
+                        <select class="form-select" id="matCbo" data-singleselect data-placeholder="Digite para buscar CBO...">
+                            <option value=""></option>
+                            {% for cod, desc in cbos %}<option value="{{ cod }}">{{ cod }} – {{ desc }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Nº do Conselho</label>
+                        <input type="text" class="form-control" id="matConselho" maxlength="30" placeholder="CRM, COREN, CRO...">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Órgão Emissor</label>
+                        <input type="text" class="form-control" id="matOrgao" maxlength="50" placeholder="CRM-SP, COREN-SP...">
+                    </div>
+                    <div class="col-12 d-flex align-items-center gap-2 mt-1" id="blocoAtivoMatricula" style="display:none!important">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="matAtivo" checked>
+                            <label class="form-check-label" for="matAtivo">Matrícula ativa</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-samu-primary" id="btnSalvarMatricula">
+                    <i class="bi bi-check-circle me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
+<script>
+// Inicializar tooltips Bootstrap
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+
+// Máscara CPF
+document.getElementById('campoCPF')?.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    this.value = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2').substring(0, 14);
+});
+document.getElementById('formProfissional')?.addEventListener('submit', function() {
+    var cpf = document.getElementById('campoCPF');
+    if (cpf) cpf.value = cpf.value.replace(/\D/g, '');
+}, true);
+
+// Máscara WhatsApp/Telefone (fixo: (15) 3238-2771 | celular: (15) 99999-9999)
+(function() {
+    var inp = document.getElementById('inputWhatsapp');
+    if (!inp) return;
+    function mascarar(v) {
+        var d = v.replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+        var isCell = d[2] === '9';
+        if (isCell) {
+            if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+            return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        } else {
+            if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+            return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        }
+    }
+    inp.addEventListener('input', function() { this.value = mascarar(this.value); });
+    inp.closest('form')?.addEventListener('submit', function() { inp.value = inp.value.replace(/\D/g, ''); }, true);
+})();
+
+{% if item %}
+// Foto com crop
+(function() {
+    var input = document.getElementById('inputFotoProf');
+    var preview = document.getElementById('avatarPreviewProf');
+    var inicial = document.getElementById('avatarInicialProf');
+    var cropModal = document.getElementById('cropModalProf');
+    var cropImage = document.getElementById('cropImageProf');
+    var btnAplicar = document.getElementById('btnAplicarCropProf');
+    var cropper = null;
+    var URL_FOTO = "{{ url_for('configuracoes.profissional_foto', id=item.id) }}";
+
+    input?.addEventListener('change', function() {
+        if (!this.files.length) return;
+        var file = this.files[0];
+        if (!file.type.startsWith('image/')) { alert('Selecione apenas imagens.'); return; }
+        var url = URL.createObjectURL(file);
+        cropImage.src = url;
+        if (cropper) cropper.destroy();
+        var modal = new bootstrap.Modal(cropModal);
+        modal.show();
+        cropModal.addEventListener('shown.bs.modal', function onShown() {
+            cropper = new Cropper(cropImage, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.8 });
+            cropModal.removeEventListener('shown.bs.modal', onShown);
+        });
+    });
+
+    cropModal.addEventListener('hidden.bs.modal', function() {
+        if (cropper) { cropper.destroy(); cropper = null; }
+        if (cropImage.src) URL.revokeObjectURL(cropImage.src);
+        cropImage.src = '';
+        input.value = '';
+    });
+
+    btnAplicar?.addEventListener('click', async function() {
+        if (!cropper) return;
+        var canvas = cropper.getCroppedCanvas({ width: 256, height: 256 });
+        canvas.toBlob(async function(blob) {
+            var fd = new FormData();
+            fd.append('csrf_token', document.querySelector('[name=csrf_token]').value);
+            fd.append('foto', blob, 'foto.jpg');
+            var resp = await fetch(URL_FOTO, { method: 'POST', body: fd });
+            if (resp.redirected) window.location.href = resp.url;
+            else alert('Erro ao salvar foto.');
+        }, 'image/jpeg', 0.9);
+    });
+})();
+{% endif %}
+
+{% if item %}
+var USUARIO_ID = {{ item.id }};
+var URL_MATRICULAS = "{{ url_for('configuracoes.profissional_criar_matricula', id=item.id) }}";
+var URL_MATRICULA_EDIT = "{{ url_for('configuracoes.profissional_atualizar_matricula', uid=item.id, mid=0) }}".replace('/0', '/');
+
+function editarMatricula(id, numero, vinculo, tipoVinculo, cbo, conselho, orgao, ativo) {
+    document.getElementById('tituloModalMatricula').textContent = 'Editar Matrícula';
+    document.getElementById('matId').value = id;
+    document.getElementById('matNumero').value = numero;
+    document.getElementById('matVinculo').value = vinculo;
+    document.getElementById('matTipoVinculo').value = tipoVinculo;
+    var tsEl = document.getElementById('matCbo');
+    if (tsEl && tsEl.tomselect) tsEl.tomselect.setValue(cbo || '');
+    else tsEl.value = cbo || '';
+    document.getElementById('matConselho').value = conselho;
+    document.getElementById('matOrgao').value = orgao;
+    document.getElementById('matAtivo').checked = ativo;
+    document.getElementById('blocoAtivoMatricula').style.removeProperty('display');
+    new bootstrap.Modal(document.getElementById('modalNovaMatricula')).show();
+}
+
+document.getElementById('modalNovaMatricula')?.addEventListener('hidden.bs.modal', function() {
+    document.getElementById('tituloModalMatricula').textContent = 'Nova Matrícula';
+    document.getElementById('matId').value = '';
+    document.getElementById('matNumero').value = '';
+    document.getElementById('matVinculo').value = '';
+    document.getElementById('matTipoVinculo').value = '';
+    var tsEl = document.getElementById('matCbo');
+    if (tsEl && tsEl.tomselect) tsEl.tomselect.setValue('');
+    else tsEl.value = '';
+    document.getElementById('matConselho').value = '';
+    document.getElementById('matOrgao').value = '';
+    document.getElementById('matAtivo').checked = true;
+    document.getElementById('blocoAtivoMatricula').style.setProperty('display', 'none', 'important');
+});
+
+document.getElementById('btnSalvarMatricula')?.addEventListener('click', async function() {
+    var id = document.getElementById('matId').value;
+    var numero = document.getElementById('matNumero').value.trim();
+    if (!numero) { alert('Informe o número da matrícula.'); return; }
+    var tsEl = document.getElementById('matCbo');
+    var cboVal = tsEl && tsEl.tomselect ? tsEl.tomselect.getValue() : tsEl.value;
+    var payload = {
+        numero: numero,
+        vinculo: document.getElementById('matVinculo').value || null,
+        tipo_vinculo: document.getElementById('matTipoVinculo').value || null,
+        cbo: cboVal || null,
+        reg_conselho: document.getElementById('matConselho').value.trim() || null,
+        orgao_emissor: document.getElementById('matOrgao').value.trim() || null,
+        ativo: document.getElementById('matAtivo').checked
+    };
+    var url = id ? URL_MATRICULA_EDIT + id : URL_MATRICULAS;
+    var method = id ? 'PUT' : 'POST';
+    var resp = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value },
+        body: JSON.stringify(payload)
+    });
+    var data = await resp.json();
+    if (data.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('modalNovaMatricula')).hide();
+        location.reload();
+    } else {
+        alert(data.erro || 'Erro ao salvar matrícula.');
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

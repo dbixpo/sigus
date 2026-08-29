@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-door-open"></i> {{ 'Editar' if tipo else 'Novo' }} Tipo de Sala</h1>
+    <h1><i class="fas fa-door-open"></i> {{ 'Editar' if tipo else 'Novo' }} Tipo de Sala</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -31,22 +31,22 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
                             Ícone
-                            <a href="https://icons.getbootstrap.com/" target="_blank"
-                               class="ms-1 small text-muted">(Bootstrap Icons)</a>
+                            <a href="https://fontawesome.com/search" target="_blank"
+                               class="ms-1 small text-muted">(Font Awesome)</a>
                         </label>
                         <div class="input-group">
                             <span class="input-group-text" id="icone-preview">
                                 <i id="icone-preview-icon"
-                                   class="{{ tipo.icone if tipo else 'bi-door-open' }} fs-5"></i>
+                                   class="{{ tipo.icone if tipo else 'fas fa-door-open' }} fs-5"></i>
                             </span>
                             <input type="text" name="icone" id="icone-input" class="form-control"
-                                   value="{{ tipo.icone if tipo else 'bi-door-open' }}"
-                                   placeholder="bi-door-open">
+                                   value="{{ tipo.icone if tipo else 'fas fa-door-open' }}"
+                                   placeholder="fas fa-door-open">
                         </div>
                         <div class="form-text">
-                            Digite o nome da classe Bootstrap Icons. Ex.:
-                            <code>bi-door-open</code>, <code>bi-person-heart</code>,
-                            <code>bi-capsule</code>, <code>bi-archive</code>
+                            Digite o nome da classe Font Awesome. Ex.:
+                            <code>fas fa-door-open</code>, <code>fas fa-user-heart</code>,
+                            <code>fas fa-capsules</code>, <code>fas fa-archive</code>
                         </div>
                     </div>
 
@@ -68,7 +68,7 @@
                     <!-- Preview -->
                     <div class="alert alert-light border mb-4 py-2">
                         <div class="d-flex align-items-center gap-3">
-                            <i id="preview-icon" class="{{ tipo.icone if tipo else 'bi-door-open' }} fs-3 text-primary"></i>
+                            <i id="preview-icon" class="{{ tipo.icone if tipo else 'fas fa-door-open' }} fs-3 text-primary"></i>
                             <div>
                                 <div class="fw-semibold" id="preview-nome">
                                     {{ tipo.nome if tipo else 'Nome do tipo' }}
@@ -83,7 +83,7 @@
                             Cancelar
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i>Salvar
+                            <i class="fas fa-check-lg me-1"></i>Salvar
                         </button>
                     </div>
                 </form>
@@ -93,7 +93,7 @@
         {% if tipo %}
         <div class="card mt-3">
             <div class="card-header text-muted small">
-                <i class="bi bi-door-open me-1"></i>
+                <i class="fas fa-door-open me-1"></i>
                 Salas usando este tipo
                 <span class="badge bg-primary ms-1">{{ tipo.salas.count() }}</span>
             </div>
@@ -125,16 +125,38 @@
 
 {% block scripts %}
 <script>
+    function normalizarIcone(valor) {
+        valor = (valor || '').trim();
+        if (!valor) return '';
+        if (valor.startsWith('bi ')) {
+            const partes = valor.split(/\s+/);
+            if (partes[1] && partes[1].startsWith('bi-')) return 'fas fa-' + partes[1].substring(3);
+        }
+        if (valor.startsWith('bi-')) return 'fas fa-' + valor.substring(3);
+        if (/^(fas|far|fab|fal|fad)\s+fa-/.test(valor)) return valor;
+        if (/^fa-/.test(valor)) return 'fas ' + valor;
+        return 'fas fa-' + valor.replace(/^fa-/, '');
+    }
+
     const iconeInput   = document.getElementById('icone-input');
     const previewIcon  = document.getElementById('preview-icon');
     const iconePreview = document.getElementById('icone-preview-icon');
     const nomeInput    = document.querySelector('input[name="nome"]');
     const previewNome  = document.getElementById('preview-nome');
 
+    // Garante preview correto mesmo com valores antigos (bi-*)
+    iconeInput.value = normalizarIcone(iconeInput.value || 'fas fa-door-open') || 'fas fa-door-open';
+    previewIcon.className  = iconeInput.value + ' fs-3 text-primary';
+    iconePreview.className = iconeInput.value + ' fs-5';
+
     iconeInput.addEventListener('input', function () {
-        const cls = this.value.trim() || 'bi-door-open';
+        const cls = normalizarIcone(this.value) || 'fas fa-door-open';
         previewIcon.className  = cls + ' fs-3 text-primary';
         iconePreview.className = cls + ' fs-5';
+    });
+
+    iconeInput.closest('form')?.addEventListener('submit', function () {
+        iconeInput.value = normalizarIcone(iconeInput.value) || 'fas fa-door-open';
     });
 
     nomeInput.addEventListener('input', function () {

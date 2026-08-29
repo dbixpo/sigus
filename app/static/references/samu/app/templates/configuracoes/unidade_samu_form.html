@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}Unidade SAMU — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-building"></i> Unidade SAMU — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" id="formUnidadeSamu" action="{{ url_for('configuracoes.unidade_samu_form', id=item.id) if item else url_for('configuracoes.unidade_samu_form') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold">É Central de Regulação ou Viatura? <span class="text-danger">*</span></label>
+                    <select name="tipo_registro" id="tipoRegistro" class="form-select" required>
+                        <option value="">— Selecione —</option>
+                        <option value="central" {% if item and not item.e_viatura %}selected{% endif %}>Central de Regulação</option>
+                        <option value="viatura" {% if item and item.e_viatura %}selected{% endif %}>Viatura</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">CNES</label>
+                    <input type="text" name="cnes" class="form-control" value="{{ item.cnes if item else '' }}" maxlength="7" placeholder="Ex: 1234567">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required placeholder="Ex: Central SAMU 192">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Apelido <span class="text-muted">(exibido no sistema)</span></label>
+                    <input type="text" name="apelido" class="form-control" value="{{ (item.apelido or '') if item else '' }}" placeholder="Como chamam (ex: Central, ALFA 1)">
+                </div>
+
+                <!-- CAMPOS CENTRAL -->
+                <div id="blocoCentral" class="col-12" style="display:{{ 'none' if item and item.e_viatura else 'block' }};">
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3"><i class="bi bi-geo-alt me-1"></i> Endereço da Central</h6>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Logradouro</label>
+                            <input type="text" name="logradouro" class="form-control" value="{{ item.logradouro if item else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Nº</label>
+                            <input type="text" name="numero" class="form-control" value="{{ item.numero if item else '' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold">Complemento</label>
+                            <input type="text" name="complemento" class="form-control" value="{{ item.complemento if item else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Bairro</label>
+                            <input type="text" name="bairro" class="form-control" value="{{ item.bairro if item else '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Cidade</label>
+                            <input type="text" name="cidade" class="form-control" value="{{ item.cidade if item else '' }}">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label fw-semibold">UF</label>
+                            <select name="uf" class="form-select">
+                                <option value="">—</option>
+                                <option value="AC" {% if item and item.uf == 'AC' %}selected{% endif %}>AC</option>
+                                <option value="AL" {% if item and item.uf == 'AL' %}selected{% endif %}>AL</option>
+                                <option value="AP" {% if item and item.uf == 'AP' %}selected{% endif %}>AP</option>
+                                <option value="AM" {% if item and item.uf == 'AM' %}selected{% endif %}>AM</option>
+                                <option value="BA" {% if item and item.uf == 'BA' %}selected{% endif %}>BA</option>
+                                <option value="CE" {% if item and item.uf == 'CE' %}selected{% endif %}>CE</option>
+                                <option value="DF" {% if item and item.uf == 'DF' %}selected{% endif %}>DF</option>
+                                <option value="ES" {% if item and item.uf == 'ES' %}selected{% endif %}>ES</option>
+                                <option value="GO" {% if item and item.uf == 'GO' %}selected{% endif %}>GO</option>
+                                <option value="MA" {% if item and item.uf == 'MA' %}selected{% endif %}>MA</option>
+                                <option value="MT" {% if item and item.uf == 'MT' %}selected{% endif %}>MT</option>
+                                <option value="MS" {% if item and item.uf == 'MS' %}selected{% endif %}>MS</option>
+                                <option value="MG" {% if item and item.uf == 'MG' %}selected{% endif %}>MG</option>
+                                <option value="PA" {% if item and item.uf == 'PA' %}selected{% endif %}>PA</option>
+                                <option value="PB" {% if item and item.uf == 'PB' %}selected{% endif %}>PB</option>
+                                <option value="PR" {% if item and item.uf == 'PR' %}selected{% endif %}>PR</option>
+                                <option value="PE" {% if item and item.uf == 'PE' %}selected{% endif %}>PE</option>
+                                <option value="PI" {% if item and item.uf == 'PI' %}selected{% endif %}>PI</option>
+                                <option value="RJ" {% if item and item.uf == 'RJ' %}selected{% endif %}>RJ</option>
+                                <option value="RN" {% if item and item.uf == 'RN' %}selected{% endif %}>RN</option>
+                                <option value="RS" {% if item and item.uf == 'RS' %}selected{% endif %}>RS</option>
+                                <option value="RO" {% if item and item.uf == 'RO' %}selected{% endif %}>RO</option>
+                                <option value="RR" {% if item and item.uf == 'RR' %}selected{% endif %}>RR</option>
+                                <option value="SC" {% if item and item.uf == 'SC' %}selected{% endif %}>SC</option>
+                                <option value="SP" {% if item and item.uf == 'SP' %}selected{% endif %}>SP</option>
+                                <option value="SE" {% if item and item.uf == 'SE' %}selected{% endif %}>SE</option>
+                                <option value="TO" {% if item and item.uf == 'TO' %}selected{% endif %}>TO</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">CEP</label>
+                            <input type="text" name="cep" id="inputCep" class="form-control" value="{{ (item.cep or '') if item else '' }}" maxlength="9" placeholder="00000-000">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Telefone</label>
+                            <input type="tel" name="telefone" id="inputTelefone" class="form-control"
+                                   value="{{ item.telefone | br_fone if item and item.telefone else '' }}" placeholder="(15) 99999-9999" maxlength="15">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">E-mail</label>
+                            <input type="email" name="email" class="form-control" value="{{ item.email if item else '' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Link Google Maps</label>
+                            <input type="url" name="link_google_maps" class="form-control" value="{{ item.link_google_maps if item else '' }}" placeholder="https://maps.google.com/...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAMPOS VIATURA -->
+                <div id="blocoViatura" class="col-12" style="display:{{ 'block' if item and item.e_viatura else 'none' }};">
+                    <hr class="my-3">
+                    <h6 class="text-muted mb-3"><i class="bi bi-truck me-1"></i> Base e Tipo da Viatura</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Base <span class="text-danger">*</span></label>
+                            <select name="base_id" id="baseId" class="form-select">
+                                <option value="">— Selecione a base —</option>
+                                {% for b in bases %}
+                                <option value="{{ b.id }}" {% if item and item.base_id == b.id %}selected{% endif %}>{{ b.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Cadastre bases em Configuração → Bases</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo da Viatura <span class="text-danger">*</span></label>
+                            <select name="tipo_unidade_id" id="tipoUnidadeId" class="form-select">
+                                <option value="">— Selecione o tipo —</option>
+                                {% for t in tipos %}
+                                <option value="{{ t.id }}" {% if item and item.tipo_unidade_id == t.id %}selected{% endif %}>{{ t.sigla }} – {{ t.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <hr>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2" style="position:relative; z-index:10;">
+                <button type="submit" class="btn btn-samu-primary" id="btnSalvarUnidade"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.unidades_samu') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        var tipoReg = document.getElementById('tipoRegistro');
+        var blocoCentral = document.getElementById('blocoCentral');
+        var blocoViatura = document.getElementById('blocoViatura');
+        var baseId = document.getElementById('baseId');
+        var tipoUnidadeId = document.getElementById('tipoUnidadeId');
+        if (tipoReg && blocoCentral && blocoViatura && baseId && tipoUnidadeId) {
+            function atualizarBlocos() {
+                var isCentral = tipoReg.value === 'central';
+                var isViatura = tipoReg.value === 'viatura';
+                blocoCentral.style.display = isCentral ? 'block' : 'none';
+                blocoViatura.style.display = isViatura ? 'block' : 'none';
+                baseId.removeAttribute('required');
+                tipoUnidadeId.removeAttribute('required');
+            }
+            tipoReg.addEventListener('change', atualizarBlocos);
+            atualizarBlocos();
+        }
+    } catch (e) { console.warn('unidade_samu: erro blocos', e); }
+
+    var inpCep = document.getElementById('inputCep');
+    if (inpCep) {
+        try {
+            function formatarCep(v) {
+                var d = String(v || '').replace(/\D/g, '').slice(0, 8);
+                return d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+            }
+            if (inpCep.value) inpCep.value = formatarCep(inpCep.value);
+            inpCep.addEventListener('input', function() { this.value = formatarCep(this.value); });
+        } catch (e) { console.warn('unidade_samu: erro cep', e); }
+    }
+
+    var inpTel = document.getElementById('inputTelefone');
+    if (inpTel) {
+        try {
+            function mascarar(v) {
+                var d = String(v || '').replace(/\D/g, '').slice(0, 11);
+                if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+                var isCell = d.length > 2 && d[2] === '9';
+                if (isCell) {
+                    if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                    return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+                } else {
+                    if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+                    return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+                }
+            }
+            inpTel.addEventListener('input', function() { this.value = mascarar(this.value); });
+        } catch (e) { console.warn('unidade_samu: erro tel', e); }
+    }
+
+    var form = document.getElementById('formUnidadeSamu');
+    if (form) {
+        form.addEventListener('submit', function() {
+            var cep = document.getElementById('inputCep');
+            var tel = document.getElementById('inputTelefone');
+            if (cep && cep.value) cep.value = cep.value.replace(/\D/g, '');
+            if (tel && tel.value) tel.value = tel.value.replace(/\D/g, '');
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-cpu"></i> {{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</h1>
+    <h1><i class="fas fa-microchip"></i> {{ 'Editar Modelo' if modelo else 'Novo Modelo' }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -62,7 +62,7 @@
                             {% endif %}
                         </select>
                         <div id="aviso-sem-marca" class="form-text text-warning d-none">
-                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            <i class="fas fa-exclamation-triangle me-1"></i>
                             Nenhuma marca cadastrada para este tipo.
                             <a href="{{ url_for('configuracoes.nova_marca') }}" target="_blank">Cadastrar marca</a>
                         </div>
@@ -80,7 +80,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar' if modelo else 'Cadastrar' }}
+                            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar' if modelo else 'Cadastrar' }}
                         </button>
                         <a href="{{ url_for('configuracoes.marcas') }}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>

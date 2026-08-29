@@ -6,7 +6,7 @@
 <title>SIGUS — Solicitação de Vínculo Profissional</title>
 <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css">
 <style>
 :root {
@@ -121,7 +121,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
 <div class="form-card">
   <div class="form-card-header">
-    <h4><i class="bi bi-person-plus me-2"></i>Formulário de Auto-Cadastro</h4>
+    <h4><i class="fas fa-user-plus me-2"></i>Formulário de Auto-Cadastro</h4>
     <p>Preencha os dados abaixo para solicitar seu cadastro em uma unidade de saúde. Um gestor irá revisar e aprovar sua solicitação.</p>
   </div>
 
@@ -141,7 +141,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
       <!-- ── UNIDADE ── -->
       <div class="secao">
-        <div class="secao-titulo"><i class="bi bi-hospital me-1"></i>Unidade de Destino</div>
+        <div class="secao-titulo"><i class="fas fa-hospital me-1"></i>Unidade de Destino</div>
         <div class="row g-2">
           <div class="col-12 campo-obrig">
             <label class="form-label">Unidade de Saúde</label>
@@ -158,7 +158,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
       <!-- ── IDENTIFICAÇÃO ── -->
       <div class="secao">
-        <div class="secao-titulo"><i class="bi bi-person me-1"></i>Identificação</div>
+        <div class="secao-titulo"><i class="fas fa-user me-1"></i>Identificação</div>
         <div class="row g-2">
           <div class="col-md-8 campo-obrig">
             <label class="form-label">Nome Completo</label>
@@ -188,7 +188,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
                      maxlength="18" disabled>
               <button type="button" id="btnBuscarCNS" class="btn btn-outline-secondary"
                       title="Buscar CNS no CADSUS pelo CPF (nova aba)" disabled>
-                <i class="bi bi-search" style="font-size:.8rem;"></i>
+                <i class="fas fa-search" style="font-size:.8rem;"></i>
               </button>
             </div>
             <div class="form-text" style="font-size:.7rem;">Preencha o CPF primeiro para habilitar.</div>
@@ -253,7 +253,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
           <div class="col-12" id="blocoEstrangeiro" style="display:none;">
             <div class="bloco-cond">
               <div class="bloco-cond-aviso">
-                <i class="bi bi-globe text-primary"></i>
+                <i class="fas fa-globe text-primary"></i>
                 Informe os dados de entrada no país.
               </div>
               <div class="row g-2">
@@ -275,7 +275,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
       <!-- ── DOCUMENTO DE IDENTIDADE ── -->
       <div class="secao">
-        <div class="secao-titulo"><i class="bi bi-card-text me-1"></i>Informações Complementares</div>
+        <div class="secao-titulo"><i class="fas fa-card-text me-1"></i>Informações Complementares</div>
         <div class="row g-2">
           <div class="col-md-4">
             <label class="form-label">RG</label>
@@ -301,7 +301,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
       <!-- ── ENDEREÇO ── -->
       <div class="secao">
-        <div class="secao-titulo"><i class="bi bi-geo-alt me-1"></i>Endereço</div>
+        <div class="secao-titulo"><i class="fas fa-geo-alt me-1"></i>Endereço</div>
         <div class="row g-2">
           <div class="col-md-7">
             <label class="form-label">Logradouro</label>
@@ -338,7 +338,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 
       <!-- ── DADOS PROFISSIONAIS ── -->
       <div class="secao">
-        <div class="secao-titulo"><i class="bi bi-briefcase me-1"></i>Dados Profissionais</div>
+        <div class="secao-titulo"><i class="fas fa-briefcase me-1"></i>Dados Profissionais</div>
         <div class="row g-2">
           <div class="col-md-5">
             <label class="form-label">Categoria / Órgão Emissor (CRM, CRO, COREN...)</label>
@@ -392,23 +392,41 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
                    value="{{ form.get('carga_horaria', '') }}">
           </div>
 
-          <!-- Bloco empresa (Estágio ou Contrato PD) -->
+          <!-- Bloco empresa (Estágio, Residência ou Contrato PD) -->
           <div class="col-12" id="blocoEmpresa" style="display:none;">
             <div class="bloco-cond">
               <div class="bloco-cond-aviso">
-                <i class="bi bi-building text-primary"></i>
+                <i class="fas fa-building text-primary"></i>
                 <span id="avisoEmpresaTexto">Informe os dados da empresa intermediadora.</span>
               </div>
-              <div class="row g-2">
+              <!-- Selectbox de empresas (quando há empresas cadastradas) -->
+              <div class="row g-2" id="blocoSelectEmpresa" style="display:none;">
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Empresa Intermediadora</label>
+                  <select name="empresa_id" id="selectEmpresa" class="form-select">
+                    <option value="">Selecione uma empresa...</option>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="checkCNPJNaoLista">
+                    <label class="form-check-label" for="checkCNPJNaoLista">
+                      O CNPJ não consta na lista
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <!-- Campos de texto (quando não há empresas ou quando checkbox está marcado) -->
+              <div class="row g-2" id="blocoInputEmpresa" style="display:none;">
                 <div class="col-md-5">
                   <label class="form-label fw-semibold">CNPJ Empresa Intermediadora</label>
-                  <input type="text" name="cnpj_empresa" class="form-control"
+                  <input type="text" name="cnpj_empresa" id="inputCNPJ" class="form-control"
                          placeholder="00.000.000/0000-00" maxlength="20"
                          value="{{ form.get('cnpj_empresa', '') }}">
                 </div>
                 <div class="col-md-7">
                   <label class="form-label fw-semibold">Razão Social da Empresa Intermediadora</label>
-                  <input type="text" name="nome_empresa" class="form-control"
+                  <input type="text" name="nome_empresa" id="inputNomeEmpresa" class="form-control"
                          placeholder="Razão social..."
                          value="{{ form.get('nome_empresa', '') }}">
                 </div>
@@ -424,7 +442,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
       <div class="secao mb-3">
         <div class="secao-titulo">Assinatura do Profissional</div>
         <p class="small text-muted mb-2">
-          <i class="bi bi-pencil-square me-1"></i>
+          <i class="fas fa-pen-to-square me-1"></i>
           Assine no campo abaixo usando o mouse (no computador) ou o dedo (no celular/tablet).
         </p>
         <div style="border:1px solid #ced4da; border-radius:6px; overflow:hidden; background:#fff; touch-action:none; cursor:crosshair;">
@@ -433,7 +451,7 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
         </div>
         <div class="d-flex gap-2 mt-2">
           <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimparAssinatura">
-            <i class="bi bi-eraser me-1"></i>Limpar
+            <i class="fas fa-eraser me-1"></i>Limpar
           </button>
           <span id="avisoAssinatura" class="small text-muted align-self-center"></span>
         </div>
@@ -441,11 +459,11 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
       </div>
 
       <div class="alert alert-info small py-2 px-3">
-        <i class="bi bi-info-circle me-1"></i>
+        <i class="fas fa-info-circle me-1"></i>
         Após o envio, um gestor irá revisar sua solicitação. Quando aprovado, você receberá as informações de acesso no e-mail informado.
       </div>
       <button type="submit" class="btn-enviar" id="btnEnviar">
-        <i class="bi bi-send me-2"></i>Enviar Solicitação
+        <i class="fas fa-send me-2"></i>Enviar Solicitação
       </button>
     </form>
   </div>
@@ -454,6 +472,16 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script>
+// ── Configuração de base URL ────────────────────────────────────────────────
+// Define base URL para requisições AJAX (necessário para funcionar com APPLICATION_ROOT)
+// Detecta o caminho base da URL atual
+(function() {
+    var path = window.location.pathname;
+    // Remove '/solicitar-vinculo-profissional' ou '/solicitar-vinculo-profissional/' do final
+    var baseUrl = path.replace(/\/solicitar-vinculo-profissional\/?$/, '');
+    window.SIGUS_BASE_URL = baseUrl || '';
+})();
+
 // ── Tom Select ──────────────────────────────────────────────────────────────
 document.querySelectorAll('[data-singleselect]').forEach(function (el) {
     new TomSelect(el, { placeholder: el.dataset.placeholder || 'Selecione...', maxOptions: 200 });
@@ -531,23 +559,186 @@ function validarCPF(cpf) {
     atualizar();
 })();
 
-// ── Bloco empresa (Estágio / Contrato PD) ────────────────────────────────────
+// ── Bloco empresa (Estágio / Residência / Contrato PD) ────────────────────────────────────
 (function () {
     var selV = document.getElementById('selVinculo');
     var selT = document.getElementById('selTipoVinculo');
     var bloco = document.getElementById('blocoEmpresa');
     var txt   = document.getElementById('avisoEmpresaTexto');
+    var blocoSelectEmpresa = document.getElementById('blocoSelectEmpresa');
+    var blocoInputEmpresa = document.getElementById('blocoInputEmpresa');
+    var selectEmpresa = document.getElementById('selectEmpresa');
+    var checkCNPJNaoLista = document.getElementById('checkCNPJNaoLista');
+    var inputCNPJ = document.getElementById('inputCNPJ');
+    var inputNomeEmpresa = document.getElementById('inputNomeEmpresa');
 
-    function atualizar() {
-        var v = selV.value, t = selT.value;
-        var show = (v === '6' || t === '3');
-        bloco.style.display = show ? '' : 'none';
-        if (txt) txt.textContent = v === '6'
-            ? 'Informe os dados da empresa / instituição de estágio.'
-            : 'Informe os dados da empresa contratante (Contrato por Prazo Determinado).';
+    // Função auxiliar para formatar CNPJ (definida uma vez, fora de atualizar)
+    function formatarCNPJ(cnpj) {
+        if (!cnpj || cnpj.length !== 14) return cnpj;
+        return cnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
     }
-    selV.addEventListener('change', atualizar);
-    selT.addEventListener('change', atualizar);
+
+    async function atualizar() {
+        var v = selV.value, t = selT.value;
+        var precisaEmpresa = (v === '6' || v === '5' || (v === '1' && t === '3'));
+        
+        if (bloco) {
+            bloco.style.display = precisaEmpresa ? '' : 'none';
+        }
+        
+        if (!precisaEmpresa) {
+            if (selectEmpresa) selectEmpresa.value = '';
+            if (inputCNPJ) inputCNPJ.value = '';
+            if (inputNomeEmpresa) inputNomeEmpresa.value = '';
+            if (checkCNPJNaoLista) checkCNPJNaoLista.checked = false;
+            if (blocoSelectEmpresa) blocoSelectEmpresa.style.display = 'none';
+            if (blocoInputEmpresa) blocoInputEmpresa.style.display = 'none';
+            return;
+        }
+        
+        // Fixar tipo quando necessário
+        if (v === '5' || v === '6') {
+            if (selT) {
+                selT.value = '3';
+                selT.disabled = true;
+            }
+        } else {
+            if (selT) {
+                selT.disabled = false;
+            }
+        }
+        
+        // Determina tipo de CNPJ a buscar
+        var tipoCNPJ = null;
+        if (v === '5') {
+            tipoCNPJ = 'residencia';
+            if (txt) txt.textContent = 'Selecione a empresa intermediadora (Residência).';
+        } else if (v === '6') {
+            tipoCNPJ = 'estagio';
+            if (txt) txt.textContent = 'Selecione a empresa intermediadora (Estágio).';
+        } else if (v === '1' && t === '3') {
+            tipoCNPJ = 'empregaticio_cpd';
+            if (txt) txt.textContent = 'Selecione a empresa intermediadora (Vínculo Empregatício - Contrato por Prazo Determinado).';
+        }
+        
+        // Busca empresas via AJAX
+        if (tipoCNPJ && blocoSelectEmpresa && blocoInputEmpresa && selectEmpresa) {
+            try {
+                // Usa caminho relativo ou base URL se disponível
+                var baseUrl = window.SIGUS_BASE_URL || '';
+                var response = await fetch(baseUrl + '/empresas/por-tipo-cnpj/' + tipoCNPJ);
+                var data = await response.json();
+                
+                if (data.empresas && data.empresas.length > 0) {
+                    // Há empresas cadastradas: mostra selectbox
+                    selectEmpresa.innerHTML = '<option value="">Selecione uma empresa...</option>';
+                    data.empresas.forEach(function(emp) {
+                        var option = document.createElement('option');
+                        option.value = emp.id;
+                        option.textContent = emp.label;
+                        option.dataset.cnpj = emp.cnpj;
+                        option.dataset.razaoSocial = emp.razao_social;
+                        selectEmpresa.appendChild(option);
+                    });
+                    
+                    blocoSelectEmpresa.style.display = '';
+                    blocoInputEmpresa.style.display = checkCNPJNaoLista && checkCNPJNaoLista.checked ? '' : 'none';
+                } else {
+                    // Não há empresas: mostra apenas campos de texto
+                    blocoSelectEmpresa.style.display = 'none';
+                    blocoInputEmpresa.style.display = '';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar empresas:', error);
+                // Em caso de erro, mostra campos de texto
+                if (blocoSelectEmpresa) blocoSelectEmpresa.style.display = 'none';
+                if (blocoInputEmpresa) blocoInputEmpresa.style.display = '';
+            }
+        } else if (!tipoCNPJ) {
+            // Se não há tipoCNPJ definido, mostra campos de texto
+            if (blocoSelectEmpresa) blocoSelectEmpresa.style.display = 'none';
+            if (blocoInputEmpresa) blocoInputEmpresa.style.display = '';
+        }
+    }
+    
+    // Event listeners adicionados apenas uma vez (fora da função atualizar)
+    if (selectEmpresa) {
+        // Remove listener anterior se existir para evitar duplicação
+        var oldHandler = selectEmpresa._empresaChangeHandler;
+        if (oldHandler) {
+            selectEmpresa.removeEventListener('change', oldHandler);
+        }
+        var handler = function() {
+            if (this.value && checkCNPJNaoLista && !checkCNPJNaoLista.checked) {
+                var option = this.options[this.selectedIndex];
+                // CNPJ já vem sem máscara do backend (só dígitos), mas formatamos para exibição
+                var cnpjFormatado = option.dataset.cnpj ? formatarCNPJ(option.dataset.cnpj) : '';
+                if (inputCNPJ) inputCNPJ.value = cnpjFormatado;
+                if (inputNomeEmpresa) inputNomeEmpresa.value = option.dataset.razaoSocial || '';
+            }
+        };
+        selectEmpresa._empresaChangeHandler = handler;
+        selectEmpresa.addEventListener('change', handler);
+    }
+    
+    // Alterna entre selectbox e campos de texto baseado no checkbox
+    if (checkCNPJNaoLista) {
+        // Remove listener anterior se existir
+        var oldCheckHandler = checkCNPJNaoLista._checkChangeHandler;
+        if (oldCheckHandler) {
+            checkCNPJNaoLista.removeEventListener('change', oldCheckHandler);
+        }
+        var checkHandler = function() {
+            if (this.checked) {
+                if (blocoInputEmpresa) blocoInputEmpresa.style.display = '';
+                if (selectEmpresa) selectEmpresa.value = '';
+                if (inputCNPJ) inputCNPJ.value = '';
+                if (inputNomeEmpresa) inputNomeEmpresa.value = '';
+            } else {
+                if (blocoInputEmpresa) blocoInputEmpresa.style.display = 'none';
+                if (selectEmpresa) selectEmpresa.value = '';
+            }
+        };
+        checkCNPJNaoLista._checkChangeHandler = checkHandler;
+        checkCNPJNaoLista.addEventListener('change', checkHandler);
+    }
+    
+    // Máscara de CNPJ (adicionada apenas uma vez)
+    if (inputCNPJ) {
+        // Remove listener anterior se existir
+        var oldInputHandler = inputCNPJ._inputHandler;
+        if (oldInputHandler) {
+            inputCNPJ.removeEventListener('input', oldInputHandler);
+        }
+        var inputHandler = function() {
+            var v = this.value.replace(/\D/g, '');
+            if (v.length <= 14) {
+                if (v.length <= 2) {
+                    this.value = v.replace(/^(\d{0,2})/, '$1');
+                } else if (v.length <= 5) {
+                    this.value = v.replace(/^(\d{2})(\d{0,3})/, '$1.$2');
+                } else if (v.length <= 8) {
+                    this.value = v.replace(/^(\d{2})(\d{3})(\d{0,3})/, '$1.$2.$3');
+                } else if (v.length <= 12) {
+                    this.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})/, '$1.$2.$3/$4');
+                } else {
+                    this.value = v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
+                }
+            }
+        };
+        inputCNPJ._inputHandler = inputHandler;
+        inputCNPJ.addEventListener('input', inputHandler);
+    }
+    
+    // Event listeners para vínculo e tipo
+    if (selV) {
+        selV.addEventListener('change', atualizar);
+    }
+    if (selT) {
+        selT.addEventListener('change', atualizar);
+    }
+    
+    // Chama atualizar na inicialização
     atualizar();
 })();
 
@@ -622,9 +813,32 @@ function validarCPF(cpf) {
     }
 
     /* Garante que a assinatura seja capturada ao enviar o formulário */
-    canvas.closest('form').addEventListener('submit', function (e) {
-        sincronizar();
-    });
+    var formSolicitacao = canvas.closest('form');
+    if (formSolicitacao) {
+        formSolicitacao.addEventListener('submit', function (e) {
+            sincronizar();
+            // Limpa máscara do CNPJ antes de enviar
+            var inputCNPJForm = document.getElementById('inputCNPJ');
+            if (inputCNPJForm) {
+                inputCNPJForm.value = inputCNPJForm.value.replace(/\D/g, '');
+            }
+            // Se empresa foi selecionada, garante que cnpj_empresa e nome_empresa sejam preenchidos
+            var selectEmpresaForm = document.getElementById('selectEmpresa');
+            if (selectEmpresaForm && selectEmpresaForm.value) {
+                var option = selectEmpresaForm.options[selectEmpresaForm.selectedIndex];
+                var inputCNPJHidden = document.createElement('input');
+                inputCNPJHidden.type = 'hidden';
+                inputCNPJHidden.name = 'cnpj_empresa';
+                inputCNPJHidden.value = option.dataset.cnpj || '';
+                formSolicitacao.appendChild(inputCNPJHidden);
+                var inputNomeEmpresaHidden = document.createElement('input');
+                inputNomeEmpresaHidden.type = 'hidden';
+                inputNomeEmpresaHidden.name = 'nome_empresa';
+                inputNomeEmpresaHidden.value = option.dataset.razaoSocial || '';
+                formSolicitacao.appendChild(inputNomeEmpresaHidden);
+            }
+        });
+    }
 })();
 </script>
 </body>

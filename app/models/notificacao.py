@@ -3,12 +3,14 @@ from app import db
 from app.utils import prefixed_static_url
 
 TIPOS_NOTIFICACAO = {
-    'chamado_aberto':    ('Chamado aberto na sua unidade',    'bi-wrench-adjustable', 'primary'),
-    'novo_andamento':    ('Novo andamento no chamado',        'bi-chat-left-text',    'info'),
-    'alerta_chamado':    ('Alerta em chamado',                'bi-exclamation-triangle', 'danger'),
-    'pedido_info':       ('Pedido de informação',             'bi-question-circle',   'warning'),
-    'chamado_concluido': ('Chamado concluído',                'bi-check-circle',      'success'),
-    'chamado_cancelado': ('Chamado cancelado',                'bi-x-circle',          'secondary'),
+    'chamado_aberto':      ('Chamado aberto na sua unidade',          'bi-wrench-adjustable',      'primary'),
+    'novo_andamento':      ('Novo andamento no chamado',              'bi-chat-left-text',         'info'),
+    'alerta_chamado':      ('Alerta em chamado',                      'bi-exclamation-triangle',   'danger'),
+    'pedido_info':         ('Pedido de informação',                   'bi-question-circle',        'warning'),
+    'chamado_concluido':   ('Chamado concluído',                      'bi-check-circle',           'success'),
+    'chamado_cancelado':   ('Chamado cancelado',                      'bi-x-circle',               'secondary'),
+    # Alertas de Planejamento (ações vencendo hoje ou em 3 dias)
+    'alerta_planejamento': ('Ação de planejamento próxima do prazo',  'bi-clipboard2-check',       'warning'),
 }
 
 

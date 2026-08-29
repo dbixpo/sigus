@@ -1,0 +1,2735 @@
+<?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
+
+<!-- 
+<?xml-stylesheet type="text/xsl" href="Listas-cnv.xsl"?>
+<?xml-stylesheet type="text/xsl" href="Listas-cnv-sel.xsl"?>
+-->
+
+<!DOCTYPE listas SYSTEM "Listas.dtd">
+<listas>
+	<lista>
+		<nome>Mortalidade Geral  - Lista Condensada</nome>
+		<item seq="1-001">
+			<nome>Algumas doenças infecciosas e parasitárias</nome>
+			<codigos>A00-B99</codigos>
+			<item seq="1-002">
+				<nome>Cólera</nome>
+				<codigos>A00-A00</codigos>
+				</item>
+			<item seq="1-003">
+				<nome>Diarréia e gastroenterite de origem infecciosa presumível</nome>
+				<codigos>A09-A09</codigos>
+				</item>
+			<item seq="1-004">
+				<nome>Outras doenças infecciosas intestinais</nome>
+				<codigos>A01-A08</codigos>
+				</item>
+			<item seq="1-005">
+				<nome>Tuberculose respiratória</nome>
+				<codigos>A15-A16</codigos>
+				</item>
+			<item seq="1-006">
+				<nome>Outras tuberculoses</nome>
+				<codigos>A17-A19</codigos>
+				</item>
+			<item seq="1-007">
+				<nome>Peste</nome>
+				<codigos>A20-A20</codigos>
+				</item>
+			<item seq="1-008">
+				<nome>Tétano</nome>
+				<codigos>A33-A35</codigos>
+				</item>
+			<item seq="1-009">
+				<nome>Difteria</nome>
+				<codigos>A36-A36</codigos>
+				</item>
+			<item seq="1-010">
+				<nome>Coqueluche</nome>
+				<codigos>A37-A37</codigos>
+				</item>
+			<item seq="1-011">
+				<nome>Infecção meningocócica</nome>
+				<codigos>A39-A39</codigos>
+				</item>
+			<item seq="1-012">
+				<nome>Septicemia</nome>
+				<codigos>A40-A41</codigos>
+				</item>
+			<item seq="1-013">
+				<nome>Infecções com transmissão predominantemente sexual</nome>
+				<codigos>A50-A64</codigos>
+				</item>
+			<item seq="1-014">
+				<nome>Poliomielite aguda</nome>
+				<codigos>A80-A80</codigos>
+				</item>
+			<item seq="1-015">
+				<nome>Raiva</nome>
+				<codigos>A82-A82</codigos>
+				</item>
+			<item seq="1-016">
+				<nome>Febre amarela</nome>
+				<codigos>A95-A95</codigos>
+				</item>
+			<item seq="1-017">
+				<nome>Outras febres por arbovírus e febres hemorrágicas virais</nome>
+				<codigos>A90-A94</codigos>
+				<codigos>A96-A99</codigos>
+				</item>
+			<item seq="1-018">
+				<nome>Sarampo</nome>
+				<codigos>B05-B05</codigos>
+				</item>
+			<item seq="1-019">
+				<nome>Hepatite viral</nome>
+				<codigos>B15-B19</codigos>
+				</item>
+			<item seq="1-020">
+				<nome>Doença pelo vírus da imunodeficiência humana [HIV]</nome>
+				<codigos>B20-B24</codigos>
+				</item>
+			<item seq="1-021">
+				<nome>Malária</nome>
+				<codigos>B50-B54</codigos>
+				</item>
+			<item seq="1-022">
+				<nome>Leishmaniose</nome>
+				<codigos>B55-B55</codigos>
+				</item>
+			<item seq="1-023">
+				<nome>Tripanossomíase</nome>
+				<codigos>B56-B57</codigos>
+				</item>
+			<item seq="1-024">
+				<nome>Esquistossomose</nome>
+				<codigos>B65-B65</codigos>
+				</item>
+			<item seq="1-025">
+				<nome>Restante de algumas doenças infecciosas e parasitárias</nome>
+				<codigos>A21-A32</codigos>
+				<codigos>A38-A38</codigos>
+				<codigos>A42-A49</codigos>
+				<codigos>A65-A79</codigos>
+				<codigos>A81-A81</codigos>
+				<codigos>A83-A89</codigos>
+				<codigos>B00-B04</codigos>
+				<codigos>B06-B09</codigos>
+				<codigos>B25-B49</codigos>
+				<codigos>B58-B64</codigos>
+				<codigos>B66-B94</codigos>
+				<codigos>B99-B99</codigos>
+				</item>
+			</item>
+		<item seq="1-026">
+			<nome>Neoplasias</nome>
+			<codigos>C00-D48</codigos>
+			<item seq="1-027">
+				<nome>Neoplasia maligna do lábio, cavidade oral e faringe</nome>
+				<codigos>C00-C14</codigos>
+				</item>
+			<item seq="1-028">
+				<nome>Neoplasia maligna do esôfago</nome>
+				<codigos>C15-C15</codigos>
+				</item>
+			<item seq="1-029">
+				<nome>Neoplasia maligna do estômago</nome>
+				<codigos>C16-C16</codigos>
+				</item>
+			<item seq="1-030">
+				<nome>Neoplasia maligna de cólon, reto e ânus</nome>
+				<codigos>C18-C21</codigos>
+				</item>
+			<item seq="1-031">
+				<nome>Neoplasia maligna do fígado e das vias biliais intra-hepáticas</nome>
+				<codigos>C22-C22</codigos>
+				</item>
+			<item seq="1-032">
+				<nome>Neoplasia maligna do pâncreas</nome>
+				<codigos>C25-C25</codigos>
+				</item>
+			<item seq="1-033">
+				<nome>Neoplasia maligna da laringe</nome>
+				<codigos>C32-C32</codigos>
+				</item>
+			<item seq="1-034">
+				<nome>Neoplasia maligna da traquéia, dos brônquios e dos pulmões</nome>
+				<codigos>C33-C34</codigos>
+				</item>
+			<item seq="1-035">
+				<nome>Neoplasia maligna da pele</nome>
+				<codigos>C43-C43</codigos>
+				</item>
+			<item seq="1-036">
+				<nome>Neoplasia maligna da mama</nome>
+				<codigos>C50-C50</codigos>
+				</item>
+			<item seq="1-037">
+				<nome>Neoplasia maligna do colo do útero</nome>
+				<codigos>C53-C53</codigos>
+				</item>
+			<item seq="1-038">
+				<nome>Neoplasia maligna de outras partes e de partes não especificadas do útero</nome>
+				<codigos>C54-C55</codigos>
+				</item>
+			<item seq="1-039">
+				<nome>Neoplasia maligna do ovário</nome>
+				<codigos>C56-C56</codigos>
+				</item>
+			<item seq="1-040">
+				<nome>Neoplasia maligna da próstata</nome>
+				<codigos>C61-C61</codigos>
+				</item>
+			<item seq="1-041">
+				<nome>Neoplasia maligna da bexiga</nome>
+				<codigos>C67-C67</codigos>
+				</item>
+			<item seq="1-042">
+				<nome>Neoplasia maligna as meninges, do encéfalo e de outras partes do sistema nervoso central</nome>
+				<codigos>C70-C72</codigos>
+				</item>
+			<item seq="1-043">
+				<nome>Linfoma não-Hodgkin</nome>
+				<codigos>C82-C85</codigos>
+				</item>
+			<item seq="1-044">
+				<nome>Mieloma múltiplo e neoplasias malignas de plasmócitos</nome>
+				<codigos>C90-C90</codigos>
+				</item>
+			<item seq="1-045">
+				<nome>Leucemia</nome>
+				<codigos>C91-C95</codigos>
+				</item>
+			<item seq="1-046">
+				<nome>Restante de neoplasias malignas</nome>
+				<codigos>C17-C17</codigos>
+				<codigos>C23-C24</codigos>
+				<codigos>C26-C31</codigos>
+				<codigos>C37-C41</codigos>
+				<codigos>C44-C49</codigos>
+				<codigos>C51-C52</codigos>
+				<codigos>C57-C60</codigos>
+				<codigos>C62-C66</codigos>
+				<codigos>C68-C69</codigos>
+				<codigos>C73-C81</codigos>
+				<codigos>C88-C88</codigos>
+				<codigos>C96-C97</codigos>
+				</item>
+			<item seq="1-047">
+				<nome>Restante de neoplasias</nome>
+				<codigos>D00-D48</codigos>
+				</item>
+			</item>
+		<item seq="1-048">
+			<nome>Doenças do sangue e dos órgãos hematopoéticos e alguns transtornos imunitários</nome>
+			<codigos>D50-D89</codigos>
+			<item seq="1-049">
+				<nome>Anemias</nome>
+				<codigos>D50-D64</codigos>
+				</item>
+			<item seq="1-050">
+				<nome>Restante das doenças do sangue e dos órgãos hematopoéticos e alguns transtornos imunitários</nome>
+				<codigos>D65-D89</codigos>
+				</item>
+			</item>
+		<item seq="1-051">
+			<nome>Doenças endrócrinas, nutrionais e metabólicas</nome>
+			<codigos>E00-E88</codigos>
+			<item seq="1-052">
+				<nome>Diabetes mellitus</nome>
+				<codigos>E10-E14</codigos>
+				</item>
+			<item seq="1-053">
+				<nome>Desnutrição</nome>
+				<codigos>E40-E46</codigos>
+				</item>
+			<item seq="1-054">
+				<nome>Restante de doenças endócrinas, nutricionais e metabólicas</nome>
+				<codigos>E00-E07</codigos>
+				<codigos>E15-E34</codigos>
+				<codigos>E50-E88</codigos>
+				</item>
+			</item>
+		<item seq="1-055">
+			<nome>Transtornos mentais e comportamentais</nome>
+			<codigos>F01-F99</codigos>
+			<item seq="1-056">
+				<nome>Transtornos mentais e comportamentais devidos ao uso de substâncias psicoativas</nome>
+				<codigos>F10-F19</codigos>
+				</item>
+			<item seq="1-057">
+				<nome>Restante dos transtornos mentais e comportamentais</nome>
+				<codigos>F01-F09</codigos>
+				<codigos>F20-F99</codigos>
+				</item>
+			</item>
+		<item seq="1-058">
+			<nome>Doenças do sistema nervoso</nome>
+			<codigos>G00-G98</codigos>
+			<item seq="1-059">
+				<nome>Meningite</nome>
+				<codigos>G03-G03</codigos>
+				</item>
+			<item seq="1-060">
+				<nome>Doença de Alzheimer</nome>
+				<codigos>G30-G30</codigos>
+				</item>
+			<item seq="1-061">
+				<nome>Restante das doenças do sistema nervoso</nome>
+				<codigos>G04-G25</codigos>
+				<codigos>G31-G98</codigos>
+				</item>
+			</item>
+		<item seq="1-062">
+			<nome>Doenças dos olhos e anexos</nome>
+			<codigos>H00-H57</codigos>
+			</item>
+		<item seq="1-063">
+			<nome>Doenças do ouvido e da apófise mastóide</nome>
+			<codigos>H60-H93</codigos>
+			</item>
+		<item seq="1-064">
+			<nome>Doenças do aparelho circulatório</nome>
+			<codigos>I00-I99</codigos>
+			<item seq="1-065">
+				<nome>Febre reumática aguda e doença reumática crônica do coração</nome>
+				<codigos>I00-I09</codigos>
+				</item>
+			<item seq="1-066">
+				<nome>Doenças hipertensivas</nome>
+				<codigos>I10-I13</codigos>
+				</item>
+			<item seq="1-067">
+				<nome>Doenças isquêmicas do coração</nome>
+				<codigos>I20-I25</codigos>
+				</item>
+			<item seq="1-068">
+				<nome>Outras doenças cardíacas</nome>
+				<codigos>I26-I51</codigos>
+				</item>
+			<item seq="1-069">
+				<nome>Doenças cerebrovasculares</nome>
+				<codigos>I60-I69</codigos>
+				</item>
+			<item seq="1-070">
+				<nome>Aterosclerose</nome>
+				<codigos>I70-I70</codigos>
+				</item>
+			<item seq="1-071">
+				<nome>Restante de doenças do aparelho circulatório</nome>
+				<codigos>I71-I99</codigos>
+				</item>
+			</item>
+		<item seq="1-072">
+			<nome>Doenças do aparelho circulatório</nome>
+			<codigos>J00-J98</codigos>
+			<item seq="1-073">
+				<nome>Influenza [gripe]</nome>
+				<codigos>J09-J11</codigos>
+				</item>
+			<item seq="1-074">
+				<nome>Pneumonia</nome>
+				<codigos>J12-J18</codigos>
+				</item>
+			<item seq="1-075">
+				<nome>Outras infecções agudas das vias aéreas inferiores</nome>
+				<codigos>J20-J22</codigos>
+				</item>
+			<item seq="1-076">
+				<nome>Doenças crônicas das vias aéreas inferiores</nome>
+				<codigos>J40-J47</codigos>
+				</item>
+			<item seq="1-077">
+				<nome>Restante de doença do aparelho respiratório</nome>
+				<codigos>J00-J06</codigos>
+				<codigos>J30-J39</codigos>
+				<codigos>J60-J98</codigos>
+				</item>
+			</item>
+		<item seq="1-078">
+			<nome>Doenças do aparelho digestivo</nome>
+			<codigos>K00-K92</codigos>
+			<item seq="1-079">
+				<nome>Úlcera gástrica e duodenal</nome>
+				<codigos>K25-K27</codigos>
+				</item>
+			<item seq="1-080">
+				<nome>Doenças do fígado</nome>
+				<codigos>K70-K76</codigos>
+				</item>
+			<item seq="1-081">
+				<nome>Restante das doenças do aparelho digestivo</nome>
+				<codigos>K00-K22</codigos>
+				<codigos>K28-K66</codigos>
+				<codigos>K80-K92</codigos>
+				</item>
+			</item>
+		<item seq="1-082">
+			<nome>Doenças da pele e de tecido subcutâneo</nome>
+			<codigos>L00-L98</codigos>
+			</item>
+		<item seq="1-083">
+			<nome>Doenças do sistema osteomuscular e do tecido conjuntivo</nome>
+			<codigos>M00-M99</codigos>
+			</item>
+		<item seq="1-084">
+			<nome>Doenças do aparelho geniturinário</nome>
+			<codigos>N00-N98</codigos>
+			<item seq="1-085">
+				<nome>Doenças glomerulares e doenças renais túbulo-intersticiais</nome>
+				<codigos>N00-N15</codigos>
+				</item>
+			<item seq="1-086">
+				<nome>Restante de doenças do aparelho geniturinário</nome>
+				<codigos>N17-N98</codigos>
+				</item>
+			</item>
+		<item seq="1-087">
+			<nome>Gravidez, parto e puerpério</nome>
+			<codigos>O00-O99</codigos>
+			<item seq="1-088">
+				<nome>Gravidez que termina em aborto</nome>
+				<codigos>O00-O07</codigos>
+				</item>
+			<item seq="1-089">
+				<nome>Outras mortes obstétricas diretas</nome>
+				<codigos>O10-O92</codigos>
+				</item>
+			<item seq="1-090">
+				<nome>Mortes obstétricas indiretas</nome>
+				<codigos>O98-O99</codigos>
+				</item>
+			<item seq="1-091">
+				<nome>Restante de gravidez, parto e puerpério</nome>
+				<codigos>O94-O97</codigos>
+				</item>
+			</item>
+		<item seq="1-092">
+			<nome>Algumas afecções originadas no período perinatal</nome>
+			<codigos>P00-P96</codigos>
+			</item>
+		<item seq="1-093">
+			<nome>Malformações congênitas, deformidades e anomalias cromossômicas</nome>
+			<codigos>Q00-Q99</codigos>
+			</item>
+		<item seq="1-094">
+			<nome>Sintomas, sinais e achados anormais de exames clínicos e de laboratório não classificados em outra parte</nome>
+			<codigos>R00-R99</codigos>
+			</item>
+		<item seq="1-095">
+			<nome>Causas externas de morbidade e mortalidade</nome>
+			<codigos>V01-Y89 </codigos>
+			<item seq="1-096">
+				<nome>Acidentes de transporte</nome>
+				<codigos>V01-V99</codigos>
+				</item>
+			<item seq="1-097">
+				<nome>Quedas</nome>
+				<codigos>W00-W19</codigos>
+				</item>
+			<item seq="1-098">
+				<nome>Afogamento e submersão acidentamente</nome>
+				<codigos>W65-W74</codigos>
+				</item>
+			<item seq="1-099">
+				<nome>Exposição à fumaça, ao fogo e às chamas</nome>
+				<codigos>X00-X09</codigos>
+				</item>
+			<item seq="1-100">
+				<nome>Envenenamento, intoxicação por ou exposição a substâncias nocivas</nome>
+				<codigos>X40-X49</codigos>
+				</item>
+			<item seq="1-101">
+				<nome>Lesões autoprovocadas voluntariamente</nome>
+				<codigos>X60-X84</codigos>
+				</item>
+			<item seq="1-102">
+				<nome>Agressões</nome>
+				<codigos>X85-Y09</codigos>
+				</item>
+			<item seq="1-103">
+				<nome>Todas as outras causas externas</nome>
+				<codigos>W20-W64</codigos>
+				<codigos>W75-W99</codigos>
+				<codigos>X10-X39</codigos>
+				<codigos>X50-X59</codigos>
+				<codigos>Y10-Y89</codigos>
+				</item>
+			</item>
+		<item seq="1-901">
+			<nome>Síndrome respiratória aguda grave (Severe acute respiratory syndrome) [SARS]</nome>
+			<codigos>U04</codigos>
+			</item>
+		</lista>
+	<lista>
+		<nome>Mortalidade Geral - Lista Selecionada</nome>
+		<item seq="2-001">
+			<nome>Cólera</nome>
+			<codigos>A00-A00</codigos>
+			</item>
+		<item seq="2-002">
+			<nome>Diarréia e gastroenterite de origem infecciosa presumível</nome>
+			<codigos>A09-A09</codigos>
+			</item>
+		<item seq="2-003">
+			<nome>Outras doenças infecciosas intestinais</nome>
+			<codigos>A01-A08</codigos>
+			</item>
+		<item seq="2-004">
+			<nome>Tuberculose respiratória</nome>
+			<codigos>A15-A16</codigos>
+			</item>
+		<item seq="2-005">
+			<nome>Outras tuberculoses</nome>
+			<codigos>A17-A19</codigos>
+			</item>
+		<item seq="2-006">
+			<nome>Peste</nome>
+			<codigos>A20-A20</codigos>
+			</item>
+		<item seq="2-007">
+			<nome>Tétano</nome>
+			<codigos>A33-A35</codigos>
+			</item>
+		<item seq="2-008">
+			<nome>Difteria</nome>
+			<codigos>A36-A36</codigos>
+			</item>
+		<item seq="2-009">
+			<nome>Coqueluche</nome>
+			<codigos>A37-A37</codigos>
+			</item>
+		<item seq="2-010">
+			<nome>Infecção meningocócica</nome>
+			<codigos>A39-A39</codigos>
+			</item>
+		<item seq="2-011">
+			<nome>Septicemia</nome>
+			<codigos>A40-A41</codigos>
+			</item>
+		<item seq="2-012">
+			<nome>Infecções de transmissão predominantemente sexual</nome>
+			<codigos>A50-A64</codigos>
+			</item>
+		<item seq="2-013">
+			<nome>Poliomielite aguda</nome>
+			<codigos>A80-A80</codigos>
+			</item>
+		<item seq="2-014">
+			<nome>Raiva</nome>
+			<codigos>A82-A82</codigos>
+			</item>
+		<item seq="2-015">
+			<nome>Febre amarela</nome>
+			<codigos>A95-A95</codigos>
+			</item>
+		<item seq="2-016">
+			<nome>Outras febres por arbovírus e febres hemorrágicas virais</nome>
+			<codigos>A90-A94</codigos>
+			<codigos>A96-A99</codigos>
+			</item>
+		<item seq="2-017">
+			<nome>Sarampo</nome>
+			<codigos>B05-B05</codigos>
+			</item>
+		<item seq="2-018">
+			<nome>Hepatite viral</nome>
+			<codigos>B15-B19</codigos>
+			</item>
+		<item seq="2-019">
+			<nome>Doença pelo vírus da imunodeficiência humana [HIV]</nome>
+			<codigos>B20-B24</codigos>
+			</item>
+		<item seq="2-020">
+			<nome>Malária</nome>
+			<codigos>B50-B54</codigos>
+			</item>
+		<item seq="2-021">
+			<nome>Leishmaniose</nome>
+			<codigos>B55-B55</codigos>
+			</item>
+		<item seq="2-022">
+			<nome>Tripanossomíase</nome>
+			<codigos>B56-B57</codigos>
+			</item>
+		<item seq="2-023">
+			<nome>Esquistossomose</nome>
+			<codigos>B65-B65</codigos>
+			</item>
+		<item seq="2-024">
+			<nome>Restante de algumas doenças infecciosas e parasitárias</nome>
+			<codigos>A21-A32</codigos>
+			<codigos>A38-A38</codigos>
+			<codigos>A42-A49</codigos>
+			<codigos>A65-A79</codigos>
+			<codigos>A81-A81</codigos>
+			<codigos>A83-A89</codigos>
+			<codigos>B00-B04</codigos>
+			<codigos>B06-B09</codigos>
+			<codigos>B25-B49</codigos>
+			<codigos>B58-B64</codigos>
+			<codigos>B66-B94</codigos>
+			<codigos>B99-B99</codigos>
+			</item>
+		<item seq="2-025">
+			<nome>Neoplasia maligna do lábio, cavidade oral e faringe</nome>
+			<codigos>C00-C14</codigos>
+			</item>
+		<item seq="2-026">
+			<nome>Neoplasia maligna de esôfago</nome>
+			<codigos>C15-C15</codigos>
+			</item>
+		<item seq="2-027">
+			<nome>Neoplasia maligna do estômago</nome>
+			<codigos>C16-C16</codigos>
+			</item>
+		<item seq="2-028">
+			<nome>Neoplasia maligna do cólon, reto e ânus</nome>
+			<codigos>C18-C21</codigos>
+			</item>
+		<item seq="2-029">
+			<nome>Neoplasia maligna do fígado e da vias biliares intra-hepáticas</nome>
+			<codigos>C22-C22</codigos>
+			</item>
+		<item seq="2-030">
+			<nome>Neoplasia maligna do pâncreas</nome>
+			<codigos>C25-C25</codigos>
+			</item>
+		<item seq="2-031">
+			<nome>Neoplasia maligna da laringe</nome>
+			<codigos>C32-C32</codigos>
+			</item>
+		<item seq="2-032">
+			<nome>Neoplasia maligna da traquéia, dos brônquios e dos pulmões</nome>
+			<codigos>C33-C34</codigos>
+			</item>
+		<item seq="2-033">
+			<nome>Neoplasia maligna da pele</nome>
+			<codigos>C43-C43</codigos>
+			</item>
+		<item seq="2-034">
+			<nome>Neoplasia maligna da mama</nome>
+			<codigos>C50-C50</codigos>
+			</item>
+		<item seq="2-035">
+			<nome>Neoplasia maligna do colo do útero</nome>
+			<codigos>C53-C53</codigos>
+			</item>
+		<item seq="2-036">
+			<nome>Neoplasia maligna de outras partes e de partes não especificadas do útero</nome>
+			<codigos>C54-C55</codigos>
+			</item>
+		<item seq="2-037">
+			<nome>Neoplasia maligna do ovário</nome>
+			<codigos>C56-C56</codigos>
+			</item>
+		<item seq="2-038">
+			<nome>Neoplasia maligna da próstata</nome>
+			<codigos>C61-C61</codigos>
+			</item>
+		<item seq="2-039">
+			<nome>Neoplasia maligna da bexiga</nome>
+			<codigos>C67-C67</codigos>
+			</item>
+		<item seq="2-040">
+			<nome>Neoplasia maligna das meninges, do encéfalo e de outras partes do sistema nervoso central</nome>
+			<codigos>C70-C72</codigos>
+			</item>
+		<item seq="2-041">
+			<nome>Linfoma não-Hodgkin</nome>
+			<codigos>C82-C85</codigos>
+			</item>
+		<item seq="2-042">
+			<nome>Mieloma múltiplo e neoplasias malignas de plasmócitos</nome>
+			<codigos>C90-C90</codigos>
+			</item>
+		<item seq="2-043">
+			<nome>Leucemia</nome>
+			<codigos>C91-C95</codigos>
+			</item>
+		<item seq="2-044">
+			<nome>Restante de neoplasias malignas</nome>
+			<codigos>C17-C17</codigos>
+			<codigos>C23-C24</codigos>
+			<codigos>C26-C31</codigos>
+			<codigos>C37-C41</codigos>
+			<codigos>C44-C49</codigos>
+			<codigos>C51-C52</codigos>
+			<codigos>C57-C60</codigos>
+			<codigos>C62-C66</codigos>
+			<codigos>C68-C69</codigos>
+			<codigos>C73-C81</codigos>
+			<codigos>C88-C88</codigos>
+			<codigos>C96-C97</codigos>
+			</item>
+		<item seq="2-045">
+			<nome>Anemias</nome>
+			<codigos>D50-D64</codigos>
+			</item>
+		<item seq="2-046">
+			<nome>Diabetes mellitus</nome>
+			<codigos>E10-E14</codigos>
+			</item>
+		<item seq="2-047">
+			<nome>Desnutrição</nome>
+			<codigos>E40-E46</codigos>
+			</item>
+		<item seq="2-048">
+			<nome>Doenças mentais e comportamentais devidas ao uso de substâncias psicoativas</nome>
+			<codigos>F10-F19</codigos>
+			</item>
+		<item seq="2-049">
+			<nome>Meningite</nome>
+			<codigos>G00-G03</codigos>
+			</item>
+		<item seq="2-050">
+			<nome>Doença de Alzheimer</nome>
+			<codigos>G30-G30</codigos>
+			</item>
+		<item seq="2-051">
+			<nome>Febre reumática aguda e doença reumática cardíaca crônica</nome>
+			<codigos>I00-I09</codigos>
+			</item>
+		<item seq="2-052">
+			<nome>Doenças hipertensivas</nome>
+			<codigos>I10-I13</codigos>
+			</item>
+		<item seq="2-053">
+			<nome>Doenças isquêmicas do coração</nome>
+			<codigos>I20-I25</codigos>
+			</item>
+		<item seq="2-054">
+			<nome>Outras doenças cardíacas</nome>
+			<codigos>I26-I51</codigos>
+			</item>
+		<item seq="2-055">
+			<nome>Doenças cerebrovasculares</nome>
+			<codigos>I60-I69</codigos>
+			</item>
+		<item seq="2-056">
+			<nome>Aterosclerose</nome>
+			<codigos>I70-I70</codigos>
+			</item>
+		<item seq="2-057">
+			<nome>Restante de doenças do aparelho circulatório</nome>
+			<codigos>I71-I99</codigos>
+			</item>
+		<item seq="2-058">
+			<nome>Influenza [gripe]</nome>
+			<codigos>J09-J11</codigos>
+			</item>
+		<item seq="2-059">
+			<nome>Pneumonia</nome>
+			<codigos>J12-J18</codigos>
+			</item>
+		<item seq="2-060">
+			<nome>Outras infecções agudas das vias aéreas inferiores</nome>
+			<codigos>J20-J22</codigos>
+			</item>
+		<item seq="2-061">
+			<nome>Doenças crônicas das vias aéreas inferiores</nome>
+			<codigos>J40-J47</codigos>
+			</item>
+		<item seq="2-062">
+			<nome>Restante de doenças do aparelho respiratório</nome>
+			<codigos>J00-J06</codigos>
+			<codigos>J30-J39</codigos>
+			<codigos>J60-J98</codigos>
+			</item>
+		<item seq="2-063">
+			<nome>Úlcera gástrica e duodenal</nome>
+			<codigos>K25-K27</codigos>
+			</item>
+		<item seq="2-064">
+			<nome>Doenças do fígado</nome>
+			<codigos>K70-K76</codigos>
+			</item>
+		<item seq="2-065">
+			<nome>Doenças glomerulares e doenças renais túbulo-intersticiais</nome>
+			<codigos>N00-N15</codigos>
+			</item>
+		<item seq="2-066">
+			<nome>Gravidez que termina em aborto</nome>
+			<codigos>O00-O07</codigos>
+			</item>
+		<item seq="2-067">
+			<nome>Outras mortes obstétricas diretas</nome>
+			<codigos>O10-O92</codigos>
+			</item>
+		<item seq="2-068">
+			<nome>Mortes obstétricas indiretas</nome>
+			<codigos>O98-O99</codigos>
+			</item>
+		<item seq="2-069">
+			<nome>Algumas afecções originadas no período perinatal</nome>
+			<codigos>P00-P96</codigos>
+			</item>
+		<item seq="2-070">
+			<nome>Malformações congênitas, deformidades e anomalias cromossômicas</nome>
+			<codigos>Q00-Q99</codigos>
+			</item>
+		<item seq="2-071">
+			<nome>Sintomas, sinais e achados anormais de exames clínicos e de laboratório não classificados em outra parte</nome>
+			<codigos>R00-R99</codigos>
+			</item>
+		<item seq="2-072">
+			<nome>Todas as outras doenças</nome>
+			<codigos>D00-D48</codigos>
+			<codigos>D65-D89</codigos>
+			<codigos>E00-E07</codigos>
+			<codigos>E15-E34</codigos>
+			<codigos>E50-E88</codigos>
+			<codigos>F01-F09</codigos>
+			<codigos>F20-F99</codigos>
+			<codigos>G04-G25</codigos>
+			<codigos>G31-G98</codigos>
+			<codigos>H00-H93</codigos>
+			<codigos>K00-K22</codigos>
+			<codigos>K28-K66</codigos>
+			<codigos>K80-K92</codigos>
+			<codigos>L00-L98</codigos>
+			<codigos>M00-M99</codigos>
+			<codigos>N17-N98</codigos>
+			<codigos>O94-O97</codigos>
+			</item>
+		<item seq="2-073">
+			<nome>Acidentes de transporte</nome>
+			<codigos>V01-V99</codigos>
+			</item>
+		<item seq="2-074">
+			<nome>Quedas</nome>
+			<codigos>W00-W19</codigos>
+			</item>
+		<item seq="2-075">
+			<nome>Afogamento e submersão acidentais</nome>
+			<codigos>W65-W74</codigos>
+			</item>
+		<item seq="2-076">
+			<nome>Exposição à fumaça, ao fogo e às chamas</nome>
+			<codigos>X00-X09</codigos>
+			</item>
+		<item seq="2-077">
+			<nome>Envenenamento (intoxicação) acidental por ou exposição a substâncias nocivas</nome>
+			<codigos>X40-X49</codigos>
+			</item>
+		<item seq="2-078">
+			<nome>Lesões autoprovocadas voluntariamente</nome>
+			<codigos>X60-X84</codigos>
+			</item>
+		<item seq="2-079">
+			<nome>Agressões</nome>
+			<codigos>X85-Y09</codigos>
+			</item>
+		<item seq="2-080">
+			<nome>Todas as outras causas externas</nome>
+			<codigos>W20-W64</codigos>
+			<codigos>W75-W99</codigos>
+			<codigos>X10-X39</codigos>
+			<codigos>X50-X59</codigos>
+			<codigos>Y10-Y89</codigos>
+			</item>
+		<item seq="2-901">
+			<nome>Síndrome respiratória aguda grave (Severe acute respiratory syndrome) [SARS]</nome>
+			<codigos>U04</codigos>
+			</item>
+		</lista>
+	<lista>
+		<nome>Mortalidade infantil e da criança - Lista condensada</nome>
+		<item seq="3-001">
+			<nome>Algumas doenças infecciosas e parasitárias</nome>
+			<codigos>A00-B99</codigos>
+			<item seq="3-002">
+				<nome>Diarréia e gastroenterite de origem infecciosa presumível</nome>
+				<codigos>A09-A09</codigos>
+				</item>
+			<item seq="3-003">
+				<nome>Outras doenças infecciosas intestinais</nome>
+				<codigos>A00-A08</codigos>
+				</item>
+			<item seq="3-004">
+				<nome>Tuberculose</nome>
+				<codigos>A15-A19</codigos>
+				</item>
+			<item seq="3-005">
+				<nome>Tétano</nome>
+				<codigos>A33-A33</codigos>
+				<codigos>A35-A35</codigos>
+				</item>
+			<item seq="3-006">
+				<nome>Difteria</nome>
+				<codigos>A36-A36</codigos>
+				</item>
+			<item seq="3-007">
+				<nome>Coqueluche</nome>
+				<codigos>A37-A37</codigos>
+				</item>
+			<item seq="3-008">
+				<nome>Infecção meningocócica</nome>
+				<codigos>A39-A39</codigos>
+				</item>
+			<item seq="3-009">
+				<nome>Septicemia</nome>
+				<codigos>A40-A41</codigos>
+				</item>
+			<item seq="3-010">
+				<nome>Poliomielite aguda</nome>
+				<codigos>A80-A80</codigos>
+				</item>
+			<item seq="3-011">
+				<nome>Sarampo</nome>
+				<codigos>B05-B05</codigos>
+				</item>
+			<item seq="3-012">
+				<nome>Doença pelo vírus da imunodeficiência humana [HIV]</nome>
+				<codigos>B20-B24</codigos>
+				</item>
+			<item seq="3-013">
+				<nome>Outras doenças virais</nome>
+				<codigos>A81-B04</codigos>
+				<codigos>B06-B19</codigos>
+				<codigos>B25-B34</codigos>
+				</item>
+			<item seq="3-014">
+				<nome>Malária</nome>
+				<codigos>B50-B54</codigos>
+				</item>
+			<item seq="3-015">
+				<nome>Restante de algumas doenças infecciosas e parasitárias</nome>
+				<codigos>A20-A32</codigos>
+				<codigos>A38-A38</codigos>
+				<codigos>A42-A79</codigos>
+				<codigos>B35-B49</codigos>
+				<codigos>B55-B94</codigos>
+				<codigos>B99-B99</codigos>
+				</item>
+			</item>
+		<item seq="3-016">
+			<nome>Neoplasias</nome>
+			<codigos>C00-D48</codigos>
+			<item seq="3-017">
+				<nome>Leucemia</nome>
+				<codigos>C91-C95</codigos>
+				</item>
+			<item seq="3-018">
+				<nome>Restante de neoplasias malignas</nome>
+				<codigos>C00-C90</codigos>
+				<codigos>C96-C97</codigos>
+				</item>
+			<item seq="3-019">
+				<nome>Restante de neoplasias</nome>
+				<codigos>D00-D48</codigos>
+				</item>
+			</item>
+		<item seq="3-020">
+			<nome>Doenças do sangue e dos órgãos hematopoéticos e alguns transtornos imunitários</nome>
+			<codigos>D50-D89</codigos>
+			<item seq="3-021">
+				<nome>Anemias</nome>
+				<codigos>D50-D64</codigos>
+				</item>
+			<item seq="3-022">
+				<nome>Restante de doenças do sangue e órgãos hematopoéticos e alguns transtornos imunitários</nome>
+				<codigos>D65-D89</codigos>
+				</item>
+			</item>
+		<item seq="3-023">
+			<nome>Doenças endócrinas, nutricionais e metabólicas</nome>
+			<codigos>E00-E88</codigos>
+			<item seq="3-024">
+				<nome>Desnutrição e outras deficiências nutricionais</nome>
+				<codigos>E40-E64</codigos>
+				</item>
+			<item seq="3-025">
+				<nome>Restante de doenças endócrinas, nutricionais e metabólicas</nome>
+				<codigos>E00-E34</codigos>
+				<codigos>E65-E88</codigos>
+				</item>
+			</item>
+		<item seq="3-026">
+			<nome>Doenças do sistema nervoso</nome>
+			<codigos>G00-G98</codigos>
+			<item seq="3-027">
+				<nome>Meningite</nome>
+				<codigos>G00-G00</codigos>
+				<codigos>G03-G03</codigos>
+				</item>
+			<item seq="3-028">
+				<nome>Restante de doenças do sistema nervoso</nome>
+				<codigos>G04-G98</codigos>
+				</item>
+			</item>
+		<item seq="3-029">
+			<nome>Doenças do ouvido e da apófise mastóide</nome>
+			<codigos>H60-H93</codigos>
+			</item>
+		<item seq="3-030">
+			<nome>Doenças do aparelho circulatório</nome>
+			<codigos>I00-I99</codigos>
+			</item>
+		<item seq="3-031">
+			<nome>Doenças do aparelho respiratório</nome>
+			<codigos>J00-J98</codigos>
+			<item seq="3-032">
+				<nome>Pneumonia</nome>
+				<codigos>J12-J18</codigos>
+				</item>
+			<item seq="3-033">
+				<nome>Outras infecções respiratórias agudas</nome>
+				<codigos>J00-J11</codigos>
+				<codigos>J20-J22</codigos>
+				</item>
+			<item seq="3-034">
+				<nome>Restante das doenças do aparelho respiratório</nome>
+				<codigos>J30-J98</codigos>
+				</item>
+			</item>
+		<item seq="3-035">
+			<nome>Doenças do aparelho digestivo</nome>
+			<codigos>K00-K92</codigos>
+			</item>
+		<item seq="3-036">
+			<nome>Doenças do aparelho geniturinário</nome>
+			<codigos>N00-N99</codigos>
+			</item>
+		<item seq="3-037">
+			<nome>Algumas afecções originadas no período perinatal</nome>
+			<codigos>P00-P96</codigos>
+			<item seq="3-038">
+				<nome>Feto e recém-nascido afetados por fatores maternos e por complicações da gravidez, do trabalho de parto e do parto</nome>
+				<codigos>P00-P04</codigos>
+				</item>
+			<item seq="3-039">
+				<nome>Transtornos relacionados à duração da gravidez e ao crescimento fetal</nome>
+				<codigos>P05-P08</codigos>
+				</item>
+			<item seq="3-040">
+				<nome>Traumatismo ocorrido durante o nascimento</nome>
+				<codigos>P10-P15</codigos>
+				</item>
+			<item seq="3-041">
+				<nome>Hipóxia intrauterina e asfixia ao nascer</nome>
+				<codigos>P20-P21</codigos>
+				</item>
+			<item seq="3-042">
+				<nome>Desconforto (angústia) respiratório(a) do recém-nascido</nome>
+				<codigos>P22-P22</codigos>
+				</item>
+			<item seq="3-043">
+				<nome>Pneumonia congênita</nome>
+				<codigos>P23-P23</codigos>
+				</item>
+			<item seq="3-044">
+				<nome>Outras afecções respiratórias do recém-nascido</nome>
+				<codigos>P24-P28</codigos>
+				</item>
+			<item seq="3-045">
+				<nome>Septicemia bacteriana do recém-nascido</nome>
+				<codigos>P36-P36</codigos>
+				</item>
+			<item seq="3-046">
+				<nome>Onfalite do recém-nascido com ou sem hemorragia leve</nome>
+				<codigos>P38-P38</codigos>
+				</item>
+			<item seq="3-047">
+				<nome>Transtornos hemorrágicos e hematológicos do feto ou do recém-nascido</nome>
+				<codigos>P50-P61</codigos>
+				</item>
+			<item seq="3-048">
+				<nome>Restante das afecções perinatais</nome>
+				<codigos>P29-P29</codigos>
+				<codigos>P35-P35</codigos>
+				<codigos>P37-P37</codigos>
+				<codigos>P39-P39</codigos>
+				<codigos>P70-P96</codigos>
+				</item>
+			</item>
+		<item seq="3-049">
+			<nome>Malformações congênitas, deformidades e anomalias cromossômicas</nome>
+			<codigos>Q00-Q99</codigos>
+			<item seq="3-050">
+				<nome>Hidrocefalia e espinha bífida congênitas</nome>
+				<codigos>Q03-Q03</codigos>
+				<codigos>Q05-Q05</codigos>
+				</item>
+			<item seq="3-051">
+				<nome>Outras malformações congênitas do sistema nervoso</nome>
+				<codigos>Q00-Q02</codigos>
+				<codigos>Q04-Q04</codigos>
+				<codigos>Q06-Q07</codigos>
+				</item>
+			<item seq="3-052">
+				<nome>Malformações congênitas do coração</nome>
+				<codigos>Q20-Q24</codigos>
+				</item>
+			<item seq="3-053">
+				<nome>Outras malformações congênitas do aparelho circulatório</nome>
+				<codigos>Q25-Q28</codigos>
+				</item>
+			<item seq="3-054">
+				<nome>Síndrome de Down e outras anomalias cromossômicas</nome>
+				<codigos>Q90-Q99</codigos>
+				</item>
+			<item seq="3-055">
+				<nome>Outras malformações congênitas</nome>
+				<codigos>Q10-Q18</codigos>
+				<codigos>Q30-Q89</codigos>
+				</item>
+			</item>
+		<item seq="3-056">
+			<nome>Sintomas, sinais e achados anormais de exames clínicos e de laboratório, não classificados em outra parte</nome>
+			<codigos>R00-R99</codigos>
+			<item seq="3-057">
+				<nome>Síndrome da morte súbita na infância</nome>
+				<codigos>R95-R95</codigos>
+				</item>
+			<item seq="3-058">
+				<nome>Outros sintomas, sinais e achados anormais de exames clínicos e de laboratório, não classificados em outra parte</nome>
+				<codigos>R00-R94</codigos>
+				<codigos>R96-R99</codigos>
+				</item>
+			</item>
+		<item seq="3-059">
+			<nome>Todas as outras doenças</nome>
+			<codigos>F01-F99</codigos>
+			<codigos>H00-H59</codigos>
+			<codigos>L00-L98</codigos>
+			<codigos>M00-M99</codigos>
+			</item>
+		<item seq="3-060">
+			<nome>Causas externas de morbidade e mortalidade</nome>
+			<codigos>V01-Y89</codigos>
+			<item seq="3-061">
+				<nome>Acidentes de transporte</nome>
+				<codigos>V01-V99</codigos>
+				</item>
+			<item seq="3-062">
+				<nome>Afogamento e submersão acidentais</nome>
+				<codigos>W65-W74</codigos>
+				</item>
+			<item seq="3-063">
+				<nome>Outros riscos acidentais à respiração</nome>
+				<codigos>W75-W84</codigos>
+				</item>
+			<item seq="3-064">
+				<nome>Exposição à fumaça, ao fogo e às chamas</nome>
+				<codigos>X00-X09</codigos>
+				</item>
+			<item seq="3-065">
+				<nome>Envenenamento (intoxicação) acidental por ou exposição a substâncias nocivas</nome>
+				<codigos>X40-X49</codigos>
+				</item>
+			<item seq="3-066">
+				<nome>Agressões</nome>
+				<codigos>X85-Y09</codigos>
+				</item>
+			<item seq="3-067">
+				<nome>Todas as outras causas externas</nome>
+				<codigos>W00-W64</codigos>
+				<codigos>W85-W99</codigos>
+				<codigos>X10-X39</codigos>
+				<codigos>X50-X84</codigos>
+				<codigos>Y10-Y89</codigos>
+				</item>
+			</item>
+		<item seq="3-901">
+			<nome>Síndrome respiratória aguda grave (Severe acute respiratory syndrome) [SARS]</nome>
+			<codigos>U04</codigos>
+			</item>
+		</lista>
+	<lista>
+		<nome>Mortalidade infantil e da criança - Lista selecionada</nome>
+		<item seq="4-001">
+			<nome>Diarréia e gastroenterite de origem presumível</nome>
+			<codigos>A09-A09</codigos>
+			</item>
+		<item seq="4-002">
+			<nome>Outras doenças infecciosas intestinais</nome>
+			<codigos>A00-A08</codigos>
+			</item>
+		<item seq="4-003">
+			<nome>Tuberculose</nome>
+			<codigos>A15-A19</codigos>
+			</item>
+		<item seq="4-004">
+			<nome>Tétano</nome>
+			<codigos>A33-A33</codigos>
+			<codigos>A35-A35</codigos>
+			</item>
+		<item seq="4-005">
+			<nome>Difteria</nome>
+			<codigos>A36-A36</codigos>
+			</item>
+		<item seq="4-006">
+			<nome>Coqueluche</nome>
+			<codigos>A37-A37</codigos>
+			</item>
+		<item seq="4-007">
+			<nome>Infecção meningocócica</nome>
+			<codigos>A39-A39</codigos>
+			</item>
+		<item seq="4-008">
+			<nome>Septicemia</nome>
+			<codigos>A40-A41</codigos>
+			</item>
+		<item seq="4-009">
+			<nome>Poliomielite aguda</nome>
+			<codigos>A80-A80</codigos>
+			</item>
+		<item seq="4-010">
+			<nome>Sarampo</nome>
+			<codigos>B05-B05</codigos>
+			</item>
+		<item seq="4-011">
+			<nome>Doença pelo vírus da imunodeficiência humana [HIV]</nome>
+			<codigos>B20-B24</codigos>
+			</item>
+		<item seq="4-012">
+			<nome>Outras doenças virais</nome>
+			<codigos>A81-B04</codigos>
+			<codigos>B06-B19</codigos>
+			<codigos>B25-B34</codigos>
+			</item>
+		<item seq="4-013">
+			<nome>Malária</nome>
+			<codigos>B50-B54</codigos>
+			</item>
+		<item seq="4-014">
+			<nome>Restante de algumas doenças infecciosas e parasitárias</nome>
+			<codigos>A20-A32</codigos>
+			<codigos>A38-A38</codigos>
+			<codigos>A42-A79</codigos>
+			<codigos>B35-B49</codigos>
+			<codigos>B55-B94</codigos>
+			<codigos>B99-B99</codigos>
+			</item>
+		<item seq="4-015">
+			<nome>Leucemia</nome>
+			<codigos>C91-C95</codigos>
+			</item>
+		<item seq="4-016">
+			<nome>Restante de neoplasias malignas</nome>
+			<codigos>C00-C90</codigos>
+			<codigos>C96-C97</codigos>
+			</item>
+		<item seq="4-017">
+			<nome>Anemias</nome>
+			<codigos>D50-D64</codigos>
+			</item>
+		<item seq="4-018">
+			<nome>Restante de doenças do sangue e dos órgãos hematopoéticos e alguns transtornos imunitários</nome>
+			<codigos>D65-D89</codigos>
+			</item>
+		<item seq="4-019">
+			<nome>Desnutrição e outras deficiências nutricionais</nome>
+			<codigos>E40-E64</codigos>
+			</item>
+		<item seq="4-020">
+			<nome>Meningite</nome>
+			<codigos>G00-G00</codigos>
+			<codigos>G03-G03</codigos>
+			</item>
+		<item seq="4-021">
+			<nome>Restante de doenças do sistema nervoso</nome>
+			<codigos>G04-G98</codigos>
+			</item>
+		<item seq="4-022">
+			<nome>Pneumonia</nome>
+			<codigos>J12-J18</codigos>
+			</item>
+		<item seq="4-023">
+			<nome>Outras infecções respiratórias agudas</nome>
+			<codigos>J00-J11</codigos>
+			<codigos>J20-J22</codigos>
+			</item>
+		<item seq="4-024">
+			<nome>Doenças do aparelho digestivo</nome>
+			<codigos>K00-K92</codigos>
+			</item>
+		<item seq="4-025">
+			<nome>Feto e recém-nascido afetado por fatores maternos e por complicações da gravidez, do trabalho de parto e do parto</nome>
+			<codigos>P00-P04</codigos>
+			</item>
+		<item seq="4-026">
+			<nome>Trantornos relacionados à duração da gestação e do crescimento fetal</nome>
+			<codigos>P05-P08</codigos>
+			</item>
+		<item seq="4-027">
+			<nome>Traumatismo ocorrido durante o nascimento</nome>
+			<codigos>P10-P15</codigos>
+			</item>
+		<item seq="4-028">
+			<nome>Hipóxia intrauterina e asfixia ao nascer</nome>
+			<codigos>P20-P21</codigos>
+			</item>
+		<item seq="4-029">
+			<nome>Desconforto (angústia) respiratório(a) do recém-nascido</nome>
+			<codigos>P22-P22</codigos>
+			</item>
+		<item seq="4-030">
+			<nome>Pneumonia congênita</nome>
+			<codigos>P23-P23</codigos>
+			</item>
+		<item seq="4-031">
+			<nome>Outras afecções respiratórias do recém-nascido</nome>
+			<codigos>P24-P28</codigos>
+			</item>
+		<item seq="4-032">
+			<nome>Septicemia bacteriana do recém-nascido</nome>
+			<codigos>P36-P36</codigos>
+			</item>
+		<item seq="4-033">
+			<nome>Onfalite do recém-nascido com ou sem hemorragia leve</nome>
+			<codigos>P38-P38</codigos>
+			</item>
+		<item seq="4-034">
+			<nome>Transtornos hemorrágicos e hematológicos do feto e do recém-nascido</nome>
+			<codigos>P50-P61</codigos>
+			</item>
+		<item seq="4-035">
+			<nome>Restante de afecções perinatais</nome>
+			<codigos>P29-P29</codigos>
+			<codigos>P35-P35</codigos>
+			<codigos>P37-P37</codigos>
+			<codigos>P39-P39</codigos>
+			<codigos>P70-P96</codigos>
+			</item>
+		<item seq="4-036">
+			<nome>Hidrocefalia e espinha bífida congênitas</nome>
+			<codigos>Q03-Q03</codigos>
+			<codigos>Q05-Q05</codigos>
+			</item>
+		<item seq="4-037">
+			<nome>Outras malformações congênitas do sistema nervoso</nome>
+			<codigos>Q00-Q02</codigos>
+			<codigos>Q04-Q04</codigos>
+			<codigos>Q06-Q07</codigos>
+			</item>
+		<item seq="4-038">
+			<nome>Malformações congênitas do coração</nome>
+			<codigos>Q20-Q24</codigos>
+			</item>
+		<item seq="4-039">
+			<nome>Outras malformações congênitas do aparelho circulatório</nome>
+			<codigos>Q25-Q28</codigos>
+			</item>
+		<item seq="4-040">
+			<nome>Síndrome de Down e outras anomalias cromossômicas</nome>
+			<codigos>Q90-Q99</codigos>
+			</item>
+		<item seq="4-041">
+			<nome>Outras malformações congênitas</nome>
+			<codigos>Q10-Q18</codigos>
+			<codigos>Q30-Q89</codigos>
+			</item>
+		<item seq="4-042">
+			<nome>Síndrome da morte súbita na infância</nome>
+			<codigos>R95-R95</codigos>
+			</item>
+		<item seq="4-043">
+			<nome>Outros sintomas, sinais e achados anormais de exames clínicos e de laboratório, não classificados em outra parte</nome>
+			<codigos>R00-R94</codigos>
+			<codigos>R96-R99</codigos>
+			</item>
+		<item seq="4-044">
+			<nome>Todas as outras doenças</nome>
+			<codigos>D00-D48</codigos>
+			<codigos>E00-E34</codigos>
+			<codigos>E65-E88</codigos>
+			<codigos>F01-F99</codigos>
+			<codigos>H00-H95</codigos>
+			<codigos>I00-I99</codigos>
+			<codigos>J30-J98</codigos>
+			<codigos>L00-L98</codigos>
+			<codigos>M00-M99</codigos>
+			<codigos>N00-N98</codigos>
+			</item>
+		<item seq="4-045">
+			<nome>Acidentes de transporte</nome>
+			<codigos>V01-V99</codigos>
+			</item>
+		<item seq="4-046">
+			<nome>Afogamento e submersão acidentais</nome>
+			<codigos>W65-W74</codigos>
+			</item>
+		<item seq="4-047">
+			<nome>Outros riscos acidentais à respiração</nome>
+			<codigos>W75-W84</codigos>
+			</item>
+		<item seq="4-048">
+			<nome>Exposição à fumaça, ao fogo e as chamas</nome>
+			<codigos>X00-X09</codigos>
+			</item>
+		<item seq="4-049">
+			<nome>Envenenamento (intoxicação) acidental por ou exposição a substâncias nocivas</nome>
+			<codigos>X40-X49</codigos>
+			</item>
+		<item seq="4-050">
+			<nome>Agressões</nome>
+			<codigos>X85-Y09</codigos>
+			</item>
+		<item seq="4-051">
+			<nome>Todas as outras causas externas</nome>
+			<codigos>W00-W64</codigos>
+			<codigos>W85-W99</codigos>
+			<codigos>X10-X39</codigos>
+			<codigos>X50-X84</codigos>
+			<codigos>Y10-Y89</codigos>
+			</item>
+		<item seq="4-901">
+			<nome>Síndrome respiratória aguda grave (Severe acute respiratory syndrome) [SARS]</nome>
+			<codigos>U04</codigos>
+			</item>
+		</lista>
+	<lista>
+		<nome>Morbidade</nome>
+		<item seq="001">
+			<nome>Cólera</nome>
+			<codigos>A00-A00</codigos>
+			</item>
+		<item seq="002">
+			<nome>Febres tifóide e paratifóide</nome>
+			<codigos>A01-A01</codigos>
+			</item>
+		<item seq="003">
+			<nome>Shiguelose</nome>
+			<codigos>A03-A03</codigos>
+			</item>
+		<item seq="004">
+			<nome>Amebíase</nome>
+			<codigos>A06-A06</codigos>
+			</item>
+		<item seq="005">
+			<nome>Diarréia e gastroenterite de origem infecciosa presumível</nome>
+			<codigos>A09-A09</codigos>
+			</item>
+		<item seq="006">
+			<nome>Outras doenças infecciosas intestinais</nome>
+			<codigos>A02-A02</codigos>
+			<codigos>A04-A05</codigos>
+			<codigos>A07-A08</codigos>
+			</item>
+		<item seq="007">
+			<nome>Tuberculose respiratória</nome>
+			<codigos>A15-A16</codigos>
+			</item>
+		<item seq="008">
+			<nome>Outras tuberculoses</nome>
+			<codigos>A17-A19</codigos>
+			</item>
+		<item seq="009">
+			<nome>Peste</nome>
+			<codigos>A20-A20</codigos>
+			</item>
+		<item seq="010">
+			<nome>Brucelose</nome>
+			<codigos>A23-A23</codigos>
+			</item>
+		<item seq="011">
+			<nome>Hanseníase [lepra]</nome>
+			<codigos>A30-A30</codigos>
+			</item>
+		<item seq="012">
+			<nome>Tétano neonatal</nome>
+			<codigos>A33-A33</codigos>
+			</item>
+		<item seq="013">
+			<nome>Outros tétanos</nome>
+			<codigos>A34-A35</codigos>
+			</item>
+		<item seq="014">
+			<nome>Difteria</nome>
+			<codigos>A36-A36</codigos>
+			</item>
+		<item seq="015">
+			<nome>Coqueluche</nome>
+			<codigos>A37-A37</codigos>
+			</item>
+		<item seq="016">
+			<nome>Infecção meningocócica</nome>
+			<codigos>A39-A39</codigos>
+			</item>
+		<item seq="017">
+			<nome>Septicemia</nome>
+			<codigos>A40-A41</codigos>
+			</item>
+		<item seq="018">
+			<nome>Outras doenças bacterianas</nome>
+			<codigos>A21-A22</codigos>
+			<codigos>A24-A28</codigos>
+			<codigos>A31-A32</codigos>
+			<codigos>A38-A38</codigos>
+			<codigos>A42-A49</codigos>
+			</item>
+		<item seq="019">
+			<nome>Sífilis congênita</nome>
+			<codigos>A50-A50</codigos>
+			</item>
+		<item seq="020">
+			<nome>Sífilis precoce</nome>
+			<codigos>A51-A51</codigos>
+			</item>
+		<item seq="021">
+			<nome>Outras sífilis</nome>
+			<codigos>A52-A53</codigos>
+			</item>
+		<item seq="022">
+			<nome>Infecção gonocócica</nome>
+			<codigos>A54-A54</codigos>
+			</item>
+		<item seq="023">
+			<nome>Doenças por clamídias transmitidas por via sexual</nome>
+			<codigos>A55-A56</codigos>
+			</item>
+		<item seq="024">
+			<nome>Outras infecções com transmissão predominantemente sexual</nome>
+			<codigos>A57-A64</codigos>
+			</item>
+		<item seq="025">
+			<nome>Febres recorrentes</nome>
+			<codigos>A68-A68</codigos>
+			</item>
+		<item seq="026">
+			<nome>Tracoma</nome>
+			<codigos>A71-A71</codigos>
+			</item>
+		<item seq="027">
+			<nome>Tifo exantemático</nome>
+			<codigos>A75-A75</codigos>
+			</item>
+		<item seq="028">
+			<nome>Poliomielite aguda</nome>
+			<codigos>A80-A80</codigos>
+			</item>
+		<item seq="029">
+			<nome>Raiva</nome>
+			<codigos>A82-A82</codigos>
+			</item>
+		<item seq="030">
+			<nome>Encefalite viral</nome>
+			<codigos>A83-A86</codigos>
+			</item>
+		<item seq="031">
+			<nome>Febre amarela</nome>
+			<codigos>A95-A95</codigos>
+			</item>
+		<item seq="032">
+			<nome>Outras febre por arbovírus e febres hemorrágicas por vírus</nome>
+			<codigos>A90-A94</codigos>
+			<codigos>A96-A99</codigos>
+			</item>
+		<item seq="033">
+			<nome>Infecções pelo vírus do herpes</nome>
+			<codigos>B00-B00</codigos>
+			</item>
+		<item seq="034">
+			<nome>Varicela e herpes zoster</nome>
+			<codigos>B01-B02</codigos>
+			</item>
+		<item seq="035">
+			<nome>Sarampo</nome>
+			<codigos>B05-B05</codigos>
+			</item>
+		<item seq="036">
+			<nome>Rubéola</nome>
+			<codigos>B06-B06</codigos>
+			</item>
+		<item seq="037">
+			<nome>Hepatite aguda B</nome>
+			<codigos>B16-B16</codigos>
+			</item>
+		<item seq="038">
+			<nome>Outras hepatites virais</nome>
+			<codigos>B15-B15</codigos>
+			<codigos>B17-B19</codigos>
+			</item>
+		<item seq="039">
+			<nome>Doença pelo vírus da imunodeficiência humana [HIV]</nome>
+			<codigos>B20-B24</codigos>
+			</item>
+		<item seq="040">
+			<nome>Caxumba [parotidite epidêmica]</nome>
+			<codigos>B26-B26</codigos>
+			</item>
+		<item seq="041">
+			<nome>Outras doenças virais</nome>
+			<codigos>A81-A81</codigos>
+			<codigos>A87-A89</codigos>
+			<codigos>B03-B04</codigos>
+			<codigos>B07-B09</codigos>
+			<codigos>B25-B25</codigos>
+			<codigos>B27-B34</codigos>
+			</item>
+		<item seq="042">
+			<nome>Micoses</nome>
+			<codigos>B35-B49</codigos>
+			</item>
+		<item seq="043">
+			<nome>Malária</nome>
+			<codigos>B50-B54</codigos>
+			</item>
+		<item seq="044">
+			<nome>Leishmaniose</nome>
+			<codigos>B55-B55</codigos>
+			</item>
+		<item seq="045">
+			<nome>Tripanossomíase</nome>
+			<codigos>B56-B57</codigos>
+			</item>
+		<item seq="046">
+			<nome>Esquistossomose</nome>
+			<codigos>B65-B65</codigos>
+			</item>
+		<item seq="047">
+			<nome>Outras infestações por trematódeos</nome>
+			<codigos>B66-B66</codigos>
+			</item>
+		<item seq="048">
+			<nome>Equinococose</nome>
+			<codigos>B67-B67</codigos>
+			</item>
+		<item seq="049">
+			<nome>Dracunculíase</nome>
+			<codigos>B72-B72</codigos>
+			</item>
+		<item seq="050">
+			<nome>Oncocercose</nome>
+			<codigos>B73-B73</codigos>
+			</item>
+		<item seq="051">
+			<nome>Filariose</nome>
+			<codigos>B74-B74</codigos>
+			</item>
+		<item seq="052">
+			<nome>Ancilostomíase</nome>
+			<codigos>B76-B76</codigos>
+			</item>
+		<item seq="053">
+			<nome>Outras helmintíases</nome>
+			<codigos>B68-B71</codigos>
+			<codigos>B75-B75</codigos>
+			<codigos>B77-B83</codigos>
+			</item>
+		<item seq="054">
+			<nome>Seqüelas de tuberculose</nome>
+			<codigos>B90-B90</codigos>
+			</item>
+		<item seq="055">
+			<nome>Seqüelas de poliomielite</nome>
+			<codigos>B91-B91</codigos>
+			</item>
+		<item seq="056">
+			<nome>Seqüelas de hanseníase [lepra]</nome>
+			<codigos>B92-B92</codigos>
+			</item>
+		<item seq="057">
+			<nome>Outras doenças infecciosas e parasitárias</nome>
+			<codigos>A65-A67</codigos>
+			<codigos>A69-A70</codigos>
+			<codigos>A74-A74</codigos>
+			<codigos>A77-A79</codigos>
+			<codigos>B58-B64</codigos>
+			<codigos>B85-B89</codigos>
+			<codigos>B94-B99</codigos>
+			</item>
+		<item seq="058">
+			<nome>Neoplasia maligna do lábio, cavidade oral e faringe</nome>
+			<codigos>C00-C14</codigos>
+			</item>
+		<item seq="059">
+			<nome>Neoplasia maligna do esôfago</nome>
+			<codigos>C15-C15</codigos>
+			</item>
+		<item seq="060">
+			<nome>Neoplasia maligna do estômago</nome>
+			<codigos>C16-C16</codigos>
+			</item>
+		<item seq="061">
+			<nome>Neoplasia maligna do cólon</nome>
+			<codigos>C18-C18</codigos>
+			</item>
+		<item seq="062">
+			<nome>Neoplasia maligna da junção retossigmóide, reto, ânus e canal anal</nome>
+			<codigos>C19-C21</codigos>
+			</item>
+		<item seq="063">
+			<nome>Neoplasia maligna do fígado e das vias biliares intra-hepáticas</nome>
+			<codigos>C22-C22</codigos>
+			</item>
+		<item seq="064">
+			<nome>Neoplasia maligna do pâncreas</nome>
+			<codigos>C25-C25</codigos>
+			</item>
+		<item seq="065">
+			<nome>Outras neoplasias malignas de órgãos digestivos</nome>
+			<codigos>C17-C17</codigos>
+			<codigos>C23-C24</codigos>
+			<codigos>C26-C26</codigos>
+			</item>
+		<item seq="066">
+			<nome>Neoplasias malignas de laringe</nome>
+			<codigos>C32-C32</codigos>
+			</item>
+		<item seq="067">
+			<nome>Neoplasia maligna da traquéia, dos brônquios e dos pulmões</nome>
+			<codigos>C33-C34</codigos>
+			</item>
+		<item seq="068">
+			<nome>Outras neoplasias malignas de órgãos respiratórios e intratorácicos</nome>
+			<codigos>C30-C31</codigos>
+			<codigos>C37-C39</codigos>
+			</item>
+		<item seq="069">
+			<nome>Neoplasia maligna do osso e da cartilagem articular</nome>
+			<codigos>C40-C41</codigos>
+			</item>
+		<item seq="070">
+			<nome>Neoplasia maligna da pele</nome>
+			<codigos>C43-C43</codigos>
+			</item>
+		<item seq="071">
+			<nome>Outras neoplasias malignas da pele</nome>
+			<codigos>C44-C44</codigos>
+			</item>
+		<item seq="072">
+			<nome>Neoplasias malignas do tecido mesotelial e tecidos moles</nome>
+			<codigos>C45-C49</codigos>
+			</item>
+		<item seq="073">
+			<nome>Neoplasia maligna da mama</nome>
+			<codigos>C50-C50</codigos>
+			</item>
+		<item seq="074">
+			<nome>Neoplasia maligna do colo do útero</nome>
+			<codigos>C53-C53</codigos>
+			</item>
+		<item seq="075">
+			<nome>Neoplasia maligna de outras porções e de porções não especificadas do útero</nome>
+			<codigos>C54-C55</codigos>
+			</item>
+		<item seq="076">
+			<nome>Outras neoplasias malignas dos órgãos genitais femininos</nome>
+			<codigos>C51-C52</codigos>
+			<codigos>C56-C58</codigos>
+			</item>
+		<item seq="077">
+			<nome>Neoplasia maligna da próstata</nome>
+			<codigos>C61-C61</codigos>
+			</item>
+		<item seq="078">
+			<nome>Outras neoplasias malignas dos órgãos genitais masculinos</nome>
+			<codigos>C60-C60</codigos>
+			<codigos>C62-C63</codigos>
+			</item>
+		<item seq="079">
+			<nome>Neoplasia maligna da bexiga</nome>
+			<codigos>C67-C67</codigos>
+			</item>
+		<item seq="080">
+			<nome>Outras neoplasias malignas do trato urinário</nome>
+			<codigos>C64-C66</codigos>
+			<codigos>C68-C68</codigos>
+			</item>
+		<item seq="081">
+			<nome>Neoplasia maligna dos olhos e anexos</nome>
+			<codigos>C69-C69</codigos>
+			</item>
+		<item seq="082">
+			<nome>Neoplasia maligna do encéfalo</nome>
+			<codigos>C71-C71</codigos>
+			</item>
+		<item seq="083">
+			<nome>Neoplasia maligna de outras partes do sistema nervoso central</nome>
+			<codigos>C70-C70</codigos>
+			<codigos>C72-C72</codigos>
+			</item>
+		<item seq="084">
+			<nome>Neoplasias malignas de outras localizações, de localização mal definida, secundárias e de localização não especificada</nome>
+			<codigos>C73-C80</codigos>
+			<codigos>C97-C97</codigos>
+			</item>
+		<item seq="085">
+			<nome>Doença de Hodgkin</nome>
+			<codigos>C81-C81</codigos>
+			</item>
+		<item seq="086">
+			<nome>Linfoma não-Hodgkin</nome>
+			<codigos>C82-C85</codigos>
+			</item>
+		<item seq="087">
+			<nome>Leucemia</nome>
+			<codigos>C91-C95</codigos>
+			</item>
+		<item seq="088">
+			<nome>Outras neoplasias malignas de tecidos linfóide, hematopoético e relacionados</nome>
+			<codigos>C88-C90</codigos>
+			<codigos>C96-C96</codigos>
+			</item>
+		<item seq="089">
+			<nome>Carcinoma in situ de colo do útero</nome>
+			<codigos>D06-D06</codigos>
+			</item>
+		<item seq="090">
+			<nome>Neoplasia benigna da pele</nome>
+			<codigos>D22-D23</codigos>
+			</item>
+		<item seq="091">
+			<nome>Neoplasia benigna da mama</nome>
+			<codigos>D24-D24</codigos>
+			</item>
+		<item seq="092">
+			<nome>Leiomioma do útero</nome>
+			<codigos>D25-D25</codigos>
+			</item>
+		<item seq="093">
+			<nome>Neoplasia benigna do ovário</nome>
+			<codigos>D27-D27</codigos>
+			</item>
+		<item seq="094">
+			<nome>Neoplasia benigna dos órgãos urinários</nome>
+			<codigos>D30-D30</codigos>
+			</item>
+		<item seq="095">
+			<nome>Neoplasia benigna do encéfalo e de outras partes do sistema nervoso central</nome>
+			<codigos>D33-D33</codigos>
+			</item>
+		<item seq="096">
+			<nome>Outras neoplasias in situ e neoplasias benignas e neoplasias de comportamento incerto ou desconhecido</nome>
+			<codigos>D00-D05</codigos>
+			<codigos>D07-D21</codigos>
+			<codigos>D26-D26</codigos>
+			<codigos>D28-D29</codigos>
+			<codigos>D31-D32</codigos>
+			<codigos>D34-D48</codigos>
+			</item>
+		<item seq="097">
+			<nome>Anemia por deficiência de ferro</nome>
+			<codigos>D50-D50</codigos>
+			</item>
+		<item seq="098">
+			<nome>Outras anemias</nome>
+			<codigos>D51-D64</codigos>
+			</item>
+		<item seq="099">
+			<nome>Afecções hemorrágicas e outras doenças do sangue e dos órgãos hematopoéticos</nome>
+			<codigos>D65-D77</codigos>
+			</item>
+		<item seq="100">
+			<nome>Alguns transtornos envolvendo o mecanismo imunitário</nome>
+			<codigos>D80-D89</codigos>
+			</item>
+		<item seq="101">
+			<nome>Transtornos tireoidianos relacionados à deficiência de iodo</nome>
+			<codigos>E00-E02</codigos>
+			</item>
+		<item seq="102">
+			<nome>Tireotoxicose</nome>
+			<codigos>E05-E05</codigos>
+			</item>
+		<item seq="103">
+			<nome>Outros transtornos tireoidianos</nome>
+			<codigos>E03-E04</codigos>
+			<codigos>E06-E07</codigos>
+			</item>
+		<item seq="104">
+			<nome>Diabetes mellitus</nome>
+			<codigos>E10-E14</codigos>
+			</item>
+		<item seq="105">
+			<nome>Desnutrição</nome>
+			<codigos>E40-E46</codigos>
+			</item>
+		<item seq="106">
+			<nome>Deficiência de vitamina A</nome>
+			<codigos>E50-E50</codigos>
+			</item>
+		<item seq="107">
+			<nome>Outras deficiências vitamínicas</nome>
+			<codigos>E51-E56</codigos>
+			</item>
+		<item seq="108">
+			<nome>Seqüelas de desnutrição e de outras deficiências nutricionais</nome>
+			<codigos>E64-E64</codigos>
+			</item>
+		<item seq="109">
+			<nome>Obesidade</nome>
+			<codigos>E66-E66</codigos>
+			</item>
+		<item seq="110">
+			<nome>Depleção de volume</nome>
+			<codigos>E86-E86</codigos>
+			</item>
+		<item seq="111">
+			<nome>Outros transtornos endócrinos, nutricionais e metabólicos</nome>
+			<codigos>E15-E35</codigos>
+			<codigos>E58-E63</codigos>
+			<codigos>E65-E65</codigos>
+			<codigos>E67-E85</codigos>
+			<codigos>E87-E90</codigos>
+			</item>
+		<item seq="112">
+			<nome>Demência</nome>
+			<codigos>F00-F03</codigos>
+			</item>
+		<item seq="113">
+			<nome>Transtornos mentais e comportamentais devidos ao uso de álcool</nome>
+			<codigos>F10-F10</codigos>
+			</item>
+		<item seq="114">
+			<nome>Transtornos mentais e comportamentais devidos ao uso de outras substâncias psicoativas</nome>
+			<codigos>F11-F19</codigos>
+			</item>
+		<item seq="115">
+			<nome>Esquizofrenia, transtornos esquizotípicos e delirantes</nome>
+			<codigos>F20-F29</codigos>
+			</item>
+		<item seq="116">
+			<nome>Transtornos de humor [afetivos]</nome>
+			<codigos>F30-F39</codigos>
+			</item>
+		<item seq="117">
+			<nome>Transtornos neuróticos, transtornos relacionados com o "stress" e transtornos somatoformes</nome>
+			<codigos>F40-F48</codigos>
+			</item>
+		<item seq="118">
+			<nome>Retardo mental</nome>
+			<codigos>F70-F79</codigos>
+			</item>
+		<item seq="119">
+			<nome>Outros transtornos mentais e comportamentais</nome>
+			<codigos>F04-F09</codigos>
+			<codigos>F50-F69</codigos>
+			<codigos>F80-F99</codigos>
+			</item>
+		<item seq="120">
+			<nome>Doenças inflamatórias do sistema nervoso central</nome>
+			<codigos>G00-G09</codigos>
+			</item>
+		<item seq="121">
+			<nome>Doença de Parkinson</nome>
+			<codigos>G20-G20</codigos>
+			</item>
+		<item seq="122">
+			<nome>Doença de Alzheimer</nome>
+			<codigos>G30-G30</codigos>
+			</item>
+		<item seq="123">
+			<nome>Esclerose múltiplas</nome>
+			<codigos>G35-G35</codigos>
+			</item>
+		<item seq="124">
+			<nome>Epilepsia</nome>
+			<codigos>G40-G41</codigos>
+			</item>
+		<item seq="125">
+			<nome>Enxaqueca e outras síndromes de algias cefálicos</nome>
+			<codigos>G43-G44</codigos>
+			</item>
+		<item seq="126">
+			<nome>Acidentes vasculares cerebrais isquêmicos transitórios e síndromes correlatas</nome>
+			<codigos>G45-G45</codigos>
+			</item>
+		<item seq="127">
+			<nome>Transtornos dos nervos, das raízes e dos plexos nervosos</nome>
+			<codigos>G50-G59</codigos>
+			</item>
+		<item seq="128">
+			<nome>Paralisia cerebral e outras síndromes paralíticas</nome>
+			<codigos>G80-G83</codigos>
+			</item>
+		<item seq="129">
+			<nome>Outras doenças do sistema nervoso</nome>
+			<codigos>G10-G13</codigos>
+			<codigos>G21-G26</codigos>
+			<codigos>G31-G32</codigos>
+			<codigos>G36-G37</codigos>
+			<codigos>G46-G47</codigos>
+			<codigos>G60-G73</codigos>
+			<codigos>G90-G99</codigos>
+			</item>
+		<item seq="130">
+			<nome>Inflamação da pálpebra</nome>
+			<codigos>H00-H01</codigos>
+			</item>
+		<item seq="131">
+			<nome>Conjuntivite e outros transtornos da conjuntiva</nome>
+			<codigos>H10-H13</codigos>
+			</item>
+		<item seq="132">
+			<nome>Ceratite e outros transtornos da esclerótica e da córnea</nome>
+			<codigos>H15-H19</codigos>
+			</item>
+		<item seq="133">
+			<nome>Catarata e outros transtornos do cristalino</nome>
+			<codigos>H25-H28</codigos>
+			</item>
+		<item seq="134">
+			<nome>Descolamentos e defeitos da retina</nome>
+			<codigos>H33-H33</codigos>
+			</item>
+		<item seq="135">
+			<nome>Glaucoma</nome>
+			<codigos>H40-H42</codigos>
+			</item>
+		<item seq="136">
+			<nome>Estrabismo</nome>
+			<codigos>H49-H50</codigos>
+			</item>
+		<item seq="137">
+			<nome>Transtornos da refração e da acomodação</nome>
+			<codigos>H52-H52</codigos>
+			</item>
+		<item seq="138">
+			<nome>Cegueira e visão subnormal</nome>
+			<codigos>H54-H54</codigos>
+			</item>
+		<item seq="139">
+			<nome>Outras doenças do olho e anexos</nome>
+			<codigos>H02-H06</codigos>
+			<codigos>H20-H22</codigos>
+			<codigos>H30-H32</codigos>
+			<codigos>H34-H36</codigos>
+			<codigos>H43-H48</codigos>
+			<codigos>H51-H51</codigos>
+			<codigos>H53-H53</codigos>
+			<codigos>H55-H59</codigos>
+			</item>
+		<item seq="140">
+			<nome>Otite média e outros transtornos do ouvido médio e da apófise mastóide</nome>
+			<codigos>H65-H75</codigos>
+			</item>
+		<item seq="141">
+			<nome>Perda de audição</nome>
+			<codigos>H90-H91</codigos>
+			</item>
+		<item seq="142">
+			<nome>Outras doenças do ouvido e da apófise mastóide</nome>
+			<codigos>H60-H62</codigos>
+			<codigos>H80-H83</codigos>
+			<codigos>H92-H95</codigos>
+			</item>
+		<item seq="143">
+			<nome>Febre reumática aguda</nome>
+			<codigos>I00-I02</codigos>
+			</item>
+		<item seq="144">
+			<nome>Doença reumática crônica do coração</nome>
+			<codigos>I05-I09</codigos>
+			</item>
+		<item seq="145">
+			<nome>Hipertensão essencial (primária)</nome>
+			<codigos>I10-I10</codigos>
+			</item>
+		<item seq="146">
+			<nome>Outras doenças hipertensivas</nome>
+			<codigos>I11-I15</codigos>
+			</item>
+		<item seq="147">
+			<nome>Infarto agudo do miocárdio</nome>
+			<codigos>I21-I22</codigos>
+			</item>
+		<item seq="148">
+			<nome>Outras doenças isquêmicas do coração</nome>
+			<codigos>I20-I20</codigos>
+			<codigos>I23-I25</codigos>
+			</item>
+		<item seq="149">
+			<nome>Embolia pulmonar</nome>
+			<codigos>I26-I26</codigos>
+			</item>
+		<item seq="150">
+			<nome>Transtornos de condução e arritmias cardíacas</nome>
+			<codigos>I44-I49</codigos>
+			</item>
+		<item seq="151">
+			<nome>Insuficiência cardíaca</nome>
+			<codigos>I50-I50</codigos>
+			</item>
+		<item seq="152">
+			<nome>Outras doenças do coração</nome>
+			<codigos>I27-I43</codigos>
+			<codigos>I51-I52</codigos>
+			</item>
+		<item seq="153">
+			<nome>Hemorragia intracraniana</nome>
+			<codigos>I60-I62</codigos>
+			</item>
+		<item seq="154">
+			<nome>Infarto cerebral</nome>
+			<codigos>I63-I63</codigos>
+			</item>
+		<item seq="155">
+			<nome>Acidente vascular cerebral, não especificado como hemorrágico ou isquêmico</nome>
+			<codigos>I64-I64</codigos>
+			</item>
+		<item seq="156">
+			<nome>Outras doenças cerebrovasculares</nome>
+			<codigos>I65-I69</codigos>
+			</item>
+		<item seq="157">
+			<nome>Arteroesclerose</nome>
+			<codigos>I70-I70</codigos>
+			</item>
+		<item seq="158">
+			<nome>Outras doenças vasculares periféricas</nome>
+			<codigos>I73-I73</codigos>
+			</item>
+		<item seq="159">
+			<nome>Embolia e trombose arteriais</nome>
+			<codigos>I74-I74</codigos>
+			</item>
+		<item seq="160">
+			<nome>Outras doenças das artérias, arteríolas e capilares</nome>
+			<codigos>I71-I72</codigos>
+			<codigos>I77-I79</codigos>
+			</item>
+		<item seq="161">
+			<nome>Flebite, tromboflebite, embolia e trombose venosa</nome>
+			<codigos>I80-I82</codigos>
+			</item>
+		<item seq="162">
+			<nome>Veias varicosas das extremidades inferiores</nome>
+			<codigos>I83-I83</codigos>
+			</item>
+		<item seq="163">
+			<nome>Hemorróidas</nome>
+			<codigos>I84-I84</codigos>
+			</item>
+		<item seq="164">
+			<nome>Outras doenças do aparelho circulatório</nome>
+			<codigos>I85-I99</codigos>
+			</item>
+		<item seq="165">
+			<nome>Faringite aguda e amigdalite aguda</nome>
+			<codigos>J02-J03</codigos>
+			</item>
+		<item seq="166">
+			<nome>Laringite e traqueíte agudas</nome>
+			<codigos>J04-J04</codigos>
+			</item>
+		<item seq="167">
+			<nome>Outras infecções agudas das vias aéreas superiores</nome>
+			<codigos>J00-J01</codigos>
+			<codigos>J05-J06</codigos>
+			</item>
+		<item seq="168">
+			<nome>Influenza [gripe]</nome>
+			<codigos>J09-J11</codigos>
+			</item>
+		<item seq="169">
+			<nome>Pneumonia</nome>
+			<codigos>J12-J18</codigos>
+			</item>
+		<item seq="170">
+			<nome>Bronquite aguda e bronquiolite aguda</nome>
+			<codigos>J20-J21</codigos>
+			</item>
+		<item seq="171">
+			<nome>Sinusite crônica</nome>
+			<codigos>J32-J32</codigos>
+			</item>
+		<item seq="172">
+			<nome>Outras doenças do nariz e dos seios paranasais</nome>
+			<codigos>J30-J31</codigos>
+			<codigos>J33-J34</codigos>
+			</item>
+		<item seq="173">
+			<nome>Doenças crônicas das amígdalas e das adenóides</nome>
+			<codigos>J35-J35</codigos>
+			</item>
+		<item seq="174">
+			<nome>Outras doenças do trato respiratório superior</nome>
+			<codigos>J36-J39</codigos>
+			</item>
+		<item seq="175">
+			<nome>Bronquite, enfisema e outras doenças pulmonares obstrutivas crônicas</nome>
+			<codigos>J40-J44</codigos>
+			</item>
+		<item seq="176">
+			<nome>Asma</nome>
+			<codigos>J45-J46</codigos>
+			</item>
+		<item seq="177">
+			<nome>Bronquiectasia</nome>
+			<codigos>J47-J47</codigos>
+			</item>
+		<item seq="178">
+			<nome>Pneumoconiose</nome>
+			<codigos>J60-J65</codigos>
+			</item>
+		<item seq="179">
+			<nome>Outras doenças do aparelho respiratório</nome>
+			<codigos>J22-J22</codigos>
+			<codigos>J66-J99</codigos>
+			</item>
+		<item seq="180">
+			<nome>Cárie dentária</nome>
+			<codigos>K02-K02</codigos>
+			</item>
+		<item seq="181">
+			<nome>Outros transtornos dos dentes e estruturas de suporte</nome>
+			<codigos>K00-K01</codigos>
+			<codigos>K03-K08</codigos>
+			</item>
+		<item seq="182">
+			<nome>Outras doenças da cavidade oral, glândulas salivares e dos maxilares</nome>
+			<codigos>K09-K14</codigos>
+			</item>
+		<item seq="183">
+			<nome>Úlcera gástrica e duodenal</nome>
+			<codigos>K25-K27</codigos>
+			</item>
+		<item seq="184">
+			<nome>Gastrite e duodenite</nome>
+			<codigos>K29-K29</codigos>
+			</item>
+		<item seq="185">
+			<nome>Outras doenças do esôfago, estômago e duodeno</nome>
+			<codigos>K20-K23</codigos>
+			<codigos>K28-K28</codigos>
+			<codigos>K30-K31</codigos>
+			</item>
+		<item seq="186">
+			<nome>Doenças do apêndice</nome>
+			<codigos>K35-K38</codigos>
+			</item>
+		<item seq="187">
+			<nome>Hérnia inguinal</nome>
+			<codigos>K40-K40</codigos>
+			</item>
+		<item seq="188">
+			<nome>Outras hérnias</nome>
+			<codigos>K41-K46</codigos>
+			</item>
+		<item seq="189">
+			<nome>Doença de Crohn e colite ulcerativa</nome>
+			<codigos>K50-K51</codigos>
+			</item>
+		<item seq="190">
+			<nome>Ileo paralítico e obstrução intestinal sem hérnia</nome>
+			<codigos>K56-K56</codigos>
+			</item>
+		<item seq="191">
+			<nome>Doença diverticular do intestino</nome>
+			<codigos>K57-K57</codigos>
+			</item>
+		<item seq="192">
+			<nome>Outras doenças dos intestinos e peritônio</nome>
+			<codigos>K52-K55</codigos>
+			<codigos>K58-K67</codigos>
+			</item>
+		<item seq="193">
+			<nome>Doença alcoólica do fígado</nome>
+			<codigos>K70-K70</codigos>
+			</item>
+		<item seq="194">
+			<nome>Outras doenças do fígado</nome>
+			<codigos>K71-K77</codigos>
+			</item>
+		<item seq="195">
+			<nome>Colelitíase e colecistite</nome>
+			<codigos>K80-K81</codigos>
+			</item>
+		<item seq="196">
+			<nome>Pancreatite aguda e outras doenças do pâncreas</nome>
+			<codigos>K85-K86</codigos>
+			</item>
+		<item seq="197">
+			<nome>Outras doenças do aparelho digestivo</nome>
+			<codigos>K82-K83</codigos>
+			<codigos>K87-K93</codigos>
+			</item>
+		<item seq="198">
+			<nome>Infecções da pele e do tecido subcutâneo</nome>
+			<codigos>L00-L08</codigos>
+			</item>
+		<item seq="199">
+			<nome>Outras doenças da pele e do tecido subcutâneo</nome>
+			<codigos>L10-L99</codigos>
+			</item>
+		<item seq="200">
+			<nome>Artrite reumatóide e outras poliartropatias inflamatórias</nome>
+			<codigos>M05-M14</codigos>
+			</item>
+		<item seq="201">
+			<nome>Artrose</nome>
+			<codigos>M15-M19</codigos>
+			</item>
+		<item seq="202">
+			<nome>Deformidades adquiridas das articulações</nome>
+			<codigos>M20-M21</codigos>
+			</item>
+		<item seq="203">
+			<nome>Outros transtronos articulares</nome>
+			<codigos>M00-M03</codigos>
+			<codigos>M22-M25</codigos>
+			</item>
+		<item seq="204">
+			<nome>Doenças sistêmicas do tecido conjuntivo</nome>
+			<codigos>M30-M36</codigos>
+			</item>
+		<item seq="205">
+			<nome>Transtornos discais cervicais e outros transtornos discais intervertebrais</nome>
+			<codigos>M50-M51</codigos>
+			</item>
+		<item seq="206">
+			<nome>Outras dorsopatias</nome>
+			<codigos>M40-M49</codigos>
+			<codigos>M53-M54</codigos>
+			</item>
+		<item seq="207">
+			<nome>Transtornos do tecido mole</nome>
+			<codigos>M60-M79</codigos>
+			</item>
+		<item seq="208">
+			<nome>Transtornos da densidade e da estrutura ósseas</nome>
+			<codigos>M80-M85</codigos>
+			</item>
+		<item seq="209">
+			<nome>Osteomielite</nome>
+			<codigos>M86-M86</codigos>
+			</item>
+		<item seq="210">
+			<nome>Outras doenças do sistema osteomuscular e do tecido conjuntivo</nome>
+			<codigos>M87-M99</codigos>
+			</item>
+		<item seq="211">
+			<nome>Síndrome nefríticas aguda e rapidamente progressiva</nome>
+			<codigos>N00-N01</codigos>
+			</item>
+		<item seq="212">
+			<nome>Outras doenças glomerulares</nome>
+			<codigos>N02-N08</codigos>
+			</item>
+		<item seq="213">
+			<nome>Doenças renais túbulo-intersticiais</nome>
+			<codigos>N10-N16</codigos>
+			</item>
+		<item seq="214">
+			<nome>Insuficiência renal</nome>
+			<codigos>N17-N19</codigos>
+			</item>
+		<item seq="215">
+			<nome>Urolitíase</nome>
+			<codigos>N20-N23</codigos>
+			</item>
+		<item seq="216">
+			<nome>Cistite</nome>
+			<codigos>N30-N30</codigos>
+			</item>
+		<item seq="217">
+			<nome>Outras doenças do aparelho urinário</nome>
+			<codigos>N25-N29</codigos>
+			<codigos>N31-N39</codigos>
+			</item>
+		<item seq="218">
+			<nome>Hiperplasia da próstata</nome>
+			<codigos>N40-N40</codigos>
+			</item>
+		<item seq="219">
+			<nome>Outros transtornos da próstata</nome>
+			<codigos>N41-N42</codigos>
+			</item>
+		<item seq="220">
+			<nome>Hidrocele e espermatocele</nome>
+			<codigos>N43-N43</codigos>
+			</item>
+		<item seq="221">
+			<nome>Preprúcio redundante, fimose e parafimose</nome>
+			<codigos>N47-N47</codigos>
+			</item>
+		<item seq="222">
+			<nome>Outras doenças dos órgãos genitais masculinos</nome>
+			<codigos>N44-N46</codigos>
+			<codigos>N48-N51</codigos>
+			</item>
+		<item seq="223">
+			<nome>Transtornos da mama</nome>
+			<codigos>N60-N64</codigos>
+			</item>
+		<item seq="224">
+			<nome>Salpingite e ooforite</nome>
+			<codigos>N70-N70</codigos>
+			</item>
+		<item seq="225">
+			<nome>Doença inflamatória do colo do útero</nome>
+			<codigos>N72-N72</codigos>
+			</item>
+		<item seq="226">
+			<nome>Outras doenças inflamatórias dos órgãos pélvicos femininos</nome>
+			<codigos>N71-N71</codigos>
+			<codigos>N73-N77</codigos>
+			</item>
+		<item seq="227">
+			<nome>Endometriose</nome>
+			<codigos>N80-N80</codigos>
+			</item>
+		<item seq="228">
+			<nome>Prolapso genital feminino</nome>
+			<codigos>N81-N81</codigos>
+			</item>
+		<item seq="229">
+			<nome>Transtornos não-inflamatórios do ovário, da trompa de Falópio e do ligamento largo</nome>
+			<codigos>N83-N83</codigos>
+			</item>
+		<item seq="230">
+			<nome>Transtornos da menstruação</nome>
+			<codigos>N91-N92</codigos>
+			</item>
+		<item seq="231">
+			<nome>Transtornos menopáusicos e outros transtornos perimenopáusicos</nome>
+			<codigos>N95-N95</codigos>
+			</item>
+		<item seq="232">
+			<nome>Infertilidade feminina</nome>
+			<codigos>N97-N97</codigos>
+			</item>
+		<item seq="233">
+			<nome>Outros transtornos do aparelho geniturinário</nome>
+			<codigos>N82-N82</codigos>
+			<codigos>N84-N90</codigos>
+			<codigos>N93-N94</codigos>
+			<codigos>N96-N96</codigos>
+			<codigos>N98-N99</codigos>
+			</item>
+		<item seq="234">
+			<nome>Aborto espontâneo</nome>
+			<codigos>O03-O03</codigos>
+			</item>
+		<item seq="235">
+			<nome>Aborto por razões médicas</nome>
+			<codigos>O04-O04</codigos>
+			</item>
+		<item seq="236">
+			<nome>Outras gravidezes que terminam em aborto</nome>
+			<codigos>O00-O02</codigos>
+			<codigos>O05-O08</codigos>
+			</item>
+		<item seq="237">
+			<nome>Edema, proteinúria e transtornos hipertensivos na gravidez, parto e puerpério</nome>
+			<codigos>O10-O16</codigos>
+			</item>
+		<item seq="238">
+			<nome>Placenta prévia, descolamento prematuro de placenta e hemorragia anteparto</nome>
+			<codigos>O44-O46</codigos>
+			</item>
+		<item seq="239">
+			<nome>Outros motivos de assistência à mãe relacionados à cavidade fetal e amniótica, e possíveis problemas de parto</nome>
+			<codigos>O30-O43</codigos>
+			<codigos>O47-O48</codigos>
+			</item>
+		<item seq="240">
+			<nome>Trabalho de parto obstruído</nome>
+			<codigos>O64-O66</codigos>
+			</item>
+		<item seq="241">
+			<nome>Hemorragia pós-parto</nome>
+			<codigos>O72-O72</codigos>
+			</item>
+		<item seq="242">
+			<nome>Outras complicações da gravidez e do parto</nome>
+			<codigos>O20-O29</codigos>
+			<codigos>O60-O63</codigos>
+			<codigos>O67-O71</codigos>
+			<codigos>O73-O75</codigos>
+			<codigos>O81-O84</codigos>
+			</item>
+		<item seq="243">
+			<nome>Parto único espontâneo</nome>
+			<codigos>O80-O80</codigos>
+			</item>
+		<item seq="244">
+			<nome>Complicações predominantemente relacionadas ao puerpério e outras afecções obstétricas, não classificadas em outra parte</nome>
+			<codigos>O85-O99</codigos>
+			</item>
+		<item seq="245">
+			<nome>Feto e recém-nascido afetados por fatores maternos e por complicações da gravidez, trabalho de parto e parto</nome>
+			<codigos>P00-P04</codigos>
+			</item>
+		<item seq="246">
+			<nome>Retardo de crescimento fetal, desnutrição fetal e transtornos relacionados à gestação curta e baixo peso ao nascer</nome>
+			<codigos>P05-P07</codigos>
+			</item>
+		<item seq="247">
+			<nome>Trauma durante o nascimento</nome>
+			<codigos>P10-P15</codigos>
+			</item>
+		<item seq="248">
+			<nome>Hipóxia intrauterina e asfixia ao nascer</nome>
+			<codigos>P20-P21</codigos>
+			</item>
+		<item seq="249">
+			<nome>Outros transtornos respiratórios originados no período perinatal</nome>
+			<codigos>P22-P28</codigos>
+			</item>
+		<item seq="250">
+			<nome>Doenças infecciosas e parasitárias congênitas</nome>
+			<codigos>P35-P37</codigos>
+			</item>
+		<item seq="251">
+			<nome>Outras infecções específicas do período perinatal</nome>
+			<codigos>P38-P39</codigos>
+			</item>
+		<item seq="252">
+			<nome>Doença hemolítica do feto e do recém-nascido</nome>
+			<codigos>P55-P55</codigos>
+			</item>
+		<item seq="253">
+			<nome>Outras afecções originadas no período perinatal</nome>
+			<codigos>P08-P08</codigos>
+			<codigos>P29-P29</codigos>
+			<codigos>P50-P54</codigos>
+			<codigos>P56-P96</codigos>
+			</item>
+		<item seq="254">
+			<nome>Espinha bífida</nome>
+			<codigos>Q05-Q05</codigos>
+			</item>
+		<item seq="255">
+			<nome>Outras malformações congênitas do sistema nervoso</nome>
+			<codigos>Q00-Q04</codigos>
+			<codigos>Q06-Q72</codigos>
+			</item>
+		<item seq="256">
+			<nome>Malformações congênitas do aparelho circulatório</nome>
+			<codigos>Q20-Q28</codigos>
+			</item>
+		<item seq="257">
+			<nome>Fenda labial e fenda palatina</nome>
+			<codigos>Q35-Q37</codigos>
+			</item>
+		<item seq="258">
+			<nome>Ausência, atresia e estenose do intestino delgado</nome>
+			<codigos>Q41-Q41</codigos>
+			</item>
+		<item seq="259">
+			<nome>Outras malformações congênitas do aparelho digestivo</nome>
+			<codigos>Q38-Q40</codigos>
+			<codigos>Q42-Q45</codigos>
+			</item>
+		<item seq="260">
+			<nome>Testiculo não-descido</nome>
+			<codigos>Q53-Q53</codigos>
+			</item>
+		<item seq="261">
+			<nome>Outras malformações do aparelho geniturinário</nome>
+			<codigos>Q50-Q52</codigos>
+			<codigos>Q54-Q64</codigos>
+			</item>
+		<item seq="262">
+			<nome>Deformidades congênitas do quadril</nome>
+			<codigos>Q65-Q65</codigos>
+			</item>
+		<item seq="263">
+			<nome>Deformidades congênitas dos pés</nome>
+			<codigos>Q66-Q66</codigos>
+			</item>
+		<item seq="264">
+			<nome>Outras malformações e deformidades congênitas do aparelho osteomuscular</nome>
+			<codigos>Q67-Q79</codigos>
+			</item>
+		<item seq="265">
+			<nome>Outras malformações congênitas</nome>
+			<codigos>Q10-Q18</codigos>
+			<codigos>Q30-Q34</codigos>
+			<codigos>Q80-Q89</codigos>
+			</item>
+		<item seq="266">
+			<nome>Anomalias cromossômicas, não classificadas em outra parte</nome>
+			<codigos>Q90-Q99</codigos>
+			</item>
+		<item seq="267">
+			<nome>Dor abdominal e pélvica</nome>
+			<codigos>R10-R10</codigos>
+			</item>
+		<item seq="268">
+			<nome>Febre de origem desconhecida</nome>
+			<codigos>R50-R50</codigos>
+			</item>
+		<item seq="269">
+			<nome>Senilidade</nome>
+			<codigos>R54-R54</codigos>
+			</item>
+		<item seq="270">
+			<nome>Outros sintomas, sinais e achados anormais de exames clínicos e de laboratório, não classificados em outra parte</nome>
+			<codigos>R00-R09</codigos>
+			<codigos>R11-R49</codigos>
+			<codigos>R51-R53</codigos>
+			<codigos>R55-R99</codigos>
+			</item>
+		<item seq="271">
+			<nome>Fratura do crânio e dos ossos da face</nome>
+			<codigos>S02-S02</codigos>
+			</item>
+		<item seq="272">
+			<nome>Fratura do pescoço, tórax ou pelve</nome>
+			<codigos>S12-S12</codigos>
+			<codigos>S22-S22</codigos>
+			<codigos>S32-S32</codigos>
+			<codigos>T08-T08</codigos>
+			</item>
+		<item seq="273">
+			<nome>Fratura do fêmur</nome>
+			<codigos>S72-S72</codigos>
+			</item>
+		<item seq="274">
+			<nome>Fratura de outros ossos dos membros</nome>
+			<codigos>S42-S42</codigos>
+			<codigos>S52-S52</codigos>
+			<codigos>S62-S62</codigos>
+			<codigos>S82-S82</codigos>
+			<codigos>S92-S92</codigos>
+			<codigos>T10-T10</codigos>
+			<codigos>T12-T12</codigos>
+			</item>
+		<item seq="275">
+			<nome>Fraturas envolvendo múltiplas regiões do corpo</nome>
+			<codigos>T02-T02</codigos>
+			</item>
+		<item seq="276">
+			<nome>Luxações, entorse e distensão de regiões especificadas e de regiões múltiplas do corpo</nome>
+			<codigos>S03-S03</codigos>
+			<codigos>S13-S13</codigos>
+			<codigos>S23-S23</codigos>
+			<codigos>S33-S33</codigos>
+			<codigos>S43-S43</codigos>
+			<codigos>S53-S53</codigos>
+			<codigos>S63-S63</codigos>
+			<codigos>S73-S73</codigos>
+			<codigos>S83-S83</codigos>
+			<codigos>S93-S93</codigos>
+			<codigos>T03-T03</codigos>
+			</item>
+		<item seq="277">
+			<nome>Traumatismo do olho e da órbita ocular</nome>
+			<codigos>S05-S05</codigos>
+			</item>
+		<item seq="278">
+			<nome>Traumatismo intracraniano</nome>
+			<codigos>S06-S06</codigos>
+			</item>
+		<item seq="279">
+			<nome>Traumatismo de outros órgãos internos</nome>
+			<codigos>S26-S27</codigos>
+			<codigos>S36-S37</codigos>
+			</item>
+		<item seq="280">
+			<nome>Lesões por esmagamento e amputações traumáticas de regiões especificadas e de múltiplas regiões do corpo</nome>
+			<codigos>S07-S08</codigos>
+			<codigos>S17-S18</codigos>
+			<codigos>S28-S28</codigos>
+			<codigos>S38-S38</codigos>
+			<codigos>S47-S48</codigos>
+			<codigos>S57-S58</codigos>
+			<codigos>S67-S68</codigos>
+			<codigos>S77-S78</codigos>
+			<codigos>S87-S88</codigos>
+			<codigos>S97-S98</codigos>
+			<codigos>T04-T05</codigos>
+			</item>
+		<item seq="281">
+			<nome>Outros traumatismos de regiões especificadas e não especificadas e de regiões múltiplas do corpo</nome>
+			<codigos>S00-S01</codigos>
+			<codigos>S04-S04</codigos>
+			<codigos>S09-S11</codigos>
+			<codigos>S14-S16</codigos>
+			<codigos>S19-S21</codigos>
+			<codigos>S24-S25</codigos>
+			<codigos>S29-S31</codigos>
+			<codigos>S34-S35</codigos>
+			<codigos>S39-S41</codigos>
+			<codigos>S44-S46</codigos>
+			<codigos>S49-S51</codigos>
+			<codigos>S54-S56</codigos>
+			<codigos>S59-S61</codigos>
+			<codigos>S64-S66</codigos>
+			<codigos>S69-S71</codigos>
+			<codigos>S74-S76</codigos>
+			<codigos>S79-S81</codigos>
+			<codigos>S84-S86</codigos>
+			<codigos>S89-S91</codigos>
+			<codigos>S94-S96</codigos>
+			<codigos>T00-T01</codigos>
+			<codigos>T06-T07</codigos>
+			<codigos>T09-T09</codigos>
+			<codigos>T11-T11</codigos>
+			<codigos>T13-T14</codigos>
+			</item>
+		<item seq="282">
+			<nome>Efeitos de corpo estranho que entra através de orifício natural</nome>
+			<codigos>T15-T19</codigos>
+			</item>
+		<item seq="283">
+			<nome>Queimadura e corrosões</nome>
+			<codigos>T20-T32</codigos>
+			</item>
+		<item seq="284">
+			<nome>Envenenamento por drogas e substâncias biológicas</nome>
+			<codigos>T36-T50</codigos>
+			</item>
+		<item seq="285">
+			<nome>Efeitos tóxicos de substâncias de origem principalmente não-medicinal</nome>
+			<codigos>T51-T65</codigos>
+			</item>
+		<item seq="286">
+			<nome>Síndromes de maus tratos</nome>
+			<codigos>T74-T74</codigos>
+			</item>
+		<item seq="287">
+			<nome>Outros efeitos e os efeitos não especificados de causas externas</nome>
+			<codigos>T33-T35</codigos>
+			<codigos>T66-T73</codigos>
+			<codigos>T75-T78</codigos>
+			</item>
+		<item seq="288">
+			<nome>Certas complicações precoces de traumatismo e complicações cirúrgicas, e da assistência médica não classificadas em outra parte</nome>
+			<codigos>T79-T88</codigos>
+			</item>
+		<item seq="289">
+			<nome>Seqüelas de traumatismos, de envenenamento e de outras conseqüências de causas externas</nome>
+			<codigos>T90-T98</codigos>
+			</item>
+		<item seq="290">
+			<nome>Pessoas em contato com os serviços de saúde para exame e investigação</nome>
+			<codigos>Z00-Z13</codigos>
+			</item>
+		<item seq="291">
+			<nome>Estado de infecção assintomática pelo vírus da imunodeficiência humana [HIV]</nome>
+			<codigos>Z21-Z21</codigos>
+			</item>
+		<item seq="292">
+			<nome>Outras pessoas com riscos potenciais à saúde relacionadas com doenças transmissíveis</nome>
+			<codigos>Z20-Z20</codigos>
+			<codigos>Z22-Z29</codigos>
+			</item>
+		<item seq="293">
+			<nome>Anticoncepção</nome>
+			<codigos>Z30-Z30</codigos>
+			</item>
+		<item seq="294">
+			<nome>Rastreamento ("screening") pré-natal e outras outras supervisões da gravidez</nome>
+			<codigos>Z34-Z36</codigos>
+			</item>
+		<item seq="295">
+			<nome>Nascidos vivos segundo o local de nascimento</nome>
+			<codigos>Z38-Z38</codigos>
+			</item>
+		<item seq="296">
+			<nome>Assistência e exame pós-natal</nome>
+			<codigos>Z39-Z39</codigos>
+			</item>
+		<item seq="297">
+			<nome>Pessoas em contato com serviços de saúde para cuidados e procedimentos específicos</nome>
+			<codigos>Z40-Z54</codigos>
+			</item>
+		<item seq="298">
+			<nome>Pessoas em contato com os serviços de saúde por outras razões</nome>
+			<codigos>Z31-Z33</codigos>
+			<codigos>Z37-Z37</codigos>
+			<codigos>Z55-Z99</codigos>
+			</item>
+		<item seq="901">
+			<nome>Síndrome respiratória aguda grave (Severe acute respiratory syndrome) [SARS]</nome>
+			<codigos>U04</codigos>
+			</item>
+		</lista>
+	</listas>

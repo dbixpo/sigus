@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Relatório — Total de Ligações{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-graph-up"></i> Relatório — Total de Ligações</h1>
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</div>
+
+{# Filtros #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <button class="btn btn-link btn-sm text-decoration-none p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosRelatorio">
+            <i class="bi bi-funnel me-1"></i>Filtros
+        </button>
+    </div>
+    <div class="collapse show" id="filtrosRelatorio">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-12 col-md-3">
+                    <label class="form-label small">Data início</label>
+                    <input type="date" name="data_inicio" class="form-control form-control-sm" value="{{ data_inicio }}">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small">Data fim</label>
+                    <input type="date" name="data_fim" class="form-control form-control-sm" value="{{ data_fim }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small">Nº Ocorrência</label>
+                    <input type="text" name="numero" class="form-control form-control-sm" placeholder="Buscar..." value="{{ filtro_numero }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small">Telefone</label>
+                    <input type="text" name="telefone" class="form-control form-control-sm" placeholder="Buscar..." value="{{ filtro_telefone }}">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small">Solicitante</label>
+                    <input type="text" name="solicitante" class="form-control form-control-sm" placeholder="Buscar..." value="{{ filtro_solicitante }}">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small">Protocolo</label>
+                    <select name="protocolo" class="form-select form-select-sm">
+                        <option value="">— Todos —</option>
+                        {% for a in algoritmos %}
+                        <option value="{{ a.id }}" {% if filtro_protocolo == a.id %}selected{% endif %}>{{ a.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small">Tipo de Ligação</label>
+                    <select name="tipo_ligacao" class="form-select form-select-sm">
+                        <option value="">— Todos —</option>
+                        {% for t in tipos %}
+                        <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label small">Origem</label>
+                    <select name="origem_ligacao" class="form-select form-select-sm">
+                        <option value="">— Todos —</option>
+                        {% for o in origens %}
+                        <option value="{{ o.id }}" {% if filtro_origem == o.id %}selected{% endif %}>{{ o.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label small">Endereço</label>
+                    <input type="text" name="endereco" class="form-control form-control-sm" placeholder="Buscar em logradouro, bairro, cidade, unidade..." value="{{ filtro_endereco }}">
+                </div>
+                <div class="col-12 col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-samu-primary btn-sm w-100"><i class="bi bi-search me-1"></i>Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# Total e tabela #}
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Total: <strong>{{ total }}</strong> ligações</span>
+    </div>
+    <div class="card-body p-0">
+        {% if itens %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nº Ocorrência</th>
+                        <th>Telefone</th>
+                        <th>Nome Solicitante</th>
+                        <th>Protocolo</th>
+                        <th>Tipo Ligação</th>
+                        <th>Origem</th>
+                        <th>Endereço</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in itens %}
+                    <tr>
+                        <td>{{ i.numero or '—' }}</td>
+                        <td>{{ i.telefone | br_fone if i.telefone else '—' }}</td>
+                        <td>{{ i.nome_solicitante or '—' }}</td>
+                        <td>{{ i.algoritmo.nome if i.algoritmo else '—' }}</td>
+                        <td>{{ i.tipo_ligacao.nome if i.tipo_ligacao else '—' }}</td>
+                        <td>{{ i.origem_ligacao.nome if i.origem_ligacao else '—' }}</td>
+                        <td class="text-break small">{{ i | endereco_relatorio }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0 text-center">Nenhuma ocorrência no período.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

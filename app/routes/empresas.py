@@ -4,7 +4,7 @@ import os
 import re
 import uuid
 import mimetypes
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models.empresa import EmpresaContratada
@@ -27,7 +27,7 @@ def _digitos(val):
 @empresas_bp.route('/')
 @login_required
 def listar():
-    if not current_user.pode('cadastrar_contrato') and not current_user.pode('editar_contrato'):
+    if not current_user.pode('ver_empresas') and not current_user.pode('editar_empresas') and not current_user.pode('adicionar_empresas'):
         abort(403)
     ativo = request.args.get('ativo', '')
     query = EmpresaContratada.query
@@ -42,7 +42,7 @@ def listar():
 @empresas_bp.route('/novo', methods=['GET', 'POST'])
 @login_required
 def novo():
-    if not current_user.pode('cadastrar_contrato'):
+    if not current_user.pode('adicionar_empresas'):
         abort(403)
     if request.method == 'POST':
         cnpj = _cnpj_limpo(request.form.get('cnpj', ''))
@@ -67,6 +67,9 @@ def novo():
             nome_comum=request.form.get('nome_comum', '').strip() or None,
             email_suporte=request.form.get('email_suporte', '').strip() or None,
             telefone_suporte=_digitos(request.form.get('telefone_suporte', '')) or None,
+            cnpj_estagio=request.form.get('cnpj_estagio') == '1',
+            cnpj_residencia=request.form.get('cnpj_residencia') == '1',
+            cnpj_vinculo_empregaticio_cpd=request.form.get('cnpj_vinculo_empregaticio_cpd') == '1',
         )
         db.session.add(emp)
         db.session.flush()
@@ -91,7 +94,7 @@ def novo():
 def detalhe(id):
     from app.models.contrato import Contrato
     empresa = EmpresaContratada.query.get_or_404(id)
-    if not current_user.pode('cadastrar_contrato') and not current_user.pode('editar_contrato'):
+    if not current_user.pode('ver_empresas') and not current_user.pode('editar_empresas'):
         abort(403)
     contratos = empresa.contratos.order_by(Contrato.data_fim.desc()).limit(50).all()
     return render_template('empresas/detalhe.html', empresa=empresa, contratos=contratos)
@@ -100,7 +103,7 @@ def detalhe(id):
 @empresas_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar(id):
-    if not current_user.pode('editar_contrato'):
+    if not current_user.pode('editar_empresas'):
         abort(403)
     empresa = EmpresaContratada.query.get_or_404(id)
     if request.method == 'POST':
@@ -126,6 +129,9 @@ def editar(id):
         empresa.nome_comum = request.form.get('nome_comum', '').strip() or None
         empresa.email_suporte = request.form.get('email_suporte', '').strip() or None
         empresa.telefone_suporte = _digitos(request.form.get('telefone_suporte', '')) or None
+        empresa.cnpj_estagio = request.form.get('cnpj_estagio') == '1'
+        empresa.cnpj_residencia = request.form.get('cnpj_residencia') == '1'
+        empresa.cnpj_vinculo_empregaticio_cpd = request.form.get('cnpj_vinculo_empregaticio_cpd') == '1'
         # Foto
         foto = request.files.get('logo')
         if foto and foto.filename:
@@ -150,7 +156,7 @@ def editar(id):
 @empresas_bp.route('/<int:id>/logo', methods=['POST'])
 @login_required
 def alterar_logo(id):
-    if not current_user.pode('editar_contrato'):
+    if not current_user.pode('editar_empresas'):
         abort(403)
     empresa = EmpresaContratada.query.get_or_404(id)
     acao = request.form.get('acao')
@@ -181,3 +187,32 @@ def alterar_logo(id):
             db.session.commit()
             flash('Logo atualizado!', 'success')
     return redirect(url_for('empresas.detalhe', id=id))
+
+
+@empresas_bp.route('/por-tipo-cnpj/<tipo>')
+@login_required
+def por_tipo_cnpj(tipo):
+    """Retorna empresas ativas filtradas por tipo de CNPJ (JSON)."""
+    if tipo == 'estagio':
+        empresas = EmpresaContratada.query.filter_by(ativo=True, cnpj_estagio=True).order_by(EmpresaContratada.razao_social).all()
+    elif tipo == 'residencia':
+        empresas = EmpresaContratada.query.filter_by(ativo=True, cnpj_residencia=True).order_by(EmpresaContratada.razao_social).all()
+    elif tipo == 'empregaticio_cpd':
+        empresas = EmpresaContratada.query.filter_by(ativo=True, cnpj_vinculo_empregaticio_cpd=True).order_by(EmpresaContratada.razao_social).all()
+    else:
+        return jsonify({'erro': 'Tipo inválido'}), 400
+    
+    def _formatar_cnpj(cnpj):
+        """Formata CNPJ: 00.000.000/0001-00"""
+        if not cnpj or len(cnpj) != 14:
+            return cnpj
+        return f'{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}'
+    
+    resultado = [{
+        'id': e.id,
+        'cnpj': _formatar_cnpj(e.cnpj),
+        'razao_social': e.razao_social,
+        'label': f'{_formatar_cnpj(e.cnpj)} {e.razao_social}'
+    } for e in empresas]
+    
+    return jsonify({'empresas': resultado})

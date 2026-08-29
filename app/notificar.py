@@ -77,8 +77,6 @@ def notificar_andamento(chamado, andamento, autor_id):
     # Sempre notifica quem abriu e o responsável
     if chamado.aberto_por and chamado.aberto_por != autor_id:
         destinos.add(chamado.aberto_por)
-    if chamado.responsavel_id and chamado.responsavel_id != autor_id:
-        destinos.add(chamado.responsavel_id)
 
     # Para alertas e pedidos de info, notifica também gestores da unidade
     if tipo in ('alerta', 'pedido_info'):

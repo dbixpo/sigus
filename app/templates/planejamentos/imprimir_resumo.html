@@ -60,6 +60,18 @@ body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background:
 
 .rodape { text-align: center; font-size: 9px; color: #888; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; }
 
+/* Mobile: preview em tela (não afeta impressão) */
+@media screen and (max-width: 767px) {
+    body { padding: 12px; }
+    .doc { max-width: 100%; }
+    .cabecalho { flex-wrap: wrap; gap: 12px; }
+    .cab-logo img { height: 48px; }
+    .cab-titulo { font-size: 12px; }
+    .tabela-planilha { font-size: 10px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabela-planilha th, .tabela-planilha td { padding: 6px 8px; white-space: nowrap; }
+    .tabela-planilha td:nth-child(2) { white-space: normal; max-width: 140px; }
+}
+
 @media print {
     .no-print { display: none !important; }
     body { padding: 0; }
@@ -82,7 +94,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
             PLANEJAMENTOS E PROJETOS<br>
@@ -101,11 +113,12 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
         <thead>
             <tr>
                 <th style="width:4%">#</th>
-                <th style="width:36%">Projeto</th>
-                <th style="width:14%">Unidade</th>
-                <th style="width:12%">Prioridade</th>
-                <th style="width:14%">Progresso</th>
-                <th style="width:8%">Ações</th>
+                <th style="width:30%">Projeto</th>
+                <th style="width:12%">Unidade</th>
+                <th style="width:11%">Prioridade</th>
+                <th style="width:13%">Progresso</th>
+                <th style="width:16%">Aguardando ação de</th>
+                <th style="width:6%">Ações</th>
                 <th style="width:12%">Última atualização</th>
             </tr>
         </thead>
@@ -128,6 +141,44 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
                         </span>
                         <span class="progress-num">{{ d.progresso_pct }}%</span>
                     </span>
+                </td>
+                <td>
+                    {% if d.proxima_acao and (d.proxima_acao.responsaveis or d.proxima_acao.empresas) %}
+                        {% set ra = d.proxima_acao %}
+                        {% if ra.responsaveis %}
+                            {% for r in ra.responsaveis %}
+                                <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                                    {% if r.foto_url %}
+                                    <span style="width:18px;height:18px;border-radius:50%;overflow:hidden;display:inline-block;border:1px solid #cbd5e1;">
+                                        <img src="{{ r.foto_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                                    </span>
+                                    {% else %}
+                                    <span style="width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;background:#1A82B8;color:#fff;">
+                                        {{ (r.nome or '?')[0]|upper if r.nome else '?' }}
+                                    </span>
+                                    {% endif %}
+                                    <span style="font-size:9px;">{{ ((r.nome or '').split() + ['?'])[0] }}</span>
+                                </div>
+                            {% endfor %}
+                        {% elif ra.empresas %}
+                            {% for e in ra.empresas %}
+                                <div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">
+                                    {% if e.foto_url %}
+                                    <span style="width:18px;height:18px;border-radius:50%;overflow:hidden;display:inline-block;border:1px solid #cbd5e1;">
+                                        <img src="{{ e.foto_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                                    </span>
+                                    {% else %}
+                                    <span style="width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;background:#64748b;color:#fff;">
+                                        <i class="fas fa-building"></i>
+                                    </span>
+                                    {% endif %}
+                                    <span style="font-size:9px;">{{ (e.nome_comum or e.razao_social)[:18] }}{% if (e.nome_comum or e.razao_social)|length > 18 %}…{% endif %}</span>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% else %}
+                        <span style="color:#94a3b8;font-size:9px;">—</span>
+                    {% endif %}
                 </td>
                 <td>{{ d.acoes_flat|length }}</td>
                 <td>{{ _atual | br_datetime if _atual else '—' }}{% if _quem %}<br><small style="color:#64748b;">{{ _quem.nome }}</small>{% endif %}</td>

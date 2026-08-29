@@ -6,6 +6,11 @@
 {% if chamado.tipo_chamado == 'predial' -%}
     {% set _local = chamado.sala.nome if chamado.sala else (chamado.titulo | replace('Predial: ', '')) -%}
     <title>{{ chamado.numero }} {{ chamado.unidade.nome }} {{ _local }}</title>
+{%- elif chamado.tipo_chamado == 'solicitacao_equipamento' -%}
+    {% set _tipo = chamado.se_tipo_equipamento.nome if chamado.se_tipo_equipamento else 'Solicitação' -%}
+    <title>{{ chamado.numero }} {{ chamado.unidade.nome }} Solicitação {{ _tipo }}</title>
+{%- elif chamado.tipo_chamado == 'solicitacao_administrativa' -%}
+    <title>{{ chamado.numero }} {{ chamado.unidade.nome }} Solicitação Administrativa</title>
 {%- elif chamado.equipamento -%}
     {% set _e = chamado.equipamento -%}
     {% set _tipo = _e.tipo_equipamento.nome if _e.tipo_equipamento else 'Equipamento' -%}
@@ -285,7 +290,7 @@ if (window.self !== window.top) {
                 </div>
                 <div class="campo w-third">
                     <div class="c-label">Responsável pela Abertura</div>
-                    <div class="c-valor">{{ chamado.solicitante.nome }}</div>
+                    <div class="c-valor">{{ chamado.solicitante_nome }}{% if chamado.aberto_por_externo and chamado.externo_whatsapp %} — WhatsApp: {{ chamado.externo_whatsapp | br_fone }}{% endif %}{% if chamado.aberto_por_externo and chamado.externo_email %} — E-mail: {{ chamado.externo_email }}{% endif %}</div>
                 </div>
                 <div class="campo w-half">
                     <div class="c-label">Endereço</div>
@@ -309,13 +314,8 @@ if (window.self !== window.top) {
                     </div>
                 </div>
                 <div class="campo w-third">
-                    <div class="c-label">Grau de Urgência</div>
-                    <div class="c-valor">
-                        {% if chamado.prioridade == 'urgente' %}P1 — Interrupção de atendimento
-                        {% elif chamado.prioridade == 'alta' %}P2 — Atendimento parcialmente prejudicado
-                        {% elif chamado.prioridade == 'media' %}P3 — Pouco urgente
-                        {% else %}{{ chamado.prioridade_label }}{% endif %}
-                    </div>
+                    <div class="c-label">Prioridade</div>
+                    <div class="c-valor">{{ chamado.prioridade_label }}</div>
                 </div>
             </div>
 
@@ -401,9 +401,38 @@ if (window.self !== window.top) {
             </div>
         </div>
     </div>
+    {% elif chamado.tipo_chamado == 'solicitacao_equipamento' %}
+    <div class="secao">
+        <div class="secao-titulo">2. Solicitação de Equipamento</div>
+        <div class="campos-grid" style="margin-bottom:8px;">
+            <div class="campo w-half">
+                <div class="c-label">Tipo de Equipamento Solicitado</div>
+                <div class="c-valor destaque">{{ chamado.se_tipo_livre or (chamado.se_tipo_equipamento.nome if chamado.se_tipo_equipamento else '—') }}</div>
+            </div>
+        </div>
+        <div class="c-label" style="margin-bottom:4px;">Itens da Solicitação</div>
+        <table style="width:100%; border-collapse:collapse; font-size:10px;">
+            <thead>
+                <tr style="background:#e8edf2; border:1px solid #bbb;">
+                    <th style="padding:4px 6px; text-align:left;">Sala</th>
+                    <th style="padding:4px 6px; text-align:left;">Motivo</th>
+                    <th style="padding:4px 6px; text-align:left;">Substituir</th>
+                    <th style="padding:4px 6px; text-align:left;">Observação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in chamado.itens_solicitacao %}
+                <tr style="border:1px solid #ddd;">
+                    <td style="padding:4px 6px;">{{ item.sala.nome if item.sala else '—' }}</td>
+                    <td style="padding:4px 6px;">{{ item.motivo_label }}</td>
+                    <td style="padding:4px 6px;">{{ item.equipamento.nome_display if item.equipamento else '—' }}</td>
+                    <td style="padding:4px 6px;">{{ item.observacao or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
-
-    {# ── Seção 3: Problema ──────────────────────────────────────── #}
     <div class="secao">
         <div class="secao-titulo">3. Problema / Serviço Solicitado</div>
         <div class="campos-grid" style="margin-bottom:10px;">
@@ -446,8 +475,8 @@ if (window.self !== window.top) {
                 <div class="c-valor">{{ chamado.setor.nome if chamado.setor else '—' }}</div>
             </div>
             <div class="campo w-third">
-                <div class="c-label">Técnico Responsável</div>
-                <div class="c-valor">{{ chamado.responsavel.nome if chamado.responsavel else '—' }}</div>
+                <div class="c-label">Última atualização por</div>
+                <div class="c-valor">{{ chamado.ultimo_editor.nome if chamado.ultimo_editor else '—' }}</div>
             </div>
             <div class="campo w-third">
                 <div class="c-label">Status Atual</div>
@@ -522,7 +551,7 @@ if (window.self !== window.top) {
             <div class="assinatura-linha"></div>
             <div class="assinatura-label">
                 <strong>Responsável pela Solicitação</strong>
-                {{ chamado.solicitante.nome }}<br>
+                {{ chamado.solicitante_nome }}{% if chamado.aberto_por_externo and chamado.externo_whatsapp %} — {{ chamado.externo_whatsapp | br_fone }}{% endif %}{% if chamado.aberto_por_externo and chamado.externo_email %} — {{ chamado.externo_email }}{% endif %}<br>
                 Data: ____/____/______
             </div>
         </div>
@@ -579,7 +608,7 @@ if (window.self !== window.top) {
     <div class="fotos-grid-print {% if fotos_img|length == 1 %}fotos-unica{% else %}fotos-multiplas{% endif %}">
         {% for foto in fotos_img %}
         <div class="foto-celula">
-            <img src="{{ request.host_url.rstrip('/') }}{{ foto.url }}"
+            <img src="{{ url_for('static', filename='uploads/chamados/' + foto.filename, _external=True) }}"
                  alt="{{ foto.original }}">
             <div class="foto-legenda">{{ loop.index }}. {{ foto.original | truncate(35, true, '…') }}</div>
         </div>

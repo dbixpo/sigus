@@ -86,8 +86,9 @@
     <!-- Cabeçalho: logo esquerda | secretaria direita | linha fina abaixo -->
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}"
-                 alt="Prefeitura de Sorocaba">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+                 alt="Prefeitura de Sorocaba"
+                 onerror="this.style.display='none'">
         </div>
         <div class="cab-secretaria">
             Secretaria de<strong>RECURSOS HUMANOS</strong>

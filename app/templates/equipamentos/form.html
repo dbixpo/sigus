@@ -16,7 +16,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-pc-display"></i> {{ 'Editar Equipamento' if equipamento else 'Novo Equipamento' }}</h1>
+    <h1><i class="fas fa-desktop"></i> {{ 'Editar Equipamento' if equipamento else 'Novo Equipamento' }}</h1>
 </div>
 
 <form method="POST">
@@ -27,32 +27,40 @@
                 <div class="form-section-title">Identificação</div>
                 <div class="row g-3">
 
-                    {# Seletor de sala — só aparece quando cadastro vem da unidade #}
-                    {% if unidade and salas is defined %}
+                    {# Seletor de sala — cadastro na unidade ou edição (realocação na mesma unidade) #}
+                    {% if salas is defined %}
                     <div class="col-12">
                         <label class="form-label fw-semibold">
                             Sala <span class="text-danger">*</span>
                         </label>
                         <select name="sala_id" class="form-select" required>
+                            {% if not equipamento %}
                             <option value="">— Selecione a sala —</option>
+                            {% endif %}
                             {% for s in salas %}
-                            <option value="{{ s.id }}">
-                                <i class="{{ s.tipo_icone }}"></i> {{ s.nome }}
-                                {% if s.tipo_label %} — {{ s.tipo_label }}{% endif %}
+                            <option value="{{ s.id }}"
+                                {% if equipamento and equipamento.sala_id == s.id %}selected{% endif %}>
+                                {{ s.nome }}{% if s.tipo_label %} — {{ s.tipo_label }}{% endif %}
                             </option>
                             {% endfor %}
                         </select>
                         <div class="form-text">
+                            {% if equipamento %}
+                            Selecione outra sala da mesma unidade para realocar o equipamento.
+                            {% else %}
                             Selecione a sala onde o equipamento está localizado.
+                            {% endif %}
+                            {% if unidade %}
                             <a href="{{ url_for('salas.nova', unidade_id=unidade.id) }}" target="_blank" class="ms-1">
-                                <i class="bi bi-plus-circle me-1"></i>Criar nova sala
+                                <i class="fas fa-plus-circle me-1"></i>Criar nova sala
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                     {% elif sala %}
                     <div class="col-12">
                         <div class="alert alert-info py-2 small mb-0">
-                            <i class="bi bi-door-open me-1"></i>
+                            <i class="fas fa-door-open me-1"></i>
                             Sala: <strong>{{ sala.nome }}</strong>
                             {% if sala.tipo_label %} — {{ sala.tipo_label }}{% endif %}
                         </div>
@@ -60,8 +68,9 @@
                     {% endif %}
                     <div class="col-md-6">
                         <label class="form-label">Tipo de Equipamento *</label>
+                        {% set tipo_bloqueado = equipamento and not pode_alterar_tipo %}
                         <select name="tipo_equipamento_id" id="tipo_equipamento_id" class="form-select" required
-                                {% if equipamento %}disabled{% endif %}>
+                                {% if tipo_bloqueado %}disabled{% endif %}>
                             <option value="">Selecione o tipo...</option>
                             {% for t in tipos %}
                             <option value="{{ t.id }}"
@@ -70,8 +79,13 @@
                             </option>
                             {% endfor %}
                         </select>
-                        {% if equipamento %}
+                        {% if tipo_bloqueado %}
                         <input type="hidden" name="tipo_equipamento_id" value="{{ equipamento.tipo_equipamento_id }}">
+                        {% elif equipamento and pode_alterar_tipo %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Alterar o tipo apaga os campos específicos do tipo anterior.
+                        </div>
                         {% endif %}
                     </div>
                     <div class="col-md-6">
@@ -108,7 +122,7 @@
                             {% endif %}
                         </select>
                         <div id="aviso-marca-sem-tipo" class="form-text text-warning d-none">
-                            <i class="bi bi-exclamation-triangle me-1"></i>Nenhuma marca cadastrada para este tipo.
+                            <i class="fas fa-exclamation-triangle me-1"></i>Nenhuma marca cadastrada para este tipo.
                             <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar marca</a>
                         </div>
                     </div>
@@ -123,7 +137,7 @@
                             </option>
                         </select>
                         <div id="aviso-modelo-sem-marca" class="form-text text-warning d-none">
-                            <i class="bi bi-exclamation-triangle me-1"></i>Nenhum modelo para esta marca.
+                            <i class="fas fa-exclamation-triangle me-1"></i>Nenhum modelo para esta marca.
                             <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar modelo</a>
                         </div>
                     </div>
@@ -131,10 +145,10 @@
             </div>
 
             <!-- Campos customizados (preenchidos via JS ou existentes) -->
-            <div class="form-section">
+            <div class="form-section" id="form-section-campos-customizados">
                 {% if equipamento %}
                 <div class="form-section-title">Informações Específicas do Tipo</div>
-                <div class="row g-3">
+                <div id="campos-customizados" class="row g-3">
                     {% for campo in equipamento.tipo_equipamento.campos.all() %}
                     <div class="col-md-6">
                         <label class="form-label">{{ campo.nome_campo }}{% if campo.obrigatorio %} *{% endif %}</label>
@@ -148,6 +162,33 @@
                         </select>
                         {% elif campo.tipo_dado == 'texto_longo' %}
                         <textarea name="campo_{{ campo.id }}" class="form-control" rows="2">{{ val }}</textarea>
+                        {% elif campo.tipo_dado == 'booleano' %}
+                        {# Trata valores legados como "true/false", "1/0", "sim/nao" etc. #}
+                        {% set v = (val|string)|lower %}
+                        {% set v_sim = v in ('1', 'true', 't', 'sim', 's') %}
+                        {% set v_nao = v in ('0', 'false', 'f', 'nao', 'não', 'n') %}
+                        <div class="d-flex gap-3 flex-wrap pt-1">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="campo_{{ campo.id }}"
+                                       id="campo_{{ campo.id }}_sim"
+                                       value="sim"
+                                       {% if v_sim %}checked{% endif %}
+                                       {% if campo.obrigatorio %}required{% endif %}>
+                                <label class="form-check-label small" for="campo_{{ campo.id }}_sim">Sim</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="campo_{{ campo.id }}"
+                                       id="campo_{{ campo.id }}_nao"
+                                       value="nao"
+                                       {% if v_nao %}checked{% endif %}
+                                       {% if campo.obrigatorio %}required{% endif %}>
+                                <label class="form-check-label small" for="campo_{{ campo.id }}_nao">Não</label>
+                            </div>
+                        </div>
                         {% else %}
                         <input type="{{ 'number' if campo.tipo_dado == 'numero' else ('date' if campo.tipo_dado == 'data' else 'text') }}"
                                name="campo_{{ campo.id }}" class="form-control"
@@ -192,9 +233,11 @@
             <div class="form-section">
                 <div class="form-section-title">Informações Adicionais</div>
                 <div class="mb-3">
-                    <label class="form-label">Data de Aquisição</label>
-                    <input type="date" name="data_aquisicao" class="form-control"
-                           value="{{ equipamento.data_aquisicao | br_date if equipamento and equipamento.data_aquisicao else '' }}">
+                    <label class="form-label">Ano de Aquisição</label>
+                    <input type="number" name="ano_aquisicao" class="form-control"
+                           min="1900" max="2100" step="1" inputmode="numeric"
+                           placeholder="Ex.: 2026"
+                           value="{{ equipamento.data_aquisicao.year if equipamento and equipamento.data_aquisicao else '' }}">
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Valor Estimado (R$)</label>
@@ -210,13 +253,39 @@
                     <label class="form-label">Observações</label>
                     <textarea name="observacoes" class="form-control" rows="3">{{ equipamento.observacoes if equipamento else '' }}</textarea>
                 </div>
+
+                {# Vincular usuário já no cadastro (apenas quando vindo da tela da unidade) #}
+                {% if unidade and not equipamento and usuarios_disponiveis is defined and current_user.pode('editar_equipamento') %}
+                <div class="separador-campos-usuario mt-3 pt-3 border-top">
+                    <div class="form-section-title mb-2"><i class="fas fa-user-plus me-2"></i>Vincular usuário (opcional)</div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Usuário</label>
+                        <select name="usuario_id" class="form-select form-select-sm"
+                                {% if not usuarios_disponiveis %}disabled{% endif %}>
+                            <option value="">— Selecione —</option>
+                            {% for u in usuarios_disponiveis %}
+                            <option value="{{ u.id }}">
+                                {{ u.nome }}{% if u.perfil %} ({{ u.perfil | capitalize }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Observação <span class="text-muted fw-normal">(opcional)</span></label>
+                        <input type="text" name="observacao" class="form-control form-control-sm"
+                               placeholder="Ex.: Responsável principal, também usa...">
+                    </div>
+                </div>
+                {% endif %}
             </div>
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if equipamento else 'Cadastrar Equipamento' }}
+                    <i class="fas fa-check-circle me-1"></i>{{ 'Salvar Alterações' if equipamento else 'Cadastrar Equipamento' }}
                 </button>
-                {% if unidade %}
+                {% if equipamento %}
+                <a href="{{ url_for('equipamentos.detalhe', id=equipamento.id) }}" class="btn btn-outline-secondary">Cancelar</a>
+                {% elif unidade %}
                 <a href="{{ url_for('unidades.detalhe', id=unidade.id) }}" class="btn btn-outline-secondary">Cancelar</a>
                 {% elif sala %}
                 <a href="{{ url_for('salas.detalhe', id=sala.id) }}" class="btn btn-outline-secondary">Cancelar</a>
@@ -245,26 +314,62 @@
     const containerCampos = document.getElementById('campos-customizados');
 
     function setSelect(sel, itens, placeholderVazio, placeholderComDados) {
+        if (!sel) return;
+        
+        // Remove duplicatas do array ANTES de processar
+        const itensUnicos = [];
+        const idsVistos = new Set();
+        itens.forEach(i => {
+            if (i && i.id && !idsVistos.has(i.id)) {
+                itensUnicos.push(i);
+                idsVistos.add(i.id);
+            }
+        });
+        
+        // Limpa completamente o select antes de adicionar
         sel.innerHTML = '';
-        const opt0 = new Option(itens.length ? placeholderComDados : placeholderVazio, '');
+        
+        // Adiciona placeholder
+        const opt0 = new Option(itensUnicos.length ? placeholderComDados : placeholderVazio, '');
         sel.appendChild(opt0);
-        itens.forEach(i => sel.appendChild(new Option(i.nome, i.id)));
-        sel.disabled = itens.length === 0;
+        
+        // Adiciona itens únicos
+        itensUnicos.forEach(i => {
+            const opt = new Option(i.nome, i.id);
+            sel.appendChild(opt);
+        });
+        
+        sel.disabled = itensUnicos.length === 0;
     }
 
+    let carregandoMarcasAgora = false;
     function carregarMarcas(tipoId, marcaPresel) {
+        if (carregandoMarcasAgora) return;
+        carregandoMarcasAgora = true;
+        
         if (!tipoId) {
             setSelect(selMarca, [], 'Selecione o tipo primeiro', '');
             setSelect(selModelo, [], 'Selecione a marca primeiro', '');
             if (avisoMarca)  avisoMarca.classList.add('d-none');
             if (avisoModelo) avisoModelo.classList.add('d-none');
+            carregandoMarcasAgora = false;
             return;
         }
         fetch(urlMarcasPorTipo + tipoId)
             .then(r => r.json())
             .then(marcas => {
-                setSelect(selMarca, marcas, 'Selecione a marca...', 'Selecione a marca...');
-                if (marcas.length === 0) {
+                // Remove duplicatas do array antes de popular
+                const marcasUnicas = [];
+                const idsVistos = new Set();
+                marcas.forEach(function(m) {
+                    if (!idsVistos.has(m.id)) {
+                        marcasUnicas.push(m);
+                        idsVistos.add(m.id);
+                    }
+                });
+                
+                setSelect(selMarca, marcasUnicas, 'Selecione a marca...', 'Selecione a marca...');
+                if (marcasUnicas.length === 0) {
                     avisoMarca && avisoMarca.classList.remove('d-none');
                 } else {
                     avisoMarca && avisoMarca.classList.add('d-none');
@@ -274,53 +379,224 @@
                     }
                 }
                 setSelect(selModelo, [], 'Selecione a marca primeiro', '');
+                carregandoMarcasAgora = false;
+            })
+            .catch(function(err) {
+                console.error('Erro ao carregar marcas:', err);
+                setSelect(selMarca, [], 'Erro ao carregar marcas', '');
+                carregandoMarcasAgora = false;
             });
     }
 
+    let carregandoModelosAgora = false;
+    let timeoutCarregarModelos = null;
+    let ultimaMarcaCarregada = null;
+    
     function carregarModelos(marcaId, modeloPresel) {
+        // Cancela qualquer chamada pendente
+        if (timeoutCarregarModelos) {
+            clearTimeout(timeoutCarregarModelos);
+            timeoutCarregarModelos = null;
+        }
+        
+        // Se já está carregando a mesma marca, ignora
+        if (carregandoModelosAgora && ultimaMarcaCarregada === marcaId) {
+            return;
+        }
+        
+        // Debounce: aguarda um pouco antes de executar
+        timeoutCarregarModelos = setTimeout(function() {
+            executarCarregarModelos(marcaId, modeloPresel);
+        }, 100);
+    }
+    
+    function executarCarregarModelos(marcaId, modeloPresel) {
+        if (carregandoModelosAgora) return;
+        carregandoModelosAgora = true;
+        ultimaMarcaCarregada = marcaId;
+        
         if (!marcaId) {
             setSelect(selModelo, [], 'Selecione a marca primeiro', '');
             if (avisoModelo) avisoModelo.classList.add('d-none');
+            carregandoModelosAgora = false;
+            ultimaMarcaCarregada = null;
             return;
         }
+        
         const tipoId = selTipo ? selTipo.value : '';
         const url = urlModelosPorMarca + marcaId + (tipoId ? '?tipo_id=' + tipoId : '');
+        
         fetch(url)
             .then(r => r.json())
             .then(modelos => {
-                setSelect(selModelo, modelos, 'Selecione o modelo...', 'Selecione o modelo...');
-                if (modelos.length === 0) {
+                // Verifica se ainda estamos na mesma marca (evita race condition)
+                if (ultimaMarcaCarregada !== marcaId) {
+                    carregandoModelosAgora = false;
+                    return;
+                }
+                
+                // Remove duplicatas do array antes de popular (já feito no setSelect, mas garantindo aqui também)
+                const modelosUnicos = [];
+                const idsVistos = new Set();
+                if (Array.isArray(modelos)) {
+                    modelos.forEach(function(m) {
+                        if (m && m.id && !idsVistos.has(m.id)) {
+                            modelosUnicos.push(m);
+                            idsVistos.add(m.id);
+                        }
+                    });
+                }
+                
+                setSelect(selModelo, modelosUnicos, 'Selecione o modelo...', 'Selecione o modelo...');
+                if (modelosUnicos.length === 0) {
                     avisoModelo && avisoModelo.classList.remove('d-none');
                 } else {
                     avisoModelo && avisoModelo.classList.add('d-none');
                     if (modeloPresel) selModelo.value = modeloPresel;
                 }
+                carregandoModelosAgora = false;
+                ultimaMarcaCarregada = null;
+            })
+            .catch(function(err) {
+                console.error('Erro ao carregar modelos:', err);
+                setSelect(selModelo, [], 'Erro ao carregar modelos', '');
+                carregandoModelosAgora = false;
+                ultimaMarcaCarregada = null;
             });
     }
 
     // ── Campos customizados ao mudar o tipo ──
+    let carregandoCamposAgora = false;
+    let timeoutCarregarCampos = null;
+    
     function carregarCampos(tipoId) {
-        if (!containerCampos || !tipoId) return;
+        // Cancela qualquer chamada pendente
+        if (timeoutCarregarCampos) {
+            clearTimeout(timeoutCarregarCampos);
+            timeoutCarregarCampos = null;
+        }
+        
+        const formSection = document.getElementById('form-section-campos-customizados');
+        if (!formSection || carregandoCamposAgora) return;
+        
+        // Debounce para evitar múltiplas chamadas rápidas
+        timeoutCarregarCampos = setTimeout(function() {
+            executarCarregarCampos(tipoId);
+        }, 100);
+    }
+    
+    function executarCarregarCampos(tipoId) {
+        const formSection = document.getElementById('form-section-campos-customizados');
+        if (!formSection || carregandoCamposAgora) return;
+        carregandoCamposAgora = true;
+        
+        // LIMPEZA COMPLETA: Remove TODOS os filhos da seção e reconstrói
+        const containerId = (containerCampos && containerCampos.id) || 'campos-customizados';
+        const containerClasses = (containerCampos && containerCampos.className) || 'row g-3';
+        
+        // Remove TODOS os elementos da seção
+        formSection.innerHTML = '';
+        
+        // Recria o container
+        const novoContainer = document.createElement('div');
+        novoContainer.id = containerId;
+        novoContainer.className = containerClasses;
+        formSection.appendChild(novoContainer);
+        
+        // Atualiza a referência
+        const containerCamposAtualizado = novoContainer;
+        
+        // Mostra mensagem de carregamento
+        containerCamposAtualizado.innerHTML = '<p class="text-muted small mt-2">Carregando campos...</p>';
+        
+        if (!tipoId) {
+            containerCamposAtualizado.innerHTML = '<p class="text-muted small mt-2">Selecione um tipo de equipamento para ver os campos específicos.</p>';
+            carregandoCamposAgora = false;
+            return;
+        }
+        
         fetch(urlCampos + tipoId)
             .then(r => r.json())
             .then(campos => {
-                if (campos.length === 0) {
-                    containerCampos.innerHTML = '<p class="text-muted small mt-2">Nenhum campo específico para este tipo.</p>';
+                // Verifica se a seção ainda existe
+                const formSectionAtual = document.getElementById('form-section-campos-customizados');
+                if (!formSectionAtual) {
+                    carregandoCamposAgora = false;
                     return;
                 }
-                containerCampos.innerHTML = campos.map(c => {
+                
+                // Limpa completamente a seção novamente
+                formSectionAtual.innerHTML = '';
+                
+                if (campos.length === 0) {
+                    const containerVazio = document.createElement('div');
+                    containerVazio.id = containerId;
+                    containerVazio.className = containerClasses;
+                    containerVazio.innerHTML = '<p class="text-muted small mt-2">Nenhum campo específico para este tipo.</p>';
+                    formSectionAtual.appendChild(containerVazio);
+                    carregandoCamposAgora = false;
+                    return;
+                }
+                
+                // Cria o título
+                const title = document.createElement('div');
+                title.className = 'form-section-title';
+                title.textContent = 'Informações Específicas do Tipo';
+                formSectionAtual.appendChild(title);
+                
+                // Cria o container de campos
+                const containerFinal = document.createElement('div');
+                containerFinal.id = containerId;
+                containerFinal.className = containerClasses;
+                
+                // Adiciona os campos
+                containerFinal.innerHTML = campos.map(c => {
                     let input = '';
                     if (c.tipo_dado === 'selecao' && c.opcoes_selecao) {
                         const opts = c.opcoes_selecao.map(o => `<option value="${o}">${o}</option>`).join('');
                         input = `<select name="campo_${c.id}" class="form-select"${c.obrigatorio ? ' required' : ''}><option value="">Selecione...</option>${opts}</select>`;
                     } else if (c.tipo_dado === 'texto_longo') {
                         input = `<textarea name="campo_${c.id}" class="form-control" rows="2"${c.obrigatorio ? ' required' : ''}></textarea>`;
+                    } else if (c.tipo_dado === 'booleano') {
+                        // Sim/Não: radios
+                        const req = c.obrigatorio ? ' required' : '';
+                        input = `
+                            <div class="d-flex gap-3 flex-wrap pt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio"
+                                           name="campo_${c.id}" id="campo_${c.id}_sim"
+                                           value="sim"${req}>
+                                    <label class="form-check-label small" for="campo_${c.id}_sim">Sim</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio"
+                                           name="campo_${c.id}" id="campo_${c.id}_nao"
+                                           value="nao"${req}>
+                                    <label class="form-check-label small" for="campo_${c.id}_nao">Não</label>
+                                </div>
+                            </div>`;
                     } else {
                         const t = c.tipo_dado === 'numero' ? 'number' : (c.tipo_dado === 'data' ? 'date' : 'text');
                         input = `<input type="${t}" name="campo_${c.id}" class="form-control"${c.obrigatorio ? ' required' : ''}>`;
                     }
                     return `<div class="col-md-6"><label class="form-label">${c.nome_campo}${c.obrigatorio ? ' <span class="text-danger">*</span>' : ''}</label>${input}</div>`;
                 }).join('');
+                
+                formSectionAtual.appendChild(containerFinal);
+                carregandoCamposAgora = false;
+            })
+            .catch(err => {
+                console.error('Erro ao carregar campos:', err);
+                const formSectionAtual = document.getElementById('form-section-campos-customizados');
+                if (formSectionAtual) {
+                    formSectionAtual.innerHTML = '';
+                    const containerErro = document.createElement('div');
+                    containerErro.id = containerId;
+                    containerErro.className = containerClasses;
+                    containerErro.innerHTML = '<p class="text-danger small mt-2">Erro ao carregar campos específicos.</p>';
+                    formSectionAtual.appendChild(containerErro);
+                }
+                carregandoCamposAgora = false;
             });
     }
 
@@ -334,10 +610,14 @@
 
     // Guarda flag para ignorar o change que o browser pode disparar na inicialização
     let _inicializando = true;
-    selMarca.addEventListener('change', function () {
-        if (_inicializando) return;
-        carregarModelos(this.value, null);
-    });
+    
+    // Adiciona listener para mudança de marca
+    if (selMarca) {
+        selMarca.addEventListener('change', function () {
+            if (_inicializando) return;
+            carregarModelos(this.value, null);
+        });
+    }
 
     // ── Inicialização em modo edição ──
     {% if equipamento and equipamento.tipo_equipamento_id %}

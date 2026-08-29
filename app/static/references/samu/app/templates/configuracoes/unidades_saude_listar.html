@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% set form_route = form_route|default(nome_rota + '_form') %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-hospital"></i> {{ titulo }}</h1>
+    <div class="d-flex gap-2">
+        {% if itens %}
+        <a href="{{ url_for('configuracoes.unidades_saude_export') }}" id="btnExportar" class="btn btn-outline-success" title="Exportar para Excel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+        </a>
+        {% endif %}
+        <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo
+        </a>
+    </div>
+</div>
+
+{% if itens %}
+<div class="filtros-mobile-wrap">
+    <button class="btn btn-outline-secondary btn-sm btn-filtros-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosUnidadesSaude" aria-expanded="false">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+    <div class="collapse filtros-panel" id="filtrosUnidadesSaude">
+<div class="card shadow-sm mb-0">
+    <div class="card-body py-3">
+        <div class="row g-2 g-md-3 align-items-end filtros-listagem">
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Cidade/UF</label>
+                <input type="text" class="form-control form-control-sm" id="filtroCidade" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">CNES</label>
+                <input type="text" class="form-control form-control-sm" id="filtroCnes" placeholder="Número" inputmode="numeric" pattern="[0-9]*">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Nome</label>
+                <input type="text" class="form-control form-control-sm" id="filtroNome" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Tipo</label>
+                <select id="filtroTipo" multiple placeholder="Todos">
+                    {% for t in (tipos_unidade_saude or []) %}
+                    <option value="{{ t.id }}">{{ t.sigla }} – {{ t.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Endereço</label>
+                <input type="text" class="form-control form-control-sm" id="filtroEndereco" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Ativo</label>
+                <select class="form-select form-select-sm" id="filtroAtivo">
+                    <option value="">Todos</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="listagem-cards" id="cardsUnidadesSaude">
+        {% for item in itens %}
+        <div class="listagem-card" data-cidade="{{ (item.cidade_uf or '') | lower }}" data-cnes="{{ (item.cnes or '') }}" data-nome="{{ (item.nome or '') | lower }}" data-tipo-id="{{ item.tipo_unidade_id or '' }}" data-endereco="{{ (item.endereco_completo or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+            <div class="card-titulo">{{ item.nome or '—' }}</div>
+            <div class="card-meta">{{ item.cidade_uf }} · {{ item.tipo_unidade.sigla if item.tipo_unidade else '—' }}</div>
+            <div class="card-meta">{{ item.hora_funcionamento or '—' }}</div>
+            <div class="card-rodape">
+                <span>{% if item.ativo %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}</span>
+                <a href="{{ url_for('configuracoes.' + form_route, id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Cidade/UF</th>
+                    <th>CNES</th>
+                    <th>Nome</th>
+                    <th>Tipo</th>
+                    <th>Horário</th>
+                    <th>Telefone</th>
+                    <th>Endereço</th>
+                    <th>Ativo</th>
+                    <th style="width:120px"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyUnidades">
+                {% for item in itens %}
+                <tr data-cidade="{{ (item.cidade_uf or '') | lower }}" data-cnes="{{ (item.cnes or '') }}" data-nome="{{ (item.nome or '') | lower }}" data-tipo-id="{{ item.tipo_unidade_id or '' }}" data-endereco="{{ (item.endereco_completo or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+                    <td>{{ item.cidade_uf }}</td>
+                    <td>
+                        {% if item.cnes %}
+                        <a href="https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search={{ item.cnes }}" target="_blank" rel="noopener noreferrer" title="Consultar no CNES/DATASUS" class="link-discreto">{{ item.cnes }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="fw-bold">{{ item.nome or '—' }}</td>
+                    <td>{{ item.tipo_unidade.sigla if item.tipo_unidade else '—' }}</td>
+                    <td>{{ item.hora_funcionamento }}</td>
+                    <td class="text-nowrap">
+                        {% if item.telefone %}
+                        {% if item.telefone | wa_link %}
+                        <a href="{{ item.telefone | wa_link }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none"><i class="bi bi-whatsapp me-1"></i>{{ item.telefone | br_fone }}</a>
+                        {% else %}{{ item.telefone | br_fone }}{% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if item.link_google_maps and item.endereco_completo %}
+                        <a href="{{ item.link_google_maps }}" target="_blank" rel="noopener noreferrer" class="link-discreto">{{ item.endereco_completo }}</a>
+                        {% elif item.endereco_completo %}{{ item.endereco_completo }}{% else %}—{% endif %}
+                    </td>
+                    <td>{% if item.ativo %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-secondary">Não</span>{% endif %}</td>
+                    <td><a href="{{ url_for('configuracoes.' + form_route, id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-hospital fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhuma unidade de saúde cadastrada.</p>
+        <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary btn-sm mt-2"><i class="bi bi-plus-circle me-1"></i>Cadastrar a primeira</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2"><a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted"><i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard</a></div>
+{% endblock %}
+
+{% block scripts %}
+{% if itens %}
+<script>
+(function() {
+    var tbody = document.getElementById('tbodyUnidades');
+    var btnExportar = document.getElementById('btnExportar');
+    var baseHref = btnExportar ? btnExportar.getAttribute('href') : '';
+    var filtroTipoSel = null;
+    var fc = document.getElementById('filtroCnes');
+    if (fc) fc.addEventListener('input', function() { this.value = this.value.replace(/\D/g, ''); });
+    var selTipo = document.getElementById('filtroTipo');
+    if (selTipo && typeof TomSelect !== 'undefined') {
+        filtroTipoSel = new TomSelect(selTipo, { placeholder: 'Todos', allowEmptyOption: true });
+    }
+    function aplicarFiltros() {
+        if (!tbody) return;
+        var cidade = (document.getElementById('filtroCidade')?.value || '').toLowerCase().trim();
+        var cnes = (document.getElementById('filtroCnes')?.value || '').replace(/\D/g, '');
+        var nome = (document.getElementById('filtroNome')?.value || '').toLowerCase().trim();
+        var tipoIds = filtroTipoSel ? (Array.isArray(filtroTipoSel.getValue()) ? filtroTipoSel.getValue() : (filtroTipoSel.getValue() ? [filtroTipoSel.getValue()] : [])) : [];
+        var endereco = (document.getElementById('filtroEndereco')?.value || '').toLowerCase().trim();
+        var ativo = document.getElementById('filtroAtivo')?.value || '';
+        function filtragem(el) {
+            var ok = true;
+            if (cidade && (el.getAttribute('data-cidade') || '').indexOf(cidade) === -1) ok = false;
+            if (cnes && (el.getAttribute('data-cnes') || '').indexOf(cnes) === -1) ok = false;
+            if (nome && (el.getAttribute('data-nome') || '').indexOf(nome) === -1) ok = false;
+            if (tipoIds.length) {
+                var tid = String(el.getAttribute('data-tipo-id') || '');
+                if (!tid || tipoIds.indexOf(tid) === -1) ok = false;
+            }
+            if (endereco && (el.getAttribute('data-endereco') || '').indexOf(endereco) === -1) ok = false;
+            if (ativo && el.getAttribute('data-ativo') !== ativo) ok = false;
+            el.style.display = ok ? '' : 'none';
+        }
+        tbody.querySelectorAll('tr').forEach(filtragem);
+        var cards = document.getElementById('cardsUnidadesSaude');
+        if (cards) cards.querySelectorAll('.listagem-card').forEach(filtragem);
+        if (btnExportar) {
+            var q = [];
+            if (cidade) q.push('cidade=' + encodeURIComponent(document.getElementById('filtroCidade').value));
+            if (cnes) q.push('cnes=' + encodeURIComponent(document.getElementById('filtroCnes').value));
+            if (nome) q.push('nome=' + encodeURIComponent(document.getElementById('filtroNome').value));
+            if (tipoIds.length) q.push('tipo_id=' + tipoIds.map(encodeURIComponent).join(','));
+            if (endereco) q.push('endereco=' + encodeURIComponent(document.getElementById('filtroEndereco').value));
+            if (ativo) q.push('ativo=' + ativo);
+            btnExportar.href = baseHref + (q.length ? '?' + q.join('&') : '');
+        }
+    }
+    ['filtroCidade', 'filtroCnes', 'filtroNome', 'filtroEndereco'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', aplicarFiltros);
+    });
+    document.getElementById('filtroAtivo')?.addEventListener('change', aplicarFiltros);
+    if (filtroTipoSel) filtroTipoSel.on('change', aplicarFiltros);
+    aplicarFiltros();
+})();
+</script>
+{% endif %}
+{% endblock %}

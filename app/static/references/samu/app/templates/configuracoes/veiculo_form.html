@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Veículo — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-truck"></i> Veículo — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="formVeiculo">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Identificação (Prefixo) <span class="text-danger">*</span></label>
+                    <input type="text" name="prefixo" class="form-control" value="{{ (item.prefixo or '') if item else '' }}" required placeholder="Ex: 1181, 1082">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Marca</label>
+                    <input type="text" name="marca" class="form-control" value="{{ (item.marca or '') if item else '' }}" placeholder="Ex: Mercedes-Benz, Ford">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Modelo</label>
+                    <input type="text" name="modelo" class="form-control" value="{{ (item.modelo or '') if item else '' }}" placeholder="Ex: Sprinter 415">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Placa</label>
+                    <input type="text" name="placa" id="inputPlaca" class="form-control" value="{{ (item.placa or '') if item else '' }}" maxlength="7" placeholder="ABC1D23">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Nº Renavam</label>
+                    <input type="text" name="renavam" class="form-control" value="{{ (item.renavam or '') if item else '' }}" maxlength="11" placeholder="Apenas números">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Tipo</label>
+                    <select name="tipo" class="form-select">
+                        <option value="">— Selecione —</option>
+                        {% for t in tipos_veiculo %}
+                        <option value="{{ t }}" {% if item and item.tipo == t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">Conforme CRLV (Denatran)</small>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Combustível</label>
+                    <select name="combustivel" class="form-select">
+                        <option value="">— Selecione —</option>
+                        {% for c in combustiveis %}
+                        <option value="{{ c }}" {% if item and item.combustivel == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Ano Fabricação</label>
+                    <input type="number" name="ano_fabricacao" class="form-control" value="{{ item.ano_fabricacao if item and item.ano_fabricacao else '' }}" min="1900" max="2100" placeholder="Ex: 2023">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Ano Modelo</label>
+                    <input type="number" name="ano_modelo" class="form-control" value="{{ item.ano_modelo if item and item.ano_modelo else '' }}" min="1900" max="2100" placeholder="Ex: 2024">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">CRLV (PDF)</label>
+                    <input type="file" name="crlv_anexo" class="form-control" accept=".pdf,application/pdf">
+                    {% if item and item.crlv_anexo %}
+                    <small class="text-muted">Atual: <a href="{{ url_for('configuracoes.veiculo_crlv', id=item.id) }}" target="_blank" class="link-discreto"><i class="bi bi-file-pdf"></i> Baixar CRLV</a>. Envie novo arquivo para substituir.</small>
+                    {% else %}
+                    <small class="text-muted">Anexe o PDF do CRLV do veículo.</small>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.veiculos') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Máscara Placa (ABC1D23 ou ABC1234)
+(function() {
+    var inp = document.getElementById('inputPlaca');
+    if (!inp) return;
+    inp.addEventListener('input', function() {
+        var v = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+        this.value = v;
+    });
+})();
+</script>
+{% endblock %}

@@ -7,16 +7,16 @@
 .th-sort a { transition: opacity 0.15s; }
 </style>
 <div class="page-header">
-    <h1><i class="bi bi-file-earmark-text"></i> Contratos</h1>
+    <h1><i class="fas fa-file-contract"></i> Contratos</h1>
     <div class="d-flex gap-2 flex-wrap">
         {% if current_user.pode('cadastrar_contrato') %}
         <a href="{{ url_for('contratos.novo') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>Novo Contrato
+            <i class="fas fa-plus-circle me-1"></i>Novo Contrato
         </a>
         {% endif %}
         {% if current_user.pode('emitir_relatorios') %}
         <a href="{{ url_for('relatorios.contratos') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-bar-chart-line me-1"></i>Relatórios
+            <i class="fas fa-chart-line me-1"></i>Relatórios
         </a>
         {% endif %}
     </div>
@@ -63,9 +63,9 @@
                             <a href="{{ url_for('contratos.listar', status=filtro_status, mandado_judicial=filtro_mandado_judicial, sort=key, order=('desc' if sort_col == key and sort_order == 'asc' else 'asc')) }}" class="text-decoration-none text-dark d-flex align-items-center gap-1">
                                 {{ label }}
                                 {% if sort_col == key %}
-                                <i class="bi bi-chevron-{{ 'up' if sort_order == 'asc' else 'down' }} small"></i>
+                                <i class="fas fa-chevron-{{ 'up' if sort_order == 'asc' else 'down' }} small"></i>
                                 {% else %}
-                                <i class="bi bi-chevron-expand text-muted small opacity-50"></i>
+                                <i class="fas fa-chevron-expand text-muted small opacity-50"></i>
                                 {% endif %}
                             </a>
                         </th>
@@ -122,7 +122,7 @@
             </table>
         </div>
         {% else %}
-        <div class="empty-state"><i class="bi bi-file-earmark-text"></i><h6>Nenhum contrato cadastrado.</h6></div>
+        <div class="empty-state"><i class="fas fa-file-contract"></i><h6>Nenhum contrato cadastrado.</h6></div>
         {% endif %}
     </div>
 </div>

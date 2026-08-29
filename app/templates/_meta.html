@@ -11,13 +11,13 @@
         <div class="d-flex flex-wrap gap-3 align-items-center" style="font-size:.8rem;">
             {% if _criado is defined and _criado %}
             <span class="text-muted">
-                <i class="bi bi-calendar-plus me-1"></i>
+                <i class="fas fa-calendar-plus me-1"></i>
                 Criado em: <strong>{{ _criado | br_datetime }}</strong>
             </span>
             {% endif %}
             {% if _atualizado is defined and _atualizado %}
             <span class="text-muted">
-                <i class="bi bi-clock-history me-1"></i>
+                <i class="fas fa-clock-history me-1"></i>
                 Última atualização: <strong>{{ _atualizado | br_datetime }}</strong>
             </span>
             {% endif %}

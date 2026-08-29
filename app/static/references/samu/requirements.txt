@@ -1,0 +1,15 @@
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.2
+Flask-Migrate==4.1.0
+psycopg2-binary==2.9.11
+pg8000>=1.31
+python-dotenv==1.2.1
+email-validator==2.3.0
+WTForms==3.2.1
+SQLAlchemy==2.0.36
+Werkzeug==3.1.6
+waitress
+openpyxl
+Pillow

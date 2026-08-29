@@ -1,0 +1,18 @@
+<!ELEMENT document (cid-o)>
+
+<!ELEMENT cid-o (grupo+)>
+	<!ELEMENT grupo (nome, referencias?, (grupo|categoria)+)>
+	<!ATTLIST grupo codgrupo NMTOKEN #REQUIRED>
+	<!ATTLIST grupo inicial NMTOKEN #REQUIRED>
+	<!ATTLIST grupo final   NMTOKEN #REQUIRED>
+		<!ELEMENT categoria (nome, nota*, referencias?)>
+		<!ATTLIST categoria codcat CDATA #REQUIRED>
+
+	
+<!ELEMENT referencias (referencia*)>
+	<!ELEMENT referencia (#PCDATA)>
+		<!ATTLIST referencia codrefer NMTOKEN #IMPLIED>
+	
+<!ELEMENT nome (#PCDATA)>
+
+<!ELEMENT nota (#PCDATA)>

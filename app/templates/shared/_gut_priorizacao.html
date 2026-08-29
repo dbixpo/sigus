@@ -1,0 +1,83 @@
+{# Matriz GUT — mesmo markup do planejamento.
+   Params: gravidade_sel, urgencia_sel, tendencia_sel (1-5), required (bool), compact (bool, sidebar) #}
+{% set g = gravidade_sel|default(1)|int %}
+{% set u = urgencia_sel|default(1)|int %}
+{% set t = tendencia_sel|default(1)|int %}
+{% set compact = compact|default(false) %}
+{% if compact %}
+<div class="gut-sidebar-stack">
+    <div class="row g-2 gut-sidebar-campos">
+        <div class="col-4">
+            <label class="form-label small text-muted mb-1">Gravidade</label>
+            <select name="gravidade" id="selGravidade" class="form-select form-select-sm"{% if required %} required{% endif %}>
+                <option value="1" {{ 'selected' if g == 1 else '' }}>Muito baixo</option>
+                <option value="2" {{ 'selected' if g == 2 else '' }}>Baixo</option>
+                <option value="3" {{ 'selected' if g == 3 else '' }}>Médio</option>
+                <option value="4" {{ 'selected' if g == 4 else '' }}>Alto</option>
+                <option value="5" {{ 'selected' if g == 5 else '' }}>Crítico</option>
+            </select>
+        </div>
+        <div class="col-4">
+            <label class="form-label small text-muted mb-1">Urgência</label>
+            <select name="urgencia" id="selUrgencia" class="form-select form-select-sm"{% if required %} required{% endif %}>
+                <option value="1" {{ 'selected' if u == 1 else '' }}>Pode esperar</option>
+                <option value="2" {{ 'selected' if u == 2 else '' }}>Pouco urgente</option>
+                <option value="3" {{ 'selected' if u == 3 else '' }}>Urgente</option>
+                <option value="4" {{ 'selected' if u == 4 else '' }}>Muito urgente</option>
+                <option value="5" {{ 'selected' if u == 5 else '' }}>Imediato</option>
+            </select>
+        </div>
+        <div class="col-4">
+            <label class="form-label small text-muted mb-1">Tendência</label>
+            <select name="tendencia" id="selTendencia" class="form-select form-select-sm"{% if required %} required{% endif %}>
+                <option value="1" {{ 'selected' if t == 1 else '' }}>Estável</option>
+                <option value="2" {{ 'selected' if t == 2 else '' }}>Leve piora</option>
+                <option value="3" {{ 'selected' if t == 3 else '' }}>Piora moderada</option>
+                <option value="4" {{ 'selected' if t == 4 else '' }}>Piora rápida</option>
+                <option value="5" {{ 'selected' if t == 5 else '' }}>Piora iminente</option>
+            </select>
+        </div>
+    </div>
+    <div class="gut-sidebar-resultado mt-2 pt-2">
+        <div class="text-muted small mb-1 text-center">Prioridade resultante</div>
+        <span class="badge w-100 py-2 gut-badge-resultado" id="gutResultado">—</span>
+    </div>
+</div>
+{% else %}
+<label class="form-label fw-semibold">GUT — Priorização</label>
+<div class="row g-3 align-items-end gut-row-mobile">
+    <div class="col-md-3">
+        <label class="form-label small text-muted">Gravidade</label>
+        <select name="gravidade" id="selGravidade" class="form-select"{% if required %} required{% endif %}>
+            <option value="1" {{ 'selected' if g == 1 else '' }}>Muito baixo (impacto insignificante)</option>
+            <option value="2" {{ 'selected' if g == 2 else '' }}>Baixo</option>
+            <option value="3" {{ 'selected' if g == 3 else '' }}>Médio</option>
+            <option value="4" {{ 'selected' if g == 4 else '' }}>Alto (impacto relevante)</option>
+            <option value="5" {{ 'selected' if g == 5 else '' }}>Crítico (impacto severo)</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted">Urgência</label>
+        <select name="urgencia" id="selUrgencia" class="form-select"{% if required %} required{% endif %}>
+            <option value="1" {{ 'selected' if u == 1 else '' }}>Pode esperar</option>
+            <option value="2" {{ 'selected' if u == 2 else '' }}>Pouco urgente</option>
+            <option value="3" {{ 'selected' if u == 3 else '' }}>Urgente</option>
+            <option value="4" {{ 'selected' if u == 4 else '' }}>Muito urgente</option>
+            <option value="5" {{ 'selected' if u == 5 else '' }}>Imediato</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted">Tendência</label>
+        <select name="tendencia" id="selTendencia" class="form-select"{% if required %} required{% endif %}>
+            <option value="1" {{ 'selected' if t == 1 else '' }}>Estável (não piora)</option>
+            <option value="2" {{ 'selected' if t == 2 else '' }}>Leve piora</option>
+            <option value="3" {{ 'selected' if t == 3 else '' }}>Piora moderada</option>
+            <option value="4" {{ 'selected' if t == 4 else '' }}>Piora rápida</option>
+            <option value="5" {{ 'selected' if t == 5 else '' }}>Piora iminente</option>
+        </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-center">
+        <span class="badge fs-6 px-3 py-2" id="gutResultado">—</span>
+    </div>
+</div>
+{% endif %}

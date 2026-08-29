@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Classificação de Risco — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-flag"></i> Classificação de Risco — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required placeholder="Ex: 1 - Vermelho">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Cor</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" id="corPicker" class="form-control form-control-color" value="{{ item.cor if item and item.cor else '#dc3545' }}" title="Cor" style="width:50px;height:38px;">
+                        <input type="text" name="cor" class="form-control" value="{{ item.cor if item and item.cor else '#dc3545' }}" maxlength="20" placeholder="#hex" id="corHex">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Ordem prioridade</label>
+                    <input type="number" name="ordem" class="form-control" value="{{ item.ordem if item and item.ordem is not none else 0 }}" min="0">
+                    <small class="text-muted">1=maior</small>
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.classificacoes_risco') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var picker = document.getElementById('corPicker');
+    var corHex = document.getElementById('corHex');
+    if (picker && corHex) {
+        picker.addEventListener('input', function() { corHex.value = this.value; });
+        corHex.addEventListener('input', function() {
+            var v = this.value.trim();
+            if (/^#[0-9A-Fa-f]{3,6}$/.test(v)) picker.value = v;
+        });
+    }
+})();
+</script>
+{% endblock %}

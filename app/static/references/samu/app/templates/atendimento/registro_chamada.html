@@ -1,0 +1,943 @@
+{% extends 'base.html' %}
+{% block title %}Registro de Chamada — SAMU{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+.endereco-mapa-preview { height: 280px; background: #e9ecef; }
+.endereco-mapa-preview.leaflet-container { background: #e9ecef; font: 12px/1.5 "Inter", sans-serif; }
+#editorMotivoWrap .ql-container { height: 180px; }
+#editorMotivoWrap .ql-editor { overflow-y: auto; }
+.algo-wizard-pergunta { min-height: 80px; }
+/* Remove setinhas de input number */
+input.paciente-idade-numero::-webkit-outer-spin-button,
+input.paciente-idade-numero::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.paciente-idade-numero { -moz-appearance: textfield; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="registro-chamada-page">
+    <div class="page-header mb-4">
+        <h1><i class="bi bi-telephone-inbound"></i> Registro de Chamada</h1>
+    </div>
+
+    {% if not ocorrencia %}
+    {# Etapa inicial: apenas coleta de telefone #}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p class="text-muted mb-3">Digite o telefone e pressione <kbd>Enter</kbd> ou <kbd>Tab</kbd> para iniciar o registro.</p>
+            <div class="row align-items-end">
+                <div class="col-12 col-md-6 col-lg-4">
+                    <label class="form-label fw-semibold">Telefone <span class="text-danger">*</span></label>
+                    <input type="tel" id="inputTelefoneInicial" class="form-control form-control-lg" autofocus
+                           placeholder="(15) 99999-9999" maxlength="20">
+                </div>
+            </div>
+            <div id="historicoInicial" class="mt-3" style="display:none;">
+                <h6 class="text-muted small fw-semibold mb-2">Histórico do número (últimas 5 ligações)</h6>
+                <ul id="listaHistoricoInicial" class="list-group list-group-flush small"></ul>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    {# Formulário completo da ocorrência #}
+    <form method="POST" action="{{ url_for('atendimento.salvar_ocorrencia', ocorrencia_id=ocorrencia.id) }}" id="formOcorrencia" {% if bloqueada %}data-bloqueada="1"{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="algoritmo_id" id="inputAlgoritmoId" value="{{ ocorrencia.algoritmo_id or '' }}">
+        {% if bloqueada %}<fieldset disabled>{% endif %}
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Ocorrência <strong>{{ ocorrencia.numero }}</strong></span>
+                <span class="badge bg-secondary">{{ ocorrencia.iniciada_em | br_datetime_local }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label class="form-label fw-semibold">Telefone <span class="text-danger">*</span></label>
+                        <input type="tel" name="telefone" id="inputTelefone" class="form-control" readonly
+                               value="{{ ocorrencia.telefone | br_fone if ocorrencia.telefone else '' }}">
+                    </div>
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <label class="form-label fw-semibold">Nome do Solicitante</label>
+                        <input type="text" name="nome_solicitante" class="form-control"
+                               value="{{ ocorrencia.nome_solicitante or '' }}" placeholder="Nome de quem ligou">
+                    </div>
+                </div>
+                <div id="historicoWrapper" class="mt-3">
+                    <h6 class="text-muted small fw-semibold mb-2">Histórico do número (últimas 5 ligações)</h6>
+                    <ul id="listaHistorico" class="list-group list-group-flush small"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-semibold">Algoritmo e Queixa</div>
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Algoritmo de Acolhimento</label>
+                        <select id="selectAlgoritmo" class="form-select" data-singleselect data-placeholder="Selecione um protocolo...">
+                            <option value="">— Nenhum —</option>
+                            {% for a in algoritmos %}
+                            <option value="{{ a.id }}" {% if ocorrencia and ocorrencia.algoritmo_id == a.id %}selected{% endif %}>{{ a.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div id="algoWizard" class="mb-3 border rounded p-3 bg-light" style="display:none;">
+                    <div id="algoPreenchidoBadge" class="alert alert-success py-2 mb-0 small" style="display:none;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Algoritmo já preenchido — respostas salvas. <a href="#" id="algoBtnReeditar" class="alert-link">Reeditar</a>
+                    </div>
+                    <div id="algoWizardPerguntasWrap" style="display:none;">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="text-muted" id="algoStepInfo">Pergunta 1 de N</small>
+                        </div>
+                        <div id="algoWizardPergunta" class="algo-wizard-pergunta mb-3"></div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAlgoAnterior" disabled><i class="bi bi-chevron-left me-1"></i>Anterior</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnAlgoProximo"><i class="bi bi-chevron-right me-1"></i>Próximo</button>
+                            <button type="button" class="btn btn-samu-primary btn-sm" id="btnAlgoFinalizar" style="display:none;"><i class="bi bi-check2 me-1"></i>Finalizar</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Motivo/Queixa</label>
+                    <div id="editorMotivoWrap" class="border rounded overflow-hidden">
+                        <div id="editorMotivoQueixa"></div>
+                    </div>
+                    <input type="hidden" name="motivo_queixa" id="inputMotivoQueixa" value="{{ ocorrencia.motivo_queixa or '' }}">
+                </div>
+                <div>
+                    <label class="form-label fw-semibold">Apelido da Ocorrência</label>
+                    <input type="text" name="apelido" class="form-control" value="{{ ocorrencia.apelido or '' }}" placeholder="Ex: Idoso queda">
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-semibold">Pacientes</div>
+            <div class="card-body">
+                <div id="pacientesLista">
+                    {% set _pacientes = (ocorrencia.pacientes or [{}]) if ocorrencia else [{}] %}
+                    {% for p in _pacientes %}
+                    <div class="paciente-row mb-3" data-idx="{{ loop.index0 }}">
+                        <div class="row g-3 align-items-start">
+                            <div class="col-12 col-md-5">
+                                <label class="form-label fw-semibold">Nome completo</label>
+                                <input type="text" name="paciente_{{ loop.index0 }}_nome" class="form-control" placeholder="Nome completo" value="{{ p.get('nome', '') or '' }}">
+                                {% if loop.index0 == 0 %}
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input form-check-input-sm" type="checkbox" id="paciente0Mesmo" data-copy-solicitante>
+                                    <label class="form-check-label text-muted" style="font-size:0.8rem;opacity:0.85;" for="paciente0Mesmo">O(A) Solicitante é o(a) paciente</label>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label fw-semibold">Sexo</label>
+                                <select name="paciente_{{ loop.index0 }}_sexo" class="form-select">
+                                    <option value="">— Selecione —</option>
+                                    <option value="M" {% if p.get('sexo') == 'M' %}selected{% endif %}>Masculino</option>
+                                    <option value="F" {% if p.get('sexo') == 'F' %}selected{% endif %}>Feminino</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold">Idade</label>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <input type="number" name="paciente_{{ loop.index0 }}_idade" class="form-control paciente-idade-numero" min="0" max="999" value="{{ p.get('idade', '') or '' }}" style="width:70px;">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_ano" value="ano" {% if (p.get('idade_unidade') or 'ano') == 'ano' %}checked{% endif %}>
+                                            <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_ano">Ano(s)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_mes" value="mes" {% if p.get('idade_unidade') == 'mes' %}checked{% endif %}>
+                                            <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_mes">Mês(es)</label>
+                                        </div>
+                                        <div class="form-check form-check-inline mb-0">
+                                            <input class="form-check-input" type="radio" name="paciente_{{ loop.index0 }}_idade_unidade" id="paciente{{ loop.index0 }}_unidade_dia" value="dia" {% if p.get('idade_unidade') == 'dia' %}checked{% endif %}>
+                                            <label class="form-check-label small" for="paciente{{ loop.index0 }}_unidade_dia">Dia(s)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-auto d-flex align-items-end">
+                                <button type="button" class="btn btn-outline-danger btn-remover-paciente {{ 'd-none' if loop.index0 == 0 and _pacientes|length == 1 else '' }}" title="Remover"><i class="bi bi-x-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-outline-secondary" id="btnAdicionarPaciente"><i class="bi bi-plus me-1"></i>Adicionar paciente</button>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light fw-semibold">Tipo e Origem da Ligação</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Tipo de Ligação</label>
+                        <select name="tipo_ligacao_id" id="selectTipoLigacao" class="form-select">
+                            <option value="">— Selecione —</option>
+                            {% for t in tipos_ligacao %}
+                            <option value="{{ t.id }}" {% if ocorrencia and ocorrencia.tipo_ligacao_id == t.id %}selected{% endif %} data-permite-encerrar="{{ '1' if t.permite_encerrar_direto else '0' }}">{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Origem da Ligação</label>
+                        <select name="origem_ligacao_id" id="selectOrigemLigacao" class="form-select">
+                            <option value="">— Selecione —</option>
+                            {% for o in origens %}
+                            <option value="{{ o.id }}" {% if ocorrencia and ocorrencia.origem_ligacao_id == o.id %}selected{% endif %} data-preenche-endereco="{{ '1' if getattr(o, 'preenche_endereco_unidade_saude', False) else '0' }}">{{ o.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Endereço</span>
+                <a id="linkMapa" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> Abrir no Google Maps
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-12 col-lg-6 p-3">
+                        <div id="selectUnidadeWrap" class="mb-2" style="display:none;">
+                            <label class="form-label fw-semibold small">Unidade de Saúde</label>
+                            <select id="selectUnidadeSaude" name="unidade_saude_id" class="form-select form-select-sm">
+                                <option value="">— Selecione a unidade —</option>
+                                {% for u in unidades_saude %}
+                                <option value="{{ u.id }}" {% if ocorrencia and ocorrencia.unidade_saude_id == u.id %}selected{% endif %}>{{ u.nome }}{% if u.apelido %} ({{ u.apelido }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small">Cidade</label>
+                                <input type="text" name="end_cidade" class="form-control form-control-sm" value="{{ ocorrencia.end_cidade or '' }}">
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <label class="form-label fw-semibold small">UF</label>
+                                <input type="text" name="end_uf" class="form-control form-control-sm" maxlength="2" value="{{ ocorrencia.end_uf or '' }}" placeholder="SP">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">Logradouro</label>
+                                <input type="text" name="end_logradouro" class="form-control form-control-sm" value="{{ ocorrencia.end_logradouro or '' }}" placeholder="Rua, Avenida...">
+                            </div>
+                            <div class="col-6 col-md-2">
+                                <label class="form-label fw-semibold small">Nº</label>
+                                <input type="text" name="end_numero" class="form-control form-control-sm" value="{{ ocorrencia.end_numero or '' }}">
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label fw-semibold small">Complemento</label>
+                                <input type="text" name="end_complemento" class="form-control form-control-sm" value="{{ ocorrencia.end_complemento or '' }}">
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label fw-semibold small">Bairro</label>
+                                <input type="text" name="end_bairro" class="form-control form-control-sm" value="{{ ocorrencia.end_bairro or '' }}">
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label fw-semibold small">CEP</label>
+                                <input type="text" name="end_cep" id="inputCep" class="form-control form-control-sm" value="{{ ocorrencia.end_cep or '' }}" placeholder="00000-000" maxlength="9">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 border-top border-lg-top-0 border-lg-start">
+                        <div id="mapaPreview" class="endereco-mapa-preview"></div>
+                        <div id="mapaLoading" class="text-muted text-center py-4 small d-none">
+                            <span class="spinner-border spinner-border-sm me-2"></span>Buscando localização...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if ocorrencia.status in ('aguardando', 'em_atendimento', 'enviada_medico') and not bloqueada %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" name="acao" value="aguardando" class="btn btn-outline-warning">
+                        <i class="bi bi-clock-history me-1"></i> Salvar e Aguardar
+                    </button>
+                    <button type="submit" name="acao" value="finalizar" class="btn btn-outline-success" id="btnFinalizarAtendimento" style="display:none;">
+                        <i class="bi bi-check-circle me-1"></i> Finalizar Atendimento
+                    </button>
+                    <button type="submit" name="acao" value="enviar_medico" class="btn btn-samu-primary">
+                        <i class="bi bi-send me-1"></i> Enviar para o Médico
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% elif bloqueada %}
+        <div class="alert alert-warning mb-0 d-none" id="alertBloqueada">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Esta ocorrência está sendo editada por <strong>{{ editando_por_usuario }}</strong>.
+        </div>
+        {% else %}
+        <p class="text-muted"><i class="bi bi-info-circle me-1"></i>Esta ocorrência já foi finalizada. Apenas visualização.</p>
+        {% endif %}
+        {% if bloqueada %}</fieldset>{% endif %}
+    </form>
+
+    {% if bloqueada %}
+    <div class="modal fade show d-block" id="modalOcorrenciaBloqueada" tabindex="-1" style="background: rgba(0,0,0,0.5);" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Ocorrência em edição</h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">A ocorrência <strong>{{ ocorrencia.numero }}</strong> está sendo editada por <strong>{{ editando_por_usuario }}</strong>.</p>
+                    <p class="text-muted small mb-0 mt-2">Deseja assumir a edição? O outro atendente não poderá mais salvar alterações nesta ocorrência.</p>
+                </div>
+                <div class="modal-footer border-0">
+                    <a href="{{ url_for('atendimento.registro_chamada') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="button" class="btn btn-warning" id="btnAssumirOcorrencia" data-url="{{ url_for('atendimento.api_assumir_ocorrencia', ocorrencia_id=ocorrencia.id) }}">
+                        <i class="bi bi-person-check me-1"></i> Assumir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {# Tabelas sempre visíveis na mesma tela #}
+    <div class="row mt-4">
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light fw-semibold">
+                    <i class="bi bi-clock-history me-1"></i> Ocorrências em Aberto
+                </div>
+                <div class="card-body p-0">
+                    {% if ocorrencias_abertas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nº</th>
+                                    <th>Telefone</th>
+                                    <th>Solicitante</th>
+                                    <th>Atendente</th>
+                                    <th>Apelido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in ocorrencias_abertas %}
+                                <tr class="{{ 'table-warning' if ocorrencia and ocorrencia.id == i.id else '' }}">
+                                    <td>
+                                        <a href="{{ url_for('atendimento.registro_chamada', ocorrencia_id=i.id) }}" class="fw-semibold text-decoration-none">
+                                            {{ i.numero[-6:] if i.numero and i.numero|length >= 6 else i.numero }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if i.telefone %}
+                                        {% if i.telefone | wa_link %}
+                                        <a href="{{ i.telefone | wa_link }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none"><i class="bi bi-whatsapp me-1"></i>{{ i.telefone | br_fone }}</a>
+                                        {% else %}{{ i.telefone | br_fone }}{% endif %}
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>{{ i.nome_solicitante or '—' }}</td>
+                                    <td>{{ i.atendente.usuario if i.atendente else '—' }}</td>
+                                    <td class="text-break">{{ i.apelido or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted p-3 mb-0 small">Nenhuma ocorrência em aberto.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light fw-semibold">
+                    <i class="bi bi-file-medical me-1"></i> Ocorrências Não Reguladas
+                </div>
+                <div class="card-body p-0">
+                    {% if ocorrencias_nao_reguladas %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nº</th>
+                                    <th>Telefone</th>
+                                    <th>Solicitante</th>
+                                    <th>Atendente</th>
+                                    <th>Apelido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for i in ocorrencias_nao_reguladas %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('atendimento.registro_chamada', ocorrencia_id=i.id) }}" class="fw-semibold text-decoration-none">
+                                            {{ i.numero[-6:] if i.numero and i.numero|length >= 6 else i.numero }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if i.telefone %}
+                                        {% if i.telefone | wa_link %}
+                                        <a href="{{ i.telefone | wa_link }}" target="_blank" rel="noopener noreferrer" class="text-success text-decoration-none"><i class="bi bi-whatsapp me-1"></i>{{ i.telefone | br_fone }}</a>
+                                        {% else %}{{ i.telefone | br_fone }}{% endif %}
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>{{ i.nome_solicitante or '—' }}</td>
+                                    <td>{{ i.atendente.usuario if i.atendente else '—' }}</td>
+                                    <td class="text-break">{{ i.apelido or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted p-3 mb-0 small">Nenhuma ocorrência aguardando regulação médica.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function() {
+    var API_CRIAR = "{{ url_for('atendimento.api_criar_ocorrencia') }}";
+    var API_HISTORICO = "{{ url_for('atendimento.api_historico_telefone') }}";
+    var API_ALGORITMO = "{{ url_for('atendimento.api_algoritmo_perguntas', algoritmo_id=0) }}".replace('/0', '/');
+    var ALGO_RESPOSTAS_INICIAIS = {{ (ocorrencia.respostas_algoritmo | tojson) if ocorrencia and ocorrencia.respostas_algoritmo else '{}' }};
+    var CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function mascararFone(v) {
+        var d = (v || '').replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+        var isCell = d[2] === '9';
+        if (isCell) {
+            if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+            return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        }
+        if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+        return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    }
+
+    function digitos(v) { return (v || '').replace(/\D/g, ''); }
+
+    function carregarHistorico(telefone, ulId) {
+        if (!telefone || digitos(telefone).length < 10) return;
+        fetch(API_HISTORICO + '?telefone=' + encodeURIComponent(digitos(telefone)))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var ul = document.getElementById(ulId);
+                if (!ul) return;
+                ul.innerHTML = '';
+                if (!data.itens || data.itens.length === 0) {
+                    ul.innerHTML = '<li class="list-group-item text-muted">Nenhuma ligação anterior.</li>';
+                } else {
+                    data.itens.forEach(function(i) {
+                        var li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        var linha2 = [];
+                        if (i.tipo_ligacao) linha2.push(i.tipo_ligacao);
+                        if (i.apelido) linha2.push(i.apelido);
+                        li.innerHTML = '<strong>' + (i.data_hora || '') + '</strong> — ' + (i.nome_solicitante || '—') + (linha2.length ? '<br><span class="text-muted small">' + linha2.join(' · ') + '</span>' : '');
+                        ul.appendChild(li);
+                    });
+                }
+                var wrap = ul.closest('[id^="historico"]');
+                if (wrap) wrap.style.display = 'block';
+            })
+            .catch(function() {});
+    }
+
+    {% if ocorrencia %}
+    carregarHistorico("{{ ocorrencia.telefone }}", "listaHistorico");
+
+    // Máscara CEP
+    var inpCep = document.getElementById('inputCep');
+    if (inpCep) {
+        inpCep.addEventListener('input', function() {
+            var v = this.value.replace(/\D/g, '').slice(0, 8);
+            this.value = v.length > 5 ? v.slice(0, 5) + '-' + v.slice(5) : v;
+        });
+    }
+
+    // Mapa + geocoding (Leaflet + Nominatim)
+    function enderecoCompleto() {
+        var campos = ['end_logradouro','end_numero','end_bairro','end_cidade','end_uf','end_cep'];
+        var partes = [];
+        campos.forEach(function(n) {
+            var inp = document.querySelector('#formOcorrencia [name="' + n + '"]');
+            if (inp && inp.value && inp.value.trim()) partes.push(inp.value.trim());
+        });
+        return partes.join(', ');
+    }
+    function atualizarLinkMapa() {
+        var q = enderecoCompleto();
+        var link = document.getElementById('linkMapa');
+        if (link) {
+            link.href = q ? ('https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q)) : '#';
+        }
+    }
+    var map = null;
+    var marker = null;
+    var geocodeTimer = null;
+    function initMapa() {
+        var div = document.getElementById('mapaPreview');
+        if (!div || map) return;
+        map = L.map('mapaPreview').setView([-23.5015, -47.4526], 13); // Sorocaba
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+    }
+    function geocodeEAtualizarMapa() {
+        var q = enderecoCompleto();
+        if (!q || q.length < 5) {
+            if (marker && map) { map.removeLayer(marker); marker = null; }
+            atualizarLinkMapa();
+            return;
+        }
+        var loading = document.getElementById('mapaLoading');
+        if (loading) loading.classList.remove('d-none');
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=1', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (loading) loading.classList.add('d-none');
+            if (!map) initMapa();
+            if (marker) map.removeLayer(marker);
+            if (data && data[0]) {
+                var lat = parseFloat(data[0].lat), lon = parseFloat(data[0].lon);
+                marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+                map.setView([lat, lon], 16);
+            }
+            atualizarLinkMapa();
+        })
+        .catch(function() {
+            if (loading) loading.classList.add('d-none');
+            atualizarLinkMapa();
+        });
+    }
+    document.querySelectorAll('#formOcorrencia [name^="end_"]').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            atualizarLinkMapa();
+            clearTimeout(geocodeTimer);
+            geocodeTimer = setTimeout(geocodeEAtualizarMapa, 600);
+        });
+    });
+    initMapa();
+    atualizarLinkMapa();
+    geocodeEAtualizarMapa();
+
+    // Origem da ligação: mostrar select de Unidade de Saúde quando preenche_endereco_unidade_saude
+    var selectOrigem = document.getElementById('selectOrigemLigacao');
+    var wrapUnidade = document.getElementById('selectUnidadeWrap');
+    var selectUnidade = document.getElementById('selectUnidadeSaude');
+    var API_UNIDADE = "{{ url_for('atendimento.api_unidade_saude', unidade_id=0) }}".replace('/0', '/');
+    function atualizarOrigemUnidade() {
+        var opt = selectOrigem && selectOrigem.options[selectOrigem.selectedIndex];
+        var preenche = opt && opt.dataset.preencheEndereco === '1';
+        if (wrapUnidade) wrapUnidade.style.display = preenche ? 'block' : 'none';
+        if (selectUnidade && !preenche) {
+            selectUnidade.selectedIndex = 0;
+        }
+    }
+    if (selectOrigem) {
+        selectOrigem.addEventListener('change', atualizarOrigemUnidade);
+        atualizarOrigemUnidade();
+    }
+    if (selectUnidade) {
+        selectUnidade.addEventListener('change', function() {
+            var id = this.value;
+            if (!id) return;
+            fetch(API_UNIDADE + id)
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    var set = function(name, val) {
+                        var inp = document.querySelector('#formOcorrencia [name="' + name + '"]');
+                        if (inp) inp.value = (val || '');
+                    };
+                    set('end_cidade', d.cidade);
+                    set('end_uf', d.uf);
+                    set('end_logradouro', d.logradouro);
+                    set('end_numero', d.numero);
+                    set('end_complemento', d.complemento);
+                    set('end_bairro', d.bairro);
+                    set('end_cep', d.cep);
+                    atualizarLinkMapa();
+                    geocodeEAtualizarMapa();
+                })
+                .catch(function() {});
+        });
+    }
+
+    // Editor rico Motivo/Queixa (Quill)
+    var quillMotivo = null;
+    var editorWrap = document.getElementById('editorMotivoWrap');
+    if (editorWrap && typeof Quill !== 'undefined') {
+        quillMotivo = new Quill('#editorMotivoQueixa', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold','italic','underline'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered' }, { 'list': 'bullet' }]
+                ]
+            }
+        });
+        quillMotivo.root.innerHTML = document.getElementById('inputMotivoQueixa').value || '';
+        quillMotivo.on('text-change', function() {
+            document.getElementById('inputMotivoQueixa').value = quillMotivo.root.innerHTML;
+        });
+    }
+
+    document.getElementById('formOcorrencia')?.addEventListener('submit', function() {
+        if (quillMotivo) document.getElementById('inputMotivoQueixa').value = quillMotivo.root.innerHTML;
+        Object.keys(algoRespostas || {}).forEach(function(k) {
+            if (algoRespostas[k]) {
+                var inp = document.querySelector('input[name="' + k + '"]');
+                if (!inp) {
+                    inp = document.createElement('input');
+                    inp.type = 'hidden';
+                    inp.name = k;
+                    document.getElementById('formOcorrencia').appendChild(inp);
+                }
+                inp.value = algoRespostas[k];
+            }
+        });
+    }, true);
+
+    // Algoritmo: wizard passo a passo
+    var selectAlgo = document.getElementById('selectAlgoritmo');
+    var wizard = document.getElementById('algoWizard');
+    var wizardPergunta = document.getElementById('algoWizardPergunta');
+    var btnAnterior = document.getElementById('btnAlgoAnterior');
+    var btnProximo = document.getElementById('btnAlgoProximo');
+    var btnFinalizar = document.getElementById('btnAlgoFinalizar');
+    var stepInfo = document.getElementById('algoStepInfo');
+    var inputAlgoId = document.getElementById('inputAlgoritmoId');
+    var algoPerguntas = [];
+    var algoRespostas = {};
+    var algoNome = '';
+    var algoIndex = 0;
+
+    function renderAlgoPergunta() {
+        if (!algoPerguntas.length) return;
+        var p = algoPerguntas[algoIndex];
+        wizardPergunta.innerHTML = '';
+        var label = document.createElement('label');
+        label.className = 'form-label fw-semibold';
+        label.textContent = p.enunciado;
+        wizardPergunta.appendChild(label);
+        var key = 'algo_' + p.id;
+        if (p.tipo === 'texto') {
+            var ta = document.createElement('textarea');
+            ta.className = 'form-control';
+            ta.rows = 2;
+            ta.dataset.key = key;
+            ta.value = algoRespostas[key] || '';
+            ta.placeholder = 'Descrição ou observação...';
+            ta.addEventListener('change', function() { algoRespostas[key] = this.value; });
+            wizardPergunta.appendChild(ta);
+        } else {
+            var div = document.createElement('div');
+            (p.opcoes || []).forEach(function(o) {
+                if (p.tipo === 'multipla_escolha') {
+                    var lb = document.createElement('label');
+                    lb.className = 'form-check d-block';
+                    var cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.className = 'form-check-input';
+                    cb.value = o.id;
+                    cb.dataset.key = key;
+                    var arr = algoRespostas[key] ? algoRespostas[key].split(',') : [];
+                    if (arr.indexOf(String(o.id)) >= 0) cb.checked = true;
+                    cb.addEventListener('change', function() {
+                        var cbs = div.querySelectorAll('input:checked');
+                        algoRespostas[key] = Array.from(cbs).map(function(x) { return x.value; }).join(',');
+                    });
+                    lb.appendChild(cb);
+                    lb.appendChild(document.createTextNode(' ' + o.texto));
+                    div.appendChild(lb);
+                } else {
+                    var lb = document.createElement('label');
+                    lb.className = 'form-check d-block';
+                    var rb = document.createElement('input');
+                    rb.type = 'radio';
+                    rb.name = key;
+                    rb.className = 'form-check-input';
+                    rb.value = o.id;
+                    rb.dataset.key = key;
+                    if (algoRespostas[key] == o.id) rb.checked = true;
+                    rb.addEventListener('change', function() { algoRespostas[key] = this.value; });
+                    lb.appendChild(rb);
+                    lb.appendChild(document.createTextNode(' ' + o.texto));
+                    div.appendChild(lb);
+                }
+            });
+            wizardPergunta.appendChild(div);
+        }
+        stepInfo.textContent = 'Pergunta ' + (algoIndex + 1) + ' de ' + algoPerguntas.length;
+        btnAnterior.disabled = algoIndex === 0;
+        btnProximo.style.display = algoIndex === algoPerguntas.length - 1 ? 'none' : 'inline-block';
+        btnFinalizar.style.display = algoIndex === algoPerguntas.length - 1 ? 'inline-block' : 'none';
+    }
+
+    function salvarRespostaAtual() {
+        var p = algoPerguntas[algoIndex];
+        if (!p) return;
+        var key = 'algo_' + p.id;
+        var inp = wizardPergunta.querySelector('[data-key="' + key + '"], [name="' + key + '"]');
+        if (inp) {
+            if (inp.tagName === 'TEXTAREA') algoRespostas[key] = inp.value;
+            else if (p.tipo === 'multipla_escolha') {
+                var cbs = wizardPergunta.querySelectorAll('input[data-key="' + key + '"]:checked');
+                algoRespostas[key] = Array.from(cbs).map(function(x) { return x.value; }).join(',');
+            } else {
+                var rb = wizardPergunta.querySelector('input[name="' + key + '"]:checked');
+                algoRespostas[key] = rb ? rb.value : '';
+            }
+        }
+    }
+
+    function transcreverParaMotivo() {
+        var linhas = [];
+        algoPerguntas.forEach(function(p) {
+            var key = 'algo_' + p.id;
+            var val = algoRespostas[key];
+            if (!val) return;
+            var texto = val;
+            if (p.tipo !== 'texto' && p.opcoes) {
+                var ids = val.toString().split(',');
+                texto = ids.map(function(id) {
+                    var o = (p.opcoes || []).find(function(x) { return String(x.id) === String(id); });
+                    return o ? o.texto : id;
+                }).join(', ');
+            }
+            var pergunta = (p.enunciado || '').trim();
+            if (pergunta && !/[.?!:]$/.test(pergunta)) pergunta += '?';
+            linhas.push('<p><strong>' + pergunta + '</strong> <em>' + texto + '</em></p>');
+        });
+        if (linhas.length && quillMotivo) {
+            var existente = quillMotivo.root.innerHTML.trim();
+            var titulo = algoNome ? ('Protocolo: <strong>' + algoNome + '</strong>') : 'Protocolo de acolhimento';
+            var novo = '<p style="margin-bottom:0.5em;padding-bottom:0.5em;border-bottom:1px solid #dee2e6;"><em>' + titulo + '</em></p>' + linhas.join('');
+            quillMotivo.root.innerHTML = (existente ? existente + '<p></p>' : '') + novo;
+            document.getElementById('inputMotivoQueixa').value = quillMotivo.root.innerHTML;
+        }
+    }
+
+    if (selectAlgo && wizard) {
+        var badgePreenchido = document.getElementById('algoPreenchidoBadge');
+        var perguntasWrap = document.getElementById('algoWizardPerguntasWrap');
+        var btnReeditar = document.getElementById('algoBtnReeditar');
+        selectAlgo.addEventListener('change', function() {
+            var id = this.value;
+            inputAlgoId.value = id || '';
+            algoPerguntas = [];
+            algoRespostas = {};
+            algoIndex = 0;
+            wizard.style.display = 'none';
+            if (badgePreenchido) badgePreenchido.style.display = 'none';
+            if (perguntasWrap) perguntasWrap.style.display = 'none';
+            if (!id) return;
+            fetch(API_ALGORITMO + id)
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.perguntas || data.perguntas.length === 0) return;
+                    algoPerguntas = data.perguntas;
+                    algoNome = data.algoritmo_nome || '';
+                    var respIniciais = (typeof ALGO_RESPOSTAS_INICIAIS === 'object' && ALGO_RESPOSTAS_INICIAIS) ? ALGO_RESPOSTAS_INICIAIS : {};
+                    for (var k in respIniciais) {
+                        if (respIniciais.hasOwnProperty(k) && respIniciais[k]) {
+                            algoRespostas['algo_' + k] = String(respIniciais[k]);
+                        }
+                    }
+                    var temRespostas = Object.keys(algoRespostas).length > 0;
+                    wizard.style.display = 'block';
+                    if (temRespostas) {
+                        if (badgePreenchido) badgePreenchido.style.display = 'block';
+                        if (perguntasWrap) perguntasWrap.style.display = 'none';
+                        renderAlgoPergunta();
+                    } else {
+                        if (badgePreenchido) badgePreenchido.style.display = 'none';
+                        if (perguntasWrap) perguntasWrap.style.display = 'block';
+                        renderAlgoPergunta();
+                    }
+                })
+                .catch(function() {});
+        });
+        if (btnAnterior) btnAnterior.addEventListener('click', function() {
+            salvarRespostaAtual();
+            if (algoIndex > 0) { algoIndex--; renderAlgoPergunta(); }
+        });
+        if (btnProximo) btnProximo.addEventListener('click', function() {
+            salvarRespostaAtual();
+            if (algoIndex < algoPerguntas.length - 1) { algoIndex++; renderAlgoPergunta(); }
+        });
+        if (btnFinalizar) btnFinalizar.addEventListener('click', function() {
+            salvarRespostaAtual();
+            transcreverParaMotivo();
+            wizard.style.display = 'none';
+            algoPerguntas = [];
+        });
+        if (btnReeditar) btnReeditar.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (badgePreenchido) badgePreenchido.style.display = 'none';
+            if (perguntasWrap) perguntasWrap.style.display = 'block';
+        });
+        if (selectAlgo.value) selectAlgo.dispatchEvent(new Event('change'));
+    }
+
+    // Botão Finalizar: só aparece quando tipo de ligação permite
+    function atualizarVisibilidadeFinalizar() {
+        var sel = document.getElementById('selectTipoLigacao');
+        var btn = document.getElementById('btnFinalizarAtendimento');
+        if (!sel || !btn) return;
+        var opt = sel.options[sel.selectedIndex];
+        var permite = opt && opt.getAttribute('data-permite-encerrar') === '1';
+        btn.style.display = permite ? '' : 'none';
+    }
+    var selTipo = document.getElementById('selectTipoLigacao');
+    if (selTipo) {
+        selTipo.addEventListener('change', atualizarVisibilidadeFinalizar);
+        atualizarVisibilidadeFinalizar();
+    }
+
+    // Pacientes: Mesmo da ligação, Adicionar, Remover
+    var inpSolicitante = document.querySelector('[name="nome_solicitante"]');
+    var cbMesmo = document.getElementById('paciente0Mesmo');
+    if (cbMesmo && inpSolicitante) {
+        cbMesmo.addEventListener('change', function() {
+            var nomeInp = document.querySelector('[name="paciente_0_nome"]');
+            if (nomeInp) nomeInp.value = this.checked ? inpSolicitante.value : '';
+        });
+        inpSolicitante.addEventListener('input', function() {
+            if (cbMesmo.checked) {
+                var nomeInp = document.querySelector('[name="paciente_0_nome"]');
+                if (nomeInp) nomeInp.value = this.value;
+            }
+        });
+    }
+    var listaPacientes = document.getElementById('pacientesLista');
+    var btnAddPaciente = document.getElementById('btnAdicionarPaciente');
+    if (listaPacientes && btnAddPaciente) {
+        btnAddPaciente.addEventListener('click', function() {
+            var rows = listaPacientes.querySelectorAll('.paciente-row');
+            var idx = rows.length;
+            var div = document.createElement('div');
+            div.className = 'paciente-row mb-3';
+            div.dataset.idx = idx;
+            div.innerHTML = '<div class="row g-3 align-items-start">' +
+                '<div class="col-12 col-md-5"><label class="form-label fw-semibold">Nome completo</label><input type="text" name="paciente_' + idx + '_nome" class="form-control" placeholder="Nome completo"></div>' +
+                '<div class="col-12 col-md-3"><label class="form-label fw-semibold">Sexo</label><select name="paciente_' + idx + '_sexo" class="form-select"><option value="">— Selecione —</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>' +
+                '<div class="col-12 col-md-4"><label class="form-label fw-semibold">Idade</label><div class="d-flex align-items-center gap-2 flex-wrap">' +
+                '<input type="number" name="paciente_' + idx + '_idade" class="form-control paciente-idade-numero" min="0" max="999" style="width:70px;">' +
+                '<div class="d-flex gap-2 flex-wrap"><div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="ano" checked><label class="form-check-label small">Ano(s)</label></div>' +
+                '<div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="mes"><label class="form-check-label small">Mês(es)</label></div>' +
+                '<div class="form-check form-check-inline mb-0"><input class="form-check-input" type="radio" name="paciente_' + idx + '_idade_unidade" value="dia"><label class="form-check-label small">Dia(s)</label></div></div></div></div>' +
+                '<div class="col-12 col-md-auto d-flex align-items-end"><button type="button" class="btn btn-outline-danger btn-remover-paciente" title="Remover"><i class="bi bi-x-lg"></i></button></div>' +
+                '</div>';
+            listaPacientes.appendChild(div);
+            div.querySelector('.btn-remover-paciente').addEventListener('click', function() {
+                div.remove();
+                reindexarPacientes();
+            });
+            if (rows.length >= 1) rows[0].querySelector('.btn-remover-paciente')?.classList.remove('d-none');
+        });
+        listaPacientes.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-remover-paciente')) {
+                var row = e.target.closest('.paciente-row');
+                if (row && listaPacientes.querySelectorAll('.paciente-row').length > 1) {
+                    row.remove();
+                    reindexarPacientes();
+                }
+            }
+        });
+        function reindexarPacientes() {
+            listaPacientes.querySelectorAll('.paciente-row').forEach(function(row, i) {
+                row.dataset.idx = i;
+                row.querySelectorAll('[name^="paciente_"]').forEach(function(inp) {
+                    inp.name = inp.name.replace(/paciente_\d+_/, 'paciente_' + i + '_');
+                });
+                var btnRem = row.querySelector('.btn-remover-paciente');
+                if (btnRem) btnRem.classList.toggle('d-none', i === 0);
+            });
+        }
+    }
+    {% else %}
+    // Etapa inicial: telefone + Enter/Tab cria ocorrência
+    var inpInicial = document.getElementById('inputTelefoneInicial');
+    if (inpInicial) {
+        inpInicial.addEventListener('input', function() { this.value = mascararFone(this.value); });
+        inpInicial.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                var tel = digitos(this.value);
+                if (tel.length < 10) {
+                    alert('Informe um telefone válido (10 ou 11 dígitos).');
+                    return;
+                }
+                fetch(API_CRIAR, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+                    body: JSON.stringify({ telefone: tel })
+                })
+                .then(function(r) {
+                    if (!r.ok) return r.json().then(function(d) { throw new Error(d.erro || 'Erro ao criar ocorrência'); });
+                    return r.json();
+                })
+                .then(function(data) {
+                    if (data.redirect) window.location.href = data.redirect;
+                })
+                .catch(function(err) { alert(err.message || 'Erro ao criar ocorrência.'); });
+            }
+        });
+        inpInicial.addEventListener('blur', function() {
+            carregarHistorico(this.value, 'listaHistoricoInicial');
+        });
+    }
+
+    // Assumir ocorrência (quando outro atendente está editando)
+    var btnAssumir = document.getElementById('btnAssumirOcorrencia');
+    if (btnAssumir) {
+        var urlAssumir = btnAssumir.getAttribute('data-url');
+        btnAssumir.addEventListener('click', function() {
+            if (!urlAssumir) return;
+            btnAssumir.disabled = true;
+            btnAssumir.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Assumindo...';
+            fetch(urlAssumir, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF }
+            })
+            .then(function(r) {
+                if (!r.ok) return r.json().then(function(d) { throw new Error(d.erro || 'Erro'); });
+                return r.json();
+            })
+            .then(function(data) {
+                if (data.redirect) window.location.href = data.redirect;
+            })
+            .catch(function(err) {
+                alert(err.message || 'Erro ao assumir.');
+                btnAssumir.disabled = false;
+                btnAssumir.innerHTML = '<i class="bi bi-person-check me-1"></i> Assumir';
+            });
+        });
+    }
+    {% endif %}
+})();
+</script>
+{% endblock %}

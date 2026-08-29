@@ -33,8 +33,8 @@
         text-align: center;
         font-size: 1.1rem;
     }
-    .permissao-check .bi-check-circle-fill { color: #28a745; }
-    .permissao-check .bi-x-circle          { color: #dee2e6; }
+    .permissao-check .fa-check-circle { color: #28a745; }
+    .permissao-check .fa-times-circle { color: #dee2e6; }
     .grupo-header td {
         background: #f1f5f9;
         font-size: 0.73rem;
@@ -91,20 +91,20 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-shield-lock"></i> Perfis de Acesso</h1>
+    <h1><i class="fas fa-shield-lock"></i> Perfis de Acesso</h1>
     <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-printer me-1"></i>Imprimir
+        <i class="fas fa-print me-1"></i>Imprimir
     </button>
 </div>
 
 <!-- CARDS DE RESUMO DOS PERFIS -->
 <div class="row g-3 mb-4">
     {% set cores = {
-        'administrador':     ('danger',  'bi-shield-fill-check'),
-        'gestor_secretaria': ('primary', 'bi-briefcase-fill'),
-        'coordenador':       ('success', 'bi-person-badge-fill'),
-        'administrativo':    ('warning', 'bi-person-lines-fill'),
-        'profissional':      ('secondary','bi-person-fill')
+        'administrador':     ('danger',  'fas fa-shield-halved'),
+        'gestor_secretaria': ('primary', 'fas fa-briefcase'),
+        'coordenador':       ('success', 'fas fa-id-badge'),
+        'administrativo':    ('warning', 'fas fa-address-card'),
+        'profissional':      ('secondary','fas fa-user')
     } %}
     {% set infos_resumo = {
         'administrador': 'Usuário responsável pela configuração completa do sistema.',
@@ -114,13 +114,13 @@
         'profissional': 'Acesso limitado às funções operacionais relacionadas à sua atuação profissional.',
     } %}
     {% for chave, label in perfis.items() %}
-    {% set cor = cores.get(chave, ('secondary','bi-person')) %}
+    {% set cor = cores.get(chave, ('secondary','fas fa-user')) %}
     <div class="col-md-4 col-xl-2">
         <div class="card text-center h-100 border-0 shadow-sm">
             <div class="card-body py-3">
                 <div class="mb-2">
                     <span class="stat-icon bg-{{ cor[0] }}-soft mx-auto" style="width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
-                        <i class="bi {{ cor[1] }}"></i>
+                        <i class="{{ cor[1] }}"></i>
                     </span>
                 </div>
                 <div class="fw-bold small">{{ label }}</div>
@@ -137,12 +137,12 @@
 <ul class="nav nav-tabs mb-3" id="perfisTabs">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabMatriz">
-            <i class="bi bi-table me-1"></i>Matriz de Permissões
+            <i class="fas fa-table me-1"></i>Matriz de Permissões
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCards">
-            <i class="bi bi-person-badge me-1"></i>Detalhamento por Perfil
+            <i class="fas fa-user-badge me-1"></i>Detalhamento por Perfil
         </button>
     </li>
 </ul>
@@ -153,10 +153,10 @@
     <div class="tab-pane fade show active" id="tabMatriz">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-table me-2"></i>Matriz completa — quem pode fazer o quê</span>
+                <span><i class="fas fa-table me-2"></i>Matriz completa — quem pode fazer o quê</span>
                 <span class="text-muted small">
-                    <i class="bi bi-check-circle-fill text-success me-1"></i>Permitido &nbsp;
-                    <i class="bi bi-x-circle text-muted me-1"></i>Não permitido
+                    <i class="fas fa-check-circle-fill text-success me-1"></i>Permitido &nbsp;
+                    <i class="fas fa-times-circle text-muted me-1"></i>Não permitido
                 </span>
             </div>
             <div class="table-responsive">
@@ -177,15 +177,16 @@
                         {% if grupos.get(grupo) %}
                         <tr class="grupo-header">
                             <td colspan="{{ perfis | length + 1 }}">
-                                <i class="bi bi-{{ {
-                                    'Unidades':'hospital',
-                                    'Salas':'door-open',
-                                    'Equipamentos':'pc-display',
-                                    'Chamados':'wrench-adjustable',
-                                    'Contratos':'file-earmark-text',
-                                    'Usuários':'people',
-                                    'Relatórios':'bar-chart-line'
-                                }.get(grupo,'tag') }} me-2"></i>{{ grupo }}
+                                {% set _grp_icon = {
+                                    'Unidades':'fas fa-hospital',
+                                    'Salas':'fas fa-door-open',
+                                    'Equipamentos':'fas fa-desktop',
+                                    'Chamados':'fas fa-wrench',
+                                    'Contratos':'fas fa-file-contract',
+                                    'Usuários':'fas fa-users',
+                                    'Relatórios':'fas fa-chart-line'
+                                }.get(grupo,'fas fa-tag') %}
+                                <i class="{{ _grp_icon }} me-2"></i>{{ grupo }}
                             </td>
                         </tr>
                         {% for chave, perm_label in grupos[grupo] %}
@@ -194,9 +195,9 @@
                             {% for p_chave in perfis %}
                             <td class="permissao-check">
                                 {% if matriz[chave][p_chave] %}
-                                <i class="bi bi-check-circle-fill" title="Permitido"></i>
+                                <i class="fas fa-check-circle-fill" title="Permitido"></i>
                                 {% else %}
-                                <i class="bi bi-x-circle" title="Não permitido"></i>
+                                <i class="fas fa-times-circle" title="Não permitido"></i>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -274,14 +275,14 @@
                         <p class="text-muted small mb-3">{{ info.get('desc', '') }}</p>
 
                         <div class="fw-semibold small text-success mb-1">
-                            <i class="bi bi-check-circle-fill me-1"></i>Pode fazer:
+                            <i class="fas fa-check-circle-fill me-1"></i>Pode fazer:
                         </div>
                         <ul class="list-unstyled mb-3">
                             {% for grupo in grupos_ordem %}
                             {% for perm_chave, perm_label in grupos.get(grupo, []) %}
                             {% if matriz[perm_chave][chave] %}
                             <li class="text-success">
-                                <i class="bi bi-check2"></i> {{ perm_label }}
+                                <i class="fas fa-check"></i> {{ perm_label }}
                             </li>
                             {% endif %}
                             {% endfor %}
@@ -290,12 +291,12 @@
 
                         {% if info.get('restricoes') %}
                         <div class="fw-semibold small text-danger mb-1">
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Restrições importantes:
+                            <i class="fas fa-exclamation-triangle-fill me-1"></i>Restrições importantes:
                         </div>
                         <ul class="list-unstyled">
                             {% for r in info['restricoes'] %}
                             <li class="text-danger">
-                                <i class="bi bi-dash"></i> {{ r }}
+                                <i class="fas fa-dash"></i> {{ r }}
                             </li>
                             {% endfor %}
                         </ul>

@@ -25,6 +25,9 @@ def login():
         return redirect(url_for('dashboard.index'))
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
+        # Se não tiver @, adiciona o domínio padrão
+        if '@' not in email:
+            email = email + '@sorocaba.sp.gov.br'
         senha = request.form.get('senha', '')
         lembrar = request.form.get('lembrar') == 'on'
 
@@ -42,12 +45,17 @@ def login():
 @auth_bp.route('/unidade-padrao', methods=['POST'])
 @login_required
 def definir_unidade_padrao():
-    """Define a unidade padrão do usuário (para gestor central e quem tem várias unidades)."""
+    """Define a unidade padrão do usuário. Apenas unidades vinculadas (opção 'Todas' removida)."""
     unidade_id = request.form.get('unidade_id')
     if unidade_id == '' or unidade_id is None:
-        current_user.unidade_padrao_id = None
-        db.session.commit()
-        flash('Exibindo todas as unidades.', 'info')
+        # Sempre define a primeira unidade vinculada (opção "Todas" não existe mais)
+        up = getattr(current_user, 'unidade_principal', None)
+        if up:
+            current_user.unidade_padrao_id = up.id
+            db.session.commit()
+            flash(f'Unidade padrão definida: {up.nome}.', 'success')
+        else:
+            flash('Você não possui unidade ativa vinculada.', 'danger')
     else:
         try:
             uid = int(unidade_id)
@@ -58,14 +66,11 @@ def definir_unidade_padrao():
         if not un or un.status != 'ativa':
             flash('Unidade não encontrada.', 'danger')
             return redirect(url_for('dashboard.index'))
-        if current_user.pode('ver_todas_unidades'):
-            current_user.unidade_padrao_id = uid
-        else:
-            ids = [uu.unidade_id for uu in current_user.unidades.filter_by(ativo=True).all()]
-            if uid not in ids:
-                flash('Você não está vinculado a essa unidade.', 'danger')
-                return redirect(url_for('dashboard.index'))
-            current_user.unidade_padrao_id = uid
+        ids = [uu.unidade_id for uu in current_user.unidades.filter_by(ativo=True).all()]
+        if uid not in ids:
+            flash('Você não está vinculado a essa unidade.', 'danger')
+            return redirect(url_for('dashboard.index'))
+        current_user.unidade_padrao_id = uid
         db.session.commit()
         flash(f'Unidade padrão definida: {un.nome}.', 'success')
     return redirect(url_for('dashboard.index'))

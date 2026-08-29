@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+.aviso-mensagem ul, .aviso-mensagem ol { padding-left: 1.25rem; margin-bottom: 0.5rem; }
+.aviso-mensagem a { text-decoration: underline; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-speedometer2 text-danger"></i> Dashboard</h1>
+</div>
+
+<div class="row g-3 align-items-start">
+    {# Quadro de Avisos - coluna esquerda fina, altura cheia #}
+    <div class="col-12 col-lg-4 order-2 order-lg-1">
+        <div class="card shadow-sm border-warning h-100 sticky-lg-top">
+            <div class="card-header bg-light py-2">
+                <i class="bi bi-megaphone-fill text-warning me-2"></i>
+                <span class="fw-semibold small">Quadro de Avisos</span>
+            </div>
+            <div class="card-body py-3 overflow-auto" style="max-height: calc(100vh - 220px);">
+                {% if avisos %}
+                <div class="d-flex flex-column gap-2">
+                    {% for a in avisos %}
+                    <div class="border rounded p-2 bg-white">
+                        <h6 class="mb-1 small">{{ a.titulo }}</h6>
+                        <div class="aviso-mensagem text-break small" style="min-height:auto;">
+                            {{ (a.mensagem or '')|links_nova_aba|formatar_links_wa|safe }}
+                        </div>
+                        <div class="mt-2 pt-2 border-top small text-muted">
+                            {% if a.criado_por %}{{ a.criado_por.nome or a.criado_por.usuario }}{% else %}—{% endif %}
+                            · {{ a.criado_em|br_datetime_local }}
+                        </div>
+                        {% if a.anexo %}
+                        <div class="mt-1">
+                            <a href="{{ url_for('gestao.quadro_aviso_anexo', filename=a.anexo) }}" class="btn btn-sm btn-outline-secondary py-0 px-1" download title="{{ a.anexo }}">
+                                <i class="bi bi-paperclip me-1"></i><span class="text-truncate d-inline-block" style="max-width:140px;">{{ a.anexo }}</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0 small">Nenhum aviso publicado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Cards - lado direito, área principal #}
+    <div class="col-12 col-lg-8 order-1 order-lg-2">
+        <div class="row g-3">
+    {# Card: Ligações hoje #}
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-primary bg-opacity-10 rounded p-3">
+                        <i class="bi bi-telephone-inbound fs-2 text-primary"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Ligações hoje</h6>
+                        <h3 class="mb-0">{{ ligacoes_hoje }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Card: Trotes #}
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-shrink-0 bg-warning bg-opacity-10 rounded p-3">
+                        <i class="bi bi-emoji-frown fs-2 text-warning"></i>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="text-muted mb-1">Trotes hoje</h6>
+                        <h3 class="mb-0">{{ trotes_hoje }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Card gordinho: Telefones que passaram trote #}
+    <div class="col-12 col-lg-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light py-2">
+                <i class="bi bi-telephone-x me-1"></i>
+                <span class="fw-semibold small">Telefones (trotes hoje)</span>
+            </div>
+            <div class="card-body p-2" style="max-height:140px; overflow-y:auto;">
+                {% if telefones_trotes %}
+                <table class="table table-sm table-hover mb-0">
+                    <tbody>
+                        {% for tel, formatted in telefones_trotes %}
+                        <tr>
+                            <td class="small">{{ formatted }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted small mb-0">Nenhum trote registrado hoje.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

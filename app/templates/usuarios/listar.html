@@ -3,27 +3,52 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-people"></i>
-        {% if is_admin %}Usuários do Sistema{% else %}Usuários da(s) Unidade(s){% endif %}
-    </h1>
+    <h1><i class="fas fa-users"></i> Usuários do Sistema</h1>
     {% if pode_cadastrar %}
     <a href="{{ url_for('usuarios.novo') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Usuário
+        <i class="fas fa-plus-circle me-1"></i>Novo Usuário
     </a>
     {% endif %}
 </div>
 
-{% if not is_admin %}
-<div class="alert alert-info py-2 mb-3">
-    <i class="bi bi-info-circle me-2"></i>
-    Exibindo apenas os usuários vinculados às suas unidades.
-    {% if pode_cadastrar %}
-    Você pode cadastrar novos usuários com perfil <strong>Administrativo</strong> ou <strong>Profissional</strong>.
-    {% endif %}
-</div>
-{% endif %}
+<form method="get" id="formBuscaUsuarios" class="card mb-3">
+    <div class="card-body py-2">
+        <div class="row g-2 align-items-end">
+            <input type="hidden" name="page" value="1" id="buscaUsuariosPage">
+            <div class="col-md-6 col-lg-5">
+                <label class="form-label small mb-0" for="inputBuscaUsuarios">Buscar (nome ou e-mail)</label>
+                <input type="search" name="q" id="inputBuscaUsuarios" class="form-control form-control-sm"
+                       value="{{ q_busca }}" placeholder="Procure por Nome ou Parte do E-mail" autocomplete="off">
+            </div>
+            <div class="col-auto d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm" title="Buscar">
+                    <i class="fas fa-search"></i>
+                </button>
+                {% if q_busca %}
+                <a href="{{ url_for('usuarios.listar', per_page=paginacao.per_page) }}" class="btn btn-outline-secondary btn-sm" title="Limpar busca">×</a>
+                {% endif %}
+            </div>
+            <div class="col-md-auto ms-md-auto">
+                <label class="form-label small mb-0" for="selPerPageUsuarios">Por página</label>
+                <select name="per_page" id="selPerPageUsuarios" class="form-select form-select-sm" style="width:85px"
+                        onchange="document.getElementById('buscaUsuariosPage').value='1'; this.form.submit();">
+                    <option value="25" {% if paginacao.per_page == 25 %}selected{% endif %}>25</option>
+                    <option value="50" {% if paginacao.per_page == 50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if paginacao.per_page == 100 %}selected{% endif %}>100</option>
+                    <option value="200" {% if paginacao.per_page == 200 %}selected{% endif %}>200</option>
+                </select>
+            </div>
+        </div>
+        <p class="text-muted small mb-0 mt-2">
+            Ordem alfabética por nome. A busca atualiza automaticamente após você parar de digitar (meio segundo).
+        </p>
+    </div>
+</form>
 
 <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <span class="small text-muted">{{ paginacao.total }} usuário(s) neste filtro</span>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
@@ -32,7 +57,7 @@
                         <th>Nome</th>
                         <th class="d-none d-md-table-cell">E-mail</th>
                         <th class="d-none d-md-table-cell">
-                            <i class="bi bi-whatsapp text-success me-1"></i>Telefone (WhatsApp)
+                            <i class="fab fa-whatsapp text-success me-1"></i>Telefone (WhatsApp)
                         </th>
                         <th>Perfil</th>
                         <th class="d-none d-lg-table-cell">Matrícula(s) | CBO</th>
@@ -42,7 +67,7 @@
                 </thead>
                 <tbody>
                     {% for u in usuarios %}
-                    {% set mats = u.matriculas.all() %}
+                    {% set mats = u.matriculas.filter_by(ativo=True).all() %}
                     <tr>
                         <td class="fw-semibold small">{{ u.nome }}</td>
 
@@ -60,7 +85,7 @@
                             {% set wnum = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ wnum }}" target="_blank"
                                class="text-success text-decoration-none d-flex align-items-center gap-1">
-                                <i class="bi bi-whatsapp"></i>
+                                <i class="fab fa-whatsapp"></i>
                                 <span>{{ _fone | br_fone }}</span>
                             </a>
                             {% else %}
@@ -77,7 +102,11 @@
                             <div class="d-flex flex-column gap-1">
                                 {% for m in mats %}
                                 <span class="{{ 'text-muted' if not m.ativo else '' }}">
+                                    {% if m.numero == 'Sem Matrícula' or not m.numero %}
+                                    <span class="fst-italic">{{ m.numero if m.numero else 'Sem matrícula' }}</span>
+                                    {% else %}
                                     <span class="fw-semibold">{{ m.numero }}</span>
+                                    {% endif %}
                                     {% if m.cbo %}
                                     <span class="text-muted mx-1">|</span>
                                     <span class="{{ 'text-decoration-line-through text-muted' if not m.ativo else '' }}">
@@ -108,8 +137,14 @@
                         <td>
                             <a href="{{ url_for('usuarios.editar', id=u.id) }}"
                                class="btn btn-sm btn-outline-secondary" title="Editar">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            Nenhum usuário encontrado{% if q_busca %} para “{{ q_busca }}”{% endif %}.
                         </td>
                     </tr>
                     {% endfor %}
@@ -117,5 +152,62 @@
             </table>
         </div>
     </div>
+    {% if paginacao.pages > 1 %}
+    <div class="card-footer d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-2">
+        <small class="text-muted">
+            Página {{ paginacao.page }} de {{ paginacao.pages }}
+        </small>
+        <nav aria-label="Paginação">
+            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center justify-content-sm-end">
+                <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
+                    {% if paginacao.has_prev %}
+                    <a class="page-link" href="{{ url_for('usuarios.listar', page=paginacao.prev_num, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}" title="Página anterior">‹</a>
+                    {% else %}
+                    <span class="page-link">‹</span>
+                    {% endif %}
+                </li>
+                {% for p in paginacao.iter_pages(left_edge=1, right_edge=1, left_current=3, right_current=3) %}
+                    {% if p %}
+                        <li class="page-item{% if p == paginacao.page %} active{% endif %}">
+                            {% if p == paginacao.page %}
+                            <span class="page-link">{{ p }}</span>
+                            {% else %}
+                            <a class="page-link" href="{{ url_for('usuarios.listar', page=p, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}">{{ p }}</a>
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
+                    {% if paginacao.has_next %}
+                    <a class="page-link" href="{{ url_for('usuarios.listar', page=paginacao.next_num, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}" title="Próxima página">›</a>
+                    {% else %}
+                    <span class="page-link">›</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var form = document.getElementById('formBuscaUsuarios');
+  var input = document.getElementById('inputBuscaUsuarios');
+  var pageHidden = document.getElementById('buscaUsuariosPage');
+  if (!form || !input) return;
+  var t;
+  input.addEventListener('input', function () {
+    clearTimeout(t);
+    t = setTimeout(function () {
+      if (pageHidden) pageHidden.value = '1';
+      form.requestSubmit();
+    }, 500);
+  });
+})();
+</script>
 {% endblock %}

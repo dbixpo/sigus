@@ -21,7 +21,7 @@ with app.app_context():
         perfil='administrador',
         ativo=True,
     )
-    novo.set_senha(os.environ.get('ADMIN_PASSWORD', 'altere-me'))
+    novo.set_senha('@Qweszxc7895123')
     db.session.add(novo)
     db.session.commit()
     print(f'  Criado: {novo.email} (id={novo.id})')

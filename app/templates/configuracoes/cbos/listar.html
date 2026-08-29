@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}CBOs{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">CBOs</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-briefcase"></i> CBOs (Códigos Brasileiros de Ocupação)</h1>
+    <a href="{{ url_for('configuracoes.novo_cbo') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Novo CBO
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if cbos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Status</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cbo in cbos %}
+                    <tr class="{{ '' if cbo.ativo else 'text-muted' }}">
+                        <td>
+                            <span class="badge bg-primary fs-6">{{ cbo.codigo }}</span>
+                        </td>
+                        <td class="fw-semibold">{{ cbo.descricao }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if cbo.ativo else 'secondary' }}">
+                                {{ 'Ativo' if cbo.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_cbo', id=cbo.id) }}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-pencil-alt me-1"></i>Editar
+                            </a>
+                            <form method="POST"
+                                  action="{{ url_for('configuracoes.alternar_status_cbo', id=cbo.id) }}"
+                                  class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-{{ 'warning' if cbo.ativo else 'success' }}"
+                                        data-confirm="{{ 'Desativar' if cbo.ativo else 'Ativar' }} o CBO {{ cbo.codigo }}?">
+                                    <i class="fas fa-{{ 'pause-circle' if cbo.ativo else 'play-circle' }} me-1"></i>
+                                    {{ 'Desativar' if cbo.ativo else 'Ativar' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-briefcase"></i>
+            <h6>Nenhum CBO cadastrado.</h6>
+            <a href="{{ url_for('configuracoes.novo_cbo') }}" class="btn btn-primary mt-2">
+                Cadastrar Primeiro CBO
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

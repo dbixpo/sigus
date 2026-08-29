@@ -1,6 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}{{ 'Editar' if sala else 'Nova' }} Sala{% endblock %}
 
+{% block head %}
+<style>
+.tooltip-wide {
+  --bs-tooltip-max-width: 420px;
+}
+.tooltip-wide .tooltip-inner {
+  text-align: left;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -11,7 +22,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-door-open"></i> {{ 'Editar Sala' if sala else 'Nova Sala' }} — {{ unidade.nome }}</h1>
+    <h1><i class="fas fa-door-open"></i> {{ 'Editar Sala' if sala else 'Nova Sala' }} — {{ unidade.nome }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -31,7 +42,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Tipo de Sala</label>
                         {% if tipos %}
-                        <select name="tipo_sala_id" class="form-select" id="tipo-sala-select">
+                        <select name="tipo_sala_id" class="form-select" id="tipo-sala-select" required>
                             <option value="">— Selecione o tipo —</option>
                             {% for t in tipos %}
                             <option value="{{ t.id }}"
@@ -65,12 +76,35 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Máx. profissionais simultâneos <span class="text-danger">*</span>
+                            <a href="javascript:void(0)"
+                               class="text-muted ms-1"
+                               tabindex="0"
+                               role="button"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="top"
+                               data-bs-custom-class="tooltip-wide"
+                               data-bs-html="true"
+                               title="Informe o número máximo de pessoas que utilizam a sala ao mesmo tempo (simultaneamente).<br>Não considerar por período (manhã/tarde), e sim o maior número possível no mesmo momento.<br><br><strong>Exemplos:</strong><br>• Consultório: geralmente 1 profissional<br>• Consultório de GO: geralmente 2 profissionais (ex: GO + técnico de enfermagem)<br>• Pós consulta: geralmente 2 profissionais<br>• Recepção / Coordenação / Administrativo: considerar todas as pessoas que trabalham juntas no local<br><br><strong>Sempre informe o maior número simultâneo.</strong>">
+                                <i class="fas fa-circle-info"></i>
+                            </a>
+                        </label>
+                        <input type="number" name="capacidade_maxima" class="form-control" required min="0" step="1"
+                               value="{{ sala.capacidade_maxima if sala else 0 }}"
+                               placeholder="Ex.: 2">
+                        <div class="form-text">
+                            Informe o máximo de profissionais que atuam na sala ao mesmo tempo (0 ou mais).
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">
                             Ramal
                             <span class="text-muted small">(opcional)</span>
                         </label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+                            <span class="input-group-text"><i class="fas fa-telephone-plus"></i></span>
                             <input type="text" name="ramal" class="form-control"
                                    value="{{ sala.ramal or '' if sala else '' }}"
                                    placeholder="Ex.: 214">
@@ -87,7 +121,7 @@
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if sala else 'Cadastrar Sala' }}
+                            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar Alterações' if sala else 'Cadastrar Sala' }}
                         </button>
                         <a href="{{ url_for('unidades.detalhe', id=unidade.id) }}" class="btn btn-outline-secondary">
                             Cancelar
@@ -98,4 +132,15 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  var els = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  for (var i = 0; i < els.length; i++) {
+    try { new bootstrap.Tooltip(els[i]); } catch (e) {}
+  }
+})();
+</script>
 {% endblock %}

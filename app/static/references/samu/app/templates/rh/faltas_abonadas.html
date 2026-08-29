@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% block title %}Faltas Abonadas{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+    <h1><i class="bi bi-calendar-check text-danger"></i> Faltas Abonadas</h1>
+    <button class="btn btn-samu-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNovaAbonada"
+            {% if restantes <= 0 %}disabled title="Limite de {{ limite }} abonadas ativas atingido para {{ ano }}"{% endif %}>
+        <i class="bi bi-plus-circle me-1"></i>Nova Falta Abonada
+    </button>
+</div>
+
+<div class="filter-bar mb-3 d-flex align-items-center gap-2 flex-wrap">
+    <span class="small fw-semibold text-muted">Ano:</span>
+    {% for a in anos_disponiveis %}
+    <a href="{{ url_for('rh.faltas_abonadas', ano=a) }}"
+       class="btn btn-sm {{ 'btn-danger' if a == ano else 'btn-outline-secondary' }}">{{ a }}</a>
+    {% endfor %}
+</div>
+
+<div class="mini-stats mb-3 d-flex flex-wrap gap-2">
+    <span class="badge bg-secondary">Ativas em {{ ano }}: <strong>{{ usadas }}</strong></span>
+    <span class="badge {{ 'bg-danger' if restantes <= 0 else 'bg-success' }}">Restantes: <strong>{{ restantes }}</strong></span>
+    <span class="badge bg-light text-dark">Limite anual: <strong>{{ limite }}</strong></span>
+</div>
+
+<ul class="nav nav-tabs mb-0 flex-nowrap overflow-auto" style="-webkit-overflow-scrolling:touch;">
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if not ver_hist else '' }}" href="{{ url_for('rh.faltas_abonadas', ano=ano) }}">
+            <i class="bi bi-calendar-check me-1"></i>Ativas {% if faltas_ativas %}<span class="badge bg-success ms-1">{{ faltas_ativas | length }}</span>{% endif %}
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if ver_hist else '' }}" href="{{ url_for('rh.faltas_abonadas', ano=ano, historico='1') }}">
+            <i class="bi bi-clock-history me-1"></i>Histórico {% if faltas_canceladas %}<span class="badge bg-secondary ms-1">{{ faltas_canceladas | length }}</span>{% endif %}
+        </a>
+    </li>
+</ul>
+
+<div class="card rounded-top-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if not ver_hist %}
+        {% if faltas_ativas %}
+        {% set dias_semana = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] %}
+        <div class="listagem-cards p-3" id="cardsFaltasAtivas">
+            {% for f in faltas_ativas %}
+            <div class="listagem-card">
+                <div class="card-titulo">{{ f.data_falta | br_date }} — {{ dias_semana[f.data_falta.weekday()] }}</div>
+                <div class="card-meta">{{ f.usuario.nome }}</div>
+                <div class="card-meta">{{ f.unidade_samu.nome_exibicao if f.unidade_samu else '—' }} · {{ f.funcao }}</div>
+                <div class="card-rodape">
+                    <span></span>
+                    <div class="d-flex gap-1">
+                        <button type="button" class="btn btn-sm btn-outline-primary" title="Imprimir"
+                                onclick="abrirImpresso('{{ url_for('rh.imprimir_abonada', id=f.id) }}', 'Falta Abonada — {{ f.data_falta.strftime('%d/%m/%Y') }}')">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" title="Cancelar"
+                                data-bs-toggle="modal" data-bs-target="#modalCancelar"
+                                data-id="{{ f.id }}" data-data="{{ f.data_falta.strftime('%d/%m/%Y') }}">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="table-responsive listagem-table-wrap">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Data da Falta</th>
+                        <th>Dia da Semana</th>
+                        <th>Matrícula</th>
+                        <th>Nome Completo</th>
+                        <th>Unidade SAMU</th>
+                        <th>Função Declarada</th>
+                        <th style="width:110px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set dias_semana = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] %}
+                    {% for f in faltas_ativas %}
+                    <tr>
+                        <td class="text-muted small">{{ loop.index }}</td>
+                        <td class="fw-semibold">{{ f.data_falta | br_date }}</td>
+                        <td class="small text-muted">{{ dias_semana[f.data_falta.weekday()] }}</td>
+                        <td class="small">{{ f.usuario.matricula or '—' }}</td>
+                        <td class="small fw-semibold">{{ f.usuario.nome }}</td>
+                        <td class="small text-muted">{{ f.unidade_samu.nome_exibicao if f.unidade_samu else '—' }}</td>
+                        <td class="small">{{ f.funcao }}</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary" title="Imprimir"
+                                        onclick="abrirImpresso('{{ url_for('rh.imprimir_abonada', id=f.id) }}', 'Falta Abonada — {{ f.data_falta.strftime('%d/%m/%Y') }}')">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Cancelar"
+                                        data-bs-toggle="modal" data-bs-target="#modalCancelar"
+                                        data-id="{{ f.id }}" data-data="{{ f.data_falta.strftime('%d/%m/%Y') }}">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-calendar-x fs-1 d-block mb-3 opacity-25"></i>
+            <h6>Nenhuma falta abonada ativa em {{ ano }}.</h6>
+            <p class="small">Você tem {{ restantes }} abonada{{ 's' if restantes != 1 else '' }} disponível{{ 'eis' if restantes != 1 else '' }}.</p>
+        </div>
+        {% endif %}
+        {% else %}
+        {% if faltas_canceladas %}
+        <div class="listagem-cards p-3" id="cardsFaltasCanceladas">
+            {% for f in faltas_canceladas %}
+            <div class="listagem-card">
+                <div class="card-titulo text-muted">{{ f.data_falta | br_date }}</div>
+                <div class="card-meta text-muted">{{ f.usuario.nome }}</div>
+                <div class="card-meta text-muted">{{ f.unidade_samu.nome_exibicao if f.unidade_samu else '—' }} · {{ f.funcao }}</div>
+                <div class="card-meta fst-italic text-muted small">{{ f.motivo_cancelamento or '—' }}</div>
+                <div class="card-rodape">
+                    <span></span>
+                    <form method="POST" action="{{ url_for('rh.reativar_falta', id=f.id) }}" onsubmit="return confirm('Reativar esta abonada?')" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-success" title="Reativar"><i class="bi bi-arrow-counterclockwise"></i></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="table-responsive listagem-table-wrap">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data da Falta</th>
+                        <th>Nome</th>
+                        <th>Unidade SAMU</th>
+                        <th>Função</th>
+                        <th>Motivo do Cancelamento</th>
+                        <th style="width:80px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in faltas_canceladas %}
+                    <tr class="text-muted">
+                        <td>{{ f.data_falta | br_date }}</td>
+                        <td>{{ f.usuario.nome }}</td>
+                        <td>{{ f.unidade_samu.nome_exibicao if f.unidade_samu else '—' }}</td>
+                        <td>{{ f.funcao }}</td>
+                        <td class="fst-italic">{{ f.motivo_cancelamento or '—' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('rh.reativar_falta', id=f.id) }}" onsubmit="return confirm('Reativar esta abonada?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Reativar"><i class="bi bi-arrow-counterclockwise"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-clock-history fs-1 d-block mb-3 opacity-25"></i>
+            <h6>Nenhuma abonada cancelada em {{ ano }}.</h6>
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{# Modal Nova Falta #}
+<div class="modal fade" id="modalNovaAbonada" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('rh.nova_falta') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Nova Falta Abonada</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info small py-2 px-3 mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Você tem <strong>{{ restantes }}</strong> abonada{{ 's' if restantes != 1 else '' }} restante{{ 's' if restantes != 1 else '' }} em {{ ano }}.
+                        Permitido <strong>1 por mês</strong>, máximo <strong>6 por ano</strong>.
+                    </div>
+                    {% if unidades_samu %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Unidade SAMU</label>
+                        <select name="unidade_samu_id" class="form-select">
+                            <option value="">— Selecione —</option>
+                            {% for u in unidades_samu %}
+                            <option value="{{ u.id }}">{{ u.nome_exibicao }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Data da Falta <span class="text-danger">*</span></label>
+                        <input type="date" name="data_falta" id="inputDataFalta" class="form-control" required>
+                        <div id="avisoMesOcupado" class="alert alert-warning small py-2 px-3 mt-2 mb-0" style="display:none;">
+                            <i class="bi bi-exclamation-triangle me-1"></i><span id="avisoMesTexto"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Função / Cargo <span class="text-danger">*</span></label>
+                        <input type="text" name="funcao" class="form-control" required
+                               placeholder="Ex.: Enfermeiro, TARM…"
+                               value="{{ current_user.cbo_label if current_user.cbo else '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{# Modal Cancelar #}
+<div class="modal fade" id="modalCancelar" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="formCancelar">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-x-circle me-2 text-warning"></i>Cancelar Falta Abonada</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Você está cancelando a abonada do dia <strong id="cancelarData"></strong>. O registro será mantido no histórico e poderá ser reativado depois.</p>
+                    <div class="mb-1">
+                        <label class="form-label fw-semibold">Motivo do cancelamento <span class="text-muted fw-normal">(opcional)</span></label>
+                        <textarea name="motivo" class="form-control" rows="3" placeholder="Ex.: Acabei comparecendo ao trabalho..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Voltar</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-x-circle me-1"></i>Confirmar Cancelamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var MESES_OCUPADOS = {{ meses_ocupados | tojson }};
+var NOMES_MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+var LIMITE_ANO = {{ limite }};
+
+document.addEventListener('DOMContentLoaded', function () {
+    var inp = document.getElementById('inputDataFalta');
+    var aviso = document.getElementById('avisoMesOcupado');
+    var avisoTexto = document.getElementById('avisoMesTexto');
+    var btnSubmit = document.querySelector('#modalNovaAbonada button[type="submit"]');
+
+    function mesOcupado(ano, mes) {
+        return MESES_OCUPADOS.some(function (m) { return m.ano === ano && m.mes === mes; });
+    }
+    function anoLotado(ano) {
+        var count = MESES_OCUPADOS.filter(function (m) { return m.ano === ano; }).length;
+        return count >= LIMITE_ANO;
+    }
+    function validar() {
+        if (!inp || !inp.value) { aviso.style.display = 'none'; if (btnSubmit) btnSubmit.disabled = false; return; }
+        var parts = inp.value.split('-');
+        var ano = parseInt(parts[0]), mes = parseInt(parts[1]);
+        if (mesOcupado(ano, mes)) {
+            avisoTexto.textContent = 'Já existe uma abonada ativa em ' + NOMES_MESES[mes - 1] + '/' + ano + '.';
+            aviso.style.display = ''; if (btnSubmit) btnSubmit.disabled = true;
+        } else if (anoLotado(ano)) {
+            avisoTexto.textContent = 'Limite de ' + LIMITE_ANO + ' abonadas ativas em ' + ano + ' atingido.';
+            aviso.style.display = ''; if (btnSubmit) btnSubmit.disabled = true;
+        } else {
+            aviso.style.display = 'none'; if (btnSubmit) btnSubmit.disabled = false;
+        }
+    }
+    if (inp) { inp.addEventListener('change', validar); inp.addEventListener('input', validar); }
+
+    var modalCancelar = document.getElementById('modalCancelar');
+    if (modalCancelar) {
+        modalCancelar.addEventListener('show.bs.modal', function (e) {
+            var btn = e.relatedTarget;
+            document.getElementById('formCancelar').action = '/rh/faltas-abonadas/' + btn.dataset.id + '/cancelar';
+            document.getElementById('cancelarData').textContent = btn.dataset.data;
+        });
+    }
+});
+</script>
+{% endblock %}

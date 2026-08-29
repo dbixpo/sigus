@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-list-ul"></i> {{ titulo }}</h1>
+    <div class="d-flex gap-2">
+        {% if itens %}
+        <a href="{{ url_for('configuracoes.tipos_unidade_saude_export') }}" id="btnExportar" class="btn btn-outline-success" title="Exportar para Excel">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+        </a>
+        {% endif %}
+        <a href="{{ url_for('configuracoes.tipo_unidade_saude_form') }}" class="btn btn-samu-primary">
+            <i class="bi bi-plus-circle me-1"></i>Novo
+        </a>
+    </div>
+</div>
+
+{% if itens %}
+<div class="filtros-mobile-wrap">
+    <button class="btn btn-outline-secondary btn-sm btn-filtros-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosTiposUnidadeSaude" aria-expanded="false">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+    <div class="collapse filtros-panel" id="filtrosTiposUnidadeSaude">
+<div class="card shadow-sm mb-0">
+    <div class="card-body py-3">
+        <div class="row g-2 g-md-3 align-items-end filtros-listagem">
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Sigla</label>
+                <input type="text" class="form-control form-control-sm" id="filtroSigla" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Nome</label>
+                <input type="text" class="form-control form-control-sm" id="filtroNome" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Ativo</label>
+                <select class="form-select form-select-sm" id="filtroAtivo">
+                    <option value="">Todos</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="listagem-cards" id="cardsTiposUnidadeSaude">
+        {% for item in itens %}
+        <div class="listagem-card" data-sigla="{{ (item.sigla or '') | lower }}" data-nome="{{ (item.nome or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+            <div class="card-titulo">{{ item.sigla or '—' }} — {{ item.nome or '—' }}</div>
+            <div class="card-rodape">
+                <span>{% if item.ativo %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}</span>
+                <a href="{{ url_for('configuracoes.tipo_unidade_saude_form', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Sigla</th>
+                    <th>Nome</th>
+                    <th>Ativo</th>
+                    <th style="width:120px"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyTipos">
+                {% for item in itens %}
+                <tr data-sigla="{{ (item.sigla or '') | lower }}" data-nome="{{ (item.nome or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+                    <td>{{ item.sigla or '—' }}</td>
+                    <td>{{ item.nome or '—' }}</td>
+                    <td>{% if item.ativo %}<span class="badge bg-success">Sim</span>{% else %}<span class="badge bg-secondary">Não</span>{% endif %}</td>
+                    <td><a href="{{ url_for('configuracoes.tipo_unidade_saude_form', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhum registro cadastrado.</p>
+        <a href="{{ url_for('configuracoes.tipo_unidade_saude_form') }}" class="btn btn-samu-primary btn-sm mt-2"><i class="bi bi-plus-circle me-1"></i>Cadastrar o primeiro</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2"><a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted"><i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard</a></div>
+{% endblock %}
+
+{% block scripts %}
+{% if itens %}
+<script>
+(function() {
+    var tbody = document.getElementById('tbodyTipos');
+    var btnExportar = document.getElementById('btnExportar');
+    var baseHref = btnExportar ? btnExportar.getAttribute('href') : '';
+    function aplicarFiltros() {
+        if (!tbody) return;
+        var sigla = (document.getElementById('filtroSigla')?.value || '').toLowerCase().trim();
+        var nome = (document.getElementById('filtroNome')?.value || '').toLowerCase().trim();
+        var ativo = document.getElementById('filtroAtivo')?.value || '';
+        function filtragem(el) {
+            var ok = true;
+            if (sigla && (el.getAttribute('data-sigla') || '').indexOf(sigla) === -1) ok = false;
+            if (nome && (el.getAttribute('data-nome') || '').indexOf(nome) === -1) ok = false;
+            if (ativo && el.getAttribute('data-ativo') !== ativo) ok = false;
+            el.style.display = ok ? '' : 'none';
+        }
+        tbody.querySelectorAll('tr').forEach(filtragem);
+        var cards = document.getElementById('cardsTiposUnidadeSaude');
+        if (cards) cards.querySelectorAll('.listagem-card').forEach(filtragem);
+        if (btnExportar) {
+            var q = [];
+            if (sigla) q.push('sigla=' + encodeURIComponent(document.getElementById('filtroSigla').value));
+            if (nome) q.push('nome=' + encodeURIComponent(document.getElementById('filtroNome').value));
+            if (ativo) q.push('ativo=' + ativo);
+            btnExportar.href = baseHref + (q.length ? '?' + q.join('&') : '');
+        }
+    }
+    ['filtroSigla', 'filtroNome'].forEach(function(id) { var el = document.getElementById(id); if (el) el.addEventListener('input', aplicarFiltros); });
+    var fa = document.getElementById('filtroAtivo');
+    if (fa) fa.addEventListener('change', aplicarFiltros);
+    aplicarFiltros();
+})();
+</script>
+{% endif %}
+{% endblock %}

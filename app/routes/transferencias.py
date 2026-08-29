@@ -3,11 +3,286 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models.transferencia import TransferenciaEquipamento, DocumentoTransferencia, ItemDocumentoTransferencia, ItemLojinha
-from app.models.equipamento import Equipamento
+from app.models.equipamento import Equipamento, TipoEquipamento
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.sala import Sala
 
 transferencias_bp = Blueprint('transferencias', __name__, url_prefix='/transferencias')
+
+PREFIXO_PATRIMONIO = 'PMS-'
+
+
+def _normalizar_patrimonio(valor):
+    v = (valor or '').strip()
+    if not v:
+        return None
+    while v.upper().startswith(PREFIXO_PATRIMONIO):
+        v = v[len(PREFIXO_PATRIMONIO):].strip()
+    return (PREFIXO_PATRIMONIO + v) if v else None
+
+
+def _variantes_patrimonio(valor):
+    """Gera variantes de busca (com/sem prefixo PMS-)."""
+    pat = (valor or '').strip()
+    if not pat:
+        return []
+    variantes = {pat, pat.upper()}
+    if pat.upper().startswith(PREFIXO_PATRIMONIO):
+        sufixo = pat[len(PREFIXO_PATRIMONIO):].strip()
+        if sufixo:
+            variantes.add(sufixo)
+            variantes.add(PREFIXO_PATRIMONIO + sufixo)
+    else:
+        variantes.add(PREFIXO_PATRIMONIO + pat)
+    return list(variantes)
+
+
+def _equipamento_do_item(item, unidade_origem_id=None):
+    """Resolve o equipamento do inventário vinculado a um item de documento."""
+    if item.equipamento_id and item.equipamento:
+        return item.equipamento
+
+    pat = (item.numero_patrimonio or '').strip()
+    ser = (item.numero_serie or '').strip()
+    if not pat and not ser:
+        return None
+
+    def _buscar(unidade_id=None):
+        q = Equipamento.query
+        if pat:
+            variantes = _variantes_patrimonio(pat)
+            q = q.filter(Equipamento.numero_patrimonio.in_(variantes))
+        elif ser:
+            q = q.filter(Equipamento.numero_serie == ser)
+        if unidade_id:
+            q = (
+                q.join(Sala, Equipamento.sala_id == Sala.id)
+                .filter(Sala.unidade_id == unidade_id)
+            )
+        return q.first()
+
+    if unidade_origem_id:
+        eq = _buscar(unidade_origem_id)
+        if eq:
+            return eq
+    return _buscar(None)
+
+
+def _vincular_equipamento_item(item, unidade_origem_id):
+    """Preenche equipamento_id no item quando só há patrimônio/série informados."""
+    if item.equipamento_id:
+        return item.equipamento
+    eq = _equipamento_do_item(item, unidade_origem_id)
+    if eq:
+        item.equipamento_id = eq.id
+    return eq
+
+
+def _inferir_tipo_equipamento_id(descricao):
+    d = (descricao or '').lower()
+    if 'all-in-one' in d or 'all in one' in d:
+        tipo = TipoEquipamento.query.filter(TipoEquipamento.nome.ilike('%All-In-One%')).first()
+    elif any(p in d for p in ('micro', 'computador', 'desktop', 'notebook', ' pc')):
+        tipo = TipoEquipamento.query.filter(TipoEquipamento.nome.ilike('%Computador (Gabinete)%')).first()
+    else:
+        tipo = TipoEquipamento.query.filter_by(ativo=True).order_by(TipoEquipamento.nome).first()
+    return tipo.id if tipo else None
+
+
+def _criar_equipamento_do_item(item, sala, doc, usuario_id=None):
+    """Cadastra no inventário da unidade destino quando o termo traz patrimônio/série manual."""
+    pat = _normalizar_patrimonio(item.numero_patrimonio)
+    ser = (item.numero_serie or '').strip() or None
+    if not pat and not ser:
+        return None
+
+    if pat:
+        existente = Equipamento.query.filter(
+            Equipamento.numero_patrimonio.in_(_variantes_patrimonio(item.numero_patrimonio))
+        ).first()
+        if existente:
+            item.equipamento_id = existente.id
+            return existente
+
+    tipo_id = _inferir_tipo_equipamento_id(item.descricao_exibicao())
+    if not tipo_id:
+        return None
+
+    eq = Equipamento(
+        sala_id=sala.id,
+        tipo_equipamento_id=tipo_id,
+        numero_patrimonio=pat,
+        numero_serie=ser,
+        status='ativo',
+        condicao='regular' if item.classificacao == 'B' else 'boa',
+        observacoes=(
+            f'Cadastrado automaticamente na {doc.tipo_label.lower()} '
+            f'(termo #{doc.id}) para {doc.unidade_destino.nome}.'
+        ),
+        criado_por=usuario_id or (getattr(current_user, 'id', None) if current_user else None) or doc.aceito_por,
+        ativo=True,
+    )
+    db.session.add(eq)
+    db.session.flush()
+    item.equipamento_id = eq.id
+    return eq
+
+
+def _realocar_itens_documento(doc, sala_id, obs='', criar_se_ausente=False, usuario_id=None):
+    """Move equipamentos do documento para a sala de destino. Retorna (movidos, criados, nao_encontrados)."""
+    sala = Sala.query.filter_by(
+        id=sala_id, unidade_id=doc.unidade_destino_id, ativo=True
+    ).first()
+    if not sala:
+        return 0, 0, ['sala de destino inválida']
+
+    movidos = 0
+    criados = 0
+    nao_encontrados = []
+    uid = usuario_id or (getattr(current_user, 'id', None) if current_user else None) or doc.aceito_por
+    if current_user and getattr(current_user, 'is_authenticated', False):
+        nome_usuario = current_user.nome
+    elif doc.aceitador:
+        nome_usuario = doc.aceitador.nome
+    else:
+        nome_usuario = 'Sistema'
+
+    for item in doc.itens.all():
+        eq = _vincular_equipamento_item(item, doc.unidade_origem_id)
+        criado_agora = False
+        if not eq and criar_se_ausente:
+            eq = _criar_equipamento_do_item(item, sala, doc, usuario_id=uid)
+            criado_agora = eq is not None
+        if not eq:
+            if item.numero_patrimonio or item.numero_serie:
+                nao_encontrados.append(item.numero_patrimonio_ou_serie() or item.descricao_exibicao())
+            continue
+
+        ja_na_sala = eq.sala_id == sala.id
+        if not ja_na_sala:
+            eq.sala_id = sala.id
+        eq.ativo = True
+
+        if criado_agora:
+            criados += 1
+            _registrar_evento(
+                eq,
+                f'{doc.tipo_label} aceito — cadastrado em {sala.nome} ({doc.unidade_destino.nome})',
+                f'{"Aceito" if doc.status == "pendente" else "Reprocessado"} por {nome_usuario}. {obs}'.strip(),
+                usuario_id=uid,
+            )
+        elif not ja_na_sala:
+            movidos += 1
+            _registrar_evento(
+                eq,
+                f'{doc.tipo_label} aceito — alocado em {sala.nome} ({doc.unidade_destino.nome})',
+                f'{"Aceito" if doc.status == "pendente" else "Reprocessado"} por {nome_usuario}. {obs}'.strip(),
+                usuario_id=uid,
+            )
+    return movidos, criados, nao_encontrados
+
+
+def _auditar_documento_aceito(doc):
+    """Lista itens de um termo aceito que não estão na sala/unidade de destino."""
+    if doc.status != 'aceita' or not doc.sala_destino_id:
+        return []
+    sala_dest = Sala.query.get(doc.sala_destino_id)
+    if not sala_dest:
+        return [{'doc_id': doc.id, 'item': '—', 'motivo': 'sala de destino inválida'}]
+
+    pendencias = []
+    for item in doc.itens.all():
+        ident = item.numero_patrimonio_ou_serie() or item.descricao_exibicao() or f'item #{item.id}'
+        eq = item.equipamento if item.equipamento_id else _equipamento_do_item(item, doc.unidade_origem_id)
+        if not eq:
+            if item.numero_patrimonio or item.numero_serie:
+                pendencias.append({
+                    'doc_id': doc.id,
+                    'item': ident,
+                    'motivo': 'equipamento não encontrado no inventário',
+                })
+            continue
+        if eq.sala_id != sala_dest.id:
+            local = eq.sala.unidade.nome if eq.sala and eq.sala.unidade else '?'
+            pendencias.append({
+                'doc_id': doc.id,
+                'item': ident,
+                'motivo': f'ainda em {local} (sala {eq.sala.nome if eq.sala else eq.sala_id})',
+            })
+    return pendencias
+
+
+def _auditar_transferencia_legada(transf):
+    """Lista transferências legadas aceitas com equipamento fora da sala destino."""
+    if transf.status != 'aceita' or not transf.sala_destino_id or not transf.equipamento:
+        return []
+    eq = transf.equipamento
+    ident = eq.numero_patrimonio or eq.numero_serie or str(eq.id)
+    if eq.sala_id != transf.sala_destino_id:
+        local = eq.sala.unidade.nome if eq.sala and eq.sala.unidade else '?'
+        return [{
+            'transf_id': transf.id,
+            'item': ident,
+            'motivo': f'ainda em {local}',
+        }]
+    return []
+
+
+def auditar_realocacoes_pendentes():
+    """Auditoria global — termos aceitos com inventário inconsistente."""
+    docs = DocumentoTransferencia.query.filter_by(status='aceita').filter(
+        DocumentoTransferencia.sala_destino_id.isnot(None)
+    ).all()
+    legado = TransferenciaEquipamento.query.filter_by(status='aceita').filter(
+        TransferenciaEquipamento.sala_destino_id.isnot(None)
+    ).all()
+    pendencias = []
+    for doc in docs:
+        pendencias.extend(_auditar_documento_aceito(doc))
+    for transf in legado:
+        pendencias.extend(_auditar_transferencia_legada(transf))
+    return pendencias
+
+
+def reparar_realocacoes_pendentes(usuario_id=None):
+    """Corrige termos aceitos com equipamentos fora da unidade destino."""
+    total_movidos = total_criados = 0
+    nao_resolvidos = []
+
+    docs = DocumentoTransferencia.query.filter_by(status='aceita').filter(
+        DocumentoTransferencia.sala_destino_id.isnot(None)
+    ).all()
+    for doc in docs:
+        if not _auditar_documento_aceito(doc):
+            continue
+        movidos, criados, parciais = _realocar_itens_documento(
+            doc, doc.sala_destino_id, criar_se_ausente=True, usuario_id=usuario_id or doc.aceito_por
+        )
+        total_movidos += movidos
+        total_criados += criados
+        if parciais:
+            nao_resolvidos.extend({'doc_id': doc.id, 'item': i} for i in parciais)
+
+    for transf in TransferenciaEquipamento.query.filter_by(status='aceita').filter(
+        TransferenciaEquipamento.sala_destino_id.isnot(None)
+    ).all():
+        for p in _auditar_transferencia_legada(transf):
+            eq = transf.equipamento
+            sala = Sala.query.get(transf.sala_destino_id)
+            if eq and sala and eq.sala_id != sala.id:
+                eq.sala_id = sala.id
+                eq.ativo = True
+                _registrar_evento(
+                    eq, f'Transferência reprocessada — {sala.nome}',
+                    'Correção automática de realocação.', usuario_id=usuario_id or transf.aceito_por
+                )
+                total_movidos += 1
+
+    return {
+        'movidos': total_movidos,
+        'criados': total_criados,
+        'nao_resolvidos': nao_resolvidos,
+    }
 
 
 def _unidades_do_usuario():
@@ -269,13 +544,12 @@ def lojinha_finalizar():
                 numero_serie=it['numero_serie'] or None,
             )
             db.session.add(item_doc)
-            if it['equipamento_id']:
-                eq = Equipamento.query.get(it['equipamento_id'])
-                if eq:
-                    _registrar_evento(
-                        eq, f'Doação solicitada para {doc.unidade_destino.nome}',
-                        f'Documento #{doc.id} — Lojinha Interna.'
-                    )
+            eq = _vincular_equipamento_item(item_doc, unidade_origem_id)
+            if eq:
+                _registrar_evento(
+                    eq, f'Doação solicitada para {doc.unidade_destino.nome}',
+                    f'Documento #{doc.id} — Lojinha Interna.'
+                )
         criados += 1
 
     # Consumir saldo na Lojinha
@@ -447,14 +721,13 @@ def documento_novo():
                 numero_serie=ser,
             )
             db.session.add(item)
-            if equip_id:
-                eq = Equipamento.query.get(equip_id)
-                if eq:
-                    _registrar_evento(
-                        eq,
-                        f'{doc.tipo_label} solicitado para {doc.unidade_destino.nome}',
-                        f'Documento #{doc.id}. {observacao}'
-                    )
+            eq = _vincular_equipamento_item(item, unidade_origem_id)
+            if eq:
+                _registrar_evento(
+                    eq,
+                    f'{doc.tipo_label} solicitado para {doc.unidade_destino.nome}',
+                    f'Documento #{doc.id}. {observacao}'
+                )
 
         db.session.commit()
         flash(f'Termo de {doc.tipo_label.lower()} criado! Aguardando aceite da unidade destino.', 'success')
@@ -501,22 +774,36 @@ def documento_aceitar(id):
                                        doc=doc, salas_destino=salas_destino)
 
             doc.sala_destino_id = sala_id
+            movidos, criados, nao_encontrados = _realocar_itens_documento(
+                doc, sala_id, obs, criar_se_ausente=True
+            )
+            if nao_encontrados:
+                db.session.rollback()
+                flash(
+                    'Não foi possível concluir o aceite. Os itens abaixo possuem patrimônio/série '
+                    'mas não puderam ser localizados ou cadastrados no inventário: '
+                    f'{", ".join(nao_encontrados)}.',
+                    'danger'
+                )
+                return render_template('transferencias/documento_aceitar.html',
+                                       doc=doc, salas_destino=salas_destino)
+
             doc.status = 'aceita'
             doc.aceito_por = current_user.id
             doc.observacao_aceite = obs
             doc.resolvido_em = datetime.utcnow()
-
-            for item in doc.itens.all():
-                if item.equipamento_id:
-                    eq = item.equipamento
-                    eq.sala_id = sala_id
-                    _registrar_evento(
-                        eq,
-                        f'{doc.tipo_label} aceito — alocado em {doc.sala_destino.nome} ({doc.unidade_destino.nome})',
-                        f'Aceito por {current_user.nome}. {obs}'
-                    )
             db.session.commit()
-            flash('Documento aceito! Equipamentos realocados com sucesso.', 'success')
+
+            partes = []
+            if movidos:
+                partes.append(f'{movidos} realocado(s)')
+            if criados:
+                partes.append(f'{criados} cadastrado(s) no inventário')
+            flash(
+                f'Documento aceito! {" e ".join(partes) or "Itens registrados"}.' if partes
+                else 'Documento aceito!',
+                'success'
+            )
 
         elif acao == 'recusar':
             doc.status = 'recusada'
@@ -595,13 +882,19 @@ def aceitar(id):
             if not sala_id:
                 flash('Selecione a sala de destino.', 'danger')
                 return render_template('transferencias/aceitar.html', transf=transf, salas_destino=salas_destino)
-            transf.sala_destino_id = sala_id
-            transf.equipamento.sala_id = sala_id
+            sala = Sala.query.filter_by(
+                id=sala_id, unidade_id=transf.unidade_destino_id, ativo=True
+            ).first()
+            if not sala:
+                flash('Sala de destino inválida.', 'danger')
+                return render_template('transferencias/aceitar.html', transf=transf, salas_destino=salas_destino)
+            transf.sala_destino_id = sala.id
+            transf.equipamento.sala_id = sala.id
             transf.status = 'aceita'
             transf.aceito_por = current_user.id
             transf.observacao_aceite = obs
             transf.resolvido_em = datetime.utcnow()
-            _registrar_evento(transf.equipamento, f'Transferência aceita — {transf.sala_destino.nome}', obs)
+            _registrar_evento(transf.equipamento, f'Transferência aceita — {sala.nome}', obs)
             db.session.commit()
             flash('Transferência aceita!', 'success')
         elif acao == 'recusar':
@@ -684,12 +977,15 @@ def api_salas(unidade_id):
 # ──────────────────────────────────────────────
 #  HELPER — evento no histórico do equipamento
 # ──────────────────────────────────────────────
-def _registrar_evento(equipamento, acao, obs=''):
+def _registrar_evento(equipamento, acao, obs='', usuario_id=None):
     """Registra um evento de transferência no histórico do equipamento."""
     from app.models.transferencia import HistoricoEquipamento
+    uid = usuario_id
+    if uid is None and current_user and getattr(current_user, 'is_authenticated', False):
+        uid = current_user.id
     db.session.add(HistoricoEquipamento(
         equipamento_id=equipamento.id,
-        usuario_id=current_user.id,
+        usuario_id=uid,
         acao=acao,
         observacao=obs or None,
     ))

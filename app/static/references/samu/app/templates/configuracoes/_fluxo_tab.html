@@ -1,0 +1,55 @@
+<p class="text-muted small mb-2">Para cada opção de resposta, defina a ação: para qual pergunta o fluxo deve ir. Se "Fim", encerra o protocolo.</p>
+
+<div class="row g-2 algoritmo-fluxo-cards">
+{% for p in perguntas %}
+{% set _p_idx0 = loop.index0 %}
+    <div class="col-12">
+        <div class="card shadow-sm fluxo-card-compact">
+            <div class="card-header fluxo-header-compact {{ 'bg-info bg-opacity-10' if p.tipo == 'texto' else 'bg-light' }}">
+                <strong>{{ loop.index }}. {{ (p.enunciado[:80] + '...') if p.enunciado|length > 80 else p.enunciado }}</strong>
+                {% if p.tipo == 'texto' %}<span class="badge bg-info ms-2">Texto informativo</span>{% endif %}
+            </div>
+            <div class="card-body fluxo-body-compact">
+                {% set opcoes_list = p.opcoes.order_by('ordem').all() %}
+                {% if p.tipo == 'texto' %}
+                <p class="text-muted small mb-0"><i class="bi bi-arrow-right-circle me-1"></i>Avança automaticamente para a próxima (sem opções)</p>
+                {% elif opcoes_list %}
+                <table class="table table-sm table-borderless mb-0 fluxo-table-compact">
+                    <thead>
+                        <tr>
+                            <th style="width:1%; white-space:nowrap;">Resposta</th>
+                            <th>Ação de acordo com a resposta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for opc in opcoes_list %}
+                    <tr>
+                        <td class="align-middle" style="white-space:nowrap;">
+                            <span class="badge bg-secondary">{{ opc.texto }}</span>{% if opc.pontuacao|default(0) %} <span class="badge bg-light text-dark">{{ opc.pontuacao }} pts</span>{% endif %}
+                        </td>
+                        <td class="align-middle">
+                            <select name="opcao_{{ opc.id }}_proxima" class="form-select form-select-sm">
+                                <option value="">— Fim —</option>
+                                {% for px in perguntas %}
+                                {% if loop.index0 > _p_idx0 %}
+                                <option value="{{ px.id }}" {% if opc.proxima_pergunta_id == px.id %}selected{% endif %}>{{ loop.index }}. {{ px.enunciado[:50] }}{% if px.enunciado|length > 50 %}...{% endif %}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted small mb-0">Sem opções.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endfor %}
+</div>
+
+<div class="d-flex gap-2 mt-3">
+    <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar fluxo</button>
+</div>

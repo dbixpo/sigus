@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if cbo else 'Novo' }} CBO{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('configuracoes.cbos') }}">CBOs</a>
+        </li>
+        <li class="breadcrumb-item active">
+            {{ 'Editar: ' + cbo.codigo if cbo else 'Novo CBO' }}
+        </li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>
+        <i class="fas fa-briefcase"></i>
+        {{ 'Editar CBO' if cbo else 'Novo CBO' }}
+    </h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="form-section">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Código *</label>
+                        <input type="text" name="codigo" class="form-control" required
+                               maxlength="10"
+                               value="{{ cbo.codigo if cbo else '' }}"
+                               placeholder="Ex: 223505"
+                               pattern="[0-9A-Za-z]+"
+                               title="Apenas números e letras">
+                        <div class="form-text">Código do CBO (ex: 223505).</div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <label class="form-label">Descrição *</label>
+                        <input type="text" name="descricao" class="form-control" required
+                               maxlength="200"
+                               value="{{ cbo.descricao if cbo else '' }}"
+                               placeholder="Ex: Enfermeiro">
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="ativo" class="form-check-input" id="ativo"
+                                   {% if not cbo or cbo.ativo %}checked{% endif %}>
+                            <label class="form-check-label" for="ativo">
+                                CBO ativo (aparece nos formulários)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check-circle me-1"></i>
+                        {{ 'Salvar Alterações' if cbo else 'Cadastrar CBO' }}
+                    </button>
+                    <a href="{{ url_for('configuracoes.cbos') }}"
+                       class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

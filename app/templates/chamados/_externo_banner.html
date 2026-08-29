@@ -1,0 +1,17 @@
+<div class="externo-banner">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <i class="fas fa-user-circle me-1"></i>
+            <strong>{{ externo.nome }}</strong>
+            <span class="text-muted mx-1">·</span>
+            <i class="fab fa-whatsapp me-1"></i>{{ externo.whatsapp | br_fone }}
+            <span class="text-muted mx-1">·</span>
+            <i class="fas fa-envelope me-1"></i>{{ externo.email }}
+            <span class="text-muted mx-1">·</span>
+            <i class="fas fa-hospital me-1"></i>{{ externo_unidade_nome }}
+        </div>
+        <a href="{{ url_for('chamados_externo.identificacao', novo=1) }}" class="btn btn-sm btn-outline-primary">
+            Alterar dados
+        </a>
+    </div>
+</div>

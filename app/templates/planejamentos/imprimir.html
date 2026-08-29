@@ -42,11 +42,12 @@ body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background:
 .tabela-planilha .nivel-2 .col-desc { padding-left: 28px; }
 
 .col-num { width: 4%; text-align: center; }
-.col-desc { width: 42%; }
-.col-resp { width: 24%; }
-.col-status { width: 14%; }
-.col-prazo { width: 14%; }
-.col-criacao { width: 12%; }
+.col-desc { width: 40%; }
+.col-resp { width: 22%; }
+.col-status { width: 12%; }
+.col-prazo { width: 12%; }
+.col-criacao { width: 10%; }
+.col-atualizacao { width: 10%; }
 
 .resp-cell { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
 .resp-item { display: flex; align-items: center; gap: 4px; }
@@ -92,6 +93,20 @@ body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background:
 
 .rodape { text-align: center; font-size: 9px; color: #888; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px; }
 
+/* Mobile: preview em tela (não afeta impressão) */
+@media screen and (max-width: 767px) {
+    body { padding: 12px; }
+    .doc { max-width: 100%; }
+    .cabecalho { flex-wrap: wrap; gap: 12px; }
+    .cab-logo img { height: 48px; }
+    .cab-titulo { font-size: 12px; }
+    .tabela-planilha { font-size: 10px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabela-planilha th, .tabela-planilha td { padding: 5px 6px; white-space: nowrap; }
+    .tabela-planilha .col-desc { white-space: normal; max-width: 180px; }
+    .projeto-header { flex-wrap: wrap; }
+    .projeto-meta-inline { flex-wrap: wrap; }
+}
+
 @media print {
     .no-print { display: none !important; }
     body { padding: 0; }
@@ -115,7 +130,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
             PLANEJAMENTOS E PROJETOS<br>
@@ -131,6 +146,22 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
     {% set p = d.plano %}
     <div class="projeto-header" style="margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid #ddd;">
         <div style="font-size: 15px; font-weight: bold; color: #1a6abf; margin-bottom: 8px;">{{ p.titulo }}</div>
+        {% if p.descricao %}
+        <div class="plano-descricao-imp" style="margin-bottom: 10px; padding: 8px 10px; background: #f8f9fa; border-radius: 6px; font-size: 11px; line-height: 1.5; color: #333;">
+            <div style="font-weight: 600; margin-bottom: 4px; color: #555;">Descrição:</div>
+            <div class="plano-descricao-conteudo">{{ p.descricao | safe }}</div>
+        </div>
+        {% endif %}
+        <div class="plano-unidades-imp" style="font-size: 10px; color: #555; margin-bottom: 8px;">
+            <div style="font-weight: 600; margin-bottom: 2px;">Unidade origem:</div>
+            <div>{{ p.unidade.nome }}</div>
+            {% set unidades_plano = d.unidades_do_plano if d.unidades_do_plano is defined else [] %}
+            {% set outras = unidades_plano | selectattr('id', 'ne', p.unidade_id) | list %}
+            {% if outras %}
+            <div style="font-weight: 600; margin-top: 6px; margin-bottom: 2px;">Também participam:</div>
+            <div>{{ outras | map(attribute='nome') | join(', ') }}</div>
+            {% endif %}
+        </div>
         {% if p.anexos.count() %}
         <div class="plano-anexos-imp">
             <div class="tit">Anexos do plano:</div>
@@ -162,6 +193,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
                 <th class="col-status">Status</th>
                 <th class="col-prazo">Prazo</th>
                 <th class="col-criacao">Data da Criação</th>
+                <th class="col-atualizacao">Última Atualização</th>
             </tr>
         </thead>
         <tbody>
@@ -202,6 +234,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
                     {% else %}—{% endif %}
                 </td>
                 <td class="col-criacao">{{ acao.criado_em | br_datetime if acao.criado_em else '—' }}</td>
+                <td class="col-atualizacao">{{ acao.atualizado_em | br_datetime if acao.atualizado_em else '—' }}</td>
             </tr>
             {% for obs in acao.observacoes %}
             <tr class="nivel-2">
@@ -232,12 +265,13 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
                 <td class="col-status">—</td>
                 <td class="col-prazo">—</td>
                 <td class="col-criacao">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
+                <td class="col-atualizacao">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
             </tr>
             {% endfor %}
             {% endfor %}
             {% if not d.acoes_flat %}
             <tr class="nivel-1">
-                <td colspan="6" style="text-align:center;color:#94a3b8;padding:16px;">Nenhuma ação</td>
+                <td colspan="7" style="text-align:center;color:#94a3b8;padding:16px;">Nenhuma ação</td>
             </tr>
             {% endif %}
         </tbody>

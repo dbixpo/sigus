@@ -11,44 +11,44 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-door-open"></i> {{ sala.nome }}
+    <h1><i class="fas fa-door-open"></i> {{ sala.nome }}
         <small class="text-muted fs-6">— {{ sala.tipo or '' }}</small>
         {% if sala.ramal %}
         <span class="badge bg-secondary fs-6 ms-2 fw-normal">
-            <i class="bi bi-telephone-plus me-1"></i>Ramal {{ sala.ramal }}
+            <i class="fas fa-telephone-plus me-1"></i>Ramal {{ sala.ramal }}
         </span>
         {% endif %}
     </h1>
     <div class="d-flex gap-2">
         {% if current_user.pode('cadastrar_equipamento') %}
         <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-circle me-1"></i>Novo Equipamento
+            <i class="fas fa-plus-circle me-1"></i>Novo Equipamento
         </a>
         {% endif %}
         {% if current_user.pode('editar_sala') %}
         <a href="{{ url_for('salas.editar', id=sala.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-pencil"></i>
+            <i class="fas fa-pencil-alt"></i>
         </a>
         {% endif %}
     </div>
 </div>
 
 <div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
-    <span><i class="bi bi-calendar-plus me-1"></i>Criado em: <strong>{{ sala.criado_em | br_datetime }}</strong></span>
-    <span><i class="bi bi-clock-history me-1"></i>Última atualização: <strong>{{ sala.atualizado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-calendar-plus me-1"></i>Criado em: <strong>{{ sala.criado_em | br_datetime }}</strong></span>
+    <span><i class="fas fa-clock-history me-1"></i>Última atualização: <strong>{{ sala.atualizado_em | br_datetime }}</strong></span>
 </div>
 
 <!-- Abas -->
 <ul class="nav nav-tabs" id="tabSala" role="tablist">
     <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-equip">
-            <i class="bi bi-pc-display me-1"></i>Equipamentos
+            <i class="fas fa-desktop me-1"></i>Equipamentos
             <span class="badge bg-primary ms-1">{{ equipamentos | length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-chamados-sala">
-            <i class="bi bi-wrench me-1"></i>Chamados
+            <i class="fas fa-wrench me-1"></i>Chamados
             {% if chamados_sala %}<span class="badge bg-danger ms-1">{{ chamados_sala | length }}</span>{% endif %}
         </button>
     </li>
@@ -79,11 +79,11 @@
                             <i class="{{ e.tipo_equipamento.icone }} me-1 text-primary"></i>
                             <span class="small fw-semibold">{{ e.nome_display }}</span>
                             {% if e.usuario_vinculado_nome %}
-                            <div class="text-muted" style="font-size:.78rem"><i class="bi bi-person-circle me-1"></i>{{ e.usuario_vinculado_nome }}</div>
+                            <div class="text-muted" style="font-size:.78rem"><i class="fas fa-user-circle me-1"></i>{{ e.usuario_vinculado_nome }}</div>
                             {% endif %}
                             <div class="text-muted" style="font-size:.78rem">
-                                {% if e.numero_patrimonio %}<i class="bi bi-tag me-1"></i>{{ e.numero_patrimonio }}
-                                {% elif e.numero_serie %}<i class="bi bi-upc me-1"></i>{{ e.numero_serie }}
+                                {% if e.numero_patrimonio %}<i class="fas fa-tag me-1"></i>{{ e.numero_patrimonio }}
+                                {% elif e.numero_serie %}<i class="fas fa-upc me-1"></i>{{ e.numero_serie }}
                                 {% endif %}
                             </div>
                         </td>
@@ -105,7 +105,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-pc-display"></i>
+            <i class="fas fa-desktop"></i>
             <h6>Nenhum equipamento cadastrado nesta sala</h6>
             {% if current_user.pode('cadastrar_equipamento') %}
             <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary mt-2">Cadastrar Equipamento</a>
@@ -147,7 +147,7 @@
         </div>
         {% else %}
         <div class="empty-state py-3">
-            <i class="bi bi-check-circle text-success"></i>
+            <i class="fas fa-check-circle text-success"></i>
             <p class="small">Nenhum chamado registrado para esta sala.</p>
         </div>
         {% endif %}

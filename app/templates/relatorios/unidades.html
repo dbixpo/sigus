@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Relatório de Unidades{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-hospital"></i> Relatório de Unidades</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-print me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><h6 class="dropdown-header">Selecione o formato</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_unidades', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="fas fa-file-earmark-excel me-2 text-success"></i>Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_unidades', formato='xls') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="fas fa-file-earmark-spreadsheet me-2 text-success"></i>Excel antigo (.xls)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_unidades', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">
+                    <i class="fas fa-filetype-csv me-2 text-primary"></i>CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="filter-bar mb-2">
+    <form method="GET" action="{{ url_for('relatorios.unidades') }}" class="row g-2 align-items-end mb-2">
+        <div class="col-md-3">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-6 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+            <a href="{{ url_for('relatorios.unidades') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
+        </div>
+    </form>
+    <div class="row g-2">
+        {{ filtro_rapido('CNES', 0, 'cnes') }}
+        {{ filtro_rapido('Nome', 1, 'nome') }}
+        {{ filtro_rapido('Tipo', 2, 'tipo') }}
+        {{ filtro_rapido('Endereço', 3, 'endereco') }}
+        {{ filtro_rapido('Gestor', 4, 'gestor') }}
+        {{ filtro_rapido('Telefone', 5, 'telefone') }}
+        {{ filtro_rapido('E-mail', 6, 'email') }}
+    </div>
+</div>
+
+<div class="mini-stats mb-2" id="miniStatsUnidades">
+    <span class="mini-stat">Total: <strong data-stat-col="-1">{{ total }}</strong></span>
+    <span class="mini-stat">Tipos: <strong data-stat-col="2">—</strong></span>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle" id="tblUnidades">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-nowrap">CNES</th>
+                        <th>Nome da Unidade</th>
+                        <th>Tipo</th>
+                        <th>Endereço</th>
+                        <th>Contato Gestor(a)</th>
+                        <th class="d-none d-lg-table-cell text-nowrap">Telefone</th>
+                        <th class="d-none d-xl-table-cell">E-mail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td class="small text-muted text-nowrap" data-col="0">
+                            {% if r.cnes != '—' %}
+                            <a href="https://cnes.datasus.gov.br/pages/estabelecimentos/consulta.jsp?search={{ r.cnes }}" target="_blank" class="text-decoration-none" title="Abrir CNES no DATASUS">
+                                {{ r.cnes }}
+                                <i class="fas fa-box-arrow-up-right ms-1" style="font-size:0.7rem;"></i>
+                            </a>
+                            {% else %}
+                            {{ r.cnes }}
+                            {% endif %}
+                        </td>
+                        <td class="small fw-semibold" data-col="1">{{ r.nome }}</td>
+                        <td class="small text-muted" data-col="2">{{ r.tipo }}</td>
+                        <td class="small text-muted" data-col="3">
+                            {% if r.endereco_link %}
+                            <a href="{{ r.endereco_link }}" target="_blank" class="text-decoration-none" title="Abrir no Google Maps">
+                                {{ r.endereco }}
+                                <i class="fas fa-box-arrow-up-right ms-1" style="font-size:0.7rem;"></i>
+                            </a>
+                            {% else %}
+                            {{ r.endereco }}
+                            {% endif %}
+                        </td>
+                        <td class="small" data-col="4">
+                            {% if r.gestores %}
+                            <div class="d-flex flex-column gap-2">
+                                {% for g in r.gestores %}
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if g.foto_url %}
+                                    <img src="{{ g.foto_url }}" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #dee2e6;flex-shrink:0;">
+                                    {% else %}
+                                    <span style="width:28px;height:28px;border-radius:50%;background:#6c757d;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.75rem;flex-shrink:0;">{{ g.inicial }}</span>
+                                    {% endif %}
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="fw-semibold">{{ g.nome }}</span>
+                                        {% if g.whatsapp_link %}
+                                        <a href="{{ g.whatsapp_link }}" target="_blank" class="text-success text-decoration-none" title="Abrir WhatsApp">
+                                            <i class="fab fa-whatsapp me-1"></i>{{ g.telefone | br_fone }}
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-lg-table-cell small text-muted text-nowrap" data-col="5">{{ r.telefone }}</td>
+                        <td class="d-none d-xl-table-cell small text-muted" data-col="6">
+                            {% if r.email != '—' %}
+                            <a href="mailto:{{ r.email }}" class="text-decoration-none">{{ r.email }}</a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="fas fa-hospital fs-1 text-muted d-block mb-3"></i>
+            <h6>Nenhuma unidade encontrada com estes filtros.</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabela = document.getElementById('tblUnidades');
+    if (!tabela) return;
+    
+    // Função para aplicar todos os filtros
+    function aplicarFiltros() {
+        const linhas = tabela.querySelectorAll('tbody tr');
+        let visiveis = 0;
+        const filtros = {};
+        
+        // Coleta valores de todos os filtros rápidos
+        document.querySelectorAll('.fr-input').forEach(input => {
+            const colIdx = parseInt(input.closest('.fr-wrap').dataset.col);
+            const valor = input.value.toLowerCase().trim();
+            if (valor) {
+                filtros[colIdx] = valor;
+            }
+        });
+        
+        linhas.forEach(tr => {
+            let match = true;
+            
+            // Aplica cada filtro
+            for (const [colIdx, busca] of Object.entries(filtros)) {
+                // Para filtro de telefone (colIdx 5), busca também nos gestores
+                if (colIdx == 5) {
+                    const celulaTelefone = tr.querySelector(`td[data-col="5"]`);
+                    const celulaGestor = tr.querySelector(`td[data-col="4"]`);
+                    const textoTelefone = celulaTelefone ? celulaTelefone.textContent.toLowerCase() : '';
+                    const textoGestor = celulaGestor ? celulaGestor.textContent.toLowerCase() : '';
+                    if (!textoTelefone.includes(busca) && !textoGestor.includes(busca)) {
+                        match = false;
+                        break;
+                    }
+                } else {
+                    const celula = tr.querySelector(`td[data-col="${colIdx}"]`);
+                    if (!celula) {
+                        match = false;
+                        break;
+                    }
+                    
+                    const texto = celula.textContent.toLowerCase();
+                    if (!texto.includes(busca)) {
+                        match = false;
+                        break;
+                    }
+                }
+            }
+            
+            tr.style.display = match ? '' : 'none';
+            if (match) visiveis++;
+        });
+        
+        // Atualiza estatísticas
+        const statTotal = document.querySelector('[data-stat-col="-1"] strong');
+        if (statTotal) statTotal.textContent = visiveis;
+    }
+    
+    // Inicializa filtros rápidos
+    document.querySelectorAll('.fr-input').forEach(input => {
+        input.addEventListener('input', aplicarFiltros);
+    });
+    
+    // Inicializa Tom Select para filtros múltiplos
+    document.querySelectorAll('[data-multiselect]').forEach(select => {
+        new TomSelect(select, {
+            plugins: ['remove_button'],
+            maxItems: null,
+            placeholder: select.dataset.placeholder || 'Selecione...',
+        });
+    });
+    
+    // Aplica filtros iniciais se houver valores nos campos
+    aplicarFiltros();
+});
+</script>
+{% endblock %}

@@ -3,15 +3,15 @@
 
 {% block content %}
 <div class="page-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-    <h1><i class="bi bi-arrow-left-right"></i> Transferências de Equipamentos</h1>
+    <h1><i class="fas fa-exchange-alt"></i> Transferências de Equipamentos</h1>
     <div class="d-flex gap-2 align-items-center">
         {% if aba == 'lojinha' %}
         <a href="{{ url_for('transferencias.lojinha_adicionar') }}" class="btn btn-success btn-sm" title="Cadastrar equipamento para doação">
-            <i class="bi bi-gift me-1"></i>Cadastrar Equipamento para Doação
+            <i class="fas fa-gift me-1"></i>Cadastrar Equipamento para Doação
         </a>
         {% elif current_user.pode('ver_transferencias') and current_user.perfil in ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo'] %}
         <a href="{{ url_for('transferencias.documento_novo') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-1"></i>Novo Termo
+            <i class="fas fa-plus-lg me-1"></i>Novo Termo
         </a>
         {% endif %}
     </div>
@@ -48,27 +48,27 @@
     <li class="nav-item">
         <a class="nav-link {% if aba == 'pendentes' %}active{% endif %}"
            href="{{ url_for('transferencias.listar', aba='pendentes', unidade_id=unidade_id) }}">
-            <i class="bi bi-inbox me-1"></i>Pendentes de aceite
+            <i class="fas fa-inbox me-1"></i>Pendentes de aceite
             {% if pendentes %}<span class="badge bg-warning text-dark ms-1">{{ pendentes | length }}</span>{% endif %}
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if aba == 'enviadas' %}active{% endif %}"
            href="{{ url_for('transferencias.listar', aba='enviadas', unidade_id=unidade_id) }}">
-            <i class="bi bi-send me-1"></i>Enviadas
+            <i class="fas fa-send me-1"></i>Enviadas
             {% if enviadas %}<span class="badge bg-info ms-1">{{ enviadas | length }}</span>{% endif %}
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if aba == 'concluidas' %}active{% endif %}"
            href="{{ url_for('transferencias.listar', aba='concluidas', unidade_id=unidade_id, status_concluida=status_concluida) }}">
-            <i class="bi bi-check2-all me-1"></i>Concluídas
+            <i class="fas fa-check-all me-1"></i>Concluídas
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if aba == 'lojinha' %}active{% endif %}"
            href="{{ url_for('transferencias.listar', aba='lojinha', unidade_id=unidade_id, lojinha_classificacao=lojinha_classificacao) }}">
-            <i class="bi bi-shop me-1"></i>Lojinha Interna
+            <i class="fas fa-shop me-1"></i>Lojinha Interna
             {% if lojinha_itens %}<span class="badge bg-success ms-1">{{ lojinha_itens | length }}</span>{% endif %}
         </a>
     </li>
@@ -77,7 +77,7 @@
 {% if aba == 'pendentes' %}
 <div class="card border-warning">
     <div class="card-header bg-warning bg-opacity-10 text-warning-emphasis fw-bold">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <i class="fas fa-exclamation-triangle-fill me-2"></i>
         Pendentes de aceite ({{ pendentes | length }})
     </div>
     <div class="card-body p-0">
@@ -108,7 +108,7 @@
                             {% if current_user.pode('aceitar_transferencia') and ids_unidades_user and doc.unidade_destino_id in ids_unidades_user %}
                             <a href="{{ url_for('transferencias.documento_aceitar', id=doc.id) }}"
                                class="btn btn-sm btn-success">
-                                <i class="bi bi-check-circle me-1"></i>Resolver
+                                <i class="fas fa-check-circle me-1"></i>Resolver
                             </a>
                             {% endif %}
                             {% if doc.criador and doc.criador.id == current_user.id or current_user.pode('ver_todas_unidades') %}
@@ -119,13 +119,13 @@
                                         data-form-id="form-cancelar-{{ doc.id }}"
                                         data-tipo="{{ doc.tipo_label }}"
                                         title="Cancelar documento">
-                                    <i class="bi bi-x"></i>
+                                    <i class="fas fa-times"></i>
                                 </button>
                             </form>
                             {% endif %}
                             <a href="#" class="btn btn-sm btn-outline-secondary"
                                onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
-                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                               title="Imprimir"><i class="fas fa-print"></i></a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -134,7 +134,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="bi bi-inbox text-muted fs-1"></i>
+            <i class="fas fa-inbox text-muted fs-1"></i>
             <p class="text-muted mb-0">Nenhum documento pendente de aceite.</p>
         </div>
         {% endif %}
@@ -175,12 +175,12 @@
                                         data-bs-toggle="modal" data-bs-target="#modalCancelarDocumento"
                                         data-form-id="form-cancelar-{{ doc.id }}"
                                         data-tipo="{{ doc.tipo_label }}"
-                                        title="Cancelar documento"><i class="bi bi-x"></i></button>
+                                        title="Cancelar documento"><i class="fas fa-times"></i></button>
                             </form>
                             {% endif %}
                             <a href="#" class="btn btn-sm btn-outline-secondary"
                                onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
-                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                               title="Imprimir"><i class="fas fa-print"></i></a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -189,7 +189,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="bi bi-send text-muted fs-1"></i>
+            <i class="fas fa-send text-muted fs-1"></i>
             <p class="text-muted mb-0">Nenhum documento enviado aguardando aceite.</p>
         </div>
         {% endif %}
@@ -198,7 +198,7 @@
 {% elif aba == 'concluidas' %}
 <div class="card">
     <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span><i class="bi bi-clock-history me-2"></i>Concluídas</span>
+        <span><i class="fas fa-clock-history me-2"></i>Concluídas</span>
         <form method="get" class="d-inline-flex align-items-center gap-1">
             <input type="hidden" name="aba" value="concluidas">
             <input type="hidden" name="unidade_id" value="{{ unidade_id or '' }}">
@@ -244,7 +244,7 @@
                         <td rowspan="{{ doc.itens.count() }}" class="text-end">
                             <a href="#" class="btn btn-sm btn-outline-secondary"
                                onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
-                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                               title="Imprimir"><i class="fas fa-print"></i></a>
                         </td>
                         {% endif %}
                     </tr>
@@ -260,7 +260,7 @@
                         <td class="text-end">
                             <a href="#" class="btn btn-sm btn-outline-secondary"
                                onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
-                               title="Imprimir"><i class="bi bi-printer"></i></a>
+                               title="Imprimir"><i class="fas fa-print"></i></a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -270,7 +270,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="bi bi-arrow-left-right text-muted fs-1"></i>
+            <i class="fas fa-exchange-alt text-muted fs-1"></i>
             <p class="text-muted mb-0">Nenhum documento concluído.</p>
         </div>
         {% endif %}
@@ -279,17 +279,17 @@
 {% elif aba == 'lojinha' %}
 <div class="card border-success">
     <div class="card-header bg-success bg-opacity-10 text-success-emphasis d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-shop me-2"></i>Lojinha Interna — Equipamentos à disposição</span>
+        <span><i class="fas fa-shop me-2"></i>Lojinha Interna — Equipamentos à disposição</span>
         <div class="d-flex gap-2 align-items-center">
             <button type="button" class="btn btn-sm btn-outline-success" id="btnVerCarrinhoLojinha" title="Ver itens escolhidos" style="display:none;">
-                <i class="bi bi-cart3 me-1"></i><span id="cartCountLojinha">0</span> item(ns)
+                <i class="fas fa-cart3 me-1"></i><span id="cartCountLojinha">0</span> item(ns)
             </button>
         </div>
     </div>
     <div class="card-body p-0">
         {% if lojinha_itens %}
         <div class="p-3 border-bottom">
-            <label class="form-label small mb-1 fw-semibold"><i class="bi bi-search me-1"></i>Buscar na descrição</label>
+            <label class="form-label small mb-1 fw-semibold"><i class="fas fa-search me-1"></i>Buscar na descrição</label>
             <input type="text" id="buscaLojinhaDescricao" class="form-control form-control-sm" placeholder="Ex: tec us, mouse, monitor..."
                    style="max-width: 280px;">
         </div>
@@ -298,13 +298,13 @@
             <div class="lojinha-grupo-unidade" data-unidade-nome="{{ unidade_loj.nome | lower }}">
                 <div class="px-3 py-2 bg-light border-bottom border-start border-end small">
                     <div class="d-flex flex-wrap align-items-center gap-2">
-                        <span class="fw-semibold"><i class="bi bi-hospital me-1 text-primary"></i>{{ unidade_loj.nome }}</span>
+                        <span class="fw-semibold"><i class="fas fa-hospital me-1 text-primary"></i>{{ unidade_loj.nome }}</span>
                         <span class="badge bg-light text-success">{{ itens | length }} item(ns)</span>
                         {% if unidade_loj.telefone %}
-                        <a href="tel:{{ unidade_loj.telefone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}" class="text-decoration-none text-muted" title="Ligar"><i class="bi bi-telephone me-0"></i> {{ unidade_loj.telefone | br_fone }}</a>
+                        <a href="tel:{{ unidade_loj.telefone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}" class="text-decoration-none text-muted" title="Ligar"><i class="fas fa-telephone me-0"></i> {{ unidade_loj.telefone | br_fone }}</a>
                         {% endif %}
                         {% if unidade_loj.email %}
-                        <a href="mailto:{{ unidade_loj.email }}" class="text-decoration-none text-muted" title="Enviar e-mail"><i class="bi bi-envelope me-0"></i> {{ unidade_loj.email }}</a>
+                        <a href="mailto:{{ unidade_loj.email }}" class="text-decoration-none text-muted" title="Enviar e-mail"><i class="fas fa-envelope me-0"></i> {{ unidade_loj.email }}</a>
                         {% endif %}
                     </div>
                 </div>
@@ -352,7 +352,7 @@
                                             data-bs-toggle="modal" data-bs-target="#modalRetirarLojinha"
                                             data-form-id="form-retirar-{{ item.id }}"
                                             data-descricao="{{ item.descricao_exibicao() | e }}"
-                                            title="Retirar da vitrine"><i class="bi bi-trash"></i></button>
+                                            title="Retirar da vitrine"><i class="fas fa-trash"></i></button>
                                 </form>
                                 {% else %}
                                 {# Item de outra unidade — posso solicitar pra minha unidade #}
@@ -367,7 +367,7 @@
                                         data-numero-patrimonio="{{ (item.numero_patrimonio or '') | e }}"
                                         data-numero-serie="{{ (item.numero_serie or '') | e }}"
                                         title="Adicionar ao carrinho">
-                                    <i class="bi bi-cart-plus"></i>
+                                    <i class="fas fa-cart-plus"></i>
                                 </button>
                                 {% endif %}
                             </td>
@@ -380,7 +380,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="bi bi-shop text-muted fs-1"></i>
+            <i class="fas fa-shop text-muted fs-1"></i>
             <p class="text-muted mb-0">Nenhum item à disposição no momento.</p>
             <p class="small text-muted mt-1">Cadastre equipamentos que sua unidade não precisa mais — outras unidades poderão ver!</p>
         </div>
@@ -393,7 +393,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-cart-plus me-2"></i>Adicionar ao carrinho</h5>
+                <h5 class="modal-title"><i class="fas fa-cart-plus me-2"></i>Adicionar ao carrinho</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -409,7 +409,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-success" id="btnConfirmAddCarrinho">
-                    <i class="bi bi-cart-plus me-1"></i>Adicionar
+                    <i class="fas fa-cart-plus me-1"></i>Adicionar
                 </button>
             </div>
         </div>
@@ -421,7 +421,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-cart3 me-2"></i>Itens escolhidos</h5>
+                <h5 class="modal-title"><i class="fas fa-cart3 me-2"></i>Itens escolhidos</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
@@ -434,7 +434,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="cart_json" id="cartJsonFinalizar" value="">
                     <button type="submit" class="btn btn-success" id="btnFinalizarCompraLojinha" style="display:none;">
-                        <i class="bi bi-check-lg me-1"></i>Finalizar "compra"
+                        <i class="fas fa-check-lg me-1"></i>Finalizar "compra"
                     </button>
                 </form>
             </div>
@@ -447,7 +447,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-trash text-danger me-2"></i>Retirar da Lojinha</h5>
+                <h5 class="modal-title"><i class="fas fa-trash text-danger me-2"></i>Retirar da Lojinha</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -456,7 +456,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmarRetirarLojinha">
-                    <i class="bi bi-trash me-1"></i>Sim, retirar
+                    <i class="fas fa-trash me-1"></i>Sim, retirar
                 </button>
             </div>
         </div>
@@ -469,7 +469,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Cancelar documento</h5>
+                <h5 class="modal-title"><i class="fas fa-times-circle text-danger me-2"></i>Cancelar documento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -478,7 +478,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Não</button>
                 <button type="button" class="btn btn-danger" id="btnConfirmarCancelarDoc">
-                    <i class="bi bi-x-circle me-1"></i>Sim, cancelar
+                    <i class="fas fa-times-circle me-1"></i>Sim, cancelar
                 </button>
             </div>
         </div>
@@ -603,7 +603,7 @@
             vazio.style.display = 'none';
             lista.innerHTML = '<table class="table table-sm"><thead><tr><th>Unidade</th><th>Qtd</th><th>Descrição</th><th>Class.</th><th></th></tr></thead><tbody>' +
                 cart.map(function(x) {
-                    return '<tr><td>' + escapeHtml(x.unidade_nome || '—') + '</td><td>' + x.quantidade + '</td><td>' + escapeHtml(x.descricao || '—') + '</td><td><span class="badge bg-secondary">' + escapeHtml(x.classificacao || 'A') + '</span></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-remove-cart" data-item-id="' + x.item_id + '"><i class="bi bi-trash"></i></button></td></tr>';
+                    return '<tr><td>' + escapeHtml(x.unidade_nome || '—') + '</td><td>' + x.quantidade + '</td><td>' + escapeHtml(x.descricao || '—') + '</td><td><span class="badge bg-secondary">' + escapeHtml(x.classificacao || 'A') + '</span></td><td><button type="button" class="btn btn-sm btn-outline-danger btn-remove-cart" data-item-id="' + x.item_id + '"><i class="fas fa-trash"></i></button></td></tr>';
                 }).join('') + '</tbody></table>';
             if (!unidadeDestinoId) {
                 lista.innerHTML += '<p class="text-warning small mb-0 mt-2">Selecione uma unidade na barra superior para finalizar a compra.</p>';

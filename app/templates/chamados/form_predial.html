@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'chamados/base_externo.html' if chamado_externo else 'base.html' %}
 {% block title %}Novo Chamado — Predial{% endblock %}
 
 {% block head %}
@@ -89,16 +89,19 @@
 
 {% block content %}
 <div class="pr-form">
+    {% if chamado_externo %}{% include 'chamados/_externo_banner.html' %}{% endif %}
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
+            {% if not chamado_externo %}
             <li class="breadcrumb-item"><a href="{{ url_for('chamados.listar') }}">Chamados</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('chamados.escolha_tipo') }}">Novo Chamado</a></li>
+            {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for(abrir_chamado_bp ~ '.escolha_tipo') }}">Novo Chamado</a></li>
             <li class="breadcrumb-item active">Predial</li>
         </ol>
     </nav>
 
     <div class="page-header mb-3">
-        <h1><i class="bi bi-building-gear me-2"></i>Chamado — Predial</h1>
+        <h1><i class="fas fa-tools me-2"></i>Chamado — Predial</h1>
     </div>
 
     <div class="pr-steps" id="prSteps">
@@ -118,7 +121,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section pr-passo" id="passo1">
             <div class="form-section-title">
-                <i class="bi bi-hospital me-2"></i>1. Unidade de Saúde
+                <i class="fas fa-hospital me-2"></i>1. Unidade de Saúde
             </div>
 
             <div class="row g-3">
@@ -134,36 +137,32 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Grau de urgência <span class="text-danger">*</span></label>
-                    <select name="prioridade" id="selPrioridade" class="form-select" required>
-                        <option value="">Selecione...</option>
-                        <option value="urgente">P1 — Interrupção de atendimento</option>
-                        <option value="alta">P2 — Atendimento parcialmente prejudicado</option>
-                        <option value="media" selected>P3 — Pouco urgente</option>
-                    </select>
-                </div>
+            </div>
+            <div class="mt-3">
+                {% with gravidade_sel=form_data.get('gravidade', 1), urgencia_sel=form_data.get('urgencia', 1), tendencia_sel=form_data.get('tendencia', 1), required=true %}
+                {% include 'shared/_gut_priorizacao.html' %}
+                {% endwith %}
             </div>
 
             <div class="unidade-info-card mt-3" id="uInfoCard">
-                <div class="inf"><i class="bi bi-geo-alt-fill"></i><span id="uiEnd">—</span></div>
-                <div class="inf"><i class="bi bi-telephone-fill"></i><span id="uiTel">—</span></div>
+                <div class="inf"><i class="fas fa-geo-alt-fill"></i><span id="uiEnd">—</span></div>
+                <div class="inf"><i class="fas fa-telephone-fill"></i><span id="uiTel">—</span></div>
                 <div class="inf" id="uiRamalWrap" style="display:none">
-                    <i class="bi bi-telephone-forward-fill"></i>Ramal: <span id="uiRamal">—</span>
+                    <i class="fas fa-telephone-forward-fill"></i>Ramal: <span id="uiRamal">—</span>
                 </div>
                 <a id="uiMaps" href="#" target="_blank" class="inf text-decoration-none" style="display:none">
-                    <i class="bi bi-map-fill"></i>Ver no mapa
+                    <i class="fas fa-map-fill"></i>Ver no mapa
                 </a>
             </div>
 
             <div class="mt-3 d-flex justify-content-between align-items-center">
                 <div class="text-muted small">
-                    <i class="bi bi-person-check me-1"></i>
+                    <i class="fas fa-user-check me-1"></i>
                     Responsável: <strong>{{ current_user.nome }}</strong>
                 </div>
                 <button type="button" class="btn btn-warning" id="btnPasso1"
                         onclick="irPasso(2)" disabled>
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -173,7 +172,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section pr-passo" id="passo2" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-door-open me-2"></i>2. Local do Problema
+                <i class="fas fa-door-open me-2"></i>2. Local do Problema
             </div>
 
             <p class="text-muted small mb-3">
@@ -183,7 +182,7 @@
 
             <div id="salasGridWrap">
                 <div class="text-muted small">
-                    <i class="bi bi-hourglass-split me-1"></i>Carregando salas...
+                    <i class="fas fa-hourglass-split me-1"></i>Carregando salas...
                 </div>
             </div>
 
@@ -198,11 +197,11 @@
 
             <div class="mt-3 d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(1)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="button" class="btn btn-warning" id="btnPasso2"
                         onclick="irPasso(3)" disabled>
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -212,7 +211,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section pr-passo" id="passo3" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-exclamation-circle me-2"></i>3. Descrição do Problema e Fotos
+                <i class="fas fa-exclamation-circle me-2"></i>3. Descrição do Problema e Fotos
             </div>
 
             <div class="mb-3">
@@ -245,7 +244,7 @@
                 <span class="text-muted small fw-normal">(recomendado — até 10 arquivos, 50 MB cada)</span>
             </label>
             <div class="upload-zona" id="uploadZona">
-                <i class="bi bi-camera fs-2 text-muted d-block mb-1"></i>
+                <i class="fas fa-camera fs-2 text-muted d-block mb-1"></i>
                 <div class="fw-semibold text-muted small">Clique ou arraste fotos aqui</div>
                 <div class="text-muted" style="font-size:.75rem">
                     JPG, PNG, MP4... máx. 10 arquivos
@@ -256,10 +255,10 @@
 
             <div class="mt-3 d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(2)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="button" class="btn btn-warning" onclick="irPasso(4)">
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -269,17 +268,17 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section pr-passo" id="passo4" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-clipboard-check me-2"></i>4. Confirmar e Abrir Chamado
+                <i class="fas fa-clipboard-check me-2"></i>4. Confirmar e Abrir Chamado
             </div>
 
             <div class="alert alert-light border mb-3" id="resumoPredial" style="font-size:.88rem"></div>
 
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(3)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="submit" class="btn btn-success btn-lg">
-                    <i class="bi bi-check-circle me-1"></i>Abrir Chamado
+                    <i class="fas fa-check-circle me-1"></i>Abrir Chamado
                 </button>
             </div>
         </div>
@@ -292,13 +291,14 @@
 {% endblock %}
 
 {% block scripts %}
+{% include 'shared/_gut_priorizacao_script.html' %}
 <script>
 (function () {
+    const chamadosApi = (window.SIGUS_BASE_URL || '') + {{ chamados_api_prefix|tojson }};
     let passoAtual  = 1;
     let salaSel     = null;   // { id, nome, tipo, chamados_abertos }
 
     const selUnidade    = document.getElementById('selUnidade');
-    const selPrioridade = document.getElementById('selPrioridade');
     const hiddenSalaId  = document.getElementById('hiddenSalaId');
     const hiddenLocal   = document.getElementById('hiddenLocalLivre');
     const inputLocal    = document.getElementById('inputLocalLivre');
@@ -347,7 +347,7 @@
     });
 
     function carregarInfoUnidade(uid) {
-        fetch(`/chamados/api/unidade-info/${uid}`)
+        fetch(`${chamadosApi}/unidade-info/${uid}`)
             .then(r => r.json())
             .then(d => {
                 const card = document.getElementById('uInfoCard');
@@ -365,9 +365,9 @@
     /* ── Passo 2: salas ───────────────────────────────────────── */
     function carregarSalas(uid) {
         const wrap = document.getElementById('salasGridWrap');
-        wrap.innerHTML = '<div class="text-muted small"><i class="bi bi-hourglass-split me-1"></i>Carregando salas...</div>';
+        wrap.innerHTML = '<div class="text-muted small"><i class="fas fa-hourglass-split me-1"></i>Carregando salas...</div>';
 
-        fetch(`/chamados/api/salas/${uid}`)
+        fetch(`${chamadosApi}/salas/${uid}`)
             .then(r => r.json())
             .then(data => {
                 const salas = data.salas || [];
@@ -385,9 +385,9 @@
                     card.className = 'sala-card' + (s.chamados_abertos ? ' tem-chamado' : '');
                     card.dataset.id = s.id;
                     card.innerHTML = `
-                        <div><i class="bi bi-door-open"></i><span class="sala-nome">${s.nome}</span></div>
+                        <div><i class="fas fa-door-open"></i><span class="sala-nome">${s.nome}</span></div>
                         ${s.tipo ? `<div class="sala-tipo">${s.tipo}</div>` : ''}
-                        ${s.chamados_abertos ? `<div class="sala-chamados"><i class="bi bi-exclamation-triangle me-1"></i>${s.chamados_abertos} chamado(s) aberto(s)</div>` : ''}`;
+                        ${s.chamados_abertos ? `<div class="sala-chamados"><i class="fas fa-exclamation-triangle me-1"></i>${s.chamados_abertos} chamado(s) aberto(s)</div>` : ''}`;
 
                     card.addEventListener('click', () => {
                         document.querySelectorAll('.sala-card').forEach(c => c.classList.remove('selected'));
@@ -461,7 +461,7 @@
                 item.appendChild(img);
             }
             const rm = document.createElement('button');
-            rm.type = 'button'; rm.className = 'rm-btn'; rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.type = 'button'; rm.className = 'rm-btn'; rm.innerHTML = '<i class="fas fa-times"></i>';
             rm.addEventListener('click', () => { arquivos.splice(i, 1); renderFotos(); syncInput(); });
             item.appendChild(rm);
             grid.appendChild(item);
@@ -479,7 +479,7 @@
     /* ── Passo 4: resumo ─────────────────────────────────────── */
     function montarResumo() {
         const unNome  = selUnidade.options[selUnidade.selectedIndex]?.text || '—';
-        const prio    = selPrioridade.options[selPrioridade.selectedIndex]?.text || '—';
+        const prio    = document.getElementById('gutResultado')?.textContent || '—';
         const local   = salaSel ? salaSel.nome : (inputLocal.value.trim() || '—');
         const desc    = document.getElementById('txtDescricao').value.trim();
         const nFotos  = inputF?.files?.length || 0;

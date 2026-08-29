@@ -11,13 +11,13 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-tag"></i> {{ marca.nome }}</h1>
+    <h1><i class="fas fa-tag"></i> {{ marca.nome }}</h1>
     <div class="d-flex gap-2">
         <a href="{{ url_for('configuracoes.novo_modelo', marca_id=marca.id) }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>Novo Modelo
+            <i class="fas fa-plus-circle me-1"></i>Novo Modelo
         </a>
         <a href="{{ url_for('configuracoes.editar_marca', id=marca.id) }}" class="btn btn-outline-secondary">
-            <i class="bi bi-pencil me-1"></i>Editar Marca
+            <i class="fas fa-pencil-alt me-1"></i>Editar Marca
         </a>
     </div>
 </div>
@@ -25,19 +25,19 @@
 {% set tipos_marca = marca.tipos.all() %}
 {% if tipos_marca %}
 <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
-    <i class="bi bi-link-45deg fs-5"></i>
+    <i class="fas fa-link fs-5"></i>
     <div>
         <strong>Tipos compatíveis:</strong>
         {% for t in tipos_marca %}
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">
-            <i class="bi {{ t.icone }} me-1"></i>{{ t.nome }}
+            <i class="{{ t.icone }} me-1"></i>{{ t.nome }}
         </span>
         {% endfor %}
     </div>
 </div>
 {% else %}
 <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-    <i class="bi bi-exclamation-triangle fs-5"></i>
+    <i class="fas fa-exclamation-triangle fs-5"></i>
     <div>
         Esta marca ainda <strong>não está vinculada</strong> a nenhum tipo de equipamento.
         <a href="{{ url_for('configuracoes.editar_marca', id=marca.id) }}" class="alert-link">Editar marca</a> para definir os tipos compatíveis.
@@ -47,7 +47,7 @@
 
 <div class="card">
     <div class="card-header">
-        <i class="bi bi-cpu me-2"></i>Modelos de {{ marca.nome }}
+        <i class="fas fa-microchip me-2"></i>Modelos de {{ marca.nome }}
         <span class="badge bg-secondary ms-1">{{ modelos | length }}</span>
     </div>
     {% if modelos %}
@@ -65,7 +65,7 @@
                     {% for md in modelos %}
                     <tr>
                         <td class="fw-semibold">
-                            <i class="bi bi-cpu me-2 text-secondary"></i>{{ md.nome }}
+                            <i class="fas fa-microchip me-2 text-secondary"></i>{{ md.nome }}
                         </td>
                         <td class="text-center">
                             <span class="badge bg-{{ 'primary' if md.equipamentos.count() > 0 else 'light text-dark' }}">
@@ -75,7 +75,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_modelo', id=md.id) }}"
                                class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             {% if md.equipamentos.count() == 0 %}
                             <form method="POST" action="{{ url_for('configuracoes.excluir_modelo', id=md.id) }}"
@@ -83,7 +83,7 @@
                                   onsubmit="return confirm('Excluir o modelo {{ md.nome }}?')">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash"></i>
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </form>
                             {% endif %}
@@ -96,7 +96,7 @@
     </div>
     {% else %}
     <div class="empty-state py-4">
-        <i class="bi bi-cpu"></i>
+        <i class="fas fa-microchip"></i>
         <p>Nenhum modelo cadastrado para <strong>{{ marca.nome }}</strong>.</p>
         <a href="{{ url_for('configuracoes.novo_modelo', marca_id=marca.id) }}" class="btn btn-primary mt-1">
             Adicionar Modelo

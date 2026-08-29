@@ -1,0 +1,44 @@
+{% if fichas %}
+<div class="card-body p-0">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 small align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Profissional</th>
+                    <th>Tipo</th>
+                    <th>CBO</th>
+                    <th>Vínculo</th>
+                    <th>CH/sem</th>
+                    <th>Gerado em</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fichas %}
+                <tr>
+                    <td class="fw-semibold">{{ f.usuario.nome }}</td>
+                    <td><span class="badge bg-{{ f.tipo_badge }}">{{ f.tipo_label }}</span></td>
+                    <td class="text-muted">{{ f.cbo or '—' }}</td>
+                    <td class="text-muted">{{ f.vinculo_label if f.vinculo else '—' }}</td>
+                    <td class="text-muted">{{ (f.carga_horaria | string + 'h') if f.carga_horaria else '—' }}</td>
+                    <td class="text-muted">{{ f.gerado_em | br_datetime }}</td>
+                    <td>
+                        <button type="button" class="btn btn-xs btn-sm btn-outline-primary btn-abrir-ficha"
+                                data-url="{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=f.id) }}"
+                                data-titulo="Ficha CNES — {{ f.usuario.nome | e }}">
+                            <i class="fas fa-eye me-1"></i>Abrir
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card-body">
+    <p class="text-muted small mb-0">
+        <i class="fas fa-info-circle me-1"></i>Nenhuma ficha gerada ainda. Ao vincular um profissional a ficha é criada automaticamente.
+    </p>
+</div>
+{% endif %}

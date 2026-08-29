@@ -68,9 +68,23 @@ class Contrato(db.Model):
 
     def atualizar_status(self):
         # Se houve Termo de Encerramento, contrato está encerrado (não "vencido")
-        if self.acoes.filter_by(tipo='termo_encerramento').first():
-            self.status = 'encerrado'
-            return
+        # Verifica se o objeto tem ID antes de tentar acessar ações
+        # Para objetos novos (sem ID), pula a verificação de termo de encerramento
+        if self.id:
+            # Tenta usar o relacionamento lazy se o objeto estiver na sessão
+            try:
+                if self.acoes.filter_by(tipo='termo_encerramento').first():
+                    self.status = 'encerrado'
+                    return
+            except Exception:
+                # Se falhar (objeto desanexado), usa query explícita
+                tem_termo = ContratoAcao.query.filter_by(
+                    contrato_id=self.id,
+                    tipo='termo_encerramento'
+                ).first()
+                if tem_termo:
+                    self.status = 'encerrado'
+                    return
         hoje = date.today()
         dias_restantes = (self.data_fim - hoje).days
         if dias_restantes < 0:

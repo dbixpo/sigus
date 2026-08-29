@@ -1,0 +1,815 @@
+/**
+ * Sistema SAMU - Identidade Visual
+ * Cores: Vermelho Pantone 186 | Laranja Pantone 717
+ * Tipografia: Inter (conforme SIGUS)
+ */
+
+:root {
+  --samu-vermelho: #c20d2f;
+  --samu-vermelho-escuro: #a00a26;
+  --samu-laranja: #dd8d0c;
+  --samu-laranja-escuro: #b8750a;
+  --samu-branco: #ffffff;
+  --samu-text: #1E3A50;
+  --samu-text-muted: #718096;
+  --samu-bg: #F4F6F9;
+  --samu-sidebar-width: 260px;
+  --samu-navbar-height: 56px;
+  --samu-sidebar-collapsed-width: 60px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 0.9rem;
+  color: var(--samu-text);
+  background-color: var(--samu-bg);
+}
+
+/* ═══ TELA DE LOGIN ═══ */
+.samu-login-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.samu-login-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z' fill='%23ffffff' fill-opacity='0.03' fill-rule='nonzero'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.samu-login-card {
+  background: var(--samu-branco);
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  max-width: 420px;
+  width: 100%;
+}
+
+.samu-login-header {
+  background: linear-gradient(180deg, var(--samu-vermelho) 0%, var(--samu-vermelho-escuro) 100%);
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.samu-login-logo {
+  height: 100px;
+  width: auto;
+  margin-bottom: 1rem;
+  border: 4px solid white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.samu-login-header h1 {
+  color: white;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+.samu-login-header p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0;
+}
+
+.samu-login-body {
+  padding: 2rem;
+}
+
+.samu-login-body .form-control:focus {
+  border-color: var(--samu-laranja);
+  box-shadow: 0 0 0 0.2rem rgba(221, 141, 12, 0.25);
+}
+
+.samu-login-body .btn-primary {
+  background: var(--samu-laranja);
+  border-color: var(--samu-laranja);
+  font-weight: 600;
+}
+
+.samu-login-body .btn-primary:hover {
+  background: var(--samu-laranja-escuro);
+  border-color: var(--samu-laranja-escuro);
+}
+
+/* ═══ NAVBAR SUPERIOR (vermelha) — acima da sidebar ═══ */
+.samu-navbar {
+  background: var(--samu-vermelho) !important;
+  min-height: 56px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1030;
+  transition: background-color 0.6s ease;
+}
+
+.samu-navbar-logo {
+  height: 48px;
+  width: auto;
+}
+
+.samu-navbar-btn {
+  height: 36px;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.samu-navbar .btn-outline-light:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.samu-navbar .dropdown-menu {
+  border-radius: 8px;
+}
+
+/* ═══ LAYOUT PRINCIPAL (igual ao SIGUS) ═══ */
+.samu-wrapper {
+  display: flex;
+  min-height: 100vh;
+  padding-top: var(--samu-navbar-height);
+}
+
+/* ═══ SIDEBAR LATERAL (laranja) — position fixed como SIGUS ═══ */
+.samu-sidebar {
+  width: var(--samu-sidebar-width);
+  background: var(--samu-laranja);
+  transition: width 0.2s ease, background-color 0.6s ease;
+  position: fixed;
+  top: var(--samu-navbar-height);
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  z-index: 1020;
+}
+
+/* Área rolável do menu (como no SIGUS) */
+.samu-sidebar .sidebar-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.4) rgba(255,255,255,0.06);
+}
+
+.samu-sidebar .sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.samu-sidebar .sidebar-scroll::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  margin: 4px 0;
+}
+
+.samu-sidebar .sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.4);
+  border-radius: 3px;
+}
+
+.samu-sidebar .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.6);
+}
+
+.samu-sidebar.collapsed {
+  width: var(--samu-sidebar-collapsed-width);
+}
+
+.samu-sidebar.collapsed .nav-section-title {
+  display: none;
+}
+
+.samu-sidebar.collapsed .nav-link {
+  display: flex;
+  justify-content: center;
+  padding: 0.65rem 0;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.samu-sidebar .sidebar-nav {
+  padding-top: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.samu-sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.95);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  margin: 2px 8px;
+}
+
+.samu-sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.samu-sidebar .nav-link.active {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 600;
+}
+
+.samu-sidebar .nav-section-title {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1rem 1rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.samu-sidebar .nav-section-title:first-child {
+  margin-top: 0;
+}
+
+.samu-sidebar .sidebar-toggle {
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+}
+
+/* Rodapé fixo no bottom — logo Saúde Digital sempre visível (como SIGUS) */
+.samu-sidebar-footer {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.samu-sidebar-footer a[href] {
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.samu-sidebar-footer a[href]:hover {
+  opacity: 1;
+}
+
+.samu-sidebar-footer a[href]:hover .samu-logo-saude-digital {
+  opacity: 1;
+}
+
+.samu-logo-saude-digital {
+  max-width: 130px;
+  max-height: 34px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.samu-sidebar:hover .samu-logo-saude-digital {
+  opacity: 1;
+}
+
+.samu-sidebar.collapsed .samu-sidebar-footer {
+  display: none;
+}
+
+/* ═══ CONTEÚDO PRINCIPAL (rola com a página, como SIGUS) ═══ */
+.samu-main {
+  flex: 1;
+  margin-left: var(--samu-sidebar-width);
+  min-height: calc(100vh - var(--samu-navbar-height));
+  padding: 2rem 1.5rem 1.5rem;
+  background: var(--samu-bg);
+  transition: margin-left 0.2s ease;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1025;
+}
+
+.samu-sidebar.collapsed ~ .samu-main {
+  margin-left: var(--samu-sidebar-collapsed-width);
+}
+
+/* ═══ TIPOGRAFIA (estilo SIGUS) ═══ */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.page-header h1 {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--samu-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 1px 8px rgba(0,0,0,0.04);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.85rem 1rem;
+}
+
+.table {
+  font-size: 0.875rem;
+}
+
+.table th {
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--samu-text-muted);
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.table td {
+  vertical-align: middle;
+  border-color: #f1f5f9;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+}
+
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--samu-text);
+  margin-bottom: 0.3rem;
+}
+
+.form-control, .form-select {
+  font-size: 0.875rem;
+  border-color: #cbd5e0;
+  border-radius: 6px;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--samu-laranja);
+  box-shadow: 0 0 0 3px rgba(221, 141, 12, 0.2);
+}
+
+.btn {
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.breadcrumb {
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+}
+
+.breadcrumb-item a {
+  color: var(--samu-laranja);
+  text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+  text-decoration: underline;
+}
+
+/* Links discretos (CNES, Maps, e-mail etc.) — cor suave, sem azul vivo */
+.link-discreto,
+a.link-discreto {
+  color: var(--samu-text);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--samu-text-muted);
+  transition: color 0.2s, border-color 0.2s;
+}
+a.link-discreto:hover {
+  color: var(--samu-laranja);
+  border-bottom-color: var(--samu-laranja);
+}
+a.link-discreto.link-sem-sublinhado,
+a.link-discreto.link-sem-sublinhado:hover {
+  border: none !important;
+  text-decoration: none !important;
+}
+
+.text-muted { color: var(--samu-text-muted) !important; }
+
+/* ═══ AVATAR REDONDO (navbar) ═══ */
+.samu-navbar-btn .samu-avatar,
+.samu-navbar-btn .samu-avatar-placeholder {
+  width: 28px;
+  height: 28px;
+  font-size: 0.8rem;
+}
+
+.samu-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+.samu-avatar-placeholder {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+}
+
+/* Avatar na tabela de profissionais */
+.avatar-tabela {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.avatar-tabela-placeholder {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: var(--samu-vermelho);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+/* Filtros listagem: altura uniforme (profissionais e demais telas) */
+#filtrosProfissionais .form-control,
+#filtrosProfissionais .form-select,
+.filtros-listagem .form-control,
+.filtros-listagem .form-select {
+  height: 38px;
+  min-height: 38px;
+}
+#filtrosProfissionais .ts-wrapper,
+#filtrosProfissionais .ts-control,
+.filtros-listagem .ts-wrapper,
+.filtros-listagem .ts-control {
+  min-height: 38px !important;
+}
+#filtrosProfissionais .ts-control,
+.filtros-listagem .ts-control {
+  min-height: 38px;
+  padding: 0.25rem 0.5rem;
+}
+
+/* Tabela profissionais: quebra apenas em perfil; texto menor em Perfil e Matrícula|CBO */
+.table-profissionais .col-nowrap { white-space: nowrap; }
+.table-profissionais .col-perfil { white-space: normal; word-wrap: break-word; font-size: 0.8rem; }
+.table-profissionais .col-perfil .badge { font-size: 0.7rem; }
+.table-profissionais .col-matricula-cbo { font-size: 0.8rem; }
+
+/* ═══ CARDS E BOTÕES SAMU ═══ */
+.btn-samu-primary {
+  background: var(--samu-laranja);
+  border-color: var(--samu-laranja);
+  color: white;
+}
+
+.btn-samu-primary:hover {
+  background: var(--samu-laranja-escuro);
+  border-color: var(--samu-laranja-escuro);
+  color: white;
+}
+
+/* ═══ MODAL IMPRESSÃO ═══ */
+#modalImpresso .modal-header {
+  background: var(--samu-vermelho);
+  color: white;
+}
+
+#modalImpresso .btn-primary {
+  background: var(--samu-laranja);
+  border-color: var(--samu-laranja);
+}
+
+/* Tom Select dropdown dentro de modal precisa ficar acima do modal */
+.ts-dropdown {
+  z-index: 1070 !important;
+}
+
+/* ═══ RESPONSIVIDADE — Mobile First / Reativo ═══ */
+
+/* Safe area para celulares com notch (PWA fullscreen) */
+@supports (padding: env(safe-area-inset-top)) {
+  .samu-main { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Touch-friendly: alvos mínimos 44px (exceto navbar para manter compacta) */
+@media (pointer: coarse) {
+  .samu-main .btn:not(.btn-sm):not(.samu-navbar-btn), .card .btn:not(.btn-sm) { min-height: 44px; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .samu-sidebar .nav-link { padding-top: 0.65rem; padding-bottom: 0.65rem; min-height: 44px; display: flex; align-items: center; }
+  .form-control, .form-select { min-height: 44px; }
+  .dropdown-menu .dropdown-item { padding: 0.65rem 1rem; min-height: 44px; display: flex; align-items: center; }
+}
+
+/* Breakpoint tablet/desktop — sidebar visível */
+@media (min-width: 992px) {
+  .samu-sidebar-backdrop { display: none !important; }
+}
+
+/* Breakpoint mobile: sidebar offcanvas, main full width, navbar compacta */
+@media (max-width: 991.98px) {
+  :root { --samu-navbar-height: 52px; }
+  .samu-navbar {
+    min-height: 52px;
+  }
+  .samu-navbar .container-fluid {
+    padding: 0.35rem 0.5rem;
+    gap: 0.2rem !important;
+    min-height: 52px;
+    flex-wrap: nowrap;
+  }
+  .samu-navbar .container-fluid > .ms-auto { flex-shrink: 0; }
+  .samu-navbar .btn-link {
+    padding: 0.3rem;
+    margin: 0 0.1rem 0 0;
+    min-width: 36px;
+  }
+  .samu-navbar .btn-link i { font-size: 1.2rem; }
+  .samu-navbar .navbar-brand { margin-right: 0.25rem; flex-shrink: 0; }
+  .samu-navbar-logo { height: 28px; max-width: 90px; object-fit: contain; flex-shrink: 0; }
+  .samu-navbar-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.4rem;
+    font-size: 0.7rem;
+  }
+  .samu-navbar-btn .samu-avatar,
+  .samu-navbar-btn .samu-avatar-placeholder { width: 22px !important; height: 22px !important; font-size: 0.65rem !important; }
+  .samu-navbar .dropdown-toggle::after { margin-left: 0.15rem; font-size: 0.55rem; }
+  .samu-wrapper {
+    padding-top: calc(52px + env(safe-area-inset-top, 0px));
+  }
+  .samu-navbar { padding-top: env(safe-area-inset-top, 0); }
+  .samu-sidebar {
+    position: fixed;
+    top: calc(52px + env(safe-area-inset-top, 0px));
+    left: 0;
+    bottom: 0;
+    width: min(280px, 85vw);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    z-index: 1040;
+    box-shadow: none;
+  }
+  .samu-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.2);
+  }
+  .samu-sidebar.collapsed { width: min(280px, 85vw); }
+  .samu-sidebar.collapsed .nav-section-title,
+  .samu-sidebar.collapsed .samu-sidebar-footer { display: block !important; }
+  .samu-sidebar.collapsed .nav-link { justify-content: flex-start; padding-left: 1rem; }
+  .samu-sidebar-backdrop {
+    top: calc(52px + env(safe-area-inset-top, 0px));
+  }
+  .samu-main {
+    margin-left: 0 !important;
+    padding: 1rem 0.75rem 1.5rem;
+  }
+  .samu-sidebar.open ~ .samu-main,
+  body.sidebar-open .samu-main { margin-left: 0 !important; }
+  .page-header { margin-bottom: 1rem; }
+  .page-header h1 { font-size: 1.15rem; }
+  .card-body { padding: 1rem; }
+  .table { font-size: 0.8rem; }
+  .table th, .table td { padding: 0.5rem 0.4rem; }
+  .modal-dialog { margin: 0.5rem; max-width: calc(100% - 1rem); }
+  .modal-fullscreen-sm-down { max-height: calc(100vh - 1rem); }
+}
+
+/* Backdrop para sidebar mobile */
+.samu-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: var(--samu-navbar-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1035;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.samu-sidebar-backdrop.show {
+  display: block;
+  opacity: 1;
+}
+@media (min-width: 992px) {
+  .samu-sidebar-backdrop { display: none !important; }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 575.98px) {
+  .samu-login-page { padding: 1rem; }
+  .samu-login-card { margin: 0; }
+  .samu-login-header { padding: 1.5rem 1rem; }
+  .samu-login-header h1 { font-size: 1.35rem; }
+  .samu-login-body { padding: 1.25rem; }
+  .samu-login-logo { height: 70px; }
+  .samu-main { padding: 0.75rem 0.5rem 1rem; }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .page-header h1 { font-size: 1.1rem; }
+  .page-header .d-flex.gap-2 { width: 100%; flex-wrap: wrap; }
+  .page-header .btn { flex: 1 1 auto; min-width: 120px; }
+  .card { margin-bottom: 1rem; }
+  .card-body { padding: 0.75rem; }
+  .table-responsive { margin: 0 -0.75rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-responsive .table { margin-bottom: 0; min-width: 600px; }
+  .filter-bar, .mini-stats { flex-wrap: wrap; gap: 0.5rem; }
+  .nav-tabs .nav-link { padding: 0.5rem 0.75rem; font-size: 0.85rem; }
+  .btn-group .btn { padding: 0.35rem 0.6rem; font-size: 0.8rem; }
+  .modal-dialog { margin: 0.25rem; }
+  .modal-body { padding: 1rem; }
+  #modalImpresso .modal-dialog { margin: 0; max-width: 100%; height: 100vh; }
+  #modalImpresso .modal-content { height: 100%; border-radius: 0; }
+  #modalImpresso .modal-body { flex: 1; min-height: 0; }
+}
+
+/* Formulários responsivos */
+@media (max-width: 575.98px) {
+  .row.g-3 > [class*="col-"], .row.g-4 > [class*="col-"] { margin-bottom: 0.5rem; }
+  .form-row .col { margin-bottom: 0.75rem; }
+  .d-flex.gap-2 { flex-wrap: wrap; }
+  .d-flex.gap-2 .btn { flex: 1 1 100%; }
+}
+
+/* Fluxograma e abas: empilhar em mobile */
+@media (max-width: 767.98px) {
+  .nav-tabs .nav-link { font-size: 0.85rem; }
+  .algoritmo-fluxo-cards .col-lg-6 { flex: 0 0 100%; max-width: 100%; }
+}
+
+/* ═══ FILTROS: dropdown no mobile ═══ */
+.filtros-mobile-wrap { margin-bottom: 1rem; }
+.filtros-mobile-wrap .btn-filtros-toggle {
+  display: flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 0.75rem; font-size: 0.875rem;
+}
+@media (min-width: 992px) {
+  .filtros-mobile-wrap .btn-filtros-toggle { display: none !important; }
+  .filtros-mobile-wrap .filtros-panel { display: block !important; }
+}
+@media (max-width: 991.98px) {
+  .filtros-mobile-wrap .filtros-panel.collapse:not(.show) { display: none; }
+  .filtros-mobile-wrap .filtros-panel.collapse.show { display: block; }
+  .filtros-mobile-wrap .filtros-panel .card { margin-top: 0.5rem; }
+}
+
+/* ═══ LISTAGEM: cards no mobile em vez de tabela ═══ */
+.listagem-cards { display: none; padding: 1rem; }
+.listagem-table-wrap { }
+@media (max-width: 991.98px) {
+  .listagem-cards { display: block; }
+  .listagem-table-wrap { display: none !important; }
+}
+@media (min-width: 992px) {
+  .listagem-cards { display: none !important; }
+  .listagem-table-wrap { display: block; }
+}
+
+.listagem-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: #fff;
+  transition: box-shadow 0.2s;
+}
+.listagem-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.listagem-card .card-titulo { font-weight: 600; font-size: 1rem; margin-bottom: 0.5rem; color: var(--samu-text); }
+.listagem-card .card-meta { font-size: 0.8rem; color: var(--samu-text-muted); margin-bottom: 0.35rem; }
+.listagem-card .card-rodape { display: flex; justify-content: space-between; align-items: center; margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+.listagem-card .card-rodape .badge { font-size: 0.7rem; }
+.listagem-card .card-acoes { display: flex; gap: 0.35rem; }
+
+/* ═══ PERGUNTAS - Algoritmos de Acolhimento (dropdown colapsável) ═══ */
+.perguntas-stack { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; min-width: 0; }
+.pergunta-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  border-left: 4px solid var(--samu-laranja, #dd8d0c);
+}
+.pergunta-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+.pergunta-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(180deg, #fefefe 0%, #f8fafc 100%);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+.pergunta-card-header:hover { background: #f1f5f9; }
+.pergunta-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.4rem;
+  margin: -0.2rem 0;
+  cursor: grab;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.pergunta-drag-handle:hover { background: rgba(0,0,0,0.06); color: #475569; }
+.pergunta-drag-handle:active { cursor: grabbing; }
+.pergunta-drag-handle i { font-size: 1rem; opacity: 0.8; }
+.pergunta-enunciado-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.9rem;
+  border-color: transparent;
+  background: rgba(255,255,255,0.6);
+}
+.pergunta-enunciado-input:hover { border-color: #e2e8f0; background: #fff; }
+.pergunta-enunciado-input:focus { border-color: var(--samu-laranja); background: #fff; box-shadow: 0 0 0 0.2rem rgba(221,141,12,0.15); }
+.pergunta-toggle { flex-shrink: 0; padding: 0.2rem 0.3rem !important; color: #64748b !important; }
+.pergunta-card-header .btn-remover {
+  flex-shrink: 0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  opacity: 0.7;
+}
+.pergunta-card-header .btn-remover:hover { opacity: 1; background: rgba(220,53,69,0.1); }
+.pergunta-card-body.collapse { display: none; }
+.pergunta-card-body.collapse.show { display: block; }
+.pergunta-card-inner { padding: 1rem 1.25rem; border-top: 1px solid #e2e8f0; }
+.pergunta-card-body .form-label { margin-bottom: 0.35rem; font-size: 0.85rem; }
+.pergunta-card-body textarea { font-size: 0.9rem; border-radius: 8px; }
+.pergunta-opcoes-vazio {
+  display: block;
+  padding: 0.6rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.opcoes-lista { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem; }
+.opcao-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+.opcao-row .flex-grow-1 { min-width: 0; }
+.opcao-row .flex-grow-1 .opcao-texto { width: 100%; }
+.opcao-row .opcao-pontos-wrap { flex: 0 0 100px; }
+.opcao-row .opcao-pontos-wrap .form-label { font-size: 0.7rem; margin-bottom: 0.2rem; font-weight: 600; color: #64748b; }
+.opcao-row .opcao-pontos { width: 100%; }
+.opcao-row .btn-remover-opcao { flex-shrink: 0; padding: 0.2rem 0.4rem; margin-bottom: 0.25rem; }
+.btn-adicionar-opcao { margin-top: 0.25rem; }
+.perguntas-stack .sortable-ghost { opacity: 0.4; }
+.perguntas-stack .sortable-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }

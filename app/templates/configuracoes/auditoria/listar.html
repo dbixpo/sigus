@@ -4,14 +4,14 @@
 {% block content %}
 <div class="page-header">
     <div>
-        <h1><i class="bi bi-journal-text me-2"></i>Auditoria do Sistema</h1>
+        <h1><i class="fas fa-book me-2"></i>Auditoria do Sistema</h1>
         <p class="text-muted mb-0 small">
             Registro de todas as requisições HTTP. Apenas administradores podem visualizar.
         </p>
     </div>
     <div>
         <a href="{{ url_for('configuracoes.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Voltar
+            <i class="fas fa-arrow-left me-1"></i>Voltar
         </a>
     </div>
 </div>
@@ -65,7 +65,7 @@
             </div>
             <div class="col-md-2 col-lg-1 d-flex gap-1">
                 <button type="submit" class="btn btn-primary btn-sm flex-fill">
-                    <i class="bi bi-search"></i>
+                    <i class="fas fa-search"></i>
                 </button>
                 <a href="{{ url_for('configuracoes.auditoria') }}" class="btn btn-outline-secondary btn-sm"
                    title="Limpar">×</a>
@@ -156,14 +156,14 @@
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
                     {% if paginacao.has_prev %}
-                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.prev_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, endpoint=filtros.endpoint or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}">←</a>
+                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.prev_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}{% if filtros.endpoint %}&endpoint={{ filtros.endpoint | urlencode }}{% endif %}">←</a>
                     {% else %}
                     <span class="page-link">←</span>
                     {% endif %}
                 </li>
                 <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
                     {% if paginacao.has_next %}
-                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.next_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, endpoint=filtros.endpoint or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}">→</a>
+                    <a class="page-link" href="{{ url_for('configuracoes.auditoria', page=paginacao.next_num, per_page=paginacao.per_page, acao=filtros.acao or none, modulo=filtros.modulo or none, usuario_id=filtros.usuario_id or none, data_inicio=filtros.data_inicio or none, data_fim=filtros.data_fim or none) }}{% if filtros.endpoint %}&endpoint={{ filtros.endpoint | urlencode }}{% endif %}">→</a>
                     {% else %}
                     <span class="page-link">→</span>
                     {% endif %}

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Aviso — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block head %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+#editorAvisoMensagem { min-height: 180px; }
+.ql-editor a { text-decoration: underline; }
+#modalLinkAviso, #modalWaAviso { z-index: 1100 !important; }
+#modalLinkAviso .modal-dialog, #modalWaAviso .modal-dialog { z-index: 1101; }
+.aviso-toolbar-wa { display: inline-flex; align-items: center; }
+.btn-aviso-wa { width: 22px; height: 24px; padding: 0; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; }
+.btn-aviso-wa .bi-whatsapp { font-size: 0.9rem; }
+.btn-aviso-wa:hover { background: rgba(0,0,0,.06); border-radius: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-megaphone-fill"></i> Aviso — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+                <input type="text" name="titulo" class="form-control" value="{{ item.titulo if item else '' }}" placeholder="Título do aviso" required>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Mensagem</label>
+                <div id="editorAvisoWrap" class="border rounded overflow-hidden">
+                    <div id="editorAvisoToolbar">
+                        <span class="ql-formats">
+                            <button type="button" class="ql-bold"></button>
+                            <button type="button" class="ql-italic"></button>
+                            <button type="button" class="ql-underline"></button>
+                        </span>
+                        <span class="ql-formats">
+                            <select class="ql-color"></select>
+                            <select class="ql-background"></select>
+                        </span>
+                        <span class="ql-formats">
+                            <button type="button" class="ql-link" id="btnAvisoLink" title="Inserir link"></button>
+                            <span class="aviso-toolbar-wa">
+                                <button type="button" id="btnAvisoWa" class="btn-aviso-wa" title="Inserir link WhatsApp"><span class="bi bi-whatsapp text-success"></span></button>
+                            </span>
+                        </span>
+                        <span class="ql-formats">
+                            <button type="button" class="ql-list" value="ordered"></button>
+                            <button type="button" class="ql-list" value="bullet"></button>
+                        </span>
+                    </div>
+                    <div id="editorAvisoMensagem"></div>
+                </div>
+                <input type="hidden" name="mensagem" id="inputAvisoMensagem" value="{{ item.mensagem or '' }}">
+                <div class="form-text">Use o ícone do WhatsApp para inserir link que abre no app com o número formatado.</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Anexo</label>
+                {% if item and item.anexo %}
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <a href="{{ url_for('gestao.quadro_aviso_anexo', filename=item.anexo) }}" class="btn btn-sm btn-outline-secondary" download>
+                        <i class="bi bi-paperclip me-1"></i>{{ item.anexo }}
+                    </a>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="remover_anexo" id="removerAnexo" value="1">
+                        <label class="form-check-label small text-muted" for="removerAnexo">Remover anexo</label>
+                    </div>
+                </div>
+                {% endif %}
+                <input type="file" name="anexo" class="form-control form-control-sm" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif">
+                <div class="form-text">PDF, Word, Excel, imagens. Máx. 10 MB.</div>
+            </div>
+
+            <div class="mb-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Ativo (exibir no Quadro de Avisos)</label>
+                </div>
+            </div>
+
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('gestao.quadro_avisos') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+{# Modais fora do content para evitar conflito de z-index com Quill #}
+<div class="modal fade" id="modalLinkAviso" tabindex="-1" aria-labelledby="modalLinkAvisoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="modalLinkAvisoLabel"><i class="bi bi-link-45deg me-1"></i>Inserir link</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label small">URL</label>
+                <input type="url" id="inputLinkUrl" class="form-control form-control-sm" placeholder="https://...">
+                <label class="form-label small mt-2">Texto do link <span class="text-muted">(se vazio, usa o texto selecionado)</span></label>
+                <input type="text" id="inputLinkTexto" class="form-control form-control-sm" placeholder="Opcional">
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-samu-primary" id="btnLinkInserir"><i class="bi bi-check2 me-1"></i>Inserir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalWaAviso" tabindex="-1" aria-labelledby="modalWaAvisoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h6 class="modal-title" id="modalWaAvisoLabel"><i class="bi bi-whatsapp text-success me-1"></i>Link WhatsApp</h6>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label small">Telefone com DDD</label>
+                <input type="tel" id="inputWaTelefone" class="form-control form-control-sm" placeholder="(15) 99999-9999" maxlength="16" autocomplete="off">
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-success" id="btnWaInserir"><i class="bi bi-whatsapp me-1"></i>Inserir</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(function() {
+    var Link = Quill.import('formats/link');
+    var defaultHandler = Link.sanitize;
+    Link.sanitize = function(url) {
+        if (url && (url.startsWith('https://wa.me/') || url.startsWith('http://wa.me/') || url.startsWith('mailto:') || url.startsWith('tel:'))) return url;
+        return defaultHandler ? defaultHandler(url) : url;
+    };
+
+    var quill = new Quill('#editorAvisoMensagem', {
+        theme: 'snow',
+        modules: {
+            toolbar: {
+                container: '#editorAvisoToolbar',
+                handlers: {
+                    link: function(value) {
+                        if (value) {
+                            document.getElementById('inputLinkUrl').value = '';
+                            document.getElementById('inputLinkTexto').value = '';
+                            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalLinkAviso')).show();
+                        } else {
+                            this.quill.format('link', false, Quill.sources.USER);
+                        }
+                    }
+                }
+            }
+        }
+    });
+    quill.root.innerHTML = document.getElementById('inputAvisoMensagem').value || '';
+
+    document.getElementById('btnLinkInserir').addEventListener('click', function() {
+        var href = (document.getElementById('inputLinkUrl').value || '').trim();
+        if (!href) {
+            document.getElementById('inputLinkUrl').focus();
+            return;
+        }
+        if (!href.startsWith('http://') && !href.startsWith('https://') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+            href = 'https://' + href;
+        }
+        var texto = (document.getElementById('inputLinkTexto').value || '').trim();
+        var range = quill.getSelection(true);
+        var idx = range ? range.index : quill.getLength();
+        var len = range ? range.length : 0;
+        if (len && !texto) {
+            quill.formatText(idx, len, 'link', href, Quill.sources.USER);
+        } else {
+            var txt = texto || href;
+            quill.insertText(idx, txt, 'link', href, Quill.sources.USER);
+            quill.setSelection(idx + txt.length);
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalLinkAviso')).hide();
+    });
+
+    document.getElementById('btnAvisoWa').addEventListener('click', function() {
+        document.getElementById('inputWaTelefone').value = '';
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalWaAviso')).show();
+        setTimeout(function() { document.getElementById('inputWaTelefone').focus(); }, 300);
+    });
+
+    function mascaraFone(el) {
+        var v = el.value.replace(/\D/g, '').slice(0, 11);
+        if (v.length <= 2) {
+            el.value = v ? '(' + v : '';
+        } else if (v.length <= 7) {
+            el.value = '(' + v.slice(0,2) + ') ' + v.slice(2);
+        } else {
+            el.value = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+        }
+    }
+    document.getElementById('inputWaTelefone').addEventListener('input', function() {
+        mascaraFone(this);
+    });
+
+    document.getElementById('btnWaInserir').addEventListener('click', function() {
+        var tel = (document.getElementById('inputWaTelefone').value || '').trim();
+        if (!tel) {
+            document.getElementById('inputWaTelefone').focus();
+            return;
+        }
+        var d = tel.replace(/\D/g, '').slice(0, 11);
+        if (d.length < 10) {
+            alert('Informe pelo menos 10 dígitos (DDD + número).');
+            return;
+        }
+        var url = 'https://wa.me/55' + d;
+        var texto = d.length === 11 ? '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7) : d.length === 10 ? '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6) : d;
+        var range = quill.getSelection(true);
+        if (range && range.length) {
+            quill.formatText(range.index, range.length, 'link', url, Quill.sources.USER);
+        } else {
+            var idx = range ? range.index : quill.getLength();
+            quill.insertText(idx, texto, 'link', url, Quill.sources.USER);
+            quill.setSelection(idx + texto.length);
+        }
+        bootstrap.Modal.getInstance(document.getElementById('modalWaAviso')).hide();
+    });
+
+    document.getElementById('modalLinkAviso').addEventListener('shown.bs.modal', function() {
+        document.getElementById('inputLinkUrl').focus();
+    });
+    document.getElementById('inputLinkUrl').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnLinkInserir').click(); }
+    });
+    document.getElementById('inputWaTelefone').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btnWaInserir').click(); }
+    });
+
+    function addTargetBlank(html) {
+        return html.replace(/<a\s+(?![^>]*target=)([^>]*)href=/gi, '<a $1target="_blank" rel="noopener noreferrer" href=');
+    }
+    quill.on('text-change', function() {
+        document.getElementById('inputAvisoMensagem').value = addTargetBlank(quill.root.innerHTML);
+    });
+    document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('inputAvisoMensagem').value = addTargetBlank(quill.root.innerHTML);
+    });
+})();
+</script>
+{% endblock %}

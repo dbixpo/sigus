@@ -10,9 +10,9 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-door-open"></i> Tipos de Sala</h1>
+    <h1><i class="fas fa-door-open"></i> Tipos de Sala</h1>
     <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
     </a>
 </div>
 
@@ -53,7 +53,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_tipo_sala', id=t.id) }}"
                                class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-pencil"></i>
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
                             <form method="POST"
                                   action="{{ url_for('configuracoes.alternar_status_tipo_sala', id=t.id) }}"
@@ -62,7 +62,7 @@
                                 <button type="submit"
                                         class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
                                         title="{{ 'Desativar' if t.ativo else 'Ativar' }}">
-                                    <i class="bi bi-{{ 'toggle-on' if t.ativo else 'toggle-off' }}"></i>
+                                    <i class="{{ 'fas fa-toggle-on' if t.ativo else 'fas fa-toggle-off' }}"></i>
                                 </button>
                             </form>
                         </td>
@@ -73,7 +73,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-door-open"></i>
+            <i class="fas fa-door-open"></i>
             <h6>Nenhum tipo de sala cadastrado</h6>
             <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary mt-2">
                 Cadastrar primeiro tipo

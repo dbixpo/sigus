@@ -10,33 +10,33 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-person-plus"></i> {{ 'Editar — ' + usuario.nome if usuario else 'Novo Usuário' }}</h1>
+    <h1><i class="fas fa-user-plus"></i> {{ 'Editar — ' + usuario.nome if usuario else 'Novo Usuário' }}</h1>
 </div>
 
-<form method="POST" id="formUsuario" novalidate>
+<form method="POST" id="formUsuario" novalidate {% if usuario %}action="{{ url_for('usuarios.editar', id=usuario.id) }}"{% else %}action="{{ url_for('usuarios.novo') }}"{% endif %}>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <!-- ABAS -->
     <ul class="nav nav-tabs mb-3" id="tabsUsuario" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-acesso" type="button">
-                <i class="bi bi-shield-lock me-1"></i>Acesso
+                <i class="fas fa-shield-lock me-1"></i>Acesso
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-pessoal" type="button">
-                <i class="bi bi-person me-1"></i>Dados Pessoais
+                <i class="fas fa-user me-1"></i>Dados Pessoais
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-endereco" type="button">
-                <i class="bi bi-house me-1"></i>Endereço
+                <i class="fas fa-house me-1"></i>Endereço
             </button>
         </li>
         {% if usuario %}
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-matriculas" type="button">
-                <i class="bi bi-card-list me-1"></i>Matrículas
+                <i class="fas fa-card-list me-1"></i>Matrículas
                 <span class="badge bg-secondary ms-1" id="badgeMatriculas">{{ matriculas|length }}</span>
             </button>
         </li>
@@ -72,19 +72,23 @@
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
                     {% if not usuario %}
-                    <input type="email" name="email" class="form-control"
-                           placeholder="email@saude.sorocaba.sp.gov.br">
+                    <input type="text" name="email" class="form-control"
+                           placeholder="usuario ou usuario@sorocaba.sp.gov.br">
+                    {% elif is_admin %}
+                    <input type="text" name="email" class="form-control"
+                           value="{{ usuario.email }}"
+                           placeholder="usuario ou usuario@sorocaba.sp.gov.br">
                     {% else %}
                     <input type="email" class="form-control" value="{{ usuario.email }}" disabled>
                     {% endif %}
                 </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-semibold">
-                        <i class="bi bi-whatsapp text-success me-1"></i>WhatsApp
+                        <i class="fab fa-whatsapp text-success me-1"></i>WhatsApp
                         <span class="text-muted small fw-normal">(opcional)</span>
                     </label>
                     <div class="input-group">
-                        <span class="input-group-text text-success"><i class="bi bi-whatsapp"></i></span>
+                        <span class="input-group-text text-success"><i class="fab fa-whatsapp"></i></span>
                         <input type="tel" name="whatsapp" id="inputWhatsapp" class="form-control"
                                value="{{ usuario.whatsapp | br_fone if usuario and usuario.whatsapp else '' }}"
                                placeholder="(15) 99999-9999" maxlength="15">
@@ -93,7 +97,7 @@
                 <div class="col-12 col-md-6">
                     {% if not usuario %}
                     <div class="alert alert-info py-2 px-3 mb-0 small">
-                        <i class="bi bi-key me-1"></i>
+                        <i class="fas fa-key me-1"></i>
                         A senha inicial será o <strong>CPF do usuário</strong> (apenas os dígitos, sem pontuação).
                         O usuário poderá alterá-la no primeiro acesso pelo perfil.
                     </div>
@@ -134,7 +138,7 @@
                 </div>
                 <div class="col-12 col-md-4 d-flex align-items-end">
                     <button type="button" class="btn btn-outline-info w-100" id="btnLocalizarCNES">
-                        <i class="bi bi-search me-1"></i>Localizar no CNES
+                        <i class="fas fa-search me-1"></i>Localizar no CNES
                     </button>
                 </div>
 
@@ -329,14 +333,14 @@
         <!-- ─── ABA MATRÍCULAS ─────────────────────────────── -->
         <div class="tab-pane fade" id="tab-matriculas">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-card-list me-2"></i>Matrículas do Profissional</h6>
+                <h6 class="mb-0 fw-semibold"><i class="fas fa-card-list me-2"></i>Matrículas do Profissional</h6>
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaMatricula">
-                    <i class="bi bi-plus-circle me-1"></i>Adicionar Matrícula
+                    <i class="fas fa-plus-circle me-1"></i>Adicionar Matrícula
                 </button>
             </div>
 
             <div class="alert alert-info py-2 small mb-3">
-                <i class="bi bi-info-circle me-1"></i>
+                <i class="fas fa-info-circle me-1"></i>
                 Cada matrícula representa um vínculo empregatício distinto. Ao vincular o profissional
                 a uma unidade, você escolhe qual matrícula usar e confirma o CBO para aquele vínculo.
             </div>
@@ -360,7 +364,13 @@
                         <tbody>
                         {% for m in matriculas %}
                             <tr id="row-mat-{{ m.id }}" class="{{ '' if m.ativo else 'text-muted' }}">
-                                <td class="fw-semibold">{{ m.numero }}</td>
+                                <td>
+                                    {% if m.numero == 'Sem Matrícula' %}
+                                    <span class="fst-italic">{{ m.numero }}</span>
+                                    {% else %}
+                                    <span class="fw-semibold">{{ m.numero }}</span>
+                                    {% endif %}
+                                </td>
                                 <td class="small">{{ m.vinculo_label }}</td>
                                 <td class="small">{{ m.tipo_vinculo_label }}</td>
                                 <td class="small">{{ m.cbo_label }}</td>
@@ -375,8 +385,13 @@
                                 </td>
                                 <td class="text-end">
                                     <button type="button" class="btn btn-sm btn-outline-secondary"
-                                            onclick="editarMatricula({{ m.id }}, '{{ m.numero }}', '{{ m.vinculo or '' }}', '{{ m.tipo_vinculo or '' }}', '{{ m.cbo or '' }}', '{{ m.reg_conselho or '' }}', '{{ m.orgao_emissor or '' }}', {{ 'true' if m.ativo else 'false' }})">
-                                        <i class="bi bi-pencil"></i>
+                                            onclick="editarMatricula({{ m.id }}, '{{ m.numero | replace("'", "\\'") }}', '{{ m.vinculo or '' }}', '{{ m.tipo_vinculo or '' }}', '{{ m.cbo or '' }}', '{{ m.reg_conselho or '' }}', '{{ m.orgao_emissor or '' }}', {{ 'true' if m.ativo else 'false' }})">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="excluirMatricula({{ m.id }}, '{{ m.numero | replace("'", "\\'") }}')"
+                                            title="Excluir matrícula">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -386,7 +401,7 @@
                 </div>
                 {% else %}
                 <div class="empty-state py-4 text-center text-muted">
-                    <i class="bi bi-card-list fs-2 d-block mb-2"></i>
+                    <i class="fas fa-card-list fs-2 d-block mb-2"></i>
                     Nenhuma matrícula cadastrada ainda.
                 </div>
                 {% endif %}
@@ -409,10 +424,6 @@
                     <input type="hidden" id="matId" value="">
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Número da Matrícula <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="matNumero" required maxlength="50">
-                        </div>
-                        <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Vínculo</label>
                             <select class="form-select" id="matVinculo">
                                 <option value="">Selecione...</option>
@@ -429,6 +440,10 @@
                                 <option value="3">Contrato por Prazo Determinado</option>
                                 <option value="0">Sem Tipo</option>
                             </select>
+                        </div>
+                        <div class="col-12 col-md-6" id="blocoMatricula" style="display: none;">
+                            <label class="form-label fw-semibold">Número da Matrícula <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="matNumero" required maxlength="50">
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">CBO</label>
@@ -458,7 +473,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                     <button type="button" class="btn btn-primary" id="btnSalvarMatricula">
-                        <i class="bi bi-check-circle me-1"></i>Salvar
+                        <i class="fas fa-check-circle me-1"></i>Salvar
                     </button>
                 </div>
             </div>
@@ -469,7 +484,7 @@
     <hr>
     <div class="d-flex gap-2 mt-2 flex-wrap">
         <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check-circle me-1"></i>{{ 'Salvar Alterações' if usuario else 'Criar Usuário' }}
+            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar Alterações' if usuario else 'Criar Usuário' }}
         </button>
         <a href="{{ url_for('usuarios.listar') }}" class="btn btn-outline-secondary">Cancelar</a>
     </div>
@@ -581,16 +596,49 @@ document.getElementById('btnLocalizarCNES')?.addEventListener('click', function 
 // ─── Matrículas ────────────────────────────────────────
 const USUARIO_ID = {{ usuario.id }};
 
+function normalizarNumeroMatricula(v) {
+    return (v || '').toString().trim().toUpperCase().replace(/\s+/g, ' ');
+}
+
+function matriculaDuplicadaNoFront(numero, idAtual) {
+    const alvo = normalizarNumeroMatricula(numero);
+    if (!alvo) return false;
+    const linhas = document.querySelectorAll('[id^="row-mat-"]');
+    for (const row of linhas) {
+        const rowId = parseInt((row.id || '').replace('row-mat-', ''), 10);
+        if (idAtual && rowId === idAtual) continue;
+        const numeroCell = row.querySelector('td:first-child');
+        const numeroExistente = normalizarNumeroMatricula(numeroCell ? numeroCell.textContent : '');
+        if (numeroExistente === alvo) return true;
+    }
+    return false;
+}
+
 function editarMatricula(id, numero, vinculo, tipoVinculo, cbo, conselho, orgao, ativo) {
     document.getElementById('tituloModalMatricula').textContent = 'Editar Matrícula';
     document.getElementById('matId').value = id;
-    document.getElementById('matNumero').value = numero;
     document.getElementById('matVinculo').value = vinculo;
     document.getElementById('matTipoVinculo').value = tipoVinculo;
     document.getElementById('matConselho').value = conselho;
     document.getElementById('matOrgao').value = orgao;
     document.getElementById('matAtivo').checked = ativo;
     document.getElementById('blocoAtivoMatricula').style.removeProperty('display');
+
+    // Ajusta visibilidade do campo de matrícula baseado no tipo de vínculo
+    const blocoMatricula = document.getElementById('blocoMatricula');
+    const numeroInput = document.getElementById('matNumero');
+    const isContratoDeterminado = tipoVinculo === '3';
+    
+    if (isContratoDeterminado) {
+        blocoMatricula.style.display = 'none';
+        numeroInput.removeAttribute('required');
+        // Se o número for "Sem Matrícula", limpa para permitir salvar sem matrícula novamente
+        numeroInput.value = numero === 'Sem Matrícula' ? '' : numero || '';
+    } else {
+        blocoMatricula.style.display = '';
+        numeroInput.setAttribute('required', 'required');
+        numeroInput.value = numero || '';
+    }
 
     // Atualiza Tom Select do CBO
     const tsEl = document.getElementById('matCbo');
@@ -602,6 +650,29 @@ function editarMatricula(id, numero, vinculo, tipoVinculo, cbo, conselho, orgao,
 
     new bootstrap.Modal(document.getElementById('modalNovaMatricula')).show();
 }
+
+// Mostra/oculta campo de matrícula baseado no tipo de vínculo
+document.getElementById('matTipoVinculo')?.addEventListener('change', function () {
+    const blocoMatricula = document.getElementById('blocoMatricula');
+    const numeroInput = document.getElementById('matNumero');
+    const isContratoDeterminado = this.value === '3';
+    
+    if (isContratoDeterminado) {
+        // Oculta campo de matrícula para Contrato por Prazo Determinado
+        blocoMatricula.style.display = 'none';
+        numeroInput.removeAttribute('required');
+        numeroInput.value = ''; // Limpa o valor quando oculto
+    } else if (this.value) {
+        // Mostra campo de matrícula para outros tipos (só se tipo foi selecionado)
+        blocoMatricula.style.display = '';
+        numeroInput.setAttribute('required', 'required');
+    } else {
+        // Se nenhum tipo selecionado, oculta
+        blocoMatricula.style.display = 'none';
+        numeroInput.removeAttribute('required');
+        numeroInput.value = '';
+    }
+});
 
 document.getElementById('modalNovaMatricula')?.addEventListener('hidden.bs.modal', function () {
     document.getElementById('tituloModalMatricula').textContent = 'Nova Matrícula';
@@ -615,18 +686,49 @@ document.getElementById('modalNovaMatricula')?.addEventListener('hidden.bs.modal
     document.getElementById('blocoAtivoMatricula').style.setProperty('display', 'none', 'important');
     const tsEl = document.getElementById('matCbo');
     if (tsEl && tsEl.tomselect) tsEl.tomselect.setValue('');
+    
+    // Oculta campo de matrícula ao fechar modal
+    const blocoMatricula = document.getElementById('blocoMatricula');
+    const numeroInput = document.getElementById('matNumero');
+    blocoMatricula.style.display = 'none';
+    numeroInput.removeAttribute('required');
+    numeroInput.value = '';
 });
 
-document.getElementById('btnSalvarMatricula')?.addEventListener('click', async function () {
+document.getElementById('btnSalvarMatricula')?.addEventListener('click', async function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
     const id = document.getElementById('matId').value;
     const numero = document.getElementById('matNumero').value.trim();
-    if (!numero) { alert('Informe o número da matrícula.'); return; }
+    const tipoVinculo = document.getElementById('matTipoVinculo').value;
+    
+    // Validação: tipo de vínculo é obrigatório
+    if (!tipoVinculo) {
+        alert('Selecione o tipo de vínculo.');
+        return;
+    }
+    
+    // Matrícula é opcional apenas para "Contrato por Prazo Determinado" (tipo_vinculo = '3')
+    // Se o campo está visível, deve ter valor
+    const blocoMatricula = document.getElementById('blocoMatricula');
+    if (blocoMatricula.style.display !== 'none' && !numero) {
+        alert('Informe o número da matrícula.');
+        return;
+    }
+
+    const numeroParaComparar = (tipoVinculo === '3' && !numero) ? 'Sem Matrícula' : numero;
+    const idAtual = id ? parseInt(id, 10) : null;
+    if (matriculaDuplicadaNoFront(numeroParaComparar, idAtual)) {
+        alert('Esta matrícula já está cadastrada para este usuário.');
+        return;
+    }
 
     const tsEl = document.getElementById('matCbo');
     const cbo = tsEl && tsEl.tomselect ? tsEl.tomselect.getValue() : tsEl.value;
 
     const payload = {
-        numero,
+        numero: numero || null,  // Envia null se vazio para tipo_vinculo '3'
         vinculo:      document.getElementById('matVinculo').value,
         tipo_vinculo: document.getElementById('matTipoVinculo').value,
         cbo,
@@ -635,24 +737,67 @@ document.getElementById('btnSalvarMatricula')?.addEventListener('click', async f
         ativo:        document.getElementById('matAtivo').checked,
     };
 
+    const baseUrl = window.SIGUS_BASE_URL || '';
     const url = id
-        ? `/usuarios/${USUARIO_ID}/matriculas/${id}`
-        : `/usuarios/${USUARIO_ID}/matriculas`;
+        ? `${baseUrl}/usuarios/${USUARIO_ID}/matriculas/${id}`
+        : `${baseUrl}/usuarios/${USUARIO_ID}/matriculas`;
     const method = id ? 'PUT' : 'POST';
 
-    const resp = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value },
-        body: JSON.stringify(payload),
-    });
-    const data = await resp.json();
-    if (data.ok) {
-        bootstrap.Modal.getInstance(document.getElementById('modalNovaMatricula')).hide();
-        location.reload();
-    } else {
-        alert(data.erro || 'Erro ao salvar matrícula.');
+    try {
+        const resp = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrf_token]').value },
+            body: JSON.stringify(payload),
+        });
+        
+        if (!resp.ok) {
+            const errorText = await resp.text();
+            console.error('Erro HTTP:', resp.status, errorText);
+            throw new Error(`Erro HTTP ${resp.status}: ${errorText.substring(0, 200)}`);
+        }
+        
+        const data = await resp.json();
+        if (data.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('modalNovaMatricula')).hide();
+            const baseUrl = window.SIGUS_BASE_URL || '';
+            // Redireciona para a tela de edição do usuário atual
+            {% if usuario %}
+            window.location.href = baseUrl + '/usuarios/{{ usuario.id }}/editar';
+            {% else %}
+            window.location.href = baseUrl + '/usuarios/';
+            {% endif %}
+        } else {
+            alert(data.erro || 'Erro ao salvar matrícula.');
+        }
+    } catch (error) {
+        console.error('Erro ao salvar matrícula:', error);
+        alert('Erro ao salvar matrícula: ' + (error.message || 'Erro desconhecido. Verifique o console.'));
     }
 });
+
+async function excluirMatricula(id, numero) {
+    if (!id) return;
+    if (!confirm(`Excluir a matrícula "${numero}"? Esta ação não pode ser desfeita.`)) return;
+
+    const baseUrl = window.SIGUS_BASE_URL || '';
+    const url = `${baseUrl}/usuarios/${USUARIO_ID}/matriculas/${id}`;
+
+    try {
+        const resp = await fetch(url, {
+            method: 'DELETE',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrf_token]').value },
+        });
+        const data = await resp.json();
+        if (resp.ok && data.ok) {
+            window.location.reload();
+        } else {
+            alert(data.erro || 'Erro ao excluir matrícula.');
+        }
+    } catch (error) {
+        console.error('Erro ao excluir matrícula:', error);
+        alert('Erro ao excluir matrícula.');
+    }
+}
 {% endif %}
 </script>
 {% endblock %}

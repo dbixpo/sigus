@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% set form_route = form_route|default(nome_rota + '_form') %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-list-ul"></i> {{ titulo }}</h1>
+    <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="listagem-cards" id="cardsCrud">
+        {% for item in itens %}
+        <div class="listagem-card">
+            <div class="card-titulo">{{ getattr(item, colunas[0][0], '') or '—' }}</div>
+            {% for attr, label in colunas[1:] %}
+            <div class="card-meta"><span class="text-muted">{{ label }}:</span> {{ getattr(item, attr, '') or '—' }}</div>
+            {% endfor %}
+            <div class="card-rodape">
+                <span>{% if item.ativo %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}</span>
+                <a href="{{ url_for('configuracoes.' + form_route, id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    {% for attr, label in colunas %}
+                    <th>{{ label }}</th>
+                    {% endfor %}
+                    <th>Ativo</th>
+                    <th style="width:120px"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    {% for attr, label in colunas %}
+                    <td>{{ getattr(item, attr, '') or '—' }}</td>
+                    {% endfor %}
+                    <td>
+                        {% if item.ativo %}
+                        <span class="badge bg-success">Sim</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('configuracoes.' + form_route, id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhum registro cadastrado.</p>
+        <a href="{{ url_for('configuracoes.' + form_route) }}" class="btn btn-samu-primary btn-sm mt-2">
+            <i class="bi bi-plus-circle me-1"></i>Cadastrar o primeiro
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard
+    </a>
+</div>
+{% endblock %}

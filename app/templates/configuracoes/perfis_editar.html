@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-pencil-square"></i> Editar permissões — {{ perfil_label }}</h1>
+    <h1><i class="fas fa-pen-to-square"></i> Editar permissões — {{ perfil_label }}</h1>
     <p class="text-muted mb-0">Defina as permissões de Ver, Editar e Adicionar para cada seção do sistema.</p>
 </div>
 
@@ -33,18 +33,27 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for secao_key, secao_label, icon in secoes %}
+                        {% for secao_key, secao_label, icon, secao_pai in secoes %}
                         {% set p = perm_map.get(secao_key) %}
+                        {% if secao_pai %}
+                        <tr class="table-light">
+                            <td style="padding-left: 2.5rem;">
+                                <i class="fas fa-{{ icon }} text-muted me-2"></i>
+                                <span>{{ secao_label }}</span>
+                            </td>
+                        {% else %}
                         <tr>
                             <td>
-                                <i class="bi bi-{{ icon }} text-muted me-2"></i>
+                                <i class="fas fa-{{ icon }} text-muted me-2"></i>
                                 <strong>{{ secao_label }}</strong>
                             </td>
+                        {% endif %}
                             <td class="text-center">
                                 <div class="form-check form-switch d-inline-block">
                                     <input class="form-check-input" type="checkbox" role="switch"
                                            name="{{ secao_key }}_ver" value="1"
                                            {% if p and p.ver %}checked{% endif %}
+                                           {% if secao_pai %}data-pai="{{ secao_pai }}"{% endif %}
                                            id="chk_{{ secao_key }}_ver">
                                     <label class="form-check-label" for="chk_{{ secao_key }}_ver">
                                         <span class="visually-hidden">Ver {{ secao_label }}</span>
@@ -56,6 +65,7 @@
                                     <input class="form-check-input" type="checkbox" role="switch"
                                            name="{{ secao_key }}_editar" value="1"
                                            {% if p and p.editar %}checked{% endif %}
+                                           {% if secao_pai %}data-pai="{{ secao_pai }}"{% endif %}
                                            id="chk_{{ secao_key }}_editar">
                                     <label class="form-check-label" for="chk_{{ secao_key }}_editar">
                                         <span class="visually-hidden">Editar {{ secao_label }}</span>
@@ -67,6 +77,7 @@
                                     <input class="form-check-input" type="checkbox" role="switch"
                                            name="{{ secao_key }}_adicionar" value="1"
                                            {% if p and p.adicionar %}checked{% endif %}
+                                           {% if secao_pai %}data-pai="{{ secao_pai }}"{% endif %}
                                            id="chk_{{ secao_key }}_adicionar">
                                     <label class="form-check-label" for="chk_{{ secao_key }}_adicionar">
                                         <span class="visually-hidden">Adicionar {{ secao_label }}</span>
@@ -82,9 +93,41 @@
         <div class="card-footer">
             <a href="{{ url_for('configuracoes.perfis') }}" class="btn btn-outline-secondary">Cancelar</a>
             <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check-lg me-1"></i>Salvar permissões
+                <i class="fas fa-check-lg me-1"></i>Salvar permissões
             </button>
         </div>
     </div>
 </form>
+
+<script>
+// Desabilita sub-itens quando seção pai não tem "ver"
+document.addEventListener('DOMContentLoaded', function() {
+    const secoesPai = ['PATRIMÔNIO', 'OPERAÇÕES', 'GESTÃO', 'OUTROS', 'RECURSOS_HUMANOS', 'CONFIGURAÇÕES'];
+    
+    function toggleSubItens(paiVer, prefixo) {
+        const subItens = document.querySelectorAll(`[data-pai="${prefixo}"]`);
+        subItens.forEach(input => {
+            const row = input.closest('tr');
+            if (paiVer && paiVer.checked) {
+                input.disabled = false;
+                row.style.opacity = '1';
+            } else {
+                input.disabled = true;
+                input.checked = false;
+                row.style.opacity = '0.5';
+            }
+        });
+    }
+    
+    secoesPai.forEach(prefixo => {
+        const paiVer = document.getElementById(`chk_${prefixo}_ver`);
+        if (paiVer) {
+            toggleSubItens(paiVer, prefixo);
+            paiVer.addEventListener('change', function() {
+                toggleSubItens(paiVer, prefixo);
+            });
+        }
+    });
+});
+</script>
 {% endblock %}

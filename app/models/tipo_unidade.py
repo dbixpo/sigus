@@ -6,7 +6,7 @@ class TipoUnidade(db.Model):
     __tablename__ = 'tipos_unidade'
 
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(60), nullable=False, unique=True)
+    nome = db.Column(db.String(200), nullable=False, unique=True)
     sigla = db.Column(db.String(20), nullable=False, unique=True)
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)

@@ -4,6 +4,26 @@ _TZ_OFFSET = timedelta(hours=-3)  # UTC-3 (horário de Brasília)
 from urllib.parse import quote
 
 
+def agora_local():
+    """
+    Retorna a data/hora atual ajustada para o horário local (Brasília, UTC-3).
+    Esta função garante que todas as telas que registram data/hora usem a mesma hora
+    que está sendo exibida no relógio da navbar.
+    
+    O servidor está em UTC-8 (PST), então adicionamos 5 horas para converter para UTC-3 (Brasília).
+    Quando aplicamos -5h no filtro br_datetime para exibição, obtemos a hora correta.
+    """
+    return datetime.now() + timedelta(hours=5)
+
+
+def agora_local_callable():
+    """
+    Retorna um callable que pode ser usado como default em modelos SQLAlchemy.
+    Usa a mesma lógica de agora_local() para garantir consistência.
+    """
+    return agora_local()
+
+
 def _montar_corpo_email(usuario, unidade):
     """Monta o corpo do e-mail de solicitação de vínculo CNES."""
     linhas = [
@@ -179,7 +199,17 @@ def registrar_filtros(app):
     def br_datetime(value):
         if value is None:
             return '—'
-        return (value + _TZ_OFFSET).strftime('%d/%m/%Y %H:%M')
+        # Se for timezone-aware, remove timezone info
+        if hasattr(value, 'tzinfo') and value.tzinfo:
+            dt = value.replace(tzinfo=None)
+        else:
+            dt = value
+        
+        # Aplica offset de -5 horas para converter para horário de Brasília (UTC-3)
+        # Servidor está em UTC-8 (PST), então salvamos com +5h e aplicamos -5h na exibição
+        # Isso converte de UTC-8 (servidor) para UTC-3 (Brasília)
+        dt_brasilia = dt - timedelta(hours=5)
+        return dt_brasilia.strftime('%d/%m/%Y %H:%M')
 
     _MESES = ('janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
               'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro')
@@ -202,6 +232,16 @@ def registrar_filtros(app):
             return f'({digits[:2]}) {digits[2:7]}-{digits[7:]}'
         if len(digits) == 10:   # fixo com DDD: 10 dígitos
             return f'({digits[:2]}) {digits[2:6]}-{digits[6:]}'
+        return value  # retorna original se não bater o padrão
+
+    @app.template_filter('br_cnpj')
+    def br_cnpj(value):
+        """Formata CNPJ para exibição: 00.000.000/0001-00."""
+        if not value:
+            return '—'
+        digits = ''.join(c for c in str(value) if c.isdigit())
+        if len(digits) == 14:
+            return f'{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}'
         return value  # retorna original se não bater o padrão
 
     @app.template_filter('br_currency')

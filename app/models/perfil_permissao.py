@@ -5,56 +5,113 @@ from app import db
 
 
 # Seções do sistema (ordem para exibição)
+# Estrutura: (chave, label, ícone, seção_pai ou None)
 SECOES = [
-    ('Unidades',       'Unidades',        'hospital'),
-    ('Salas',          'Salas',           'door-open'),
-    ('Equipamentos',   'Equipamentos',    'pc-display'),
-    ('Chamados',       'Chamados',        'wrench-adjustable'),
-    ('Contratos',      'Contratos',       'file-earmark-text'),
-    ('Usuários',       'Usuários',        'people'),
-    ('Relatórios',     'Relatórios',      'bar-chart-line'),
-    ('Configurações',  'Configurações',   'gear'),
-    ('Transferências', 'Transferências',  'arrow-left-right'),
-    ('Planejamentos',  'Planejamentos',   'kanban'),
-    ('Auditoria',      'Auditoria',       'journal-text'),
+    # PATRIMÔNIO (seção pai)
+    ('PATRIMÔNIO',     'PATRIMÔNIO',      'box-seam', None),
+    ('PAT_Predios',    'Prédios',         'buildings', 'PATRIMÔNIO'),
+    ('Unidades',       'Unidades',        'hospital', 'PATRIMÔNIO'),
+    ('Salas',          'Salas',           'door-open', 'PATRIMÔNIO'),
+    ('Equipamentos',   'Equipamentos',    'pc-display', 'PATRIMÔNIO'),
+    # OPERAÇÕES (seção pai)
+    ('OPERAÇÕES',      'OPERAÇÕES',       'briefcase', None),
+    ('OP_Chamados',    'Chamados',        'wrench-adjustable', 'OPERAÇÕES'),
+    ('OP_GestaoChamados', 'Gestão de Chamados', 'kanban', 'OPERAÇÕES'),
+    ('OP_Transferencias', 'Transferências', 'arrow-left-right', 'OPERAÇÕES'),
+    ('OP_Contratos',   'Contratos',       'file-earmark-text', 'OPERAÇÕES'),
+    ('OP_ControleEmpenho', 'Controle de Empenho', 'currency-dollar', 'OPERAÇÕES'),
+    ('OP_Empresas',    'Empresas',        'building', 'OPERAÇÕES'),
+    # GESTÃO (seção pai)
+    ('GESTÃO',         'GESTÃO',          'clipboard-check', None),
+    ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
+    ('Relatórios',     'Relatórios',      'bar-chart-line', 'GESTÃO'),
+    # OUTROS (seção pai)
+    ('OUTROS',         'OUTROS',          'three-dots-vertical', None),
+    ('OUT_LinksUteis', 'Links Úteis',    'link-45deg', 'OUTROS'),
+    ('OUT_CadastroPublico', 'Cadastro Público', 'person-plus', 'OUTROS'),
+    # RECURSOS HUMANOS (seção pai)
+    ('RECURSOS_HUMANOS', 'RECURSOS HUMANOS', 'people-fill', None),
+    ('RH_FaltasAbonadas', 'Faltas Abonadas', 'calendar-check', 'RECURSOS_HUMANOS'),
+    # CONFIGURAÇÕES (seção pai)
+    ('CONFIGURAÇÕES',  'CONFIGURAÇÕES',  'gear', None),
+    ('CONF_Sistema',   'Configurações do Sistema', 'gear-fill', 'CONFIGURAÇÕES'),
+    ('Usuários',       'Usuários',        'people', 'CONFIGURAÇÕES'),
+    ('Auditoria',      'Auditoria',       'journal-text', 'CONFIGURAÇÕES'),
 ]
 
 # Mapeamento: acao (pode) -> (secao, tipo: ver|editar|adicionar)
 ACAO_PARA_SECAO_TIPO = {
-    # Unidades
+    # PATRIMÔNIO - Prédios
+    'ver_predios':         ('PAT_Predios', 'ver'),
+    'cadastrar_predio':    ('PAT_Predios', 'adicionar'),
+    'editar_predio':       ('PAT_Predios', 'editar'),
+    # PATRIMÔNIO - Unidades
     'ver_todas_unidades':  ('Unidades', 'ver'),
     'cadastrar_unidade':   ('Unidades', 'adicionar'),
     'editar_unidade':      ('Unidades', 'editar'),
     'excluir_unidade':     ('Unidades', 'editar'),
-    # Salas
+    # PATRIMÔNIO - Salas
     'cadastrar_sala':      ('Salas', 'adicionar'),
     'editar_sala':         ('Salas', 'editar'),
-    # Equipamentos
+    'ver_salas':           ('Salas', 'ver'),
+    # PATRIMÔNIO - Equipamentos
     'cadastrar_equipamento':   ('Equipamentos', 'adicionar'),
     'editar_equipamento':      ('Equipamentos', 'editar'),
     'dar_baixa_equipamento':   ('Equipamentos', 'editar'),
-    'gerenciar_tipos_equipamento': ('Configurações', 'editar'),
-    # Chamados
-    'abrir_chamado':       ('Chamados', 'adicionar'),
-    'editar_chamado':      ('Chamados', 'editar'),
-    'cancelar_chamado':    ('Chamados', 'editar'),
-    'fechar_chamado':      ('Chamados', 'editar'),
-    'ver_chamados_todos':  ('Chamados', 'ver'),
-    # Contratos
-    'cadastrar_contrato':  ('Contratos', 'adicionar'),
-    'editar_contrato':     ('Contratos', 'editar'),
-    # Usuários
+    'ver_equipamentos':        ('Equipamentos', 'ver'),
+    # OPERAÇÕES - Chamados
+    'abrir_chamado':       ('OP_Chamados', 'adicionar'),
+    'editar_chamado':      ('OP_Chamados', 'editar'),
+    'cancelar_chamado':    ('OP_Chamados', 'editar'),
+    'fechar_chamado':      ('OP_Chamados', 'editar'),
+    'ver_chamados_todos':  ('OP_Chamados', 'ver'),
+    # OPERAÇÕES - Gestão de Chamados
+    'gerir_chamados_setor': ('OP_GestaoChamados', 'ver'),
+    'gerir_chamados_editar': ('OP_GestaoChamados', 'editar'),
+    # OPERAÇÕES - Transferências
+    'solicitar_transferencia': ('OP_Transferencias', 'adicionar'),
+    'aceitar_transferencia':   ('OP_Transferencias', 'editar'),
+    'ver_transferencias':      ('OP_Transferencias', 'ver'),
+    # OPERAÇÕES - Contratos
+    'cadastrar_contrato':  ('OP_Contratos', 'adicionar'),
+    'editar_contrato':     ('OP_Contratos', 'editar'),
+    'ver_contratos':       ('OP_Contratos', 'ver'),
+    # OPERAÇÕES - Controle de Empenho
+    'ver_controle_empenho': ('OP_ControleEmpenho', 'ver'),
+    'editar_controle_empenho': ('OP_ControleEmpenho', 'editar'),
+    'adicionar_controle_empenho': ('OP_ControleEmpenho', 'adicionar'),
+    # OPERAÇÕES - Empresas
+    'ver_empresas':        ('OP_Empresas', 'ver'),
+    'editar_empresas':     ('OP_Empresas', 'editar'),
+    'adicionar_empresas':  ('OP_Empresas', 'adicionar'),
+    # GESTÃO - Planejamentos
+    'criar_plano':         ('Planejamentos', 'adicionar'),
+    'editar_plano_gut':    ('Planejamentos', 'editar'),
+    'criar_acao':          ('Planejamentos', 'adicionar'),
+    'alterar_status_acao': ('Planejamentos', 'editar'),
+    'ver_planejamentos':  ('Planejamentos', 'ver'),
+    # GESTÃO - Relatórios
+    'emitir_relatorios':   ('Relatórios', 'ver'),
+    'ver_dashboard_geral': ('Relatórios', 'ver'),
+    # OUTROS - Links Úteis
+    'ver_links_uteis':     ('OUT_LinksUteis', 'ver'),
+    'editar_links_uteis':  ('OUT_LinksUteis', 'editar'),
+    'adicionar_links_uteis': ('OUT_LinksUteis', 'adicionar'),
+    # RECURSOS HUMANOS - Faltas Abonadas
+    'ver_faltas_abonadas': ('RH_FaltasAbonadas', 'ver'),
+    'editar_faltas_abonadas': ('RH_FaltasAbonadas', 'editar'),
+    'adicionar_faltas_abonadas': ('RH_FaltasAbonadas', 'adicionar'),
+    # CONFIGURAÇÕES - Sistema
+    'gerenciar_tipos_equipamento': ('CONF_Sistema', 'editar'),
+    'gerenciar_perfis':    ('CONF_Sistema', 'editar'),
+    'ver_configuracoes':   ('CONF_Sistema', 'ver'),
+    # CONFIGURAÇÕES - Usuários
     'gerenciar_usuarios':  ('Usuários', 'editar'),
     'cadastrar_usuario':   ('Usuários', 'adicionar'),
     'ver_usuarios_unidade': ('Usuários', 'ver'),
     'vincular_profissionais': ('Usuários', 'editar'),
-    # Relatórios
-    'emitir_relatorios':   ('Relatórios', 'ver'),
-    'ver_dashboard_geral': ('Relatórios', 'ver'),
-    # Transferências
-    'solicitar_transferencia': ('Transferências', 'adicionar'),
-    'aceitar_transferencia':   ('Transferências', 'editar'),
-    'ver_transferencias':      ('Transferências', 'ver'),
+    # CONFIGURAÇÕES - Auditoria
+    'ver_auditoria':       ('Auditoria', 'ver'),
     # Planejamentos
     'criar_plano':         ('Planejamentos', 'adicionar'),
     'editar_plano_gut':    ('Planejamentos', 'editar'),
@@ -64,6 +121,8 @@ ACAO_PARA_SECAO_TIPO = {
     'ver_auditoria':       ('Auditoria', 'ver'),
     # Gestão de perfis (especial — só admin via código)
     'gerenciar_perfis':    ('Configurações', 'editar'),
+    # OUTROS - Cadastro Público
+    'ver_cadastro_publico': ('OUT_CadastroPublico', 'ver'),
 }
 
 

@@ -4,15 +4,15 @@
 
 {% block content %}
 <div class="page-header">
-    <h1><i class="bi bi-balloon-heart-fill"></i> Aniversariantes do Mês</h1>
+    <h1><i class="fas fa-balloon-heart-fill"></i> Aniversariantes do Mês</h1>
     <div class="d-flex flex-wrap gap-2 align-items-center">
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
         {% set qs = request.query_string.decode() %}
         <div class="btn-group btn-group-sm">
             <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Exportar
+                <i class="fas fa-download me-1"></i>Exportar
             </button>
             <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_aniversariantes', formato='xlsx') }}?{{ qs }}">XLSX</a></li>
@@ -25,7 +25,7 @@
 
 {# ── Filtros ── #}
 <div class="filter-bar mb-2">
-    <form method="get" class="row g-2 align-items-end mb-2">
+    <form method="get" action="{{ url_for('relatorios.aniversariantes') }}" class="row g-2 align-items-end mb-2">
         <div class="col-md-2">
             <label class="form-label mb-1 small fw-semibold">Mês</label>
             <select name="mes" class="form-select form-select-sm" data-singleselect data-placeholder="Todos os meses">
@@ -39,8 +39,8 @@
             {{ filtro_multiselect('Unidade', 'unidade', unidades_opcoes, unidade_ids, 'Todas as Unidades') }}
         </div>
         <div class="col-auto d-flex gap-1 align-items-end">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel me-1"></i>Filtrar</button>
-            <a href="{{ url_for('relatorios.aniversariantes') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i></a>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-funnel me-1"></i>Filtrar</button>
+            <a href="{{ url_for('relatorios.aniversariantes') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times-circle"></i></a>
         </div>
     </form>
     <div class="row g-2">
@@ -62,7 +62,7 @@
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <span class="fw-semibold">
-            <i class="bi bi-calendar-heart me-1"></i>
+            <i class="fas fa-calendar-heart me-1"></i>
             {% if mes_sel == 0 %}Todos os aniversariantes{% else %}Aniversariantes de {{ meses[mes_sel] }}{% endif %}
         </span>
         <span class="badge bg-primary">{{ dados | length }} profissional{{ 'is' if dados | length != 1 else '' }}</span>
@@ -116,7 +116,7 @@
                             {% endif %}
                             <span>
                                 {% if aniv_hoje %}
-                                <i class="bi bi-balloon-heart-fill text-warning me-1"></i>
+                                <i class="fas fa-balloon-heart-fill text-warning me-1"></i>
                                 {% endif %}
                                 {{ r.nome }}
                             </span>
@@ -136,7 +136,7 @@
                         {% if r.wa %}
                         <a href="https://wa.me/{{ r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}"
                            target="_blank" class="text-decoration-none small" onclick="event.stopPropagation()">
-                            <i class="bi bi-whatsapp text-success me-1"></i>{{ r.wa | br_fone }}
+                            <i class="fab fa-whatsapp text-success me-1"></i>{{ r.wa | br_fone }}
                         </a>
                         {% else %}—{% endif %}
                     </td>
@@ -147,7 +147,7 @@
     </div>
     {% else %}
     <div class="card-body text-center text-muted py-5">
-        <i class="bi bi-calendar-x fs-1 opacity-25 d-block mb-2"></i>
+        <i class="fas fa-calendar-x fs-1 opacity-25 d-block mb-2"></i>
         Nenhum aniversariante
         {% if mes_sel %}em <strong>{{ meses[mes_sel] }}</strong>{% endif %}
         {% if unidade_ids %}nas unidades selecionadas{% endif %}.
@@ -171,18 +171,18 @@
                     </div>
                     <div id="anivAnivBadge" class="mb-1" style="display:none;">
                         <span class="badge bg-warning text-dark">
-                            <i class="bi bi-balloon-heart-fill me-1"></i>Aniversário hoje!
+                            <i class="fas fa-balloon-heart-fill me-1"></i>Aniversário hoje!
                         </span>
                     </div>
                     <h5 class="fw-bold mb-0" id="anivNome"></h5>
                     <div class="text-muted small mb-3" id="anivUnidade"></div>
                     <div class="d-flex flex-column gap-2 text-start" style="font-size:.85rem;">
-                        <div><i class="bi bi-calendar2-heart me-2 text-primary"></i><span id="anivData"></span></div>
-                        <div id="anivCboWrap"><i class="bi bi-briefcase me-2 text-secondary"></i><span id="anivCbo"></span></div>
-                        <div id="anivEmailWrap"><i class="bi bi-envelope me-2 text-secondary"></i>
+                        <div><i class="fas fa-calendar2-heart me-2 text-primary"></i><span id="anivData"></span></div>
+                        <div id="anivCboWrap"><i class="fas fa-briefcase me-2 text-secondary"></i><span id="anivCbo"></span></div>
+                        <div id="anivEmailWrap"><i class="fas fa-envelope me-2 text-secondary"></i>
                             <a id="anivEmail" href="#" class="text-decoration-none text-dark"></a>
                         </div>
-                        <div id="anivWaWrap"><i class="bi bi-whatsapp me-2 text-success"></i>
+                        <div id="anivWaWrap"><i class="fab fa-whatsapp me-2 text-success"></i>
                             <a id="anivWa" href="#" target="_blank" class="text-decoration-none text-dark"></a>
                         </div>
                     </div>

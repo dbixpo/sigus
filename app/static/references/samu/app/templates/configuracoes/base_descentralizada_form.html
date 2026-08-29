@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Base — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-building"></i> Base — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST" id="formBaseDescentralizada">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" value="{{ item.nome if item else '' }}" required>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Logradouro</label>
+                    <input type="text" name="logradouro" class="form-control" value="{{ (item.logradouro or '') if item else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Nº</label>
+                    <input type="text" name="numero" class="form-control" value="{{ (item.numero or '') if item else '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Complemento</label>
+                    <input type="text" name="complemento" class="form-control" value="{{ (item.complemento or '') if item else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Bairro</label>
+                    <input type="text" name="bairro" class="form-control" value="{{ (item.bairro or '') if item else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Cidade</label>
+                    <input type="text" name="cidade" class="form-control" value="{{ (item.cidade or '') if item else '' }}">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-semibold">UF</label>
+                    <select name="uf" class="form-select">
+                        <option value="">—</option>
+                        <option value="AC" {% if item and item.uf == 'AC' %}selected{% endif %}>AC</option>
+                        <option value="AL" {% if item and item.uf == 'AL' %}selected{% endif %}>AL</option>
+                        <option value="AP" {% if item and item.uf == 'AP' %}selected{% endif %}>AP</option>
+                        <option value="AM" {% if item and item.uf == 'AM' %}selected{% endif %}>AM</option>
+                        <option value="BA" {% if item and item.uf == 'BA' %}selected{% endif %}>BA</option>
+                        <option value="CE" {% if item and item.uf == 'CE' %}selected{% endif %}>CE</option>
+                        <option value="DF" {% if item and item.uf == 'DF' %}selected{% endif %}>DF</option>
+                        <option value="ES" {% if item and item.uf == 'ES' %}selected{% endif %}>ES</option>
+                        <option value="GO" {% if item and item.uf == 'GO' %}selected{% endif %}>GO</option>
+                        <option value="MA" {% if item and item.uf == 'MA' %}selected{% endif %}>MA</option>
+                        <option value="MT" {% if item and item.uf == 'MT' %}selected{% endif %}>MT</option>
+                        <option value="MS" {% if item and item.uf == 'MS' %}selected{% endif %}>MS</option>
+                        <option value="MG" {% if item and item.uf == 'MG' %}selected{% endif %}>MG</option>
+                        <option value="PA" {% if item and item.uf == 'PA' %}selected{% endif %}>PA</option>
+                        <option value="PB" {% if item and item.uf == 'PB' %}selected{% endif %}>PB</option>
+                        <option value="PR" {% if item and item.uf == 'PR' %}selected{% endif %}>PR</option>
+                        <option value="PE" {% if item and item.uf == 'PE' %}selected{% endif %}>PE</option>
+                        <option value="PI" {% if item and item.uf == 'PI' %}selected{% endif %}>PI</option>
+                        <option value="RJ" {% if item and item.uf == 'RJ' %}selected{% endif %}>RJ</option>
+                        <option value="RN" {% if item and item.uf == 'RN' %}selected{% endif %}>RN</option>
+                        <option value="RS" {% if item and item.uf == 'RS' %}selected{% endif %}>RS</option>
+                        <option value="RO" {% if item and item.uf == 'RO' %}selected{% endif %}>RO</option>
+                        <option value="RR" {% if item and item.uf == 'RR' %}selected{% endif %}>RR</option>
+                        <option value="SC" {% if item and item.uf == 'SC' %}selected{% endif %}>SC</option>
+                        <option value="SP" {% if item and item.uf == 'SP' %}selected{% endif %}>SP</option>
+                        <option value="SE" {% if item and item.uf == 'SE' %}selected{% endif %}>SE</option>
+                        <option value="TO" {% if item and item.uf == 'TO' %}selected{% endif %}>TO</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">CEP</label>
+                    <input type="text" name="cep" class="form-control" value="{{ (item.cep or '') if item else '' }}" maxlength="9">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Telefone</label>
+                    <input type="tel" name="telefone" id="inputTelefone" class="form-control"
+                           value="{{ item.telefone | br_fone if item and item.telefone else '' }}" placeholder="(15) 99999-9999" maxlength="15">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="{{ (item.email or '') if item else '' }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Link Google Maps</label>
+                    <input type="url" name="link_google_maps" class="form-control" value="{{ (item.link_google_maps or '') if item else '' }}" placeholder="https://maps.google.com/...">
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <a href="{{ url_for('configuracoes.bases_descentralizadas') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Máscara Telefone (fixo: (15) 3238-2771 | celular: (15) 99999-9999)
+(function() {
+    var inp = document.getElementById('inputTelefone');
+    if (!inp) return;
+    function mascarar(v) {
+        var d = v.replace(/\D/g, '').slice(0, 11);
+        if (d.length <= 2) return d.replace(/^(\d{0,2})/, '($1');
+        var isCell = d[2] === '9';
+        if (isCell) {
+            if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+            return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+        } else {
+            if (d.length <= 6) return d.replace(/^(\d{2})(\d{0,4})/, '($1) $2');
+            return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+        }
+    }
+    inp.addEventListener('input', function() { this.value = mascarar(this.value); });
+    document.getElementById('formBaseDescentralizada')?.addEventListener('submit', function() {
+        if (inp) inp.value = inp.value.replace(/\D/g, '');
+    }, true);
+})();
+</script>
+{% endblock %}

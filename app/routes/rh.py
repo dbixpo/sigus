@@ -19,6 +19,8 @@ def _checar_acesso(falta):
 @rh_bp.route('/faltas-abonadas')
 @login_required
 def faltas_abonadas():
+    if not current_user.pode('ver_faltas_abonadas'):
+        abort(403)
     ano       = request.args.get('ano', date.today().year, type=int)
     ver_hist  = request.args.get('historico', '0') == '1'
 

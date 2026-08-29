@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h1><i class="bi bi-calendar-event"></i> {{ titulo }}</h1>
+    <a href="{{ url_for('configuracoes.feriado_form') }}" class="btn btn-samu-primary">
+        <i class="bi bi-plus-circle me-1"></i>Novo
+    </a>
+</div>
+
+{% if itens %}
+<div class="filtros-mobile-wrap">
+    <button class="btn btn-outline-secondary btn-sm btn-filtros-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosFeriados" aria-expanded="false">
+        <i class="bi bi-funnel"></i> Filtros
+    </button>
+    <div class="collapse filtros-panel" id="filtrosFeriados">
+<div class="card shadow-sm mb-0">
+    <div class="card-body py-3">
+        <div class="row g-2 g-md-3 align-items-end filtros-listagem">
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Data</label>
+                <input type="text" class="form-control form-control-sm" id="filtroData" placeholder="DD/MM ou buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Dia da Semana</label>
+                <input type="text" class="form-control form-control-sm" id="filtroDiaSemana" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Evento</label>
+                <input type="text" class="form-control form-control-sm" id="filtroEvento" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Tipo de Folga</label>
+                <select class="form-select form-select-sm" id="filtroTipoFolga">
+                    <option value="">Todos</option>
+                    {% for k, v in tipos_folga.items() %}
+                    <option value="{{ k }}">{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Natureza</label>
+                <select class="form-select form-select-sm" id="filtroNatureza">
+                    <option value="">Todas</option>
+                    {% for k, v in naturezas.items() %}
+                    <option value="{{ k }}">{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Nº do Decreto</label>
+                <input type="text" class="form-control form-control-sm" id="filtroDecreto" placeholder="Buscar...">
+            </div>
+            <div class="col-12 col-sm-6 col-md">
+                <label class="form-label small mb-1">Ativo</label>
+                <select class="form-select form-select-sm" id="filtroAtivo">
+                    <option value="">Todos</option>
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+    {% if itens %}
+    <div class="listagem-cards" id="cardsFeriados">
+        {% for item in itens %}
+        <div class="listagem-card" data-data="{{ item.data_fmt | lower }}" data-dia-semana="{{ (item.dia_semana or '') | lower }}" data-evento="{{ (item.nome or '') | lower }}" data-tipo-folga="{{ item.tipo_folga or '' }}" data-natureza="{{ (item.natureza or item.emoji or '') | lower }}" data-decreto="{{ (item.numero_decreto or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+            <div class="card-titulo">{% if item.emoji %}{{ item.emoji }} {% endif %}{{ item.nome or '—' }}</div>
+            <div class="card-meta">{{ item.data_fmt }} · {{ item.dia_semana }}</div>
+            <div class="card-meta">{{ item.tipo_folga_label }}{% if item.tipo_folga == 'data_comemorativa' %} · {{ item.emoji or '—' }}{% else %} · {{ item.natureza_label }}{% endif %}</div>
+            <div class="card-rodape">
+                <span>{% if item.ativo %}<span class="badge bg-success">Ativo</span>{% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}</span>
+                <a href="{{ url_for('configuracoes.feriado_form', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="table-responsive listagem-table-wrap">
+        <table class="table table-hover mb-0 align-middle table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Data</th>
+                    <th>Dia da Semana</th>
+                    <th>Evento</th>
+                    <th>Tipo de Folga</th>
+                    <th>Natureza / Emoji</th>
+                    <th>Nº do Decreto</th>
+                    <th>Ativo</th>
+                    <th style="width:90px"></th>
+                </tr>
+            </thead>
+            <tbody id="tbodyFeriados">
+                {% for item in itens %}
+                <tr data-data="{{ item.data_fmt | lower }}" data-dia-semana="{{ (item.dia_semana or '') | lower }}" data-evento="{{ (item.nome or '') | lower }}" data-tipo-folga="{{ item.tipo_folga or '' }}" data-natureza="{{ (item.natureza or item.emoji or '') | lower }}" data-decreto="{{ (item.numero_decreto or '') | lower }}" data-ativo="{{ '1' if item.ativo else '0' }}">
+                    <td>{{ item.data_fmt }}</td>
+                    <td>{{ item.dia_semana }}</td>
+                    <td>{% if item.emoji %}{{ item.emoji }} {% endif %}{{ item.nome or '—' }}</td>
+                    <td>{{ item.tipo_folga_label }}</td>
+                    <td>{% if item.tipo_folga == 'data_comemorativa' %}{{ item.emoji or '—' }}{% else %}{{ item.natureza_label }}{% endif %}</td>
+                    <td>
+                        {% if item.link_decreto and item.numero_decreto %}
+                        <a href="{{ item.link_decreto }}" target="_blank" rel="noopener noreferrer" class="link-discreto" title="Abrir link do decreto">{{ item.numero_decreto }}</a>
+                        {% elif item.numero_decreto %}{{ item.numero_decreto }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if item.ativo %}<span class="badge bg-success">Sim</span>
+                        {% else %}<span class="badge bg-secondary">Não</span>{% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuracoes.feriado_form', id=item.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="bi bi-calendar-event fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhum feriado cadastrado.</p>
+        <a href="{{ url_for('configuracoes.feriado_form') }}" class="btn btn-samu-primary btn-sm mt-2">
+            <i class="bi bi-plus-circle me-1"></i>Cadastrar o primeiro
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-2">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-link text-muted">
+        <i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if itens %}
+<script>
+(function() {
+    var tbody = document.getElementById('tbodyFeriados');
+    function aplicarFiltros() {
+        if (!tbody) return;
+        var data = (document.getElementById('filtroData')?.value || '').toLowerCase().trim();
+        var diaSemana = (document.getElementById('filtroDiaSemana')?.value || '').toLowerCase().trim();
+        var evento = (document.getElementById('filtroEvento')?.value || '').toLowerCase().trim();
+        var tipoFolga = document.getElementById('filtroTipoFolga')?.value || '';
+        var natureza = document.getElementById('filtroNatureza')?.value || '';
+        var decreto = (document.getElementById('filtroDecreto')?.value || '').toLowerCase().trim();
+        var ativo = document.getElementById('filtroAtivo')?.value || '';
+        function filtragem(el) {
+            var ok = true;
+            if (data && (el.getAttribute('data-data') || '').indexOf(data) === -1) ok = false;
+            if (diaSemana && (el.getAttribute('data-dia-semana') || '').indexOf(diaSemana) === -1) ok = false;
+            if (evento && (el.getAttribute('data-evento') || '').indexOf(evento) === -1) ok = false;
+            if (tipoFolga && el.getAttribute('data-tipo-folga') !== tipoFolga) ok = false;
+            if (natureza && el.getAttribute('data-natureza') !== natureza) ok = false;
+            if (decreto && (el.getAttribute('data-decreto') || '').indexOf(decreto) === -1) ok = false;
+            if (ativo && el.getAttribute('data-ativo') !== ativo) ok = false;
+            el.style.display = ok ? '' : 'none';
+        }
+        tbody.querySelectorAll('tr').forEach(filtragem);
+        var cards = document.getElementById('cardsFeriados');
+        if (cards) cards.querySelectorAll('.listagem-card').forEach(filtragem);
+    }
+    ['filtroData', 'filtroDiaSemana', 'filtroEvento', 'filtroDecreto'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', aplicarFiltros);
+    });
+    ['filtroTipoFolga', 'filtroNatureza', 'filtroAtivo'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('change', aplicarFiltros);
+    });
+    aplicarFiltros();
+})();
+</script>
+{% endif %}
+{% endblock %}

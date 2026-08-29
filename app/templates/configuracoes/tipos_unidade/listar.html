@@ -10,9 +10,9 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-hospital"></i> Tipos de Unidade</h1>
+    <h1><i class="fas fa-hospital"></i> Tipos de Unidade</h1>
     <a href="{{ url_for('configuracoes.novo_tipo_unidade') }}" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i>Novo Tipo
+        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
     </a>
 </div>
 
@@ -52,7 +52,7 @@
                         <td class="text-end">
                             <a href="{{ url_for('configuracoes.editar_tipo_unidade', id=t.id) }}"
                                class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-pencil me-1"></i>Editar
+                                <i class="fas fa-pencil-alt me-1"></i>Editar
                             </a>
                             <form method="POST"
                                   action="{{ url_for('configuracoes.alternar_status_tipo_unidade', id=t.id) }}"
@@ -61,7 +61,7 @@
                                 <button type="submit"
                                         class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
                                         data-confirm="{{ 'Desativar' if t.ativo else 'Ativar' }} o tipo {{ t.sigla }}?">
-                                    <i class="bi bi-{{ 'pause-circle' if t.ativo else 'play-circle' }} me-1"></i>
+                                    <i class="{{ 'fas fa-pause-circle' if t.ativo else 'fas fa-play-circle' }} me-1"></i>
                                     {{ 'Desativar' if t.ativo else 'Ativar' }}
                                 </button>
                             </form>
@@ -73,7 +73,7 @@
         </div>
         {% else %}
         <div class="empty-state">
-            <i class="bi bi-hospital"></i>
+            <i class="fas fa-hospital"></i>
             <h6>Nenhum tipo de unidade cadastrado.</h6>
             <a href="{{ url_for('configuracoes.novo_tipo_unidade') }}" class="btn btn-primary mt-2">
                 Cadastrar Primeiro Tipo

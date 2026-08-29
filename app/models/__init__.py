@@ -8,7 +8,7 @@ from app.models.equipamento import (
     TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,
     Equipamento, EquipamentoCampoValor
 )
-from app.models.chamado import Divisao, SetorManutencao, UsuarioSetor, Chamado, ChamadoHistorico, ChamadoFoto, AnexoAndamento
+from app.models.chamado import Divisao, SetorManutencao, UsuarioSetor, Chamado, ChamadoHistorico, ChamadoFoto, ChamadoSolicitacaoItem, AnexoAndamento, ChamadoAtribuido
 from app.models.status_chamado import StatusChamado
 from app.models.notificacao import Notificacao
 from app.models.contrato import Contrato, ContratoTipoEquipamento, ContratoAcao
@@ -24,3 +24,4 @@ from app.models.matricula import MatriculaProfissional
 from app.models.tipo_link import TipoLink
 from app.models.link_util import LinkUtil
 from app.models.empresa import EmpresaContratada
+from app.models.cbo import CBO

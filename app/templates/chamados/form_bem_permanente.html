@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'chamados/base_externo.html' if chamado_externo else 'base.html' %}
 {% block title %}Novo Chamado — Bem Permanente{% endblock %}
 
 {% block head %}
@@ -136,16 +136,19 @@
 
 {% block content %}
 <div class="bp-form">
+    {% if chamado_externo %}{% include 'chamados/_externo_banner.html' %}{% endif %}
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
+            {% if not chamado_externo %}
             <li class="breadcrumb-item"><a href="{{ url_for('chamados.listar') }}">Chamados</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('chamados.escolha_tipo') }}">Novo Chamado</a></li>
+            {% endif %}
+            <li class="breadcrumb-item"><a href="{{ url_for(abrir_chamado_bp ~ '.escolha_tipo') }}">Novo Chamado</a></li>
             <li class="breadcrumb-item active">Bem Permanente</li>
         </ol>
     </nav>
 
     <div class="page-header mb-3">
-        <h1><i class="bi bi-pc-display-horizontal me-2"></i>Chamado — Bem Permanente</h1>
+        <h1><i class="fas fa-desktop me-2"></i>Chamado — Bem Permanente</h1>
     </div>
 
     {# Steps visuais #}
@@ -159,7 +162,7 @@
 
     {% if alerta_duplicado %}
     <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
-        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+        <i class="fas fa-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
         <div>
             <strong>Atenção:</strong> este equipamento já possui um chamado em aberto.
             Confirme para abrir mesmo assim.
@@ -180,7 +183,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section bp-passo" id="passo1">
             <div class="form-section-title">
-                <i class="bi bi-hospital me-2"></i>1. Unidade de Saúde
+                <i class="fas fa-hospital me-2"></i>1. Unidade de Saúde
             </div>
 
             <div class="row g-3">
@@ -196,58 +199,45 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Grau de urgência <span class="text-danger">*</span></label>
-                    <select name="prioridade" id="selPrioridade" class="form-select" required>
-                        <option value="">Selecione...</option>
-                        <option value="urgente"
-                            {{ 'selected' if form_data.get('prioridade') == 'urgente' }}>
-                            P1 — Interrupção de atendimento
-                        </option>
-                        <option value="alta"
-                            {{ 'selected' if form_data.get('prioridade') == 'alta' }}>
-                            P2 — Atendimento parcialmente prejudicado
-                        </option>
-                        <option value="media"
-                            {{ 'selected' if form_data.get('prioridade') in ('media', '') or not form_data.get('prioridade') }}>
-                            P3 — Pouco urgente
-                        </option>
-                    </select>
-                </div>
+            </div>
+            <div class="mt-3">
+                {% with gravidade_sel=form_data.get('gravidade', 1), urgencia_sel=form_data.get('urgencia', 1), tendencia_sel=form_data.get('tendencia', 1), required=true %}
+                {% include 'shared/_gut_priorizacao.html' %}
+                {% endwith %}
             </div>
 
             {# Info da unidade (preenchida via JS) #}
             <div class="unidade-info-card mt-3" id="unidadeInfoCard">
                 <div class="inf-item">
-                    <i class="bi bi-geo-alt-fill"></i>
+                    <i class="fas fa-geo-alt-fill"></i>
                     <span id="uiEndereco">—</span>
                 </div>
                 <div class="inf-item">
-                    <i class="bi bi-telephone-fill"></i>
+                    <i class="fas fa-telephone-fill"></i>
                     <span id="uiTelefone">—</span>
                 </div>
                 <div class="inf-item" id="uiRamalWrap" style="display:none">
-                    <i class="bi bi-telephone-forward-fill"></i>
+                    <i class="fas fa-telephone-forward-fill"></i>
                     Ramal: <span id="uiRamal">—</span>
                 </div>
                 <div class="inf-item">
-                    <i class="bi bi-envelope-fill"></i>
+                    <i class="fas fa-envelope-fill"></i>
                     <span id="uiEmail">—</span>
                 </div>
                 <a id="uiMaps" href="#" target="_blank" class="inf-item text-decoration-none"
                    style="display:none">
-                    <i class="bi bi-map-fill"></i> Ver no mapa
+                    <i class="fas fa-map-fill"></i> Ver no mapa
                 </a>
             </div>
 
             <div class="mt-3 d-flex justify-content-between align-items-center">
                 <div class="text-muted small">
-                    <i class="bi bi-person-check me-1"></i>
+                    <i class="fas fa-user-check me-1"></i>
                     Responsável pela abertura: <strong>{{ current_user.nome }}</strong>
                 </div>
                 <button type="button" class="btn btn-primary" id="btnPasso1"
                         onclick="irPasso(2)" disabled>
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -257,12 +247,12 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section bp-passo" id="passo2" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-tag me-2"></i>2. Identificação do Equipamento
+                <i class="fas fa-tag me-2"></i>2. Identificação do Equipamento
             </div>
 
             <label class="form-label">Tipo de Equipamento</label>
             <div id="tiposGrid" class="tipos-grid mb-3">
-                <div class="tipos-loading"><i class="bi bi-hourglass-split me-1"></i>Carregando tipos...</div>
+                <div class="tipos-loading"><i class="fas fa-hourglass-split me-1"></i>Carregando tipos...</div>
             </div>
             <input type="hidden" id="hiddenTipoId">
 
@@ -277,12 +267,12 @@
             <div class="equip-selected-card mt-3" id="equipSelectedCard">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <i class="bi bi-check-circle-fill text-success me-1"></i>
+                        <i class="fas fa-check-circle-fill text-success me-1"></i>
                         <strong id="esNome">—</strong>
                     </div>
                     <button type="button" class="btn btn-outline-secondary btn-sm"
                             onclick="limparEquip()">
-                        <i class="bi bi-x me-1"></i>Trocar
+                        <i class="fas fa-times me-1"></i>Trocar
                     </button>
                 </div>
                 <div class="equip-detail-grid">
@@ -294,7 +284,7 @@
                 </div>
                 <div id="esHistoricoWrap" style="display:none">
                     <div class="text-muted small mt-2 mb-1">
-                        <i class="bi bi-clock-history me-1"></i>Histórico de chamados deste equipamento:
+                        <i class="fas fa-clock-history me-1"></i>Histórico de chamados deste equipamento:
                     </div>
                     <div class="hist-chamados" id="esHistorico"></div>
                 </div>
@@ -302,11 +292,11 @@
 
             <div class="mt-3 d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(1)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="button" class="btn btn-primary" id="btnPasso2"
                         onclick="irPasso(3)" disabled>
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -316,7 +306,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section bp-passo" id="passo3" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-exclamation-circle me-2"></i>3. Descrição do Problema
+                <i class="fas fa-exclamation-circle me-2"></i>3. Descrição do Problema
             </div>
 
             <div class="row g-3">
@@ -382,11 +372,11 @@
 
             <div class="mt-3 d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(2)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="button" class="btn btn-primary" id="btnPasso3"
                         onclick="irPasso(4)">
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -396,12 +386,12 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section bp-passo" id="passo4" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-images me-2"></i>4. Fotos / Vídeos
+                <i class="fas fa-images me-2"></i>4. Fotos / Vídeos
                 <span class="text-muted small fw-normal ms-2">(opcional — até 10 arquivos, 50 MB cada)</span>
             </div>
 
             <div class="upload-fotos-zona" id="uploadZona">
-                <i class="bi bi-cloud-arrow-up fs-2 text-muted d-block mb-1"></i>
+                <i class="fas fa-cloud-upload-alt fs-2 text-muted d-block mb-1"></i>
                 <div class="fw-semibold text-muted small">Clique ou arraste fotos/vídeos aqui</div>
                 <div class="text-muted" style="font-size:.75rem">JPG, PNG, MP4... máx. 10 arquivos</div>
             </div>
@@ -410,10 +400,10 @@
 
             <div class="mt-3 d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(3)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="button" class="btn btn-primary" onclick="irPasso(5)">
-                    Próximo <i class="bi bi-arrow-right ms-1"></i>
+                    Próximo <i class="fas fa-arrow-right ms-1"></i>
                 </button>
             </div>
         </div>
@@ -423,7 +413,7 @@
         ═══════════════════════════════════════════ #}
         <div class="form-section bp-passo" id="passo5" style="display:none">
             <div class="form-section-title">
-                <i class="bi bi-clipboard-check me-2"></i>5. Confirmar e Abrir Chamado
+                <i class="fas fa-clipboard-check me-2"></i>5. Confirmar e Abrir Chamado
             </div>
 
             <div class="alert alert-light border mb-3" id="resumoChamado" style="font-size:.88rem">
@@ -432,10 +422,10 @@
 
             <div class="d-flex justify-content-between">
                 <button type="button" class="btn btn-outline-secondary" onclick="irPasso(4)">
-                    <i class="bi bi-arrow-left me-1"></i>Voltar
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
                 </button>
                 <button type="submit" class="btn btn-success btn-lg">
-                    <i class="bi bi-check-circle me-1"></i>Abrir Chamado
+                    <i class="fas fa-check-circle me-1"></i>Abrir Chamado
                 </button>
             </div>
         </div>
@@ -448,8 +438,10 @@
 {% endblock %}
 
 {% block scripts %}
+{% include 'shared/_gut_priorizacao_script.html' %}
 <script>
 (function () {
+    const chamadosApi = (window.SIGUS_BASE_URL || '') + {{ chamados_api_prefix|tojson }};
     /* ─── Estado ─────────────────────────────────────────────── */
     let passoAtual  = 1;
     let equipSel    = null;   // objeto completo do equipamento selecionado
@@ -457,7 +449,6 @@
 
     const hiddenEquipId = document.getElementById('hiddenEquipId');
     const selUnidade    = document.getElementById('selUnidade');
-    const selPrioridade = document.getElementById('selPrioridade');
 
     /* ─── Steps visuais ──────────────────────────────────────── */
     function atualizarSteps(passo) {
@@ -509,7 +500,7 @@
     });
 
     function carregarInfoUnidade(uid) {
-        fetch(`/chamados/api/unidade-info/${uid}`)
+        fetch(`${chamadosApi}/unidade-info/${uid}`)
             .then(r => r.json())
             .then(d => {
                 const card = document.getElementById('unidadeInfoCard');
@@ -535,13 +526,13 @@
         const uid = selUnidade.value;
         // Tipos
         const grid = document.getElementById('tiposGrid');
-        grid.innerHTML = '<div class="tipos-loading"><i class="bi bi-hourglass-split me-1"></i>Carregando...</div>';
+        grid.innerHTML = '<div class="tipos-loading"><i class="fas fa-hourglass-split me-1"></i>Carregando...</div>';
         document.getElementById('equipListaWrap').style.display = 'none';
         document.getElementById('hiddenTipoId').value = '';
         // Limpa equip se mudou de unidade
         if (!hiddenEquipId.value) limparEquip();
 
-        fetch(`/chamados/api/tipos-equipamento-da-unidade/${uid}`)
+        fetch(`${chamadosApi}/tipos-equipamento-da-unidade/${uid}`)
             .then(r => r.json())
             .then(tipos => {
                 if (!tipos.length) {
@@ -550,7 +541,7 @@
                 }
                 grid.innerHTML = '';
                 // opção "Todos"
-                const todos = criarTipoCard({id: '', nome: 'Todos', icone: 'bi-grid'}, uid);
+                const todos = criarTipoCard({id: '', nome: 'Todos', icone: 'fas fa-th'}, uid);
                 grid.appendChild(todos);
                 tipos.forEach(t => grid.appendChild(criarTipoCard(t, uid)));
                 // Se já tem equip pré-selecionado, carrega todos
@@ -565,7 +556,7 @@
         const el = document.createElement('div');
         el.className = 'tipo-card';
         el.dataset.id = tipo.id;
-        el.innerHTML = `<i class="bi ${tipo.icone}"></i>${tipo.nome}`;
+        el.innerHTML = `<i class="${tipo.icone}"></i>${tipo.nome}`;
         el.addEventListener('click', () => {
             selecionarTipoCard(el);
             carregarEquipamentos(uid, tipo.id);
@@ -582,10 +573,10 @@
     function carregarEquipamentos(uid, tipoId) {
         const lista = document.getElementById('equipLista');
         const wrap  = document.getElementById('equipListaWrap');
-        lista.innerHTML = '<div class="p-3 text-muted small"><i class="bi bi-hourglass-split me-1"></i>Carregando equipamentos...</div>';
+        lista.innerHTML = '<div class="p-3 text-muted small"><i class="fas fa-hourglass-split me-1"></i>Carregando equipamentos...</div>';
         wrap.style.display = '';
 
-        const url = `/chamados/api/equipamentos-da-unidade/${uid}${tipoId ? '?tipo_id='+tipoId : ''}`;
+        const url = `${chamadosApi}/equipamentos-da-unidade/${uid}${tipoId ? '?tipo_id='+tipoId : ''}`;
         fetch(url)
             .then(r => r.json())
             .then(equips => {
@@ -608,7 +599,7 @@
 
             let badges = '';
             if (e.tem_chamado) {
-                badges = `<span class="equip-badge-warn"><i class="bi bi-exclamation-triangle me-1"></i>Chamado ${e.tem_chamado}</span>`;
+                badges = `<span class="equip-badge-warn"><i class="fas fa-exclamation-triangle me-1"></i>Chamado ${e.tem_chamado}</span>`;
             }
 
             el.innerHTML = `
@@ -617,10 +608,10 @@
                     <div class="d-flex gap-2 mt-1">
                         ${e.patrimonio ? `<span class="equip-pat">PAT: ${e.patrimonio}</span>` : ''}
                         ${e.serie      ? `<span class="equip-pat">S/N: ${e.serie}</span>` : ''}
-                        ${e.sala       ? `<span class="equip-sala"><i class="bi bi-door-open me-1"></i>${e.sala}</span>` : ''}
+                        ${e.sala       ? `<span class="equip-sala"><i class="fas fa-door-open me-1"></i>${e.sala}</span>` : ''}
                     </div>
                 </div>
-                <i class="bi bi-chevron-right text-muted"></i>`;
+                <i class="fas fa-chevron-right text-muted"></i>`;
 
             el.addEventListener('click', () => {
                 if (e.tem_chamado) {
@@ -648,7 +639,7 @@
         hiddenEquipId.value = id;
         marcarSelecionadoNaLista(id);
         // Busca detalhes
-        fetch(`/chamados/api/equipamento-detalhe/${id}`)
+        fetch(`${chamadosApi}/equipamento-detalhe/${id}`)
             .then(r => r.json())
             .then(d => {
                 equipSel = d;
@@ -711,7 +702,7 @@
     /* ─── Passo 5: Resumo ────────────────────────────────────── */
     function montarResumo() {
         const unNome   = selUnidade.options[selUnidade.selectedIndex]?.text || '—';
-        const prio     = selPrioridade.options[selPrioridade.selectedIndex]?.text || '—';
+        const prio     = document.getElementById('gutResultado')?.textContent || '—';
         const servico  = document.querySelector('[name=bp_servico]');
         const servTxt  = servico?.options[servico.selectedIndex]?.text || '—';
         const desc     = document.getElementById('txtDescricao').value.trim();
@@ -773,7 +764,7 @@
                 item.appendChild(img);
             }
             const rm = document.createElement('button');
-            rm.type = 'button'; rm.className = 'rm-btn'; rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.type = 'button'; rm.className = 'rm-btn'; rm.innerHTML = '<i class="fas fa-times"></i>';
             rm.addEventListener('click', () => { arquivos.splice(i,1); renderFotos(); syncInput(); });
             item.appendChild(rm);
             grid.appendChild(item);

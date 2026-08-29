@@ -18,7 +18,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-input-cursor-text"></i> Editar Campo: {{ campo.nome_campo }}</h1>
+    <h1><i class="fas fa-input-cursor-text"></i> Editar Campo: {{ campo.nome_campo }}</h1>
 </div>
 
 <div class="row justify-content-center">
@@ -73,7 +73,7 @@
                         <input type="checkbox" name="campo_destaque" class="form-check-input"
                                id="destaque" {% if campo.campo_destaque %}checked{% endif %}>
                         <label class="form-check-label fw-semibold" for="destaque">
-                            <i class="bi bi-star-fill text-warning me-1"></i>Atributo de destaque
+                            <i class="fas fa-star-fill text-warning me-1"></i>Atributo de destaque
                         </label>
                     </div>
                     <div class="form-text">
@@ -85,7 +85,7 @@
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-1"></i>Salvar Campo
+                        <i class="fas fa-check-circle me-1"></i>Salvar Campo
                     </button>
                     <a href="{{ url_for('configuracoes.editar_tipo_equipamento', id=campo.tipo_equipamento_id) }}"
                        class="btn btn-outline-secondary">Cancelar</a>

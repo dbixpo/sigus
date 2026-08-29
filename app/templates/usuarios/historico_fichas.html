@@ -11,7 +11,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="bi bi-file-earmark-person me-2"></i>Fichas CNES — {{ usuario.nome }}</h1>
+    <h1><i class="fas fa-file-earmark-person me-2"></i>Fichas CNES — {{ usuario.nome }}</h1>
 </div>
 
 {% if fichas %}
@@ -58,11 +58,11 @@
                                 <button type="button"
                                         class="btn btn-sm btn-outline-primary" title="Abrir ficha"
                                         onclick="abrirImpresso('{{ url_for('unidades.ficha_cnes_vinculo', ficha_id=f.id) }}', 'Ficha CNES')">
-                                    <i class="bi bi-eye"></i>
+                                    <i class="fas fa-eye"></i>
                                 </button>
                                 <a href="{{ links_email[f.id] }}"
                                    class="btn btn-sm btn-outline-success" title="Enviar por e-mail">
-                                    <i class="bi bi-envelope"></i>
+                                    <i class="fas fa-envelope"></i>
                                 </a>
                             </div>
                         </td>
@@ -76,7 +76,7 @@
 {% else %}
 <div class="card">
     <div class="card-body text-center text-muted py-4">
-        <i class="bi bi-file-earmark-person fs-2 d-block mb-2"></i>
+        <i class="fas fa-file-earmark-person fs-2 d-block mb-2"></i>
         Nenhuma ficha CNES gerada para este profissional ainda.<br>
         <small>As fichas são geradas automaticamente ao vincular ou desvincular o profissional de uma unidade.</small>
     </div>

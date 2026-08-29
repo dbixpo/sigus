@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Feriados — {{ 'Editar' if item else 'Novo' }}{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <h1><i class="bi bi-calendar-event"></i> Feriados — {{ 'Editar' if item else 'Novo' }}</h1>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-semibold">Data <span class="text-danger">*</span></label>
+                    <input type="date" name="data" class="form-control"
+                        value="{{ item.data.strftime('%Y-%m-%d') if item and item.data else '' }}" required>
+                </div>
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-semibold">Evento <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control"
+                        value="{{ item.nome if item else '' }}" placeholder="Ex: Natal, Ano Novo, Carnaval" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Tipo de Folga</label>
+                    <select name="tipo_folga" id="tipoFolga" class="form-select">
+                        {% for k, v in tipos_folga.items() %}
+                        <option value="{{ k }}" {% if item and item.tipo_folga == k %}selected{% elif not item and k == 'feriado' %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="blocoNatureza" class="col-12 col-md-6">
+                    <label class="form-label fw-semibold">Natureza</label>
+                    <select name="natureza" id="naturezaSelect" class="form-select">
+                        {% for k, v in naturezas.items() %}
+                        <option value="{{ k }}" {% if item and item.natureza == k %}selected{% elif not item and k == 'nacional' %}selected{% endif %}>{{ v }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="blocoEmoji" class="col-12 col-md-6" style="display:none;">
+                    <label class="form-label fw-semibold">Emoji</label>
+                    <div class="dropdown">
+                        <input type="hidden" name="emoji" id="emojiHidden" value="{{ item.emoji if item and item.emoji else '' }}">
+                        <button type="button" class="form-select text-start d-flex align-items-center" id="emojiTrigger" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="height:38px; cursor:pointer; padding-top:0.375rem; padding-bottom:0.375rem;" title="Clique para escolher emoji">
+                            <span id="emojiDisplay" class="me-auto">{% if item and item.emoji %}{{ item.emoji }}{% else %}<span class="text-muted">Clique para escolher</span>{% endif %}</span>
+                            <i class="bi bi-emoji-smile text-muted ms-1"></i>
+                        </button>
+                        <div class="dropdown-menu p-0" id="emojiPickerDropdown" style="max-height:320px; overflow:auto;">
+                            <emoji-picker id="emojiPicker" class="light"></emoji-picker>
+                        </div>
+                    </div>
+                </div>
+                <!-- Decreto (feriado/ponto_facultativo) -->
+                <div id="blocoDecreto" class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Nº do Decreto</label>
+                        <input type="text" name="numero_decreto" id="numeroDecreto" class="form-control"
+                            value="{{ item.numero_decreto if item and item.numero_decreto else '' }}"
+                            placeholder="Ex: Lei nº 10.607/2002">
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold">Link de Acesso do Decreto</label>
+                        <input type="url" name="link_decreto" id="linkDecreto" class="form-control"
+                            value="{{ item.link_decreto if item and item.link_decreto else '' }}"
+                            placeholder="https://...">
+                    </div>
+                </div>
+                <!-- Cores (data_comemorativa) -->
+                <div id="blocoCores" class="row g-3" style="display:none;">
+                    <div class="col-12 mb-2"><small class="text-muted">Personalize as cores do sistema para o dia do evento.</small></div>
+                    <div class="col-12 col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3">
+                                <label class="form-label fw-semibold small mb-2">Cor principal</label>
+                                <div class="d-grid gap-1 mb-2" style="grid-template-columns: 1fr 1fr; max-width:200px;">
+                                    <input type="color" name="cor_primaria" id="corPrimaria" class="form-control form-control-color border rounded w-100" style="height:38px; padding:2px; cursor:pointer; min-width:0; width:100%;" value="{{ (item and item.cor_primaria) or '#c20d2f' }}">
+                                    <select name="cor_fonte_primaria" id="corFontePrimaria" class="form-select form-select-sm" style="min-width:0;">
+                                        <option value="#ffffff" {% if not item or (item.cor_fonte_primaria or '#ffffff').lower() in ('#ffffff','#fff') %}selected{% endif %}>Branco</option>
+                                        <option value="#000000" {% if item and item.cor_fonte_primaria and (item.cor_fonte_primaria or '').lower() in ('#000000','#000','black') %}selected{% endif %}>Preto</option>
+                                    </select>
+                                </div>
+                                <div class="rounded-2 p-2 text-center small mt-1" id="previewPrimaria" style="background:{{ (item and item.cor_primaria) or '#c20d2f' }}; color:{{ '#fff' if ((item and item.cor_fonte_primaria) or '#ffffff').lower() in ('#ffffff','#fff','white') else '#000' }}; max-width:200px;">Exemplo de texto</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body p-3">
+                                <label class="form-label fw-semibold small mb-2">Cor secundária</label>
+                                <div class="d-grid gap-1 mb-2" style="grid-template-columns: 1fr 1fr; max-width:200px;">
+                                    <input type="color" name="cor_secundaria" id="corSecundaria" class="form-control form-control-color border rounded w-100" style="height:38px; padding:2px; cursor:pointer; min-width:0; width:100%;" value="{{ (item and item.cor_secundaria) or '#dd8d0c' }}">
+                                    <select name="cor_fonte_secundaria" id="corFonteSecundaria" class="form-select form-select-sm" style="min-width:0;">
+                                        <option value="#ffffff" {% if item and (item.cor_fonte_secundaria or '').lower() in ('#ffffff','#fff','white') %}selected{% endif %}>Branco</option>
+                                        <option value="#000000" {% if not item or (item.cor_fonte_secundaria or '').lower() in ('#000000','#000','black') or not (item and item.cor_fonte_secundaria) %}selected{% endif %}>Preto</option>
+                                    </select>
+                                </div>
+                                <div class="rounded-2 p-2 text-center small mt-1" id="previewSecundaria" style="background:{{ (item and item.cor_secundaria) or '#dd8d0c' }}; color:{{ '#fff' if ((item and item.cor_fonte_secundaria) or '').lower() in ('#ffffff','#fff','white') else '#000' }}; max-width:200px;">Exemplo de texto</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Descrição</label>
+                    <input type="text" name="descricao" class="form-control"
+                        value="{{ item.descricao if item and item.descricao else '' }}"
+                        placeholder="Opcional">
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="ativo" id="ativo" {% if not item or item.ativo %}checked{% endif %}>
+                        <label class="form-check-label" for="ativo">Ativo</label>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="submit" class="btn btn-samu-primary"><i class="bi bi-check2 me-1"></i>Salvar</button>
+                <button type="submit" name="salvar_e_novo" value="1" class="btn btn-samu-primary"><i class="bi bi-plus-circle me-1"></i>Salvar e Adicionar Novo</button>
+                <a href="{{ url_for('configuracoes.feriados') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block head %}
+<script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+<style>
+#emojiPickerDropdown emoji-picker { --num-columns: 8; width: 100%; }
+#blocoCores input[type="color"] { width: 100% !important; flex: 1; min-width: 0; }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+(function() {
+    var tipoFolga = document.getElementById('tipoFolga');
+    var blocoDecreto = document.getElementById('blocoDecreto');
+    var blocoCores = document.getElementById('blocoCores');
+    var blocoNatureza = document.getElementById('blocoNatureza');
+    var blocoEmoji = document.getElementById('blocoEmoji');
+    var corPrimaria = document.getElementById('corPrimaria');
+    var corSecundaria = document.getElementById('corSecundaria');
+    var corFontePrimaria = document.getElementById('corFontePrimaria');
+    var corFonteSecundaria = document.getElementById('corFonteSecundaria');
+    var previewPrimaria = document.getElementById('previewPrimaria');
+    var previewSecundaria = document.getElementById('previewSecundaria');
+    function atualizarPreview() {
+        if (previewPrimaria && corPrimaria && corFontePrimaria) {
+            previewPrimaria.style.background = corPrimaria.value;
+            previewPrimaria.style.color = corFontePrimaria.value === '#000000' ? '#000' : '#fff';
+        }
+        if (previewSecundaria && corSecundaria && corFonteSecundaria) {
+            previewSecundaria.style.background = corSecundaria.value;
+            previewSecundaria.style.color = corFonteSecundaria.value === '#000000' ? '#000' : '#fff';
+        }
+    }
+    var naturezaSelect = document.getElementById('naturezaSelect');
+    function atualizarBlocos() {
+        var val = tipoFolga ? tipoFolga.value : '';
+        if (val === 'data_comemorativa') {
+            if (blocoDecreto) blocoDecreto.style.display = 'none';
+            if (blocoNatureza) { blocoNatureza.style.display = 'none'; if (naturezaSelect) naturezaSelect.disabled = true; }
+            if (blocoEmoji) blocoEmoji.style.display = 'block';
+            if (blocoCores) blocoCores.style.display = 'flex';
+            atualizarPreview();
+        } else {
+            if (blocoDecreto) blocoDecreto.style.display = 'flex';
+            if (blocoNatureza) { blocoNatureza.style.display = 'block'; if (naturezaSelect) naturezaSelect.disabled = false; }
+            if (blocoEmoji) blocoEmoji.style.display = 'none';
+            if (blocoCores) blocoCores.style.display = 'none';
+        }
+    }
+    [corPrimaria, corSecundaria, corFontePrimaria, corFonteSecundaria].forEach(function(el) {
+        if (el) el.addEventListener('change', atualizarPreview);
+        if (el) el.addEventListener('input', atualizarPreview);
+    });
+    if (tipoFolga) tipoFolga.addEventListener('change', atualizarBlocos);
+    atualizarBlocos();
+
+    // Emoji picker
+    var emojiPicker = document.getElementById('emojiPicker');
+    var emojiHidden = document.getElementById('emojiHidden');
+    var emojiDisplay = document.getElementById('emojiDisplay');
+    var emojiTrigger = document.getElementById('emojiTrigger');
+    if (emojiPicker && emojiHidden && emojiDisplay && emojiTrigger) {
+        emojiPicker.addEventListener('emoji-click', function(ev) {
+            var emoji = ev.detail.unicode || '';
+            emojiHidden.value = emoji;
+            emojiDisplay.innerHTML = emoji;
+            var bsDropdown = bootstrap.Dropdown.getInstance(emojiTrigger);
+            if (bsDropdown) bsDropdown.hide();
+        });
+    }
+})();
+</script>
+{% endblock %}

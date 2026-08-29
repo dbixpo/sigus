@@ -7,19 +7,39 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
-.no-print { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
-.btn-imprimir { padding: 8px 16px; background: #1a6abf; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
-@media print { .no-print { display: none !important; } body { padding: 12px; } }
+.no-print {
+    display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
+    padding: 12px; background: #f8f9fa; border-radius: 8px;
+}
+.btn-imprimir {
+    padding: 8px 16px; background: #1a6abf; color: #fff; border: none;
+    border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px;
+}
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    @page { margin: 1.2cm; }
+}
 
-.doc { max-width: 740px; margin: 0 auto; padding: 14px 16px; }
+.doc { max-width: 740px; margin: 0 auto; border: 1px solid #000; padding: 14px 16px; }
 
 .cabecalho {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 10px;
+    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 12px;
 }
 .cab-logo img { height: 58px; width: auto; }
-.cab-titulo { flex: 1; text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
-.cab-secretaria { text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap; }
+.cab-titulo {
+    flex: 1; text-align: center;
+    font-size: 13px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
+}
+.cab-titulo .subtitulo {
+    font-size: 11px; font-weight: 600; text-transform: none; color: #333; margin-top: 2px;
+    display: block; letter-spacing: .3px;
+}
+.cab-secretaria {
+    text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap;
+}
 .cab-secretaria strong { font-size: 13px; display: block; }
 
 .secao { border-top: 1px solid #aaa; margin-top: 8px; padding-top: 6px; }
@@ -92,18 +112,26 @@ a { color: #0d6efd; text-decoration: none; }
 </style>
 </head>
 <body>
-<div class="no-print"><button type="button" class="btn-imprimir" onclick="window.print()">Imprimir</button></div>
-<script>if (window.self !== window.top) { var b = document.querySelector('.no-print'); if (b) b.style.display = 'none'; }</script>
+<div class="no-print" id="barraAcoes">
+    <button type="button" class="btn-imprimir" onclick="window.print()">&#x1F5A8; Imprimir / Salvar PDF</button>
+</div>
+<script>if (window.self !== window.top) { var b = document.getElementById('barraAcoes'); if (b) b.style.display = 'none'; }</script>
 
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura" onerror="this.style.display='none'">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+                 alt="Prefeitura de Sorocaba"
+                 onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
-            {{ doc.tipo_titulo_impressao }}
+            SISTEMA INTEGRADO DE GESTÃO DE UNIDADE<br>
+            <span class="subtitulo">{{ doc.tipo_titulo_impressao }}</span>
         </div>
-        <div class="cab-secretaria">Secretaria da<br><strong>SAÚDE</strong></div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
     </div>
 
     {# ── Seção: Unidade de Origem ───────────────────────────────── #}

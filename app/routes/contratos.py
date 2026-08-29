@@ -33,7 +33,7 @@ def _sort_contratos(query, sort_col, order):
 @contratos_bp.route('/')
 @login_required
 def listar():
-    if not current_user.pode('cadastrar_contrato') and not current_user.pode('editar_contrato'):
+    if not current_user.pode('ver_contratos') and not current_user.pode('cadastrar_contrato') and not current_user.pode('editar_contrato'):
         abort(403)
     status = request.args.get('status', '')
     mandado_judicial = request.args.get('mandado_judicial', '')

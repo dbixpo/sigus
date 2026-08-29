@@ -13,7 +13,7 @@ import os
 import sys
 import subprocess
 from datetime import datetime
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 # Raiz do projeto
 PROJETO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,8 +40,8 @@ def parse_database_url(url):
         return {
             'host': parsed.hostname or 'localhost',
             'port': parsed.port or 5432,
-            'user': parsed.username or 'postgres',
-            'password': parsed.password or '',
+            'user': unquote(parsed.username) if parsed.username else 'postgres',
+            'password': unquote(parsed.password) if parsed.password else '',
             'dbname': (parsed.path or '/sigus').lstrip('/') or 'sigus',
         }
     except Exception:

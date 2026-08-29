@@ -107,6 +107,31 @@
     width: 18px; height: 18px; font-size: .6rem;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
+
+/* GUT na sidebar — 3 campos em linha, prioridade embaixo */
+.gut-revisao-sidebar .gut-sidebar-stack {
+    width: 100%;
+}
+.gut-revisao-sidebar .gut-sidebar-campos .form-select {
+    font-size: .75rem;
+    padding-left: .4rem;
+    padding-right: 1.4rem;
+}
+.gut-revisao-sidebar .gut-sidebar-campos .form-label {
+    font-size: .72rem;
+}
+.gut-revisao-sidebar .gut-sidebar-resultado {
+    border-top: 1px dashed #e5e7eb;
+}
+.gut-revisao-sidebar .gut-badge-resultado {
+    display: block;
+    font-size: .8rem;
+    font-weight: 600;
+}
+.gut-resumo-box {
+    overflow: hidden;
+    word-break: break-word;
+}
 </style>
 {% endblock %}
 
@@ -122,7 +147,7 @@
 {% for p in pendencias %}
 <div class="alert alert-{{ 'danger' if p.tipo_andamento == 'alerta' else 'warning' }} d-flex align-items-start gap-3 mb-2"
      role="alert">
-    <i class="bi bi-{{ 'exclamation-triangle-fill' if p.tipo_andamento == 'alerta' else 'question-circle-fill' }} fs-5 flex-shrink-0 mt-1"></i>
+    <i class="{{ 'fas fa-exclamation-triangle' if p.tipo_andamento == 'alerta' else 'fas fa-question-circle' }} fs-5 flex-shrink-0 mt-1"></i>
     <div class="flex-grow-1">
         <strong>{{ p.tipo_label }}:</strong>
         {{ p.acao }}
@@ -138,7 +163,7 @@
           class="flex-shrink-0">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn btn-sm btn-outline-{{ 'danger' if p.tipo_andamento == 'alerta' else 'warning' }}">
-            <i class="bi bi-check2 me-1"></i>Marcar como resolvido
+            <i class="fas fa-check me-1"></i>Marcar como resolvido
         </button>
     </form>
     {% endif %}
@@ -149,7 +174,7 @@
 <div class="page-header mb-3">
     <div>
         <h1 class="mb-1">
-            <i class="bi bi-wrench-adjustable me-2"></i>{{ chamado.numero }}
+            <i class="fas fa-wrench me-2"></i>{{ chamado.numero }}
         </h1>
         <div class="d-flex flex-wrap gap-2 align-items-center">
             <span class="badge bg-{{ chamado.status_badge }} fs-6">{{ chamado.status_label }}</span>
@@ -162,13 +187,13 @@
         {% if chamado.status not in ['concluido', 'cancelado'] %}
         <button type="button" class="btn btn-primary"
                 data-bs-toggle="modal" data-bs-target="#modalAndamento">
-            <i class="bi bi-plus-circle me-1"></i>Novo Andamento
+            <i class="fas fa-plus-circle me-1"></i>Novo Andamento
         </button>
         {% endif %}
         {# Botão Imprimir #}
         <button type="button" class="btn btn-outline-secondary"
                 onclick="abrirImpresso('{{ url_for('chamados.imprimir', id=chamado.id) }}', 'Chamado {{ chamado.numero }}')">
-            <i class="bi bi-printer me-1"></i>Imprimir
+            <i class="fas fa-print me-1"></i>Imprimir
         </button>
     </div>
 </div>
@@ -183,7 +208,7 @@
         {# ── Dados do chamado ────────────────────────────────── #}
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center gap-2">
-                <i class="bi bi-info-circle text-primary"></i>
+                <i class="fas fa-info-circle text-primary"></i>
                 <strong>{{ chamado.titulo }}</strong>
             </div>
             <div class="card-body">
@@ -208,25 +233,91 @@
                         </div>
                     </div>
                     {% endif %}
+                    {% if chamado.tipo_chamado == 'solicitacao_equipamento' and (chamado.se_tipo_equipamento or chamado.se_tipo_livre) %}
+                    <div class="col-sm-6 col-md-4">
+                        <div class="text-muted small">Tipo Solicitado</div>
+                        <div><strong>{{ chamado.se_tipo_livre or (chamado.se_tipo_equipamento.nome if chamado.se_tipo_equipamento else '') }}</strong></div>
+                    </div>
+                    {% endif %}
                     <div class="col-sm-6 col-md-4">
                         <div class="text-muted small">Aberto por</div>
-                        <div>{{ chamado.solicitante.nome }}</div>
+                        <div>{{ chamado.solicitante_nome }}</div>
+                        {% if chamado.aberto_por_externo and chamado.externo_whatsapp %}
+                        <div class="text-muted small">
+                            <i class="fab fa-whatsapp me-1"></i>{{ chamado.externo_whatsapp | br_fone }}
+                        </div>
+                        {% endif %}
+                        {% if chamado.aberto_por_externo and chamado.externo_email %}
+                        <div class="text-muted small">
+                            <i class="fas fa-envelope me-1"></i>{{ chamado.externo_email }}
+                        </div>
+                        {% endif %}
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="text-muted small">Setor Responsável</div>
-                        <div>{{ chamado.setor.nome if chamado.setor else '—' }}</div>
+                        <div class="text-muted small">Unidade Responsável</div>
+                        <div>{% if chamado.unidade_responsavel %}<a href="{{ url_for('unidades.detalhe', id=chamado.unidade_responsavel_id) }}">{{ chamado.unidade_responsavel.nome }}</a>{% else %}—{% endif %}</div>
                     </div>
-                    {% if chamado.responsavel %}
-                    <div class="col-sm-6 col-md-4">
-                        <div class="text-muted small">Técnico Responsável</div>
-                        <div>{{ chamado.responsavel.nome }}</div>
+                </div>
+
+                {% if chamado.gut_solicitante_preenchido %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-{% if chamado.gut_executante_preenchido %}6{% else %}12{% endif %}">
+                        {% with titulo='Priorização do solicitante', resumo=chamado.gut_solicitante_resumo, prioridade_label=chamado.gut_solicitante_prioridade_label, prioridade_badge=chamado.gut_solicitante_prioridade_badge %}
+                        {% include 'chamados/_gut_resumo_chamado.html' %}
+                        {% endwith %}
+                    </div>
+                    {% if chamado.gut_executante_preenchido %}
+                    <div class="col-md-6">
+                        {% with titulo='Priorização do setor', resumo=chamado.gut_executante_resumo, prioridade_label=chamado.gut_executante_prioridade_label, prioridade_badge=chamado.gut_executante_prioridade_badge %}
+                        {% include 'chamados/_gut_resumo_chamado.html' %}
+                        {% endwith %}
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
+
+                {# ── Itens da Solicitação (Solicitação de Equipamento) ─── #}
+                {% if chamado.tipo_chamado == 'solicitacao_equipamento' and chamado.itens_solicitacao.count() %}
+                <div class="mb-3">
+                    <div class="text-muted small fw-semibold mb-2">
+                        <i class="fas fa-list me-1"></i>Itens da Solicitação
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sala</th>
+                                    <th>Motivo</th>
+                                    <th>Substituir</th>
+                                    <th>Observação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in chamado.itens_solicitacao %}
+                                <tr>
+                                    <td>{{ item.sala.nome if item.sala else '—' }}</td>
+                                    <td>{{ item.motivo_label }}</td>
+                                    <td>
+                                        {% if item.equipamento %}
+                                        <a href="{{ url_for('equipamentos.detalhe', id=item.equipamento_id) }}">
+                                            {{ item.equipamento.nome_display }}
+                                        </a>
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>{{ item.observacao or '—' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
 
                 {# Descrição #}
                 <div class="mb-2">
-                    <div class="text-muted small mb-1">Descrição do problema</div>
+                    <div class="text-muted small mb-1">
+                        {% if chamado.tipo_chamado == 'solicitacao_administrativa' %}Descrição da solicitação{% else %}Descrição do problema{% endif %}
+                    </div>
                     <div class="p-3 bg-light rounded" style="white-space:pre-wrap">{{ chamado.descricao }}</div>
                 </div>
 
@@ -234,7 +325,7 @@
                 {% if chamado.tipo_chamado == 'equipamento' and (chamado.bp_servico or chamado.bp_rechamado is not none) %}
                 <hr class="my-3">
                 <div class="text-muted small fw-semibold mb-2">
-                    <i class="bi bi-pc-display me-1"></i>Detalhes do Bem Permanente
+                    <i class="fas fa-desktop me-1"></i>Detalhes do Bem Permanente
                 </div>
                 <div class="row g-2">
                     {% if chamado.equipamento %}
@@ -287,7 +378,7 @@
                 {% if fotos_list %}
                 <hr class="my-3">
                 <div class="text-muted small mb-1">
-                    <i class="bi bi-images me-1"></i>Fotos / Vídeos ({{ fotos_list|length }})
+                    <i class="fas fa-images me-1"></i>Fotos / Vídeos ({{ fotos_list|length }})
                 </div>
                 <div class="fotos-grid">
                     {% for foto in fotos_list %}
@@ -319,7 +410,7 @@
         {# ── Histórico / Andamentos ──────────────────────────── #}
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-clock-history me-2"></i>Histórico de Andamentos</span>
+                <span><i class="fas fa-clock-history me-2"></i>Histórico de Andamentos</span>
                 <span class="badge bg-secondary rounded-pill">{{ historico|length }}</span>
             </div>
             <div class="card-body">
@@ -334,7 +425,7 @@
                         {# Chip de tipo (só mostra quando não é andamento comum) #}
                         {% if h.tipo_andamento != 'andamento' %}
                         <span class="and-tipo-chip bg-{{ h.tipo_cor }} text-white">
-                            <i class="bi {{ h.tipo_icone }}"></i>{{ h.tipo_label }}
+                            <i class="{{ h.tipo_icone }}"></i>{{ h.tipo_label }}
                             {% if h.pendente %}
                             <span class="ms-1" title="Aguardando resposta">⚠</span>
                             {% elif h.respondido_em %}
@@ -344,12 +435,12 @@
                         {% endif %}
 
                         <div class="timeline-time">
-                            <i class="bi bi-person me-1"></i>{{ h.usuario.nome if h.usuario else 'Sistema' }}
+                            <i class="fas fa-user me-1"></i>{{ h.usuario.nome if h.usuario else 'Sistema' }}
                             <span class="mx-1">·</span>
-                            <i class="bi bi-calendar3 me-1"></i>{{ h.criado_em | br_datetime }}
+                            <i class="fas fa-calendar3 me-1"></i>{{ h.criado_em | br_datetime }}
                             {% if h.contrato %}
                             <span class="mx-1">·</span>
-                            <i class="bi bi-file-earmark-text me-1"></i>
+                            <i class="fas fa-file-contract me-1"></i>
                             <span class="text-muted">Contrato {{ h.contrato.identificador }}</span>
                             {% endif %}
                         </div>
@@ -371,7 +462,7 @@
                             </a>
                             {% else %}
                             <a href="{{ a.url }}" target="_blank" class="anexo-item" title="{{ a.original }}">
-                                <i class="bi {{ a.icone }} text-primary"></i>
+                                <i class="{{ a.icone }} text-primary"></i>
                                 <span class="nome">{{ a.original | truncate(22) }}</span>
                                 {% if a.tamanho_fmt %}<span class="tam">{{ a.tamanho_fmt }}</span>{% endif %}
                             </a>
@@ -401,16 +492,21 @@
             <div class="card-body py-2 px-3">
                 <div class="d-flex flex-column gap-2" style="font-size:.82rem;">
                     <div class="text-muted">
-                        <i class="bi bi-calendar-plus me-1"></i>Aberto em:
+                        <i class="fas fa-calendar-plus me-1"></i>Aberto em:
                         <strong>{{ chamado.criado_em | br_datetime }}</strong>
                     </div>
                     <div class="text-muted">
-                        <i class="bi bi-clock-history me-1"></i>Última atualização:
+                        <i class="fas fa-clock-history me-1"></i>Última atualização:
                         <strong>{{ chamado.atualizado_em | br_datetime }}</strong>
+                        {% if chamado.ultimo_editor %}
+                        <div class="mt-1">
+                            <i class="fas fa-user-pen me-1"></i>por <strong>{{ chamado.ultimo_editor.nome }}</strong>
+                        </div>
+                        {% endif %}
                     </div>
                     {% if chamado.fechado_em %}
                     <div class="text-muted">
-                        <i class="bi bi-check-circle text-success me-1"></i>Fechado em:
+                        <i class="fas fa-check-circle text-success me-1"></i>Fechado em:
                         <strong>{{ chamado.fechado_em | br_datetime }}</strong>
                     </div>
                     {% endif %}
@@ -425,9 +521,9 @@
             <div class="card-header d-flex align-items-center justify-content-between">
                 <span>
                     {% if chamado.equipamento %}
-                    <i class="bi bi-pc-display me-2 text-primary"></i>Histórico do Equipamento
+                    <i class="fas fa-desktop me-2 text-primary"></i>Histórico do Equipamento
                     {% else %}
-                    <i class="bi bi-door-open me-2 text-warning"></i>Histórico da Sala
+                    <i class="fas fa-door-open me-2 text-warning"></i>Histórico da Sala
                     {% endif %}
                 </span>
                 <span class="badge bg-secondary rounded-pill">{{ _oc_total }}</span>
@@ -459,7 +555,7 @@
                 {% if _oc_total > 3 %}
                 <div class="text-center py-2 border-top">
                     <button type="button" class="btn btn-link btn-sm text-muted p-0" id="btnVerMaisOC">
-                        <i class="bi bi-chevron-down me-1"></i>Ver mais {{ _oc_total - 3 }} chamado{{ 's' if _oc_total - 3 > 1 else '' }}
+                        <i class="fas fa-chevron-down me-1"></i>Ver mais {{ _oc_total - 3 }} chamado{{ 's' if _oc_total - 3 > 1 else '' }}
                     </button>
                 </div>
                 {% endif %}
@@ -470,7 +566,7 @@
         {# ── Alterar status ──────────────────────────────────── #}
         {% if chamado.status not in ['concluido', 'cancelado'] %}
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-arrow-repeat me-2"></i>Alterar Status</div>
+            <div class="card-header"><i class="fas fa-arrows-rotate me-2"></i>Alterar Status</div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('chamados.atualizar_status', id=chamado.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -485,13 +581,14 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label form-label-sm">Setor</label>
-                        <select name="setor_id" class="form-select form-select-sm">
-                            <option value="">Manter atual</option>
-                            {% for s in setores %}
-                            <option value="{{ s.id }}" {% if chamado.setor_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                        <label class="form-label form-label-sm">Unidade responsável</label>
+                        <select name="unidade_responsavel_id" class="form-select form-select-sm">
+                            <option value="0" {% if not chamado.unidade_responsavel_id %}selected{% endif %}>— Nenhuma —</option>
+                            {% for u in unidades_responsaveis %}
+                            <option value="{{ u.id }}" {% if chamado.unidade_responsavel_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
                             {% endfor %}
                         </select>
+                        <small class="text-muted">Unidades que tratam chamados {{ chamado.tipo_label }}</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label form-label-sm">Observação</label>
@@ -499,17 +596,37 @@
                                   placeholder="Motivo ou ação tomada..."></textarea>
                     </div>
                     <button type="submit" class="btn btn-warning btn-sm w-100">
-                        <i class="bi bi-arrow-repeat me-1"></i>Alterar Status
+                        <i class="fas fa-arrows-rotate me-1"></i>Alterar Status
                     </button>
                 </form>
             </div>
         </div>
+
+        {% if pode_revisar_gut and chamado.gut_solicitante_preenchido %}
+        <div class="card mb-3">
+            <div class="card-header py-2"><i class="fas fa-sliders me-2"></i>Revisar prioridade (setor)</div>
+            <div class="card-body py-3">
+                <p class="small text-muted mb-2">
+                    Mantém o GUT do solicitante. Só registra alteração se os valores forem diferentes.
+                </p>
+                <form method="POST" action="{{ url_for('chamados.revisar_prioridade', id=chamado.id) }}" class="gut-revisao-sidebar">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% with gravidade_sel=chamado.gut_exec_gravidade or chamado.sa_gravidade, urgencia_sel=chamado.gut_exec_urgencia or chamado.sa_urgencia, tendencia_sel=chamado.gut_exec_tendencia or chamado.sa_tendencia, required=true, compact=true %}
+                    {% include 'shared/_gut_priorizacao.html' %}
+                    {% endwith %}
+                    <button type="submit" class="btn btn-outline-primary btn-sm w-100 mt-3">
+                        <i class="fas fa-check me-1"></i>Salvar revisão
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
         {% else %}
         {# Chamado fechado — mostra status em destaque #}
         <div class="card mb-3">
             <div class="card-body text-center py-3">
                 <span class="badge bg-{{ chamado.status_badge }} fs-5 px-3 py-2">
-                    <i class="bi bi-{{ 'check-circle' if chamado.status == 'concluido' else 'x-circle' }} me-2"></i>
+                    <i class="{{ 'fas fa-check-circle' if chamado.status == 'concluido' else 'fas fa-times-circle' }} me-2"></i>
                     {{ chamado.status_label }}
                 </span>
                 {% if chamado.fechado_em %}
@@ -536,7 +653,7 @@
 
                 <div class="modal-header" id="andModalHeader">
                     <h5 class="modal-title" id="modalAndamentoLabel">
-                        <i class="bi bi-plus-circle me-2 text-primary" id="andModalIcone"></i>
+                        <i class="fas fa-plus-circle me-2 text-primary" id="andModalIcone"></i>
                         <span id="andModalTitulo">Novo Andamento</span>
                         <small class="text-muted fw-normal ms-2">{{ chamado.numero }}</small>
                     </h5>
@@ -550,25 +667,25 @@
                         <label class="form-label fw-semibold">Tipo de andamento</label>
                         <div class="d-flex flex-wrap gap-2" id="tipoAndamentoBtns">
                             <button type="button" class="btn btn-sm btn-primary and-tipo-btn active"
-                                    data-tipo="andamento" data-icone="bi-chat-left-text"
+                                    data-tipo="andamento" data-icone="fas fa-comment"
                                     data-titulo="Andamento" data-cor="primary">
-                                <i class="bi bi-chat-left-text me-1"></i>Andamento
+                                <i class="fas fa-chat-left-text me-1"></i>Andamento
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-warning and-tipo-btn"
-                                    data-tipo="pedido_info" data-icone="bi-question-circle"
+                                    data-tipo="pedido_info" data-icone="fas fa-question-circle"
                                     data-titulo="Pedido de Informação" data-cor="warning">
-                                <i class="bi bi-question-circle me-1"></i>Pedido de Informação
+                                <i class="fas fa-question-circle me-1"></i>Pedido de Informação
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-danger and-tipo-btn"
-                                    data-tipo="alerta" data-icone="bi-exclamation-triangle"
+                                    data-tipo="alerta" data-icone="fas fa-exclamation-triangle"
                                     data-titulo="Alerta / Pendência" data-cor="danger">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Alerta / Pendência
+                                <i class="fas fa-exclamation-triangle me-1"></i>Alerta / Pendência
                             </button>
                             {% if current_user.pode('fechar_chamado') %}
                             <button type="button" class="btn btn-sm btn-outline-success and-tipo-btn"
-                                    data-tipo="nota_encerramento" data-icone="bi-file-check"
+                                    data-tipo="nota_encerramento" data-icone="fas fa-file-check"
                                     data-titulo="Nota de Encerramento" data-cor="success">
-                                <i class="bi bi-file-check me-1"></i>Nota de Encerramento
+                                <i class="fas fa-file-check me-1"></i>Nota de Encerramento
                             </button>
                             {% endif %}
                         </div>
@@ -604,7 +721,7 @@
                                            application/vnd.openxmlformats-officedocument.wordprocessingml.document,
                                            application/vnd.ms-excel,
                                            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
-                            <i class="bi bi-paperclip fs-4 text-muted d-block mb-1"></i>
+                            <i class="fas fa-paperclip fs-4 text-muted d-block mb-1"></i>
                             <div class="small text-muted">Clique ou arraste arquivos aqui</div>
                         </div>
                         <div class="and-preview-grid" id="andPreviewGrid"></div>
@@ -614,7 +731,7 @@
                     {# ── Contrato vinculado ────────────────────────────── #}
                     <div class="mb-3">
                         <label class="form-label d-flex align-items-center gap-2">
-                            <i class="bi bi-file-earmark-text text-secondary"></i>
+                            <i class="fas fa-file-contract text-secondary"></i>
                             Contrato vinculado
                             <span class="text-muted fw-normal small">(opcional)</span>
                             {% if chamado.equipamento %}
@@ -639,7 +756,7 @@
                         </select>
                         {% elif chamado.equipamento %}
                         <div class="alert alert-warning py-2 px-3 mb-0" style="font-size:.82rem;">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <i class="fas fa-exclamation-triangle me-2"></i>
                             Nenhum contrato vigente cobre <strong>{{ chamado.equipamento.nome_display }}</strong>.
                             <a href="{{ url_for('contratos.listar') }}" target="_blank" class="alert-link ms-1">
                                 Gerenciar contratos
@@ -647,7 +764,7 @@
                         </div>
                         {% else %}
                         <div class="alert alert-info py-2 px-3 mb-0" style="font-size:.82rem;">
-                            <i class="bi bi-info-circle me-2"></i>
+                            <i class="fas fa-info-circle me-2"></i>
                             Nenhum contrato vigente cadastrado no sistema.
                         </div>
                         {% endif %}
@@ -684,7 +801,7 @@
                         Cancelar
                     </button>
                     <button type="submit" class="btn btn-primary" id="andBtnSubmit">
-                        <i class="bi bi-check-circle me-1"></i>Registrar Andamento
+                        <i class="fas fa-check-circle me-1"></i>Registrar Andamento
                     </button>
                 </div>
             </form>
@@ -696,6 +813,9 @@
 {% endblock %}
 
 {% block scripts %}
+{% if pode_revisar_gut and chamado.gut_solicitante_preenchido %}
+{% include 'shared/_gut_priorizacao_script.html' %}
+{% endif %}
 <script>
 (function () {
     /* ── Tipo de andamento ─────────────────────────────────────── */
@@ -729,11 +849,11 @@
             andTipoInfo.textContent = cfg.info;
             andAcaoInput.placeholder = cfg.placeholder;
             andModalTit.textContent  = btn.dataset.titulo || 'Novo Andamento';
-            andModalIco.className    = `bi ${btn.dataset.icone} me-2 text-${cor}`;
+            andModalIco.className    = `${btn.dataset.icone} me-2 text-${cor}`;
 
             // Botão de submit
             btnSubmit.className = `btn ${cfg.submitCls}`;
-            btnSubmit.innerHTML = `<i class="bi bi-check-circle me-1"></i>${cfg.submitLabel}`;
+            btnSubmit.innerHTML = `<i class="fas fa-check-circle me-1"></i>${cfg.submitLabel}`;
 
             // Nota de encerramento: oculta seleção de status (força concluído), mostra aviso
             if (tipo === 'nota_encerramento') {
@@ -780,18 +900,18 @@
             } else {
                 const ico = document.createElement('div');
                 ico.className = 'and-prev-icon';
-                let iconeClass = 'bi-paperclip';
-                if (f.type === 'application/pdf') iconeClass = 'bi-file-pdf text-danger';
-                else if (f.type.startsWith('video/')) iconeClass = 'bi-camera-video text-warning';
-                else if (f.type.includes('word')) iconeClass = 'bi-file-word text-primary';
-                else if (f.type.includes('excel') || f.type.includes('spreadsheet')) iconeClass = 'bi-file-excel text-success';
-                ico.innerHTML = `<i class="bi ${iconeClass}"></i><span>${f.name.split('.').pop().toUpperCase()}</span>`;
+                let iconeClass = 'fas fa-paperclip';
+                if (f.type === 'application/pdf') iconeClass = 'fas fa-file-pdf text-danger';
+                else if (f.type.startsWith('video/')) iconeClass = 'fas fa-video text-warning';
+                else if (f.type.includes('word')) iconeClass = 'fas fa-file-word text-primary';
+                else if (f.type.includes('excel') || f.type.includes('spreadsheet')) iconeClass = 'fas fa-file-excel text-success';
+                ico.innerHTML = `<i class="${iconeClass}"></i><span>${f.name.split('.').pop().toUpperCase()}</span>`;
                 item.appendChild(ico);
             }
 
             const rm = document.createElement('button');
             rm.type = 'button'; rm.className = 'rm-btn';
-            rm.innerHTML = '<i class="bi bi-x"></i>';
+            rm.innerHTML = '<i class="fas fa-times"></i>';
             rm.addEventListener('click', () => { arquivos.splice(i, 1); renderPreview(); syncInput(); });
             item.appendChild(rm);
             grid.appendChild(item);
@@ -826,8 +946,8 @@
             const expandido = !extras[0].classList.contains('d-none');
             extras.forEach(el => el.classList.toggle('d-none', expandido));
             this.innerHTML = expandido
-                ? `<i class="bi bi-chevron-down me-1"></i>${this.dataset.labelMais}`
-                : `<i class="bi bi-chevron-up me-1"></i>Ver menos`;
+                ? `<i class="fas fa-chevron-down me-1"></i>${this.dataset.labelMais}`
+                : `<i class="fas fa-chevron-up me-1"></i>Ver menos`;
         });
         // guarda o label original para restaurar
         btnVerMais.dataset.labelMais = btnVerMais.textContent.trim();

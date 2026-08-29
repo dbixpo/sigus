@@ -165,7 +165,6 @@ CBOS = [
     ('224120', 'Preparador Físico'),
     ('234410', 'Professor de Educação Física no Ensino Superior'),
     ('224140', 'Profissional de Educação Física na Saúde'),
-    ('317110', 'Programador de sistemas de informação'),
     ('251550', 'Psicanalista'),
     ('251510', 'Psicólogo Clínico'),
     ('251540', 'Psicólogo do Trabalho'),
@@ -294,9 +293,17 @@ class Usuario(UserMixin, db.Model):
 
     @property
     def cbo_label(self):
+        if not self.cbo:
+            return '—'
+        # Busca do banco de dados primeiro
+        from app.models.cbo import CBO
+        cbo_obj = CBO.query.filter_by(codigo=self.cbo).first()
+        if cbo_obj:
+            return f'{cbo_obj.codigo} – {cbo_obj.descricao}'
+        # Fallback para a lista hardcoded (caso o CBO não esteja no banco ainda)
         for cod, desc in CBOS:
             if cod == self.cbo:
-                return f'{cod} - {desc}'
+                return f'{cod} – {desc}'
         return self.cbo or '—'
 
     @property
@@ -348,20 +355,14 @@ class Usuario(UserMixin, db.Model):
 
     def ids_unidades_efetivos(self):
         """Retorna lista de ids de unidades para ações (aceitar transferência, lojinha, etc.).
-        Considera unidade_padrao_id: gestor central em 'Todas' retorna None; com unidade
-        selecionada retorna [id]. Usuários com vínculos: retorna unidade_padrao se definida
-        e válida, senão todas as vinculadas."""
-        if self.pode('ver_todas_unidades'):
-            if self.unidade_padrao_id:
-                un = self.unidade_padrao
-                if un and un.status == 'ativa':
-                    return [self.unidade_padrao_id]
-            return None  # Todas
+        Sempre filtra pelas unidades vinculadas ao usuário (opção 'Todas' removida do navbar)."""
         ids = [uu.unidade_id for uu in self.unidades.filter_by(ativo=True).all()]
         if not ids:
             return None
         if self.unidade_padrao_id and self.unidade_padrao_id in ids:
-            return [self.unidade_padrao_id]
+            un = self.unidade_padrao
+            if un and un.status == 'ativa':
+                return [self.unidade_padrao_id]
         return ids
 
     @property
@@ -399,6 +400,32 @@ class Usuario(UserMixin, db.Model):
         return list(out)
 
     @property
+    def unidade_logada(self):
+        """Unidade selecionada no navbar (contexto de trabalho após login)."""
+        if self.unidade_padrao_id and self.unidade_padrao:
+            u = self.unidade_padrao
+            if u.status == 'ativa':
+                if not self.requer_vinculo:
+                    return u
+                if self.unidades.filter_by(unidade_id=u.id, ativo=True).first():
+                    return u
+        ativas = self.unidades_ativas
+        return ativas[0] if len(ativas) == 1 else None
+
+    @property
+    def unidade_trabalho(self):
+        """Alias — mesma unidade efetiva da navbar."""
+        return self.unidade_logada
+
+    @property
+    def pode_ver_gestao_chamados(self):
+        """Gestão de chamados: permissão + unidade logada que trata algum tipo."""
+        if not self.pode('gerir_chamados_setor') and not self.pode('ver_chamados_todos'):
+            return False
+        u = self.unidade_logada
+        return u is not None and u.trata_chamados
+
+    @property
     def tem_setor(self):
         """True se o usuário está vinculado a pelo menos um setor de manutenção,
         ou se tem perfil que vê todos os chamados (admin, gestor central)."""
@@ -415,14 +442,35 @@ class Usuario(UserMixin, db.Model):
             return False
         # Casos especiais que dependem de outros fatores
         if acao == 'gerir_chamados_setor':
-            return self.tem_setor
+            # Verifica se tem permissão E se tem setor vinculado
+            from app.models.perfil_permissao import PerfilPermissao
+            tem_perm = PerfilPermissao.tem_permissao(self.perfil, 'OP_GestaoChamados', 'ver')
+            return tem_perm and self.tem_setor
         # Demais ações: consulta perfil_permissoes
-        from app.models.perfil_permissao import PerfilPermissao, ACAO_PARA_SECAO_TIPO
+        from app.models.perfil_permissao import PerfilPermissao, ACAO_PARA_SECAO_TIPO, SECOES
         mapeamento = ACAO_PARA_SECAO_TIPO.get(acao)
         if not mapeamento:
             return False
         secao, tipo = mapeamento
-        return PerfilPermissao.tem_permissao(self.perfil, secao, tipo)
+        
+        # Verifica permissão direta
+        tem_perm = PerfilPermissao.tem_permissao(self.perfil, secao, tipo)
+        if tem_perm:
+            return True
+        
+        # Se for tipo "ver" e não tem permissão direta, verifica seção pai
+        if tipo == 'ver':
+            # Encontra seção pai
+            secao_pai = None
+            for sec_key, _label, _icon, pai in SECOES:
+                if sec_key == secao and pai:
+                    secao_pai = pai
+                    break
+            if secao_pai:
+                # Se seção pai tem "ver", permite acesso
+                return PerfilPermissao.tem_permissao(self.perfil, secao_pai, 'ver')
+        
+        return False
 
     def __repr__(self):
         return f'<Usuario {self.email} [{self.perfil}]>'

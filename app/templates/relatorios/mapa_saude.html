@@ -1,0 +1,993 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+
+{% block title %}Mapa da Saúde{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    :root { --sigus-mapa-vh: 84vh; }
+
+    /* overflow:hidden no card mantém altura/largura estáveis; tooltips ficam dentro da área do mapa (clamp no JS) */
+    .sigus-mapa-col .card,
+    .sigus-mapa-col .card-body {
+        overflow: hidden;
+        border-radius: 14px;
+    }
+    #mapaSaude {
+        height: var(--sigus-mapa-vh);
+        width: 100%;
+        border-radius: 14px;
+        position: relative;
+        z-index: 0;
+    }
+    /* Leaflet precisa de overflow:hidden no container para respeitar a caixa (#mapaSaude); visible quebrava a “dimensão” na tela */
+    #mapaSaude.leaflet-container {
+        overflow: hidden;
+        border-radius: 14px;
+        font-family: inherit;
+    }
+    .leaflet-tooltip-pane {
+        z-index: 900 !important;
+    }
+    .sigus-tip-outer {
+        display: inline-block;
+        will-change: transform;
+    }
+
+    @media (max-width: 767px) {
+        :root { --sigus-mapa-vh: 74vh; }
+    }
+
+    /* Evita a coluna de filtros estourar a viewport: legenda vira scroll interno */
+    .sigus-mapa-col,
+    .sigus-filtros-col {
+        display: flex;
+        flex-direction: column;
+    }
+    .sigus-filtros-card {
+        height: var(--sigus-mapa-vh);
+        overflow: hidden;
+    }
+    .sigus-filtros-body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    #mapaLegenda {
+        overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    #mapaLegenda .sigus-legend-tipo-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        min-width: 0;
+    }
+    #mapaLegenda .sigus-legend-tipo-sigla {
+        font-size: 0.92rem;
+        font-weight: 600;
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+        color: var(--bs-body-color, #0f172a);
+    }
+    #mapaLegenda .sigus-legend-tipo-nome {
+        font-size: calc(0.52rem + 2px);
+        line-height: 1.2;
+        margin-top: 0;
+        opacity: 0.9;
+    }
+    #mapaLegenda .sigus-legend-count {
+        font-size: 0.65rem;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+    }
+    #mapaLegenda > .border.rounded {
+        padding: 0.4rem 0.45rem !important;
+    }
+    #mapaLegenda .sigus-legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+    }
+
+    /* Força animação do collapse mesmo com "reduzir animações" do SO ligado */
+    @media (prefers-reduced-motion: reduce) {
+        #mapaLegenda .collapsing {
+            transition: height .35s ease !important;
+        }
+    }
+
+    /* Pin inspirado em marcador */
+    .sigus-pin {
+        width: 18px;
+        height: 18px;
+        background: var(--pin-color, #1A82B8);
+        border: 2px solid #fff;
+        border-radius: 50% 50% 50% 0;
+        transform: rotate(-45deg);
+        box-shadow: 0 3px 12px rgba(0,0,0,.25);
+        position: relative;
+    }
+    .sigus-pin::after {
+        content: '';
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 50%;
+        top: 5px;
+        left: 5px;
+        transform: rotate(45deg);
+        opacity: .95;
+    }
+
+    /* Tooltip / card da unidade (hover na bolinha) */
+    /* Leaflet padrão: max-width ~200px e nowrap — quebra endereço longo no card */
+    .sigus-unidade-tooltip.leaflet-tooltip {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        pointer-events: auto;
+        max-width: min(500px, calc(100vw - 28px)) !important;
+        white-space: normal !important;
+    }
+    .sigus-unidade-tooltip .leaflet-tooltip-content {
+        margin: 0 !important;
+        padding: 0 !important;
+        white-space: normal !important;
+        max-width: none !important;
+    }
+    .sigus-unidade-tooltip.leaflet-tooltip-top::before { border-top-color: #fff !important; }
+    .sigus-unidade-tooltip.leaflet-tooltip-bottom::before { border-bottom-color: #fff !important; }
+    .sigus-unidade-tooltip.leaflet-tooltip-left::before { border-left-color: #fff !important; }
+    .sigus-unidade-tooltip.leaflet-tooltip-right::before { border-right-color: #fff !important; }
+    .sigus-unidade-tooltip::before {
+        filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.08));
+    }
+
+    .sigus-tip {
+        --sigus-tip-accent: var(--card-color, #1A82B8);
+        width: min(440px, calc(100vw - 28px));
+        max-width: 440px;
+        box-sizing: border-box;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow:
+            0 4px 6px -1px rgba(15, 23, 42, 0.07),
+            0 12px 24px -4px rgba(15, 23, 42, 0.12);
+        overflow: hidden;
+        font-family: 'Inter', system-ui, sans-serif;
+        text-align: left;
+    }
+    .sigus-tip__accent {
+        height: 4px;
+        background: var(--sigus-tip-accent);
+    }
+    .sigus-tip__head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 14px 10px;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .sigus-tip__head-text {
+        min-width: 0;
+        flex: 1;
+    }
+    .sigus-tip__close {
+        flex-shrink: 0;
+        margin: -4px -6px 0 0;
+        padding: 6px 8px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #64748b;
+        line-height: 1;
+        cursor: pointer;
+    }
+    .sigus-tip__close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+    .sigus-tip--pinned {
+        outline: 2px solid rgba(26, 130, 184, 0.35);
+        outline-offset: -1px;
+    }
+    .sigus-tip__title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        line-height: 1.35;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+        overflow-wrap: anywhere;
+    }
+    .sigus-tip__badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+        align-items: center;
+    }
+    .sigus-tip__badge {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #475569;
+        background: #f1f5f9;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+    .sigus-tip__badge--cnes {
+        color: #0f172a;
+        background: #f1f5f9;
+        border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    .sigus-tip__body {
+        padding: 10px 14px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .sigus-tip__row {
+        display: grid;
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 8px 10px;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        align-items: start;
+    }
+    .sigus-tip__label {
+        color: #94a3b8;
+        font-weight: 600;
+        font-size: 0.6875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding-top: 2px;
+    }
+    .sigus-tip__value {
+        color: #1e293b;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+    .sigus-tip__value--muted {
+        color: #64748b;
+    }
+    .sigus-tip__footer {
+        padding: 0 14px 12px;
+    }
+    .sigus-tip__maps {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #fff !important;
+        text-decoration: none !important;
+        border-radius: 8px;
+        background: var(--sigus-tip-accent);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        transition: filter 0.15s ease, transform 0.15s ease;
+    }
+    .sigus-tip__maps:hover {
+        filter: brightness(1.06);
+        transform: translateY(-1px);
+        color: #fff !important;
+    }
+    .sigus-tip__maps--disabled {
+        background: #e2e8f0;
+        color: #94a3b8 !important;
+        cursor: default;
+        pointer-events: none;
+        box-shadow: none;
+    }
+    .sigus-tip.sigus-tip--predio {
+        max-width: 480px;
+        width: min(480px, calc(100vw - 28px));
+    }
+    .sigus-tip__subtitle {
+        font-size: 0.8125rem;
+        color: #64748b;
+        font-weight: 500;
+        margin-top: 6px;
+        line-height: 1.35;
+    }
+        .sigus-tip__predio-list {
+            max-height: 240px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+    .sigus-tip__predio-unit {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px 12px;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid rgba(15, 23, 42, 0.07);
+    }
+    .sigus-tip__predio-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 5px;
+        box-shadow: 0 0 0 2px #fff, 0 1px 3px rgba(15, 23, 42, 0.2);
+    }
+    .sigus-tip__predio-unit-body { min-width: 0; flex: 1; }
+    .sigus-tip__predio-unit-name {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1.35;
+    }
+    .sigus-tip__predio-unit-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        margin-top: 6px;
+    }
+    .sigus-tip__predio-pill {
+        font-size: 0.625rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 2px 7px;
+        border-radius: 5px;
+        background: #e2e8f0;
+        color: #475569;
+    }
+    .sigus-tip__predio-cnes {
+        font-size: 0.6875rem;
+        color: #64748b;
+    }
+    .sigus-legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 4px;
+        border: 1px solid rgba(0,0,0,.08);
+        box-shadow: 0 6px 14px rgba(0,0,0,.10);
+        flex-shrink: 0;
+    }
+
+    /* className vazio removia o estilo base do Leaflet e podia deixar o PIN sem área clicável/visível */
+    .leaflet-div-icon.sigus-marker-wrap {
+        background: transparent !important;
+        border: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center justify-content-between gap-2 flex-wrap">
+    <h1 class="m-0"><i class="fas fa-map-location-dot"></i> Mapa da Saúde</h1>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn btn-outline-primary btn-sm" id="mapaBtnCopiarLink" title="Copiar link do mapa público">
+            <i class="fas fa-link me-1"></i>Copiar link público
+        </button>
+        <span class="small text-muted d-none" id="mapaLinkFeedback">Link copiado.</span>
+        <input type="text" class="visually-hidden" id="mapaLinkCompartilhar" readonly autocomplete="off" tabindex="-1" aria-hidden="true" />
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-9 sigus-mapa-col">
+        <div class="card">
+            <div class="card-body p-0 position-relative">
+                <div id="mapaLoading" class="position-absolute top-50 start-50 translate-middle text-muted small">
+                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                    Carregando unidades no mapa...
+                </div>
+                <div id="mapaSaude"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 sigus-filtros-col">
+        <div class="card sigus-filtros-card">
+            <div class="card-body sigus-filtros-body">
+                <div class="d-flex align-items-center justify-content-between gap-2">
+                    <div class="fw-semibold">Filtros por legenda</div>
+                </div>
+                <div class="mt-2 d-flex flex-column gap-1" id="mapaLegenda"></div>
+                <hr class="my-3" />
+                <div class="small text-muted mt-3 pt-3 border-top">
+                    Use a legenda para filtrar por tipo e unidade. Várias unidades no mesmo <strong>prédio</strong> viram um PIN único (cinza, maior) com lista no card. Passe o mouse ou clique para fixar.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    (function () {
+        const elMapa = document.getElementById('mapaSaude');
+        if (!elMapa) return;
+
+        // Centro ajustado levemente para "puxar" o mapa para baixo
+        // (deixa a parte de cima de Sorocaba mais visível no zoom inicial).
+        // Centro levemente ao sul para caber a pontinha sul; zoom 11 = enquadramento mais amplo (menos “aperto” que 12)
+        const sorocabaCenter = [-23.4685, -47.4521];
+        const map = L.map('mapaSaude', {
+            zoomControl: true,
+            worldCopyJump: true,
+            /* Menos agressivo: roda do mouse precisa de mais pixels por “degrau”; +/- em passos menores (Leaflet escala os tiles). */
+            zoomSnap: 0.25,
+            zoomDelta: 0.25,
+            wheelPxPerZoomLevel: 480
+        }).setView(sorocabaCenter, 11.8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        (function ensureAbrangPane() {
+            if (map.getPane('sigusAbrang')) return;
+            const p = map.createPane('sigusAbrang');
+            /* Abaixo do overlayPane (400): pins (CircleMarker) ficam por cima das linhas */
+            p.style.zIndex = 390;
+            p.style.pointerEvents = 'none';
+        })();
+
+        const mapaLoading = document.getElementById('mapaLoading');
+        const legendaEl = document.getElementById('mapaLegenda');
+        const totalEl = null;
+        const totalBadge = null;
+        const avisoLocalizacaoEl = null;
+        const layerPins = L.layerGroup().addTo(map);
+        let layerAbrang = null;
+        let allMarkers = [];
+        let sigusOpenTooltip = null;
+        let sigusPinnedMarker = null;
+        let sigusMapClickFromPin = false;
+
+        function escapeHtml(str) {
+            return (str ?? '').toString().replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[m]);
+        }
+
+        function absUrl(path) {
+            const base = (window.SIGUS_BASE_URL || '/sigus').replace(/\/$/, '');
+            return `${window.location.origin}${base}${path.startsWith('/') ? path : '/' + path}`;
+        }
+        const urlDados = absUrl("{{ url_for('relatorios.mapa_saude_dados') }}".replace(/^\/sigus/, ''));
+        const urlAbrang = absUrl("{{ url_for('relatorios.mapa_saude_abrang') }}".replace(/^\/sigus/, ''));
+
+        const linkCompartilhar = document.getElementById('mapaLinkCompartilhar');
+        const btnCopiarLink = document.getElementById('mapaBtnCopiarLink');
+        const linkFeedback = document.getElementById('mapaLinkFeedback');
+        const mapaPublicoPath = {{ (mapa_publico_url or '')|tojson }};
+        const urlCompartilhar = `${window.location.origin}${mapaPublicoPath || ''}`;
+        if (linkCompartilhar) linkCompartilhar.value = urlCompartilhar;
+        if (btnCopiarLink && linkCompartilhar) {
+            btnCopiarLink.addEventListener('click', function () {
+                navigator.clipboard.writeText(urlCompartilhar).then(() => {
+                    if (linkFeedback) linkFeedback.classList.remove('d-none');
+                    setTimeout(() => linkFeedback && linkFeedback.classList.add('d-none'), 1500);
+                }).catch(() => {});
+            });
+        }
+
+        function markerTipoKey(m) {
+            if (!m) return '—';
+            if (m.tipo_key != null && String(m.tipo_key).trim() !== '') return String(m.tipo_key);
+            return String(m.tipo || '—');
+        }
+
+        function getFilteredMarkers() {
+            const typeChecks = Array.from(document.querySelectorAll('.legend-type-check'));
+            const unitChecks = Array.from(document.querySelectorAll('.legend-unit-check'));
+            const types = new Set(typeChecks.filter(c => c.checked).map(c => c.value));
+            const units = new Set(unitChecks.filter(c => c.checked).map(c => c.value));
+            return allMarkers.filter(m => types.has(markerTipoKey(m)) && units.has(String(m.id)));
+        }
+
+        function updateLegendTipoCounts() {
+            if (!legendaEl) return;
+            legendaEl.querySelectorAll('[data-tipo-key]').forEach(wrap => {
+                const checks = wrap.querySelectorAll('.legend-unit-check');
+                const total = checks.length;
+                const sel = Array.from(checks).filter(c => c.checked).length;
+                const el = wrap.querySelector('.legend-tipo-count');
+                if (el) el.textContent = `${sel}/${total}`;
+            });
+        }
+
+        function cardHtml(u, opts) {
+            const pinned = !!(opts && opts.pinned);
+            const maps = (u.endereco_link || '').toString().trim();
+            const cor = u.cor || '#1A82B8';
+            const row = (label, val, muted) => {
+                const v = (val ?? '').toString().trim() || '—';
+                const cls = muted && v === '—' ? 'sigus-tip__value sigus-tip__value--muted' : 'sigus-tip__value';
+                return `<div class="sigus-tip__row"><span class="sigus-tip__label">${escapeHtml(label)}</span><span class="${cls}">${escapeHtml(v)}</span></div>`;
+            };
+            const mapsBlock = maps
+                ? `<div class="sigus-tip__footer"><a class="sigus-tip__maps" href="${escapeHtml(maps)}" target="_blank" rel="noopener"><i class="fas fa-location-arrow"></i> Abrir no Google Maps</a></div>`
+                : `<div class="sigus-tip__footer"><span class="sigus-tip__maps sigus-tip__maps--disabled" aria-disabled="true"><i class="fas fa-ban"></i> Sem link do Maps</span></div>`;
+            const closeBtn = pinned
+                ? '<button type="button" class="sigus-tip__close" title="Fechar" aria-label="Fechar card fixo"><i class="fas fa-times" aria-hidden="true"></i></button>'
+                : '';
+            const tipCls = pinned ? 'sigus-tip sigus-tip--pinned' : 'sigus-tip';
+            return `
+                <div class="sigus-tip-outer">
+                <div class="${tipCls}" style="--card-color:${cor}">
+                    <div class="sigus-tip__accent" aria-hidden="true"></div>
+                    <div class="sigus-tip__head">
+                        <div class="sigus-tip__head-text">
+                            <div class="sigus-tip__title">${escapeHtml(u.nome)}</div>
+                            <div class="sigus-tip__badges">
+                                <span class="sigus-tip__badge sigus-tip__badge--cnes">CNES ${escapeHtml(u.cnes || '—')}</span>
+                                <span class="sigus-tip__badge">${escapeHtml(u.tipo || '—')}</span>
+                            </div>
+                        </div>
+                        ${closeBtn}
+                    </div>
+                    <div class="sigus-tip__body">
+                        ${row('Endereço', u.endereco)}
+                        ${row('Gestor', u.gestores_texto, true)}
+                        ${row('Telefone', u.telefone, true)}
+                        ${row('E-mail', u.email, true)}
+                    </div>
+                    ${mapsBlock}
+                </div>
+                </div>
+            `;
+        }
+
+        function cardHtmlPredio(p, opts) {
+            const pinned = !!(opts && opts.pinned);
+            const maps = (p.endereco_link || '').toString().trim();
+            const cor = p.cor || '#334155';
+            const n = (p.unidades || []).length;
+            const mapsBlock = maps
+                ? `<div class="sigus-tip__footer"><a class="sigus-tip__maps" href="${escapeHtml(maps)}" target="_blank" rel="noopener"><i class="fas fa-location-arrow"></i> Abrir no Google Maps</a></div>`
+                : `<div class="sigus-tip__footer"><span class="sigus-tip__maps sigus-tip__maps--disabled" aria-disabled="true"><i class="fas fa-ban"></i> Sem link do Maps</span></div>`;
+            const closeBtn = pinned
+                ? '<button type="button" class="sigus-tip__close" title="Fechar" aria-label="Fechar card fixo"><i class="fas fa-times" aria-hidden="true"></i></button>'
+                : '';
+            const tipCls = pinned ? 'sigus-tip sigus-tip--pinned sigus-tip--predio' : 'sigus-tip sigus-tip--predio';
+            const unitsHtml = (p.unidades || []).map(u => {
+                const tel = (u.telefone || '').toString().trim();
+                const telLine = tel && tel !== '—'
+                    ? `<div class="sigus-tip__predio-cnes mt-1"><i class="fas fa-phone fa-fw me-1 opacity-50"></i>${escapeHtml(tel)}</div>`
+                    : '';
+                return `
+                    <div class="sigus-tip__predio-unit">
+                        <span class="sigus-tip__predio-dot" style="background:${escapeHtml(u.cor || '#64748B')}" aria-hidden="true"></span>
+                        <div class="sigus-tip__predio-unit-body">
+                            <div class="sigus-tip__predio-unit-name">${escapeHtml(u.nome)}</div>
+                            <div class="sigus-tip__predio-unit-meta">
+                                <span class="sigus-tip__predio-pill">${escapeHtml(u.tipo || '—')}</span>
+                                <span class="sigus-tip__predio-cnes">CNES ${escapeHtml(u.cnes || '—')}</span>
+                            </div>
+                            ${telLine}
+                        </div>
+                    </div>`;
+            }).join('');
+            return `
+                <div class="sigus-tip-outer">
+                <div class="${tipCls}" style="--card-color:${cor}">
+                    <div class="sigus-tip__accent" aria-hidden="true"></div>
+                    <div class="sigus-tip__head">
+                        <div class="sigus-tip__head-text">
+                            <div class="sigus-tip__title"><i class="fas fa-building me-1 opacity-70" aria-hidden="true"></i>${escapeHtml(p.predio_nome || 'Prédio')}</div>
+                            <div class="sigus-tip__subtitle">${n} unidade${n === 1 ? '' : 's'} de saúde neste endereço</div>
+                            <div class="sigus-tip__badges mt-2">
+                                <span class="sigus-tip__badge sigus-tip__badge--cnes">Endereço compartilhado</span>
+                            </div>
+                        </div>
+                        ${closeBtn}
+                    </div>
+                    <div class="sigus-tip__body">
+                        <div class="sigus-tip__row">
+                            <span class="sigus-tip__label">Endereço</span>
+                            <span class="sigus-tip__value">${escapeHtml(p.endereco || '—')}</span>
+                        </div>
+                        <div class="sigus-tip__label mb-1">Unidades no local</div>
+                        <div class="sigus-tip__predio-list">${unitsHtml}</div>
+                    </div>
+                    ${mapsBlock}
+                </div>
+                </div>
+            `;
+        }
+
+        function tipStateHtml(state, opts) {
+            if (!state) return '';
+            if (state.kind === 'predio') return cardHtmlPredio(state.predio, opts);
+            return cardHtml(state.unit, opts);
+        }
+
+        function buildPredioPinPayload(units) {
+            let latSum = 0;
+            let lngSum = 0;
+            let n = 0;
+            units.forEach(u => {
+                const la = typeof u.lat === 'number' ? u.lat : parseFloat(u.lat);
+                const ln = typeof u.lng === 'number' ? u.lng : parseFloat(u.lng);
+                if (Number.isFinite(la) && Number.isFinite(ln)) {
+                    latSum += la;
+                    lngSum += ln;
+                    n += 1;
+                }
+            });
+            const first = units[0];
+            const unidadesSorted = [...units].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt', { sensitivity: 'base' }));
+            return {
+                predio_id: first.predio_id,
+                predio_nome: first.predio_nome || 'Prédio',
+                endereco: first.predio_endereco || first.endereco || '—',
+                endereco_link: (first.predio_endereco_link || first.endereco_link || '').toString().trim(),
+                lat: n ? latSum / n : null,
+                lng: n ? lngSum / n : null,
+                cor: '#334155',
+                unidades: unidadesSorted
+            };
+        }
+
+        function mergePredioPins(unitMarkers) {
+            const byPredio = new Map();
+            const out = [];
+            unitMarkers.forEach(u => {
+                const pid = u.predio_id;
+                if (pid == null || pid === '') {
+                    out.push({ kind: 'unit', unit: u });
+                    return;
+                }
+                const key = String(pid);
+                if (!byPredio.has(key)) byPredio.set(key, []);
+                byPredio.get(key).push(u);
+            });
+            byPredio.forEach(group => {
+                if (group.length < 2) {
+                    group.forEach(u => out.push({ kind: 'unit', unit: u }));
+                } else {
+                    out.push({ kind: 'predio', predio: buildPredioPinPayload(group) });
+                }
+            });
+            return out;
+        }
+
+        function clampSigusTooltipInMap(tooltip) {
+            const tipEl = tooltip && tooltip.getElement && tooltip.getElement();
+            if (!tipEl || !tipEl.classList.contains('sigus-unidade-tooltip')) return;
+            const inner = tipEl.querySelector('.sigus-tip-outer');
+            if (!inner) return;
+            inner.style.transform = '';
+            const mapContainer = map.getContainer();
+            const pad = 12;
+            const run = () => {
+                const c = mapContainer.getBoundingClientRect();
+                const t = inner.getBoundingClientRect();
+                let dx = 0;
+                let dy = 0;
+                if (t.left < c.left + pad) dx = (c.left + pad) - t.left;
+                const rightAfterDx = t.right + dx;
+                if (rightAfterDx > c.right - pad) dx += (c.right - pad) - rightAfterDx;
+                if (t.top < c.top + pad) dy = (c.top + pad) - t.top;
+                const bottomAfterDy = t.bottom + dy;
+                if (bottomAfterDy > c.bottom - pad) dy += (c.bottom - pad) - bottomAfterDy;
+                if (dx || dy) inner.style.transform = `translate(${dx}px, ${dy}px)`;
+            };
+            requestAnimationFrame(() => requestAnimationFrame(run));
+        }
+
+        function sigusFixTooltipWheel(tooltip) {
+            const tipEl = tooltip && tooltip.getElement && tooltip.getElement();
+            if (!tipEl || !tipEl.classList.contains('sigus-unidade-tooltip')) return;
+            if (typeof L.DomEvent === 'undefined' || typeof L.DomEvent.disableScrollPropagation !== 'function') return;
+            if (tooltip._sigusPredioTouchCleanup) {
+                tooltip._sigusPredioTouchCleanup();
+                tooltip._sigusPredioTouchCleanup = null;
+            }
+            L.DomEvent.disableScrollPropagation(tipEl);
+            const card = tipEl.querySelector('.sigus-tip');
+            if (card) L.DomEvent.disableScrollPropagation(card);
+            const list = tipEl.querySelector('.sigus-tip__predio-list');
+            if (list) {
+                L.DomEvent.disableScrollPropagation(list);
+                const stopTouchToMap = (e) => {
+                    e.stopPropagation();
+                };
+                L.DomEvent.on(list, 'touchmove', stopTouchToMap);
+                const offFns = [
+                    () => {
+                        L.DomEvent.off(list, 'touchmove', stopTouchToMap);
+                    }
+                ];
+                if (typeof window.PointerEvent !== 'undefined') {
+                    const stopPointerToMap = (e) => {
+                        if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+                            e.stopPropagation();
+                        }
+                    };
+                    L.DomEvent.on(list, 'pointermove', stopPointerToMap);
+                    offFns.push(() => {
+                        L.DomEvent.off(list, 'pointermove', stopPointerToMap);
+                    });
+                }
+                tooltip._sigusPredioTouchCleanup = () => {
+                    offFns.forEach((fn) => fn());
+                };
+            }
+        }
+
+        map.on('tooltipopen', function (ev) {
+            sigusOpenTooltip = ev.tooltip;
+            sigusFixTooltipWheel(ev.tooltip);
+            clampSigusTooltipInMap(ev.tooltip);
+        });
+        map.on('tooltipclose', function (ev) {
+            const tt = ev.tooltip;
+            if (tt && tt._sigusPredioTouchCleanup) {
+                tt._sigusPredioTouchCleanup();
+                tt._sigusPredioTouchCleanup = null;
+            }
+            if (sigusOpenTooltip === tt) sigusOpenTooltip = null;
+            const tipEl = tt && tt.getElement && tt.getElement();
+            const inner = tipEl && tipEl.querySelector('.sigus-tip-outer');
+            if (inner) inner.style.transform = '';
+        });
+        map.on('moveend zoomend', function () {
+            if (sigusOpenTooltip) clampSigusTooltipInMap(sigusOpenTooltip);
+        });
+
+        function sigusTooltipOpts(permanent) {
+            return {
+                direction: 'auto',
+                /* Com permanent+sticky o Leaflet faz o card seguir o mouse; fixo precisa grudar no PIN */
+                sticky: !permanent,
+                className: 'sigus-unidade-tooltip' + (permanent ? ' sigus-unidade-tooltip--pinned' : ''),
+                offset: [0, -10],
+                opacity: 1,
+                interactive: true,
+                permanent: !!permanent
+            };
+        }
+
+        function unpinSigusMarker(marker) {
+            if (!marker || !marker._sigusState) return;
+            const st = marker._sigusState;
+            marker.unbindTooltip();
+            marker.bindTooltip(tipStateHtml(st, { pinned: false }), sigusTooltipOpts(false));
+            marker.closeTooltip();
+            if (sigusPinnedMarker === marker) sigusPinnedMarker = null;
+        }
+
+        function pinSigusMarker(marker, st) {
+            if (sigusPinnedMarker && sigusPinnedMarker !== marker) {
+                unpinSigusMarker(sigusPinnedMarker);
+            }
+            marker.unbindTooltip();
+            marker.bindTooltip(tipStateHtml(st, { pinned: true }), sigusTooltipOpts(true));
+            marker.openTooltip();
+            sigusPinnedMarker = marker;
+            const tt = marker.getTooltip();
+            if (tt) {
+                requestAnimationFrame(() => requestAnimationFrame(() => clampSigusTooltipInMap(tt)));
+            }
+        }
+
+        function togglePinSigusMarker(marker) {
+            const st = marker._sigusState;
+            if (!st) return;
+            if (sigusPinnedMarker === marker) {
+                unpinSigusMarker(marker);
+            } else {
+                pinSigusMarker(marker, st);
+            }
+        }
+
+        map.on('click', function (e) {
+            if (sigusMapClickFromPin) return;
+            const el = e.originalEvent && e.originalEvent.target;
+            if (el && el.closest) {
+                if (el.closest('.sigus-tip__close')) {
+                    if (sigusPinnedMarker) unpinSigusMarker(sigusPinnedMarker);
+                    return;
+                }
+                if (el.closest('.sigus-unidade-tooltip')) return;
+            }
+            if (sigusPinnedMarker) unpinSigusMarker(sigusPinnedMarker);
+        });
+
+        function renderPins(unitMarkersFlat) {
+            sigusPinnedMarker = null;
+            layerPins.clearLayers();
+            const entries = mergePredioPins(unitMarkersFlat);
+            entries.forEach(entry => {
+                let lat;
+                let lng;
+                let fillColor;
+                let weight = 2;
+                let radius = 9;
+                let st;
+                if (entry.kind === 'unit') {
+                    const u = entry.unit;
+                    lat = typeof u.lat === 'number' ? u.lat : parseFloat(u.lat);
+                    lng = typeof u.lng === 'number' ? u.lng : parseFloat(u.lng);
+                    fillColor = u.cor || '#1A82B8';
+                    st = { kind: 'unit', unit: u };
+                } else {
+                    const p = entry.predio;
+                    lat = typeof p.lat === 'number' ? p.lat : parseFloat(p.lat);
+                    lng = typeof p.lng === 'number' ? p.lng : parseFloat(p.lng);
+                    fillColor = p.cor || '#334155';
+                    weight = 3;
+                    radius = 11;
+                    st = { kind: 'predio', predio: p };
+                }
+                if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+                const marker = L.circleMarker([lat, lng], {
+                    radius,
+                    color: '#fff',
+                    weight,
+                    fillColor,
+                    fillOpacity: .95,
+                    interactive: true
+                }).addTo(layerPins);
+                marker._sigusState = st;
+                marker.bindTooltip(tipStateHtml(st, { pinned: false }), sigusTooltipOpts(false));
+                marker.on('click', function (ev) {
+                    sigusMapClickFromPin = true;
+                    if (ev.originalEvent) {
+                        L.DomEvent.stopPropagation(ev.originalEvent);
+                    }
+                    togglePinSigusMarker(marker);
+                    setTimeout(function () { sigusMapClickFromPin = false; }, 0);
+                });
+            });
+            if (typeof layerPins.bringToFront === 'function') {
+                layerPins.bringToFront();
+            }
+        }
+
+        function applyLegendFilter() {
+            updateLegendTipoCounts();
+            renderPins(getFilteredMarkers());
+        }
+
+        function renderLegendFilters(data) {
+            legendaEl.innerHTML = '';
+            const markers = data.markers || [];
+            const grupos = {};
+            markers.forEach(m => {
+                const t = markerTipoKey(m);
+                if (!grupos[t]) grupos[t] = [];
+                grupos[t].push(m);
+            });
+
+            Object.keys(grupos).sort((a, b) => {
+                const na = (grupos[a][0].tipo_nome || grupos[a][0].tipo || '').toString();
+                const nb = (grupos[b][0].tipo_nome || grupos[b][0].tipo || '').toString();
+                return na.localeCompare(nb, 'pt', { sensitivity: 'base' });
+            }).forEach((tipoKey, idx) => {
+                const id = `legendTipo${idx}`;
+                const cor = (data.tipo_cores || {})[tipoKey] || '#64748B';
+                const first = grupos[tipoKey][0];
+                const sigla = (first.tipo_sigla != null && first.tipo_sigla !== '') ? first.tipo_sigla : '—';
+                const nome = (first.tipo_nome != null && first.tipo_nome !== '') ? first.tipo_nome : (first.tipo || '—');
+                const lblTit = `${sigla} (${nome})`;
+                const unitsHtml = grupos[tipoKey]
+                    .map(u => `<label class="form-check d-flex align-items-center gap-1 mb-1">
+                        <input class="form-check-input legend-unit-check" type="checkbox" value="${u.id}" checked />
+                        <span class="small text-muted text-truncate" title="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</span>
+                    </label>`).join('');
+
+                const item = document.createElement('div');
+                item.className = 'border rounded p-2';
+                item.setAttribute('data-tipo-key', tipoKey);
+                item.innerHTML = `
+                    <div class="d-flex align-items-start justify-content-between gap-1">
+                        <label class="form-check d-flex align-items-start gap-1 m-0 min-w-0 flex-grow-1">
+                            <input class="form-check-input legend-type-check mt-1" type="checkbox" value="${escapeHtml(tipoKey)}" checked />
+                            <span class="sigus-legend-dot flex-shrink-0 mt-1" style="background:${cor}"></span>
+                            <div class="sigus-legend-tipo-stack min-w-0 flex-grow-1" title="${escapeHtml(lblTit)}">
+                                <span class="sigus-legend-tipo-sigla text-truncate d-block w-100">${escapeHtml(sigla)}</span>
+                                <span class="sigus-legend-tipo-nome text-muted text-truncate d-block w-100">${escapeHtml(nome)}</span>
+                            </div>
+                        </label>
+                        <span class="text-muted text-nowrap flex-shrink-0 legend-tipo-count sigus-legend-count pt-1">0/0</span>
+                        <button class="btn btn-sm btn-light border py-0 px-2 flex-shrink-0"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#${id}"
+                                aria-expanded="false"
+                                aria-controls="${id}"
+                                type="button">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse" id="${id}">
+                        <div style="max-height:180px; overflow:auto">${unitsHtml}</div>
+                    </div>
+                `;
+                legendaEl.appendChild(item);
+            });
+
+            legendaEl.querySelectorAll('.legend-type-check').forEach(el => {
+                el.addEventListener('change', function () {
+                    const wrap = this.closest('[data-tipo-key]');
+                    if (!wrap) return applyLegendFilter();
+                    const unitChecks = Array.from(wrap.querySelectorAll('.legend-unit-check'));
+                    if (!this.checked) {
+                        unitChecks.forEach(c => { c.checked = false; });
+                    } else {
+                        unitChecks.forEach(c => { c.checked = true; });
+                    }
+                    applyLegendFilter();
+                });
+            });
+            legendaEl.querySelectorAll('.legend-unit-check').forEach(el => {
+                el.addEventListener('change', function () {
+                    const wrap = this.closest('[data-tipo-key]');
+                    if (wrap) {
+                        const typeCheck = wrap.querySelector('.legend-type-check');
+                        if (typeCheck) {
+                            const anyChecked = Array.from(wrap.querySelectorAll('.legend-unit-check')).some(c => c.checked);
+                            typeCheck.checked = anyChecked;
+                        }
+                    }
+                    applyLegendFilter();
+                });
+            });
+            updateLegendTipoCounts();
+        }
+
+        fetch(urlAbrang, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(r => r.ok ? r.json() : null)
+            .then(d => {
+                if (!d || !d.ok || !d.geojson) return;
+                layerAbrang = L.geoJSON(d.geojson, {
+                    pane: 'sigusAbrang',
+                    interactive: false,
+                    style: () => ({
+                        color: '#0e7490',
+                        weight: 2.5,
+                        opacity: 1,
+                        fillColor: '#0891b2',
+                        fillOpacity: 0.09,
+                        dashArray: '3 5'
+                    })
+                }).addTo(map);
+            })
+            .catch(() => {});
+
+        fetch(urlDados, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(r => r.ok ? r.json() : Promise.reject(r))
+            .then(data => {
+                if (mapaLoading) mapaLoading.style.display = 'none';
+                allMarkers = (data.markers || []).filter(m => m && m.id != null);
+                renderLegendFilters(data);
+                applyLegendFilter();
+            })
+            .catch(() => {
+                if (mapaLoading) mapaLoading.innerHTML = '<i class="fas fa-exclamation-triangle text-warning me-2"></i>Falha ao carregar unidades.';
+            });
+    })();
+</script>
+{% endblock %}
+

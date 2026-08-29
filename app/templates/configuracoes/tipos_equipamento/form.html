@@ -16,7 +16,7 @@
 
 <div class="page-header">
     <h1>
-        {% if tipo %}<i class="{{ tipo.icone }}"></i>{% else %}<i class="bi bi-tags"></i>{% endif %}
+        {% if tipo %}<i class="{{ tipo.icone }}"></i>{% else %}<i class="fas fa-tags"></i>{% endif %}
         {{ 'Editar Tipo de Equipamento' if tipo else 'Novo Tipo de Equipamento' }}
     </h1>
 </div>
@@ -37,19 +37,19 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Ícone Bootstrap Icons</label>
+                    <label class="form-label">Ícone Font Awesome</label>
                     <div class="input-group">
                         <span class="input-group-text" id="iconPreview" style="width:44px; justify-content:center;">
-                            <i class="{{ tipo.icone if tipo else 'bi-box' }}" id="iconEl"></i>
+                            <i class="{{ tipo.icone if tipo else 'fas fa-box' }}" id="iconEl"></i>
                         </span>
                         <input type="text" name="icone" class="form-control" id="iconInput"
-                               value="{{ tipo.icone if tipo else 'bi-box' }}"
-                               placeholder="Ex: bi-pc-display, bi-hospital...">
+                               value="{{ tipo.icone if tipo else 'fas fa-box' }}"
+                               placeholder="Ex: fas fa-desktop, fas fa-hospital...">
                     </div>
                     <div class="form-text">
                         Consulte em
-                        <a href="https://icons.getbootstrap.com" target="_blank">
-                            icons.getbootstrap.com
+                        <a href="https://fontawesome.com/icons" target="_blank">
+                            fontawesome.com/icons
                         </a>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle me-1"></i>
+                        <i class="fas fa-check-circle me-1"></i>
                         {{ 'Salvar Alterações' if tipo else 'Cadastrar Tipo' }}
                     </button>
                     <a href="{{ url_for('configuracoes.tipos_equipamento') }}"
@@ -108,8 +108,8 @@
                             <th style="width:30px;">#</th>
                             <th>Nome do Campo</th>
                             <th>Tipo de Dado</th>
-                            <th title="Obrigatório"><i class="bi bi-asterisk text-danger"></i></th>
-                            <th title="Destaque no nome"><i class="bi bi-star-fill text-warning"></i></th>
+                            <th title="Obrigatório"><i class="fas fa-asterisk text-danger"></i></th>
+                            <th title="Destaque no nome"><i class="fas fa-star-fill text-warning"></i></th>
                             <th>Opções</th>
                             <th class="text-end">Ações</th>
                         </tr>
@@ -127,13 +127,13 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <i class="bi bi-{{ 'check-circle-fill text-success' if c.obrigatorio else 'x-circle text-muted' }}"></i>
+                                <i class="{{ 'fas fa-check-circle text-success' if c.obrigatorio else 'fas fa-times-circle text-muted' }}"></i>
                             </td>
                             <td class="text-center">
                                 {% if c.campo_destaque %}
-                                <i class="bi bi-star-fill text-warning" title="Atributo de destaque — compõe o nome do equipamento"></i>
+                                <i class="fas fa-star-fill text-warning" title="Atributo de destaque — compõe o nome do equipamento"></i>
                                 {% else %}
-                                <i class="bi bi-star text-muted"></i>
+                                <i class="fas fa-star text-muted"></i>
                                 {% endif %}
                             </td>
                             <td class="small text-muted">
@@ -144,7 +144,7 @@
                             <td class="text-end">
                                 <a href="{{ url_for('configuracoes.editar_campo_equipamento', campo_id=c.id) }}"
                                    class="btn btn-xs btn-outline-primary btn-sm">
-                                    <i class="bi bi-pencil"></i>
+                                    <i class="fas fa-pencil-alt"></i>
                                 </a>
                                 <form method="POST"
                                       action="{{ url_for('configuracoes.excluir_campo_equipamento', campo_id=c.id) }}"
@@ -152,7 +152,7 @@
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="btn btn-sm btn-outline-danger"
                                             data-confirm="Remover o campo '{{ c.nome_campo }}'? Os valores preenchidos em equipamentos serão perdidos.">
-                                        <i class="bi bi-trash"></i>
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </td>
@@ -166,7 +166,7 @@
             <!-- Formulário de novo campo -->
             <div class="card border-dashed">
                 <div class="card-header bg-light">
-                    <i class="bi bi-plus-circle me-2 text-primary"></i>
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
                     <strong>Adicionar Novo Campo</strong>
                 </div>
                 <div class="card-body">
@@ -215,7 +215,7 @@
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-plus-circle me-1"></i>Adicionar Campo
+                                    <i class="fas fa-plus-circle me-1"></i>Adicionar Campo
                                 </button>
                             </div>
                         </div>
@@ -230,9 +230,42 @@
 <script>
 const iconInput = document.getElementById('iconInput');
 if (iconInput) {
+    // Função para normalizar o ícone (adiciona prefixo fas se necessário)
+    function normalizarIcone(valor) {
+        valor = valor.trim();
+        if (!valor) return '';
+        
+        // Se já tem prefixo (fas, far, fab, fal, fad), retorna como está
+        if (/^(fas|far|fab|fal|fad)\s+fa-/.test(valor)) {
+            return valor;
+        }
+        
+        // Se começa com fa- mas não tem prefixo, adiciona fas
+        if (/^fa-/.test(valor)) {
+            return 'fas ' + valor;
+        }
+        
+        // Se não começa com fa-, assume que é um nome completo e adiciona fas fa-
+        if (!/^(fas|far|fab|fal|fad)\s+/.test(valor)) {
+            return 'fas fa-' + valor.replace(/^fa-/, '');
+        }
+        
+        return valor;
+    }
+    
     iconInput.addEventListener('input', function () {
-        document.getElementById('iconEl').className = this.value.trim();
+        const valorNormalizado = normalizarIcone(this.value);
+        document.getElementById('iconEl').className = valorNormalizado || 'fas fa-box';
     });
+    
+    // Normaliza antes de submeter o formulário
+    const form = iconInput.closest('form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            const valorNormalizado = normalizarIcone(iconInput.value);
+            iconInput.value = valorNormalizado;
+        });
+    }
 }
 
 const tipoDadoSelect = document.getElementById('tipoDadoSelect');

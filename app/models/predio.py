@@ -23,6 +23,8 @@ class Predio(db.Model):
     cep                    = db.Column(db.String(9))
     telefone               = db.Column(db.String(20))
     link_maps              = db.Column(db.Text)
+    latitude               = db.Column(db.Float)
+    longitude              = db.Column(db.Float)
     responsavel_predial_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     observacoes            = db.Column(db.Text)
     ativo                  = db.Column(db.Boolean, nullable=False, default=True)

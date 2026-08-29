@@ -7,6 +7,7 @@ from app.models.equipamento import (
     STATUS_EQUIPAMENTO, STATUS_LABELS,
     CONDICAO_EQUIPAMENTO, CONDICAO_LABELS
 )
+from datetime import date
 from app.models.sala import Sala
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.tipo_unidade import TipoUnidade
@@ -15,6 +16,30 @@ from app.models.usuario import Usuario
 equipamentos_bp = Blueprint('equipamentos', __name__, url_prefix='/equipamentos')
 
 PREFIXO_PATRIMONIO = 'PMS-'
+
+def _normalizar_icone_fontawesome(valor):
+    """Normaliza o ícone do Font Awesome, adicionando prefixo 'fas' se necessário."""
+    if not valor:
+        return ''
+    valor = valor.strip()
+    if not valor:
+        return ''
+    
+    import re
+    # Se já tem prefixo (fas, far, fab, fal, fad), retorna como está
+    if re.match(r'^(fas|far|fab|fal|fad)\s+fa-', valor):
+        return valor
+    
+    # Se começa com fa- mas não tem prefixo, adiciona fas
+    if valor.startswith('fa-'):
+        return 'fas ' + valor
+    
+    # Se não começa com fa- e não tem prefixo, adiciona fas fa-
+    if not re.match(r'^(fas|far|fab|fal|fad)\s+', valor):
+        nome_icone = re.sub(r'^fa-', '', valor)
+        return 'fas fa-' + nome_icone
+    
+    return valor
 
 def _normalizar_patrimonio(valor: str) -> str | None:
     """Garante que o nº de patrimônio sempre comece com PMS-."""
@@ -26,6 +51,30 @@ def _normalizar_patrimonio(valor: str) -> str | None:
         v = v[len(PREFIXO_PATRIMONIO):]
     v = v.strip()
     return (PREFIXO_PATRIMONIO + v) if v else None
+
+
+def _parse_ano_aquisicao(valor) -> date | None:
+    """
+    Aceita 'YYYY' (novo) e 'YYYY-MM-DD' (legado) e retorna YYYY-01-01.
+    """
+    if valor is None:
+        return None
+    v = str(valor).strip()
+    if not v:
+        return None
+
+    # Legado: se vier no formato de data, pega só o ano (YYYY-...)
+    if '-' in v:
+        v = v.split('-', 1)[0].strip()
+
+    if not v.isdigit() or len(v) != 4:
+        return None
+
+    ano = int(v)
+    if ano < 1900 or ano > 2100:
+        return None
+
+    return date(ano, 1, 1)
 
 
 @equipamentos_bp.route('/')
@@ -128,7 +177,10 @@ def novo(sala_id):
             numero_serie=request.form.get('numero_serie', '').strip() or None,
             marca_id=marca_id,
             modelo_id=modelo_id,
-            data_aquisicao=request.form.get('data_aquisicao') or None,
+            data_aquisicao=_parse_ano_aquisicao(
+                request.form.get('ano_aquisicao')
+                or request.form.get('data_aquisicao')
+            ),
             valor_estimado=request.form.get('valor_estimado') or None,
             tempo_uso_anos=request.form.get('tempo_uso_anos') or None,
             status=request.form.get('status', 'ativo'),
@@ -168,6 +220,14 @@ def novo_na_unidade(unidade_id):
     tipos   = TipoEquipamento.query.filter_by(ativo=True).order_by(TipoEquipamento.nome).all()
     marcas  = Marca.query.order_by(Marca.nome).all()
 
+    # Usuários disponíveis para vincular durante o cadastro (mesma lógica do detalhe do equipamento)
+    ids_unidade = {uu.usuario_id for uu in unidade.usuarios.filter_by(ativo=True).all() if uu.usuario_id}
+    usuarios_disponiveis = Usuario.query.filter(
+        Usuario.id.in_(ids_unidade) if ids_unidade else db.false(),
+        Usuario.ativo == True,
+        Usuario.perfil != 'administrador',
+    ).order_by(Usuario.nome).all()
+
     if request.method == 'POST':
         sala_id = request.form.get('sala_id', type=int)
         if not sala_id:
@@ -177,7 +237,8 @@ def novo_na_unidade(unidade_id):
                                    salas=salas, tipos=tipos, marcas=marcas,
                                    status_opts=STATUS_EQUIPAMENTO,
                                    condicao_opts=CONDICAO_EQUIPAMENTO,
-                                   campos_valores={})
+                                   campos_valores={},
+                                   usuarios_disponiveis=usuarios_disponiveis)
         sala    = Sala.query.get_or_404(sala_id)
         tipo_id = request.form.get('tipo_equipamento_id', type=int)
         tipo    = TipoEquipamento.query.get_or_404(tipo_id)
@@ -210,7 +271,10 @@ def novo_na_unidade(unidade_id):
             numero_serie=request.form.get('numero_serie', '').strip() or None,
             marca_id=marca_id,
             modelo_id=modelo_id,
-            data_aquisicao=request.form.get('data_aquisicao') or None,
+            data_aquisicao=_parse_ano_aquisicao(
+                request.form.get('ano_aquisicao')
+                or request.form.get('data_aquisicao')
+            ),
             valor_estimado=request.form.get('valor_estimado') or None,
             tempo_uso_anos=request.form.get('tempo_uso_anos') or None,
             status=request.form.get('status', 'ativo'),
@@ -232,14 +296,40 @@ def novo_na_unidade(unidade_id):
 
         db.session.commit()
         flash('Equipamento cadastrado com sucesso!', 'success')
-        return redirect(url_for('unidades.detalhe', id=unidade_id) + '#tab-equipamentos')
+        # Direciona para a tela do equipamento recém-criado e abre a aba de usuários
+        # para permitir vincular o profissional já no passo seguinte.
+        if current_user.pode('editar_equipamento'):
+            usuario_id = request.form.get('usuario_id', type=int)
+            observacao = request.form.get('observacao', '').strip() or None
+            if usuario_id:
+                vinculo_unidade = UsuarioUnidade.query.filter_by(
+                    usuario_id=usuario_id,
+                    unidade_id=unidade_id,
+                    ativo=True
+                ).first()
+                if not vinculo_unidade:
+                    flash('Usuário selecionado não pertence à unidade informada (vínculo não criado).', 'warning')
+                else:
+                    existente = EquipamentoUsuario.query.filter_by(
+                        equipamento_id=equipamento.id,
+                        usuario_id=usuario_id
+                    ).first()
+                    if not existente:
+                        db.session.add(EquipamentoUsuario(
+                            equipamento_id=equipamento.id,
+                            usuario_id=usuario_id,
+                            observacao=observacao,
+                        ))
+                        db.session.commit()
+        return redirect(url_for('equipamentos.detalhe', id=equipamento.id) + '#tab-usuarios')
 
     return render_template('equipamentos/form.html',
                            equipamento=None, sala=None, unidade=unidade,
                            salas=salas, tipos=tipos, marcas=marcas,
                            status_opts=STATUS_EQUIPAMENTO,
                            condicao_opts=CONDICAO_EQUIPAMENTO,
-                           campos_valores={})
+                           campos_valores={},
+                           usuarios_disponiveis=usuarios_disponiveis)
 
 
 @equipamentos_bp.route('/<int:id>')
@@ -341,42 +431,102 @@ def desvincular_usuario(id, usuario_id):
 def editar(id):
     if not current_user.pode('editar_equipamento'):
         abort(403)
+    from app.models.transferencia import HistoricoEquipamento
+
     equipamento = Equipamento.query.get_or_404(id)
+    unidade = equipamento.sala.unidade
+    salas = Sala.query.filter_by(unidade_id=unidade.id, ativo=True).order_by(Sala.nome).all()
+    pode_alterar_tipo = current_user.perfil in ('administrador', 'gestor_secretaria')
     tipos = TipoEquipamento.query.order_by(TipoEquipamento.nome).all()
     marcas = Marca.query.order_by(Marca.nome).all()
     modelos = Modelo.query.filter_by(marca_id=equipamento.marca_id).order_by(Modelo.nome).all() if equipamento.marca_id else []
     campos_valores = {cv.campo_id: cv.valor for cv in equipamento.campos_valores.all()}
 
+    def _render_editar():
+        return render_template('equipamentos/form.html',
+                               equipamento=equipamento, sala=equipamento.sala,
+                               unidade=unidade, salas=salas,
+                               pode_alterar_tipo=pode_alterar_tipo,
+                               tipos=tipos, marcas=marcas, modelos=modelos,
+                               campos_valores=campos_valores,
+                               status_opts=STATUS_EQUIPAMENTO, condicao_opts=CONDICAO_EQUIPAMENTO)
+
     if request.method == 'POST':
+        novo_sala_id = request.form.get('sala_id', type=int)
+        if novo_sala_id and novo_sala_id != equipamento.sala_id:
+            nova_sala = Sala.query.filter_by(
+                id=novo_sala_id, unidade_id=unidade.id, ativo=True
+            ).first()
+            if not nova_sala:
+                flash('Sala inválida para esta unidade.', 'danger')
+                return _render_editar()
+            sala_antiga = equipamento.sala.nome
+            equipamento.sala_id = novo_sala_id
+            db.session.add(HistoricoEquipamento(
+                equipamento_id=equipamento.id,
+                usuario_id=current_user.id,
+                acao=f'Realocado de {sala_antiga} para {nova_sala.nome}',
+            ))
+
+        tipo_alterado = False
+        if pode_alterar_tipo:
+            novo_tipo_id = request.form.get('tipo_equipamento_id', type=int)
+            if novo_tipo_id and novo_tipo_id != equipamento.tipo_equipamento_id:
+                novo_tipo = TipoEquipamento.query.get(novo_tipo_id)
+                if not novo_tipo:
+                    flash('Tipo de equipamento inválido.', 'danger')
+                    return _render_editar()
+                tipo_antigo = equipamento.tipo_equipamento.nome
+                EquipamentoCampoValor.query.filter_by(equipamento_id=equipamento.id).delete()
+                equipamento.tipo_equipamento_id = novo_tipo_id
+                tipo_alterado = True
+                db.session.add(HistoricoEquipamento(
+                    equipamento_id=equipamento.id,
+                    usuario_id=current_user.id,
+                    acao=f'Tipo alterado de {tipo_antigo} para {novo_tipo.nome}',
+                ))
+
         equipamento.numero_patrimonio = _normalizar_patrimonio(request.form.get('numero_patrimonio', ''))
         equipamento.numero_serie = request.form.get('numero_serie', '').strip() or None
-        equipamento.marca_id = request.form.get('marca_id', type=int) or None
-        equipamento.modelo_id = request.form.get('modelo_id', type=int) or None
-        equipamento.data_aquisicao = request.form.get('data_aquisicao') or None
+        marca_id = request.form.get('marca_id', type=int) or None
+        modelo_id = request.form.get('modelo_id', type=int) or None
+        if marca_id:
+            marca = Marca.query.get(marca_id)
+            if not marca or not marca.suporta_tipo(equipamento.tipo_equipamento_id):
+                marca_id = None
+                modelo_id = None
+        equipamento.marca_id = marca_id
+        equipamento.modelo_id = modelo_id
+        equipamento.data_aquisicao = _parse_ano_aquisicao(
+            request.form.get('ano_aquisicao')
+            or request.form.get('data_aquisicao')
+        )
         equipamento.valor_estimado = request.form.get('valor_estimado') or None
         equipamento.tempo_uso_anos = request.form.get('tempo_uso_anos') or None
         equipamento.status = request.form.get('status', 'ativo')
         equipamento.condicao = request.form.get('condicao', 'boa')
         equipamento.observacoes = request.form.get('observacoes', '').strip()
 
+        db.session.flush()
         for campo in equipamento.tipo_equipamento.campos.all():
             valor = request.form.get(f'campo_{campo.id}', '').strip()
-            cv = equipamento.campos_valores.filter_by(campo_id=campo.id).first()
-            if cv:
-                cv.valor = valor
-            elif valor:
-                db.session.add(EquipamentoCampoValor(
-                    equipamento_id=equipamento.id, campo_id=campo.id, valor=valor))
+            if tipo_alterado:
+                if valor:
+                    db.session.add(EquipamentoCampoValor(
+                        equipamento_id=equipamento.id, campo_id=campo.id, valor=valor))
+            else:
+                cv = equipamento.campos_valores.filter_by(campo_id=campo.id).first()
+                if cv:
+                    cv.valor = valor
+                elif valor:
+                    db.session.add(EquipamentoCampoValor(
+                        equipamento_id=equipamento.id, campo_id=campo.id, valor=valor))
 
         db.session.commit()
         flash('Equipamento atualizado com sucesso!', 'success')
         return redirect(url_for('equipamentos.detalhe', id=equipamento.id))
 
-    return render_template('equipamentos/form.html',
-                           equipamento=equipamento, sala=equipamento.sala,
-                           tipos=tipos, marcas=marcas, modelos=modelos,
-                           campos_valores=campos_valores,
-                           status_opts=STATUS_EQUIPAMENTO, condicao_opts=CONDICAO_EQUIPAMENTO)
+    return _render_editar()
 
 
 @equipamentos_bp.route('/<int:id>/baixa', methods=['POST'])
@@ -455,7 +605,7 @@ def novo_tipo():
             nome=request.form['nome'].strip(),
             descricao=request.form.get('descricao', '').strip(),
             tem_patrimonio=request.form.get('tem_patrimonio') == 'on',
-            icone=request.form.get('icone', 'bi-box').strip(),
+            icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-box')),
         )
         db.session.add(tipo)
         db.session.commit()
@@ -474,7 +624,7 @@ def editar_tipo(id):
         tipo.nome = request.form['nome'].strip()
         tipo.descricao = request.form.get('descricao', '').strip()
         tipo.tem_patrimonio = request.form.get('tem_patrimonio') == 'on'
-        tipo.icone = request.form.get('icone', 'bi-box').strip()
+        tipo.icone = _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-box'))
         db.session.commit()
         flash('Tipo atualizado!', 'success')
         return redirect(url_for('equipamentos.listar_tipos'))
