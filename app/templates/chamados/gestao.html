@@ -87,8 +87,8 @@
 
 {# ── Totalizadores ───────────────────────────────────────────── #}
 <div class="totais-bar">
-    <a href="{{ url_for('chamados.gestao') }}"
-       class="total-card {{ 'ativo' if not status_filtro else '' }}"
+    <a href="{{ url_for('chamados.gestao', ver_todos=1) }}"
+       class="total-card {{ 'ativo' if ver_todos else '' }}"
        style="background:#374151;">
         <div class="tc-num">{{ total_geral }}</div>
         <div class="tc-lbl">Total de Chamados</div>

@@ -248,7 +248,7 @@
     </div>
     <div class="d-flex align-items-center" style="padding-bottom:0.25rem;">
         <div class="form-check form-switch mb-0">
-            <input class="form-check-input" type="checkbox" id="chkSomenteMinhasPendencias" checked>
+            <input class="form-check-input" type="checkbox" id="chkSomenteMinhasPendencias">
             <label class="form-check-label small" for="chkSomenteMinhasPendencias">
                 Verificar apenas planos com pendências minhas
             </label>
@@ -256,7 +256,7 @@
     </div>
 </div>
 
-{# Repete filtro/somente_minhas na URL ao trocar de aba (sem localStorage). #}
+{# Repete filtro/somente_minhas na URL ao trocar de aba. A preferência do checkbox fica no localStorage. #}
 {% set _aba_filtro = filtro_inicial if (filtro_inicial is defined and filtro_inicial) else none %}
 {% set _aba_sm_raw = somente_minhas_inicial if somente_minhas_inicial is defined else '' %}
 {% set _aba_somente = (0 if _aba_sm_raw in ('0', 'false') else (1 if _aba_sm_raw in ('1', 'true') else none)) %}
@@ -777,10 +777,11 @@
 {% endif %}
 
 <script>
-// Filtros iniciais só pela URL (servidor). Sem localStorage nem redirect — evita “puxar” aba/unidade antiga e segunda carga confusa.
+// Busca inicial pela URL. Checkbox: URL (se veio na query) senão preferência salva; padrão desmarcado.
 (function () {
     var inputBusca = document.getElementById('filtroPlanos');
     var chkMinhas = document.getElementById('chkSomenteMinhasPendencias');
+    var prefKey = 'sigus-planejamentos-somente-minhas-{{ current_user.id }}';
     if (inputBusca) {
         var v = {{ (filtro_inicial if filtro_inicial is defined else '') | tojson }};
         if (v) inputBusca.value = v;
@@ -789,6 +790,10 @@
         var vm = {{ (somente_minhas_inicial if somente_minhas_inicial is defined else '') | tojson }};
         if (vm === '0' || vm === 'false') chkMinhas.checked = false;
         else if (vm === '1' || vm === 'true') chkMinhas.checked = true;
+        else {
+            try { chkMinhas.checked = localStorage.getItem(prefKey) === '1'; }
+            catch (e) { chkMinhas.checked = false; }
+        }
     }
 })();
 </script>
@@ -1300,7 +1305,10 @@
         });
     }
     if (chkMinhas) {
+        var prefKey = 'sigus-planejamentos-somente-minhas-{{ current_user.id }}';
         chkMinhas.addEventListener('change', function () {
+            try { localStorage.setItem(prefKey, chkMinhas.checked ? '1' : '0'); }
+            catch (e) {}
             syncQueryNaUrl();
             aplicarFiltro();
         });
@@ -1309,7 +1317,7 @@
 })();
 </script>
 <script>
-// Abas: leva na URL o filtro e o checkbox atuais (sem localStorage).
+// Abas: leva na URL o filtro e o checkbox atuais.
 (function () {
     document.querySelectorAll('.abas-planos a').forEach(function (a) {
         a.addEventListener('click', function (e) {

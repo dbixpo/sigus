@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Emendas Parlamentares{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-landmark me-2"></i>Emendas Parlamentares</h1>
+    {% if current_user.pode('adicionar_emendas') %}
+    <a href="{{ url_for('sueq.emenda_nova') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Nova emenda
+    </a>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Emendas</div>
+            <div class="fs-4 fw-semibold">{{ kpis.qtd }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Valor cedido</div>
+            <div class="fs-4 fw-semibold">{{ kpis.cedido | br_currency }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Executado</div>
+            <div class="fs-4 fw-semibold">{{ kpis.executado | br_currency }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card"><div class="card-body">
+            <div class="text-muted small">Itens</div>
+            <div class="fs-4 fw-semibold">{{ kpis.itens }}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label mb-1">Busca</label>
+            <input type="text" name="q" class="form-control form-control-sm" value="{{ filtro_q }}"
+                   placeholder="Emenda, parlamentar, unidade, SEI">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1">Tipo</label>
+            <select name="tipo" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for t in tipos %}
+                <option value="{{ t }}" {% if filtro_tipo == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('sueq.emendas') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if lista %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Emenda</th>
+                        <th>Ano</th>
+                        <th>Tipo</th>
+                        <th>Parlamentar</th>
+                        <th>SEI</th>
+                        <th>Unidade</th>
+                        <th class="text-end">Cedido</th>
+                        <th class="text-end">Executado</th>
+                        <th class="text-end">Saldo</th>
+                        <th>Itens</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in lista %}
+                    <tr>
+                        <td><a href="{{ url_for('sueq.emenda_detalhe', id=e.id) }}">{{ e.emenda or '—' }}</a></td>
+                        <td>{{ e.ano or '—' }}</td>
+                        <td>{{ e.tipo or '—' }}</td>
+                        <td>{{ e.parlamentar or '—' }}</td>
+                        <td>
+                            {% if e.link_sei_url %}
+                            <a href="{{ e.link_sei_url }}" target="_blank" rel="noopener">{{ e.sei_display or 'Abrir' }}</a>
+                            {% else %}
+                            {{ e.sei_display or '—' }}
+                            {% endif %}
+                        </td>
+                        <td>{{ e.unidade or '—' }}</td>
+                        <td class="text-end">{{ e.valor_cedido | br_currency }}</td>
+                        <td class="text-end">{{ e.total_executado | br_currency }}</td>
+                        <td class="text-end">{{ e.saldo | br_currency }}</td>
+                        <td>{{ e.itens.count() }}</td>
+                        <td class="text-end">
+                            {% if current_user.pode('editar_emendas') %}
+                            <a href="{{ url_for('sueq.emenda_editar', id=e.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0">Nenhuma emenda cadastrada.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

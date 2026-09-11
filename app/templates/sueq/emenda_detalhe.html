@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Emenda {{ emenda.emenda }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('sueq.emendas') }}">Emendas</a></li>
+        <li class="breadcrumb-item active">{{ emenda.emenda }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="fas fa-landmark me-2"></i>Emenda {{ emenda.emenda or '' }}</h1>
+    {% if current_user.pode('editar_emendas') %}
+    <a href="{{ url_for('sueq.emenda_editar', id=emenda.id) }}" class="btn btn-outline-secondary">Editar</a>
+    {% endif %}
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="text-muted small">Tipo / ano</div>
+        <div class="fw-semibold">{{ emenda.tipo or '—' }} · {{ emenda.ano or '—' }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="text-muted small">Parlamentar</div>
+        <div class="fw-semibold">{{ emenda.parlamentar or '—' }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="text-muted small">Valor cedido</div>
+        <div class="fw-semibold">{{ emenda.valor_cedido | br_currency }}</div>
+    </div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body">
+        <div class="text-muted small">Saldo</div>
+        <div class="fw-semibold">{{ emenda.saldo | br_currency }}</div>
+    </div></div></div>
+</div>
+
+<p class="text-muted mb-3">
+    SEI
+    {% if emenda.link_sei_url %}
+    <a href="{{ emenda.link_sei_url }}" target="_blank" rel="noopener">{{ emenda.sei_display or 'Abrir processo' }}</a>
+    <i class="fas fa-box-arrow-up-right" style="font-size:.7rem;"></i>
+    {% else %}
+    {{ emenda.sei_display or '—' }}
+    {% endif %}
+    · Unidade {{ emenda.unidade or '—' }}
+</p>
+{% if emenda.objeto %}
+<p class="mb-3">{{ emenda.objeto }}</p>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th class="text-end">Qtde plan.</th>
+                        <th class="text-end">Vl. unit. plan.</th>
+                        <th class="text-end">Total plan.</th>
+                        <th class="text-end">Total exec.</th>
+                        <th>CPL</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in emenda.itens %}
+                    <tr>
+                        <td>{{ i.item or i.item_cadastrado or '—' }}</td>
+                        <td class="text-end">{{ i.qtde_cadastrada or i.qtde or '—' }}</td>
+                        <td class="text-end">{{ i.vl_unitario_cadastrado | br_currency }}</td>
+                        <td class="text-end">{{ i.vl_total_cadastrado | br_currency }}</td>
+                        <td class="text-end">{{ i.vl_total | br_currency }}</td>
+                        <td>{{ i.cpl or (i.processo.identificador if i.processo else '—') }}</td>
+                        <td>{{ i.status or '—' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-muted p-3">Nenhum item nesta emenda.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

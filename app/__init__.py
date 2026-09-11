@@ -66,6 +66,8 @@ def create_app(config_name='default'):
     from app.routes.rh import rh_bp
     from app.routes.planejamentos import planejamentos_bp
     from app.routes.empresas import empresas_bp
+    from app.routes.sueq import sueq_bp
+    from app.routes.agenda import agenda_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -87,6 +89,8 @@ def create_app(config_name='default'):
     app.register_blueprint(rh_bp)
     app.register_blueprint(planejamentos_bp)
     app.register_blueprint(empresas_bp)
+    app.register_blueprint(sueq_bp)
+    app.register_blueprint(agenda_bp)
 
     # Redirects legados: /unidades e /predios → /configuracoes/unidades e /configuracoes/predios
     from flask import redirect as flask_redirect, url_for, request

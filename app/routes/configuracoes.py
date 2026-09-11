@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import extract
 from app import db
 from app.models.tipo_unidade import TipoUnidade
 from app.models.tipo_sala import TipoSala
@@ -14,6 +15,9 @@ from app.models.perfil_permissao import PerfilPermissao, SECOES
 from app.models.cbo import CBO
 from app.models.unidade import Unidade
 from app.models.predio import Predio
+from app.models.feriado import (
+    Feriado, TIPOS_FOLGA, NATUREZAS, TIPO_FERIADO, NATUREZA_NACIONAL,
+)
 
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
@@ -95,6 +99,7 @@ def index():
     total_divisoes = Divisao.query.filter_by(ativo=True).count()
     total_setores = SetorManutencao.query.count()
     total_cbos = CBO.query.count()
+    total_feriados = Feriado.query.filter_by(ativo=True).count()
     return render_template('configuracoes/index.html',
                            total_unidades=total_unidades,
                            total_predios=total_predios,
@@ -109,7 +114,8 @@ def index():
                            total_status_chamado=total_status_chamado,
                            total_divisoes=total_divisoes,
                            total_setores=total_setores,
-                           total_cbos=total_cbos)
+                           total_cbos=total_cbos,
+                           total_feriados=total_feriados)
 
 
 # ══════════════════════════════════════════════════════════
@@ -1317,4 +1323,165 @@ def auditoria():
                                'data_inicio': filtro_data_inicio,
                                'data_fim': filtro_data_fim,
                            })
+
+
+# ══════════════════════════════════════════════════════════
+#  FERIADOS / PONTOS FACULTATIVOS
+# ══════════════════════════════════════════════════════════
+
+def _parse_time(valor):
+    from datetime import datetime
+    if not valor:
+        return None
+    texto = valor.strip()
+    for fmt in ('%H:%M', '%H:%M:%S'):
+        try:
+            return datetime.strptime(texto, fmt).time()
+        except ValueError:
+            continue
+    return None
+
+
+def _dados_feriado(form):
+    from datetime import datetime
+    data_raw = (form.get('data') or '').strip()
+    try:
+        data = datetime.strptime(data_raw, '%Y-%m-%d').date()
+    except ValueError:
+        data = None
+    tipo = form.get('tipo') or TIPO_FERIADO
+    if tipo not in TIPOS_FOLGA:
+        tipo = TIPO_FERIADO
+    natureza = form.get('natureza') or NATUREZA_NACIONAL
+    if natureza not in NATUREZAS:
+        natureza = NATUREZA_NACIONAL
+    dia_inteiro = form.get('dia_inteiro') in ('1', 'on', 'true', True)
+    return {
+        'data': data,
+        'nome': (form.get('nome') or '').strip(),
+        'tipo': tipo,
+        'natureza': natureza,
+        'numero_decreto': (form.get('numero_decreto') or '').strip() or None,
+        'link_decreto': (form.get('link_decreto') or '').strip() or None,
+        'dia_inteiro': dia_inteiro,
+        'expediente_inicio': None if dia_inteiro else _parse_time(form.get('expediente_inicio')),
+        'expediente_fim': None if dia_inteiro else _parse_time(form.get('expediente_fim')),
+        'observacao': (form.get('observacao') or '').strip() or None,
+        'ativo': form.get('ativo') == 'on',
+    }
+
+
+@configuracoes_bp.route('/feriados')
+@login_required
+def feriados():
+    _exigir_admin()
+    from datetime import date as date_cls
+    ano = request.args.get('ano', type=int) or date_cls.today().year
+    anos = [
+        int(a) for (a,) in db.session.query(extract('year', Feriado.data)).distinct().order_by(
+            extract('year', Feriado.data).desc()
+        ).all() if a
+    ]
+    if ano not in anos:
+        anos = [ano] + [a for a in anos if a != ano]
+    itens = (
+        Feriado.query
+        .filter(extract('year', Feriado.data) == ano)
+        .order_by(Feriado.data)
+        .all()
+    )
+    return render_template(
+        'configuracoes/feriados/listar.html',
+        itens=itens,
+        ano=ano,
+        anos=anos,
+        tipos_folga=TIPOS_FOLGA,
+        naturezas=NATUREZAS,
+    )
+
+
+@configuracoes_bp.route('/feriados/novo', methods=['GET', 'POST'])
+@login_required
+def novo_feriado():
+    _exigir_admin()
+    if request.method == 'POST':
+        dados = _dados_feriado(request.form)
+        if not dados['data'] or not dados['nome']:
+            flash('Informe a data e o nome do evento.', 'danger')
+            return render_template(
+                'configuracoes/feriados/form.html', item=None,
+                tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+            )
+        if Feriado.query.filter_by(data=dados['data']).first():
+            flash(f'Já existe um feriado em {dados["data"].strftime("%d/%m/%Y")}.', 'danger')
+            return render_template(
+                'configuracoes/feriados/form.html', item=None,
+                tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+            )
+        item = Feriado(**dados)
+        db.session.add(item)
+        db.session.commit()
+        flash(f'Feriado "{item.nome}" cadastrado.', 'success')
+        if request.form.get('salvar_e_novo'):
+            return redirect(url_for('configuracoes.novo_feriado'))
+        return redirect(url_for('configuracoes.feriados', ano=item.data.year))
+    return render_template(
+        'configuracoes/feriados/form.html', item=None,
+        tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+    )
+
+
+@configuracoes_bp.route('/feriados/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_feriado(id):
+    _exigir_admin()
+    item = Feriado.query.get_or_404(id)
+    if request.method == 'POST':
+        dados = _dados_feriado(request.form)
+        if not dados['data'] or not dados['nome']:
+            flash('Informe a data e o nome do evento.', 'danger')
+            return render_template(
+                'configuracoes/feriados/form.html', item=item,
+                tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+            )
+        conflito = Feriado.query.filter(Feriado.data == dados['data'], Feriado.id != id).first()
+        if conflito:
+            flash(f'Já existe outro feriado em {dados["data"].strftime("%d/%m/%Y")}.', 'danger')
+            return render_template(
+                'configuracoes/feriados/form.html', item=item,
+                tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+            )
+        for k, v in dados.items():
+            setattr(item, k, v)
+        db.session.commit()
+        flash('Feriado atualizado.', 'success')
+        return redirect(url_for('configuracoes.feriados', ano=item.data.year))
+    return render_template(
+        'configuracoes/feriados/form.html', item=item,
+        tipos_folga=TIPOS_FOLGA, naturezas=NATUREZAS,
+    )
+
+
+@configuracoes_bp.route('/feriados/<int:id>/alternar-status', methods=['POST'])
+@login_required
+def alternar_status_feriado(id):
+    _exigir_admin()
+    item = Feriado.query.get_or_404(id)
+    item.ativo = not item.ativo
+    db.session.commit()
+    flash(f'{"Ativado" if item.ativo else "Desativado"}: {item.nome}.', 'info')
+    return redirect(url_for('configuracoes.feriados', ano=item.data.year if item.data else None))
+
+
+@configuracoes_bp.route('/feriados/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_feriado(id):
+    _exigir_admin()
+    item = Feriado.query.get_or_404(id)
+    ano = item.data.year if item.data else None
+    nome = item.nome
+    db.session.delete(item)
+    db.session.commit()
+    flash(f'Feriado "{nome}" excluído.', 'info')
+    return redirect(url_for('configuracoes.feriados', ano=ano))
 

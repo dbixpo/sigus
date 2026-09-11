@@ -20,7 +20,13 @@ logs/
 *.log
 
 # Backups de banco (gerados por scripts/clone_banco.py)
+database/sigus_backup.sql
 database/sigus_backup_*.sql
+database/sigus_dump.sql
+
+# Dump de produção SUEQ (Patrick) — dados e anexos não vão para o Git
+database/sueq_data.sql
+app/static/uploads/sueq/
 
 # IDE / Editor
 .idea/

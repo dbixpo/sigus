@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if emenda else 'Nova' }} emenda{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('sueq.emendas') }}">Emendas</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if emenda else 'Nova' }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="fas fa-landmark me-2"></i>{{ 'Editar' if emenda else 'Nova' }} emenda</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Tipo</label>
+                        <select name="tipo" class="form-select">
+                            <option value="">—</option>
+                            {% for t in tipos %}
+                            <option value="{{ t }}" {% if emenda and emenda.tipo == t %}selected{% endif %}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Nº da emenda *</label>
+                        <input type="text" name="emenda" class="form-control" required
+                               value="{{ emenda.emenda if emenda else '' }}" placeholder="2026/014">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Ano</label>
+                        <input type="number" name="ano" class="form-control" value="{{ emenda.ano if emenda else 2026 }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Parlamentar</label>
+                        <input type="text" name="parlamentar" class="form-control" list="listaParlamentares"
+                               value="{{ emenda.parlamentar if emenda else '' }}">
+                        <datalist id="listaParlamentares">
+                            {% for p in parlamentares %}
+                            <option value="{{ p.nome }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nº do Processo SEI</label>
+                        <input type="text" name="sei_emenda" class="form-control"
+                               value="{{ emenda.sei_emenda if emenda else '' }}"
+                               placeholder="Ex: 0001.2026.0001234-5">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Link de Acesso Direto do Processo SEI</label>
+                        <input type="url" name="link_sei" class="form-control"
+                               value="{{ emenda.link_sei if emenda else '' }}"
+                               placeholder="https://sei.sorocaba.sp.gov.br/...">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor cedido (R$)</label>
+                        <input type="number" step="0.01" name="valor_cedido" class="form-control"
+                               value="{{ emenda.valor_cedido if emenda and emenda.valor_cedido else '' }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Unidade beneficiada</label>
+                        <select name="unidade_id" class="form-select">
+                            <option value="">—</option>
+                            {% for u in unidades %}
+                            <option value="{{ u.id }}" {% if emenda and emenda.unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            {% if not emenda %}
+            <div class="form-section">
+                <div class="form-section-title">Primeiro item (opcional)</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Item</label>
+                        <input type="text" name="item" class="form-control" placeholder="Ar-condicionado 24.000 BTU">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Qtde</label>
+                        <input type="number" step="0.01" name="qtde" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Vl. unitário</label>
+                        <input type="number" step="0.01" name="vl_unitario" class="form-control">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Status</label>
+                        <select name="status_item" class="form-select">
+                            {% for s in status_item %}
+                            <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{{ url_for('sueq.emendas') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

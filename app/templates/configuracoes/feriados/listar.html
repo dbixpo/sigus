@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Feriados{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Feriados</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-calendar-day me-2"></i>Feriados e pontos facultativos</h1>
+    <a href="{{ url_for('configuracoes.novo_feriado') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus-circle me-1"></i>Novo
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    Dias sem expediente na administração municipal. A agenda só sugere reuniões em
+    <strong>dias úteis, das 8h às 17h</strong>, pulando almoço e estas datas.
+    Cadastro conforme o decreto do ano (ex.: Decreto nº 30.713/2025 para 2026).
+</p>
+
+<form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3">
+    <div>
+        <label class="form-label mb-1 small text-muted">Ano</label>
+        <select name="ano" class="form-select form-select-sm" style="min-width:110px;" onchange="this.form.submit()">
+            {% for a in anos %}
+            <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+
+<div class="card">
+    {% if itens %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Dia</th>
+                    <th>Evento</th>
+                    <th>Tipo</th>
+                    <th>Natureza</th>
+                    <th>Expediente</th>
+                    <th>Decreto</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr class="{% if not item.ativo %}text-muted{% endif %}">
+                    <td class="fw-semibold">{{ item.data_fmt }}</td>
+                    <td>{{ item.dia_semana }}</td>
+                    <td>
+                        {{ item.nome }}
+                        {% if item.observacao %}<div class="small text-muted">{{ item.observacao }}</div>{% endif %}
+                    </td>
+                    <td>{{ item.tipo_label }}</td>
+                    <td>{{ item.natureza_label }}</td>
+                    <td>
+                        {% if item.dia_inteiro %}
+                        Sem expediente
+                        {% else %}
+                        {{ item.expediente_inicio.strftime('%H:%M') if item.expediente_inicio else '08:00' }}
+                        –
+                        {{ item.expediente_fim.strftime('%H:%M') if item.expediente_fim else '17:00' }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.link_decreto and item.numero_decreto %}
+                        <a href="{{ item.link_decreto }}" target="_blank" rel="noopener">{{ item.numero_decreto }}</a>
+                        {% elif item.numero_decreto %}{{ item.numero_decreto }}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-{{ 'success' if item.ativo else 'secondary' }}">
+                            {{ 'Ativo' if item.ativo else 'Inativo' }}
+                        </span>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ url_for('configuracoes.editar_feriado', id=item.id) }}"
+                           class="btn btn-sm btn-outline-secondary" title="Editar">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                        <form method="POST" action="{{ url_for('configuracoes.alternar_status_feriado', id=item.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if item.ativo else 'success' }}"
+                                    title="{{ 'Desativar' if item.ativo else 'Ativar' }}">
+                                <i class="{{ 'fas fa-toggle-on' if item.ativo else 'fas fa-toggle-off' }}"></i>
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('configuracoes.excluir_feriado', id=item.id) }}" class="d-inline"
+                              onsubmit="return confirm('Excluir {{ item.nome }} em {{ item.data_fmt }}?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5 text-muted">
+        <i class="fas fa-calendar-day fs-1 d-block mb-2 opacity-50"></i>
+        <p class="mb-0">Nenhum feriado cadastrado em {{ ano }}.</p>
+        <a href="{{ url_for('configuracoes.novo_feriado') }}" class="btn btn-primary btn-sm mt-2">
+            Cadastrar o primeiro
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

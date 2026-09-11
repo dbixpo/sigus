@@ -180,7 +180,13 @@
     <!-- SIDEBAR -->
     <aside class="sigus-sidebar" id="sidebar">
         <div class="sidebar-scroll">
-        <nav class="sidebar-nav pt-2">
+        <div class="sidebar-search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" id="sidebarSearch" placeholder="Buscar no menu…"
+                   autocomplete="off" spellcheck="false" aria-label="Buscar no menu">
+        </div>
+        <p class="sidebar-search-empty d-none" id="sidebarSearchEmpty">Nenhum item encontrado.</p>
+        <nav class="sidebar-nav pt-1">
             {% set _sidebar_sem_vinculo = current_user.requer_vinculo and not current_user.tem_vinculo %}
             <ul class="nav flex-column">
                 {% if not _sidebar_sem_vinculo %}
@@ -191,9 +197,14 @@
                     </a>
                 </li>
 
-                {% set _mostrar_gestao_unidade = current_user.pode('ver_predios') or current_user.pode('cadastrar_predio') or current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') or current_user.pode('ver_salas') or current_user.pode('cadastrar_sala') or current_user.pode('ver_equipamentos') or current_user.pode('cadastrar_equipamento') or current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') or current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') or current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
+                {% set _mostrar_gestao_unidade = current_user.pode('ver_predios') or current_user.pode('cadastrar_predio') or current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') or current_user.pode('ver_salas') or current_user.pode('cadastrar_sala') or current_user.pode('ver_equipamentos') or current_user.pode('cadastrar_equipamento') or current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') or current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') or current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
                 {% if _mostrar_gestao_unidade %}
-                <li class="sidebar-section">GESTÃO DA UNIDADE</li>
+                <li class="sidebar-group" data-group="gestao-unidade">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Gestão da Unidade</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
 
                 {# Unidades: se unidade padrão selecionada → abre direto; senão → lista (Prédios acessados via Configurações) #}
                 {% if current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
@@ -220,6 +231,14 @@
                     </a>
                 </li>
                 {% endif %}
+                {% if current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('agenda') %}active{% endif %}"
+                       href="{{ url_for('agenda.index') }}">
+                        <i class="fas fa-calendar-alt"></i><span>Agenda</span>
+                    </a>
+                </li>
+                {% endif %}
                 {% if current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('links') %}active{% endif %}"
@@ -236,10 +255,17 @@
                     </a>
                 </li>
                 {% endif %}
+                    </ul>
+                </li>
                 {% endif %}
 
                 {% if current_user.pode('ver_faltas_abonadas') or current_user.pode('editar_faltas_abonadas') or current_user.pode('adicionar_faltas_abonadas') or current_user.perfil in ['gestor_secretaria', 'coordenador'] or current_user.pode('ver_cadastro_publico') %}
-                <li class="sidebar-section">RECURSOS HUMANOS</li>
+                <li class="sidebar-group" data-group="recursos-humanos">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Recursos Humanos</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
                 {% if current_user.pode('ver_faltas_abonadas') or current_user.pode('editar_faltas_abonadas') or current_user.pode('adicionar_faltas_abonadas') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('rh') %}active{% endif %}"
@@ -255,10 +281,17 @@
                     </a>
                 </li>
                 {% endif %}
+                    </ul>
+                </li>
                 {% endif %}
 
                 {% if current_user.pode_ver_gestao_chamados or current_user.pode('ver_transferencias') %}
-                <li class="sidebar-section">OPERAÇÕES</li>
+                <li class="sidebar-group" data-group="operacoes">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Operações</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
 
                 {% if current_user.pode_ver_gestao_chamados %}
                 <li class="nav-item">
@@ -276,11 +309,34 @@
                     </a>
                 </li>
                 {% endif %}
+                    </ul>
+                </li>
                 {% endif %}
 
-                {% if current_user.pode('ver_controle_empenho') or current_user.pode('editar_controle_empenho') or current_user.pode('adicionar_controle_empenho') or current_user.pode('ver_contratos') or current_user.pode('cadastrar_contrato') or current_user.pode('editar_contrato') or current_user.pode('ver_empresas') or current_user.pode('editar_empresas') or current_user.pode('adicionar_empresas') %}
-                <li class="sidebar-section">GESTÃO FINANCEIRA</li>
+                {% if current_user.pode('ver_controle_empenho') or current_user.pode('editar_controle_empenho') or current_user.pode('adicionar_controle_empenho') or current_user.pode('ver_contratos') or current_user.pode('cadastrar_contrato') or current_user.pode('editar_contrato') or current_user.pode('ver_empresas') or current_user.pode('editar_empresas') or current_user.pode('adicionar_empresas') or current_user.pode('ver_emendas') or current_user.pode('editar_emendas') or current_user.pode('adicionar_emendas') or current_user.pode('ver_licitacoes') or current_user.pode('editar_licitacoes') or current_user.pode('adicionar_licitacoes') %}
+                <li class="sidebar-group" data-group="gestao-financeira">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Gestão Financeira</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
 
+                {% if current_user.pode('ver_emendas') or current_user.pode('editar_emendas') or current_user.pode('adicionar_emendas') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('sueq.emenda') %}active{% endif %}"
+                       href="{{ url_for('sueq.emendas') }}">
+                        <i class="fas fa-landmark"></i><span>Emendas</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if current_user.pode('ver_licitacoes') or current_user.pode('editar_licitacoes') or current_user.pode('adicionar_licitacoes') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('sueq.licitacao') %}active{% endif %}"
+                       href="{{ url_for('sueq.licitacoes') }}">
+                        <i class="fas fa-gavel"></i><span>Licitações</span>
+                    </a>
+                </li>
+                {% endif %}
                 {% if current_user.pode('ver_controle_empenho') or current_user.pode('editar_controle_empenho') or current_user.pode('adicionar_controle_empenho') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('contrato_financeiro') %}active{% endif %}"
@@ -305,15 +361,28 @@
                     </a>
                 </li>
                 {% endif %}
+                    </ul>
+                </li>
                 {% endif %}
 
                 {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') or current_user.pode('gerenciar_perfis') or current_user.pode('ver_usuarios_unidade') or current_user.pode('cadastrar_usuario') or current_user.pode('gerenciar_usuarios') or current_user.pode('ver_auditoria') %}
-                <li class="sidebar-section">CONFIGURAÇÕES</li>
+                <li class="sidebar-group" data-group="configuracoes">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Configurações</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
                 {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') or current_user.pode('gerenciar_perfis') %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('configuracoes') %}active{% endif %}"
+                    <a class="nav-link {% if request.endpoint == 'configuracoes.index' or (request.endpoint and request.endpoint.startswith('configuracoes.') and 'feriado' not in request.endpoint and request.endpoint != 'configuracoes.auditoria') %}active{% endif %}"
                        href="{{ url_for('configuracoes.index') }}">
                         <i class="fas fa-cog"></i><span>Configurações do Sistema</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and 'feriado' in request.endpoint %}active{% endif %}"
+                       href="{{ url_for('configuracoes.feriados') }}">
+                        <i class="fas fa-calendar-day"></i><span>Feriados</span>
                     </a>
                 </li>
                 {% endif %}
@@ -333,15 +402,24 @@
                     </a>
                 </li>
                 {% endif %}
+                    </ul>
+                </li>
                 {% endif %}
                 {% else %}
                 {# Usuário sem vínculo: apenas Links Úteis #}
-                <li class="sidebar-section">GESTÃO DA UNIDADE</li>
+                <li class="sidebar-group" data-group="gestao-unidade">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Gestão da Unidade</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('links') %}active{% endif %}"
                        href="{{ url_for('links.index') }}">
                         <i class="fas fa-link"></i><span>Links Úteis</span>
                     </a>
+                </li>
+                    </ul>
                 </li>
                 {% endif %}
             </ul>

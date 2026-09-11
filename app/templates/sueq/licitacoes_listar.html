@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Licitações{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-gavel me-2"></i>Licitações em andamento</h1>
+    {% if current_user.pode('adicionar_licitacoes') %}
+    <a href="{{ url_for('sueq.licitacao_nova') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Novo processo
+    </a>
+    {% endif %}
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label mb-1">Busca</label>
+            <input type="text" name="q" class="form-control form-control-sm" value="{{ filtro_q }}"
+                   placeholder="CPL, objeto, modalidade">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('sueq.licitacoes') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if lista %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Processo / CPL</th>
+                        <th>Tipo</th>
+                        <th>Objeto</th>
+                        <th>Modalidade</th>
+                        <th>Status</th>
+                        <th class="text-end">Valor estimado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in lista %}
+                    <tr>
+                        <td>
+                            {% if p.link_sei_url %}
+                            <a href="{{ p.link_sei_url }}" target="_blank" rel="noopener">{{ p.identificador }}</a>
+                            <i class="fas fa-box-arrow-up-right text-muted" style="font-size:.7rem;"></i>
+                            {% else %}
+                            {{ p.identificador }}
+                            {% endif %}
+                        </td>
+                        <td>{{ p.tipo or '—' }}</td>
+                        <td>{{ p.objeto or '—' }}</td>
+                        <td>{{ p.modalidade or '—' }}</td>
+                        <td>{{ p.status or '—' }}</td>
+                        <td class="text-end">{{ p.valor_estimado | br_currency }}</td>
+                        <td class="text-end">
+                            {% if current_user.pode('editar_licitacoes') %}
+                            <a href="{{ url_for('sueq.licitacao_editar', id=p.id) }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0">Nenhum processo cadastrado.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

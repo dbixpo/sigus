@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Novo' }} feriado{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.feriados') }}">Feriados</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-calendar-day me-2"></i>{{ 'Editar' if item else 'Novo' }} feriado</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Data *</label>
+                            <input type="date" name="data" class="form-control" required
+                                   value="{{ item.data.strftime('%Y-%m-%d') if item and item.data else '' }}">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Evento *</label>
+                            <input type="text" name="nome" class="form-control" required maxlength="200"
+                                   value="{{ item.nome if item else '' }}"
+                                   placeholder="Ex.: Natal, Carnaval, Corpus Christi">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tipo</label>
+                            <select name="tipo" class="form-select">
+                                {% for k, v in tipos_folga.items() %}
+                                <option value="{{ k }}" {% if (item and item.tipo == k) or (not item and k == 'feriado') %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Natureza</label>
+                            <select name="natureza" class="form-select">
+                                {% for k, v in naturezas.items() %}
+                                <option value="{{ k }}" {% if (item and item.natureza == k) or (not item and k == 'nacional') %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nº do decreto</label>
+                            <input type="text" name="numero_decreto" class="form-control" maxlength="120"
+                                   value="{{ item.numero_decreto if item else '' }}"
+                                   placeholder="Ex.: Decreto nº 30.713/2025">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Link do decreto</label>
+                            <input type="url" name="link_decreto" class="form-control" maxlength="500"
+                                   value="{{ item.link_decreto if item else '' }}"
+                                   placeholder="https://...">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="dia_inteiro" id="campoDiaInteiro" value="1"
+                                       {% if not item or item.dia_inteiro %}checked{% endif %}>
+                                <label class="form-check-label" for="campoDiaInteiro">Sem expediente o dia todo</label>
+                            </div>
+                            <div class="form-text">Desmarque só se o decreto definir horário especial (ex.: Cinzas a partir das 12h).</div>
+                        </div>
+                        <div class="col-md-6" id="blocoExpIni">
+                            <label class="form-label fw-semibold">Expediente a partir de</label>
+                            <input type="time" name="expediente_inicio" id="campoExpIni" class="form-control"
+                                   min="08:00" max="17:00"
+                                   value="{{ item.expediente_inicio.strftime('%H:%M') if item and item.expediente_inicio else '12:00' }}">
+                        </div>
+                        <div class="col-md-6" id="blocoExpFim">
+                            <label class="form-label fw-semibold">Expediente até</label>
+                            <input type="time" name="expediente_fim" id="campoExpFim" class="form-control"
+                                   min="08:00" max="17:00"
+                                   value="{{ item.expediente_fim.strftime('%H:%M') if item and item.expediente_fim else '17:00' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Observação</label>
+                            <input type="text" name="observacao" class="form-control" maxlength="400"
+                                   value="{{ item.observacao if item else '' }}"
+                                   placeholder="Emenda, véspera, trecho do decreto…">
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                                       {% if not item or item.ativo %}checked{% endif %}>
+                                <label class="form-check-label" for="ativo">Ativo (vale para a agenda)</label>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        {% if not item %}
+                        <button type="submit" name="salvar_e_novo" value="1" class="btn btn-outline-primary">Salvar e adicionar outro</button>
+                        {% endif %}
+                        <a href="{{ url_for('configuracoes.feriados') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var chk = document.getElementById('campoDiaInteiro');
+    var ini = document.getElementById('blocoExpIni');
+    var fim = document.getElementById('blocoExpFim');
+    function sync() {
+        var todo = chk.checked;
+        ini.classList.toggle('d-none', todo);
+        fim.classList.toggle('d-none', todo);
+    }
+    chk.addEventListener('change', sync);
+    sync();
+})();
+</script>
+{% endblock %}

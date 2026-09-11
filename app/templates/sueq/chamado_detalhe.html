@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ chamado.protocolo }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('sueq.chamados') }}">Chamados SUEQ</a></li>
+        <li class="breadcrumb-item active">{{ chamado.protocolo }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="fas fa-tools me-2"></i>{{ chamado.protocolo }}</h1>
+    <div class="d-flex gap-2">
+        <a href="#" class="btn btn-outline-secondary"
+           onclick="abrirImpresso('{{ url_for('sueq.chamado_imprimir', id=chamado.id) }}', 'Chamado {{ chamado.protocolo }}'); return false;">
+            <i class="fas fa-print me-1"></i>Impresso
+        </a>
+        {% if current_user.pode('editar_chamados_sueq') %}
+        <a href="{{ url_for('sueq.chamado_editar', id=chamado.id) }}" class="btn btn-primary">Editar</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4"><span class="text-muted small d-block">Unidade</span>{{ chamado.unidade or '—' }}</div>
+            <div class="col-md-4"><span class="text-muted small d-block">Status</span>{{ chamado.status or '—' }}</div>
+            <div class="col-md-4"><span class="text-muted small d-block">Urgência</span>{{ chamado.grau_urgencia or '—' }}</div>
+            <div class="col-md-4"><span class="text-muted small d-block">Equipamento</span>{{ chamado.equipamento or '—' }}</div>
+            <div class="col-md-4"><span class="text-muted small d-block">Patrimônio</span>{{ chamado.patrimonio or '—' }}</div>
+            <div class="col-md-4"><span class="text-muted small d-block">OS</span>{{ chamado.os_numero or '—' }}</div>
+            <div class="col-12"><span class="text-muted small d-block">Problema</span>{{ chamado.problema or '—' }}</div>
+            <div class="col-12"><span class="text-muted small d-block">Descrição</span>{{ chamado.descricao or '—' }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

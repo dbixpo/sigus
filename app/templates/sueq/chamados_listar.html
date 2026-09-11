@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Chamados SUEQ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-tools me-2"></i>Chamados SUEQ</h1>
+    {% if current_user.pode('adicionar_chamados_sueq') %}
+    <a href="{{ url_for('sueq.chamado_novo') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Novo chamado
+    </a>
+    {% endif %}
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label mb-1">Busca</label>
+            <input type="text" name="q" class="form-control form-control-sm" value="{{ filtro_q }}"
+                   placeholder="Protocolo, unidade, equipamento, patrimônio">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1">Status</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Todos</option>
+                {% for s in status_opcoes %}
+                <option value="{{ s }}" {% if filtro_status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('sueq.chamados') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if lista %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Protocolo</th>
+                        <th>Data</th>
+                        <th>Unidade</th>
+                        <th>Equipamento</th>
+                        <th>Patrimônio</th>
+                        <th>Problema</th>
+                        <th>Urgência</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in lista %}
+                    <tr>
+                        <td><a href="{{ url_for('sueq.chamado_detalhe', id=c.id) }}">{{ c.protocolo }}</a></td>
+                        <td>{{ c.data_solicitacao or '—' }}</td>
+                        <td>{{ c.unidade or '—' }}</td>
+                        <td>{{ c.equipamento or '—' }}</td>
+                        <td>{{ c.patrimonio or '—' }}</td>
+                        <td>{{ c.problema or '—' }}</td>
+                        <td>{{ c.grau_urgencia or '—' }}</td>
+                        <td>{{ c.status or '—' }}</td>
+                        <td class="text-end text-nowrap">
+                            <a href="#" class="btn btn-sm btn-outline-secondary"
+                               onclick="abrirImpresso('{{ url_for('sueq.chamado_imprimir', id=c.id) }}', 'Chamado {{ c.protocolo }}'); return false;"
+                               title="Imprimir">
+                                <i class="fas fa-print"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted p-4 mb-0">Nenhum chamado SUEQ.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

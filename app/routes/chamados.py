@@ -1288,6 +1288,12 @@ def gestao():
     tipo_filtro   = request.args.getlist('tipo')
     prio_filtro   = request.args.getlist('prioridade')
     unidade_abriu_filtro = request.args.get('unidade_abriu', type=int)
+    ver_todos = request.args.get('ver_todos') == '1'
+    slugs_padrao = [s.slug for s in status_db if s.padrao_listagem]
+    filtro_aplicado_automatico = False
+    if not status_filtro and slugs_padrao and not ver_todos:
+        status_filtro = slugs_padrao
+        filtro_aplicado_automatico = True
 
     tipos_unidade = unidade_op.tipos_chamado_recebe or []
     tipos_gestao = {k: v for k, v in TIPOS_CHAMADO_LABELS.items() if k in tipos_unidade}
@@ -1329,6 +1335,8 @@ def gestao():
                            prio_filtro=prio_filtro,
                            unidades_ativas=unidades_ativas,
                            unidade_abriu_filtro=unidade_abriu_filtro,
+                           ver_todos=ver_todos,
+                           filtro_aplicado_automatico=filtro_aplicado_automatico,
                            gestao_unidade=unidade_op,
                            totais=totais,
                            tipos=tipos_gestao,

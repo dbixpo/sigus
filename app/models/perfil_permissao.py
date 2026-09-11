@@ -19,11 +19,15 @@ SECOES = [
     ('OP_GestaoChamados', 'Gestão de Chamados', 'kanban', 'OPERAÇÕES'),
     ('OP_Transferencias', 'Transferências', 'arrow-left-right', 'OPERAÇÕES'),
     ('OP_Contratos',   'Contratos',       'file-earmark-text', 'OPERAÇÕES'),
+    ('OP_Emendas',     'Emendas',         'bank', 'OPERAÇÕES'),
+    ('OP_Licitacoes',  'Licitações',      'hammer', 'OPERAÇÕES'),
+    ('OP_ChamadosSueq','Chamados SUEQ',   'tools', 'OPERAÇÕES'),
     ('OP_ControleEmpenho', 'Controle de Empenho', 'currency-dollar', 'OPERAÇÕES'),
     ('OP_Empresas',    'Empresas',        'building', 'OPERAÇÕES'),
     # GESTÃO (seção pai)
     ('GESTÃO',         'GESTÃO',          'clipboard-check', None),
     ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
+    ('Agenda',         'Agenda',          'calendar-event', 'GESTÃO'),
     ('Relatórios',     'Relatórios',      'bar-chart-line', 'GESTÃO'),
     # OUTROS (seção pai)
     ('OUTROS',         'OUTROS',          'three-dots-vertical', None),
@@ -76,6 +80,16 @@ ACAO_PARA_SECAO_TIPO = {
     'cadastrar_contrato':  ('OP_Contratos', 'adicionar'),
     'editar_contrato':     ('OP_Contratos', 'editar'),
     'ver_contratos':       ('OP_Contratos', 'ver'),
+    # OPERAÇÕES - Emendas / Licitações / Chamados SUEQ
+    'ver_emendas':         ('OP_Emendas', 'ver'),
+    'editar_emendas':      ('OP_Emendas', 'editar'),
+    'adicionar_emendas':   ('OP_Emendas', 'adicionar'),
+    'ver_licitacoes':      ('OP_Licitacoes', 'ver'),
+    'editar_licitacoes':   ('OP_Licitacoes', 'editar'),
+    'adicionar_licitacoes': ('OP_Licitacoes', 'adicionar'),
+    'ver_chamados_sueq':   ('OP_ChamadosSueq', 'ver'),
+    'editar_chamados_sueq': ('OP_ChamadosSueq', 'editar'),
+    'adicionar_chamados_sueq': ('OP_ChamadosSueq', 'adicionar'),
     # OPERAÇÕES - Controle de Empenho
     'ver_controle_empenho': ('OP_ControleEmpenho', 'ver'),
     'editar_controle_empenho': ('OP_ControleEmpenho', 'editar'),
@@ -90,6 +104,10 @@ ACAO_PARA_SECAO_TIPO = {
     'criar_acao':          ('Planejamentos', 'adicionar'),
     'alterar_status_acao': ('Planejamentos', 'editar'),
     'ver_planejamentos':  ('Planejamentos', 'ver'),
+    # GESTÃO - Agenda
+    'ver_agenda':         ('Agenda', 'ver'),
+    'editar_agenda':      ('Agenda', 'editar'),
+    'adicionar_agenda':   ('Agenda', 'adicionar'),
     # GESTÃO - Relatórios
     'emitir_relatorios':   ('Relatórios', 'ver'),
     'ver_dashboard_geral': ('Relatórios', 'ver'),

@@ -24,4 +24,10 @@ from app.models.matricula import MatriculaProfissional
 from app.models.tipo_link import TipoLink
 from app.models.link_util import LinkUtil
 from app.models.empresa import EmpresaContratada
+from app.models.agenda import AgendaEvento
+from app.models.feriado import Feriado
 from app.models.cbo import CBO
+from app.models.sueq import (
+    SueqParlamentar, SueqUnidade, SueqProcesso, SueqEmenda, SueqEmendaItem,
+    SueqChamado, SueqChamadoControle,
+)

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ chamado.protocolo }} {{ chamado.unidade or '' }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+.no-print { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;
+    background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 16px; }
+.no-print .label-chamado { font-size: 15px; font-weight: bold; margin-right: auto; color: #1A82B8; }
+.btn-acao { border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.btn-imprimir { background: #1A82B8; color: #fff; }
+.btn-voltar { background: #6c757d; color: #fff; }
+.doc { max-width: 740px; margin: 0 auto; border: 1px solid #000; padding: 14px 16px; }
+.cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 12px; }
+.cab-logo img { height: 58px; width: auto; }
+.cab-titulo { flex: 1; text-align: center; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; line-height: 1.5; }
+.cab-titulo .subtitulo { font-size: 12px; font-weight: bold; text-transform: uppercase; }
+.cab-secretaria { text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap; }
+.cab-secretaria strong { font-size: 13px; display: block; }
+.chamado-num { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+.chamado-num .num { font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+.badge-imp { font-size: 11px; text-transform: uppercase; }
+.secao { border-top: 1px solid #aaa; margin-top: 10px; padding-top: 6px; }
+.secao-titulo { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #555; letter-spacing: .6px; margin-bottom: 6px; }
+.campos-grid { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.campo { display: flex; flex-direction: column; min-width: 80px; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 2px 4px 2px 0; }
+.campo.w-half { flex: 1 1 45%; }
+.campo.w-third { flex: 1 1 28%; }
+.campo.w-full { flex: 1 1 100%; }
+.c-label { font-size: 8.5px; font-weight: bold; text-transform: uppercase; color: #444; margin-bottom: 2px; }
+.c-valor { min-height: 16px; padding: 1px 3px 2px; font-size: 11px; line-height: 1.3; }
+.c-valor.destaque { font-weight: bold; font-size: 12px; }
+.texto-block { border: 1px solid #bbb; border-radius: 3px; padding: 6px 8px; font-size: 11px; line-height: 1.5; white-space: pre-wrap; min-height: 40px; background: #fafafa; }
+.assinatura-wrap { display: flex; gap: 28px; margin-top: 32px; border-top: 2px solid #000; padding-top: 16px; }
+.assinatura-box { flex: 1; text-align: center; }
+.assinatura-linha { border-bottom: 1px solid #000; margin-bottom: 6px; height: 52px; }
+.assinatura-label { font-size: 9px; line-height: 1.5; }
+.rodape { text-align: center; font-size: 8.5px; color: #888; border-top: 1px solid #ccc; padding-top: 6px; margin-top: 24px; }
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .doc { border: none; }
+    @page { margin: 1cm; }
+}
+</style>
+</head>
+<body>
+<div class="no-print" id="barraAcoes">
+    <span class="label-chamado">Chamado {{ chamado.protocolo }}</span>
+    <button class="btn-acao btn-imprimir" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <a class="btn-acao btn-voltar" href="{{ url_for('sueq.chamado_detalhe', id=chamado.id) }}">Voltar</a>
+</div>
+<script>
+if (window.self !== window.top) {
+    var b = document.getElementById('barraAcoes');
+    if (b) b.style.display = 'none';
+}
+</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+                 onerror="this.src='{{ url_for('static', filename='img/logo-sd-colorido.png') }}'"
+                 alt="Prefeitura de Sorocaba">
+        </div>
+        <div class="cab-titulo">
+            SISTEMA INTEGRADO DE GESTÃO DE UNIDADE<br>
+            <span class="subtitulo">Abertura de Chamado</span>
+        </div>
+        <div class="cab-secretaria">
+            <strong>Secretaria da</strong>
+            SAÚDE
+        </div>
+    </div>
+
+    <div class="chamado-num">
+        <span class="num">{{ chamado.protocolo }}</span>
+        <div class="badges" style="margin-left:auto; text-align:right;">
+            <span class="badge-imp"><span style="color:#888;font-weight:normal;">Status:</span> {{ chamado.status or '—' }}</span>
+            <span style="color:#bbb; margin:0 4px;">·</span>
+            <span class="badge-imp"><span style="color:#888;font-weight:normal;">Prioridade:</span> {{ chamado.grau_urgencia or '—' }}</span>
+        </div>
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">1. Identificação</div>
+        <div style="display:flex; gap:12px; align-items:stretch;">
+            <div class="campos-grid" style="flex:1; align-content:flex-start;">
+                <div class="campo w-half">
+                    <div class="c-label">Unidade de Saúde</div>
+                    <div class="c-valor destaque">{{ chamado.unidade or '—' }}</div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Data de Abertura</div>
+                    <div class="c-valor">{{ chamado.data_solicitacao or (chamado.created_at | br_datetime) }}</div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Responsável</div>
+                    <div class="c-valor">{{ chamado.responsavel or '—' }}</div>
+                </div>
+                <div class="campo w-half">
+                    <div class="c-label">Endereço</div>
+                    <div class="c-valor">{{ chamado.endereco or (unidade_sigus.endereco if unidade_sigus else '—') }}</div>
+                </div>
+                <div class="campo w-third">
+                    <div class="c-label">Telefone</div>
+                    <div class="c-valor">{{ chamado.telefone or '—' }}</div>
+                </div>
+            </div>
+            {% if qr_url %}
+            <div style="width:120px; flex-shrink:0; text-align:center;">
+                <div id="qrMaps"></div>
+                <div style="font-size:8px; color:#555; margin-top:4px;">Localização da unidade</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">2. Equipamento / serviço</div>
+        <div class="campos-grid">
+            <div class="campo w-half">
+                <div class="c-label">Equipamento</div>
+                <div class="c-valor destaque">{{ chamado.equipamento or '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Patrimônio</div>
+                <div class="c-valor">{{ chamado.patrimonio or '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Fabricante / série</div>
+                <div class="c-valor">{{ chamado.fabricante or '—' }}{% if chamado.serie %} · {{ chamado.serie }}{% endif %}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Categoria</div>
+                <div class="c-valor">{{ chamado.categoria or '—' }}</div>
+            </div>
+            <div class="campo w-third">
+                <div class="c-label">Serviço</div>
+                <div class="c-valor">{{ chamado.servico or '—' }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">3. Problema</div>
+        <div class="texto-block">{{ chamado.problema or '' }}{% if chamado.descricao %}
+
+{{ chamado.descricao }}{% endif %}</div>
+    </div>
+
+    <div class="assinatura-wrap">
+        <div class="assinatura-box">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label"><strong>Solicitante</strong>Unidade</div>
+        </div>
+        <div class="assinatura-box">
+            <div class="assinatura-linha"></div>
+            <div class="assinatura-label"><strong>Recebimento</strong>SUEQ / manutenção</div>
+        </div>
+    </div>
+
+    <div class="rodape">
+        SIGUS — Sistema de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba ·
+        Impresso em {{ now | br_datetime }}
+    </div>
+</div>
+
+{% if qr_url %}
+<script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+<script>
+(function () {
+    var el = document.getElementById('qrMaps');
+    if (!el || typeof qrcode === 'undefined') return;
+    var url = {{ qr_url | tojson }};
+    if (!url) return;
+    var qr = qrcode(4, 'L');
+    qr.addData(url);
+    qr.make();
+    el.innerHTML = qr.createSvgTag({ scalable: true, margin: 1 });
+    var svg = el.querySelector('svg');
+    if (svg) svg.style.cssText = 'width:110px;height:110px;display:block;';
+})();
+</script>
+{% endif %}
+</body>
+</html>

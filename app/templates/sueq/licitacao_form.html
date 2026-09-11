@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if processo else 'Novo' }} processo{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('sueq.licitacoes') }}">Licitações</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if processo else 'Novo' }}</li>
+    </ol>
+</nav>
+<div class="page-header">
+    <h1><i class="fas fa-gavel me-2"></i>{{ 'Editar' if processo else 'Novo' }} processo</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-section">
+                <div class="form-section-title">Processo</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Identificador (CPL) *</label>
+                        <input type="text" name="identificador" class="form-control" required
+                               value="{{ processo.identificador if processo else '' }}" placeholder="CPL 086/2025">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Tipo</label>
+                        <input type="text" name="tipo" class="form-control"
+                               value="{{ processo.tipo if processo else '' }}" placeholder="Aquisição ou ATA">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Seção</label>
+                        <input type="text" name="secao" class="form-control"
+                               value="{{ processo.secao if processo else 'SUEQ' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Objeto</label>
+                        <textarea name="objeto" class="form-control" rows="2">{{ processo.objeto if processo else '' }}</textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Modalidade</label>
+                        <select name="modalidade" class="form-select">
+                            <option value="">—</option>
+                            {% for m in modalidades %}
+                            <option value="{{ m }}" {% if processo and processo.modalidade == m %}selected{% endif %}>{{ m }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            {% for s in status_opcoes %}
+                            <option value="{{ s }}" {% if processo and processo.status == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Valor estimado (R$)</label>
+                        <input type="number" step="0.01" name="valor_estimado" class="form-control"
+                               value="{{ processo.valor_estimado if processo and processo.valor_estimado else '' }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Link de Acesso Direto do Processo SEI</label>
+                        <input type="url" name="link_publico_sei" class="form-control"
+                               value="{{ processo.link_publico_sei if processo else '' }}"
+                               placeholder="https://sei.sorocaba.sp.gov.br/...">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observação</label>
+                        <textarea name="observacao" class="form-control" rows="2">{{ processo.observacao if processo else '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a href="{{ url_for('sueq.licitacoes') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

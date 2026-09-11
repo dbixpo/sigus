@@ -45,6 +45,86 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── Menu: busca + seções recolhíveis ────────────────────
+    (function initSidebarMenu() {
+        if (!sidebar) return;
+        const STORAGE_KEY = 'sigus-sidebar-groups';
+        const groups = Array.from(sidebar.querySelectorAll('.sidebar-group'));
+        const searchInput = document.getElementById('sidebarSearch');
+        const emptyEl = document.getElementById('sidebarSearchEmpty');
+        const topItems = Array.from(sidebar.querySelectorAll('.sidebar-nav > ul > .nav-item'));
+
+        function loadState() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+            catch (e) { return {}; }
+        }
+        function saveState() {
+            const state = {};
+            groups.forEach(g => { state[g.dataset.group] = g.classList.contains('open'); });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        }
+        function setOpen(group, open) {
+            group.classList.toggle('open', open);
+            const btn = group.querySelector('.sidebar-group-toggle');
+            if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        function normalize(text) {
+            return (text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+
+        const saved = loadState();
+        groups.forEach(group => {
+            const hasActive = !!group.querySelector('.nav-link.active');
+            group.classList.toggle('has-active', hasActive);
+            const remembered = saved[group.dataset.group];
+            setOpen(group, hasActive || remembered === true);
+            const btn = group.querySelector('.sidebar-group-toggle');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    if (searchInput && searchInput.value.trim()) return;
+                    setOpen(group, !group.classList.contains('open'));
+                    saveState();
+                });
+            }
+        });
+
+        if (!searchInput) return;
+
+        function applySearch() {
+            const q = normalize(searchInput.value);
+            let visible = 0;
+
+            function matchItem(item) {
+                const label = item.querySelector('.nav-link span');
+                const ok = !q || normalize(label ? label.textContent : '').includes(q);
+                item.classList.toggle('d-none', !ok);
+                if (ok) visible += 1;
+                return ok;
+            }
+
+            topItems.forEach(matchItem);
+            groups.forEach(group => {
+                let any = false;
+                group.querySelectorAll(':scope > .sidebar-group-items > .nav-item').forEach(item => {
+                    if (matchItem(item)) any = true;
+                });
+                group.classList.toggle('d-none', !!q && !any);
+                group.classList.toggle('filtering', !!q && any);
+            });
+
+            if (emptyEl) emptyEl.classList.toggle('d-none', !(q && visible === 0));
+        }
+
+        searchInput.addEventListener('input', applySearch);
+        searchInput.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape') {
+                searchInput.value = '';
+                applySearch();
+                searchInput.blur();
+            }
+        });
+    })();
+
     // ── Auto-fechar alertas após 5s ─────────────────────────
     document.querySelectorAll('.alert:not(.alert-permanent)').forEach(function (alert) {
         setTimeout(function () {
