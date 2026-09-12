@@ -14,6 +14,7 @@ MODULO_OPCOES = [
     'usuarios', 'unidades', 'salas', 'equipamentos', 'auth',
     'transferencias', 'planejamentos', 'empresas', 'links',
     'rh', 'solicitacoes', 'notificacoes', 'predios', 'dashboard',
+    'nsp',
 ]
 
 

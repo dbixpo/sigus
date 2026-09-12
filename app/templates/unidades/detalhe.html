@@ -83,6 +83,14 @@
             <span class="badge bg-secondary ms-1">{{ chamados_abertos_count }}</span>
         </button>
     </li>
+    {% if current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') %}
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-nsp" type="button">
+            <i class="fas fa-user-shield me-1"></i>Segurança do Paciente
+            <span class="badge bg-danger ms-1">{{ nsp_abertos_count | default(0) }}</span>
+        </button>
+    </li>
+    {% endif %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-equipamentos" type="button">
             <i class="fas fa-desktop me-1"></i>Equipamentos
@@ -589,6 +597,57 @@
             </div>
         </div>
     </div>
+
+    {% if current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') %}
+    <div class="tab-pane fade" id="tab-nsp">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-user-shield me-2"></i>Notificações da unidade</span>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('nsp.index', unidade=unidade.id) }}" class="btn btn-sm btn-outline-secondary">Ver todas</a>
+                    {% if current_user.pode('adicionar_nsp') %}
+                    <a href="{{ url_for('nsp.nova', unidade_id=unidade.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus"></i> Nova notificação
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if nsp_recentes %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr>
+                            <th>Protocolo</th><th>Data</th><th>Classificação</th><th>Tipo</th><th>Status</th><th class="text-end" style="width:56px"></th>
+                        </tr></thead>
+                        <tbody>
+                            {% for o in nsp_recentes %}
+                            <tr onclick="window.location='{{ url_for('nsp.detalhe', id=o.id) }}'" style="cursor:pointer">
+                                <td class="small text-primary">{{ o.protocolo }}{% if o.never_event %} <span class="badge bg-danger">Jamais deveria ocorrer</span>{% endif %}</td>
+                                <td class="small text-muted">{{ o.data_ocorrencia.strftime('%d/%m/%Y') if o.data_ocorrencia else '—' }}</td>
+                                <td><span class="badge bg-{{ o.classificacao_cor }}">{{ o.classificacao_nome }}</span></td>
+                                <td class="small">{{ o.tipo_incidente_nome | truncate(28) }}</td>
+                                <td><span class="badge bg-{{ o.status_cor }}">{{ o.status_nome }}</span></td>
+                                <td class="text-end" onclick="event.stopPropagation()">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Imprimir"
+                                            onclick="abrirImpresso('{{ url_for('nsp.imprimir', id=o.id) }}', '{{ o.protocolo }} — Segurança do Paciente')">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state py-4 text-center text-muted">
+                    <i class="fas fa-user-shield d-block mb-2"></i>
+                    <p class="mb-0">Nenhuma notificação nesta unidade.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ══════════════════════════════════════════════
          ABA FICHAS CNES

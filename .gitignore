@@ -27,6 +27,7 @@ database/sigus_dump.sql
 # Dump de produção SUEQ (Patrick) — dados e anexos não vão para o Git
 database/sueq_data.sql
 app/static/uploads/sueq/
+app/static/uploads/nsp/
 
 # IDE / Editor
 .idea/

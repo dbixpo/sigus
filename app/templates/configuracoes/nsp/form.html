@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Novo' }} item — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-user-shield me-2"></i>{{ 'Editar' if item else 'Novo' }} item</h1>
+</div>
+
+<div class="row justify-content-center">
+<div class="col-md-7">
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="grupo" value="{{ grupo }}">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Grupo</label>
+                <input type="text" class="form-control bg-light" value="{% for g,l in grupos %}{% if g == grupo %}{{ l }}{% endif %}{% endfor %}" disabled>
+            </div>
+
+            {% if not item %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Identificador (slug)</label>
+                <input type="text" name="slug" class="form-control font-monospace" maxlength="50" pattern="[a-z0-9_]+" placeholder="ex: sala_vacina">
+                <div class="form-text">Se vazio, é gerado a partir do nome. Não muda depois.</div>
+            </div>
+            {% else %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Identificador</label>
+                <input type="text" class="form-control font-monospace bg-light" value="{{ item.slug }}" disabled>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nome *</label>
+                <input type="text" name="nome" class="form-control" required maxlength="150" value="{{ item.nome if item else '' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descrição</label>
+                <textarea name="descricao" class="form-control" rows="2">{{ item.descricao if item and item.descricao else '' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cor do badge</label>
+                <div class="d-flex flex-wrap gap-2 mb-2" id="corBtns">
+                    {% for slug_cor, nome_cor in badge_cores %}
+                    <button type="button" class="btn btn-sm btn-{{ slug_cor }} cor-btn {{ 'ring-sel' if (item and item.cor == slug_cor) or (not item and slug_cor == 'secondary') }}" data-cor="{{ slug_cor }}">{{ nome_cor }}</button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="cor" id="hiddenCor" value="{{ item.cor if item else 'secondary' }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ordem</label>
+                <input type="number" name="ordem" class="form-control" style="max-width:120px" value="{{ item.ordem if item else proximo_ordem }}">
+            </div>
+            <div class="border rounded p-3 bg-light mb-3">
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="exige_texto" value="0">
+                    <input class="form-check-input" type="checkbox" name="exige_texto" value="1" id="ex" {{ 'checked' if item and item.exige_texto }}>
+                    <label class="form-check-label" for="ex">Pede campo “Outro” quando selecionado</label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="never_event" value="0">
+                    <input class="form-check-input" type="checkbox" name="never_event" value="1" id="nv" {{ 'checked' if item and item.never_event }}>
+                    <label class="form-check-label" for="nv">Marca evento que nunca deveria ocorrer (tipo de incidente)</label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="encerra" value="0">
+                    <input class="form-check-input" type="checkbox" name="encerra" value="1" id="en" {{ 'checked' if item and item.encerra }}>
+                    <label class="form-check-label" for="en">Encerra a ocorrência (status)</label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="padrao" value="0">
+                    <input class="form-check-input" type="checkbox" name="padrao" value="1" id="pd" {{ 'checked' if item and item.padrao }}>
+                    <label class="form-check-label" for="pd">Padrão de listagem (status abertos)</label>
+                </div>
+                {% if item %}
+                <div class="form-check form-switch">
+                    <input type="hidden" name="ativo" value="0">
+                    <input class="form-check-input" type="checkbox" name="ativo" value="1" id="at" {{ 'checked' if item.ativo }}>
+                    <label class="form-check-label" for="at">Ativo</label>
+                </div>
+                {% endif %}
+            </div>
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ url_for('configuracoes.nsp_catalogos', grupo=grupo) }}" class="btn btn-outline-secondary">Cancelar</a>
+                <button class="btn btn-primary" type="submit"><i class="fas fa-check me-1"></i>Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.cor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.cor-btn').forEach(b => b.classList.remove('ring-sel'));
+        btn.classList.add('ring-sel');
+        document.getElementById('hiddenCor').value = btn.dataset.cor;
+    });
+});
+</script>
+<style>.ring-sel { outline: 3px solid #000; outline-offset: 2px; }</style>
+{% endblock %}

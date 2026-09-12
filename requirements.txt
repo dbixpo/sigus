@@ -12,3 +12,5 @@ Werkzeug==3.1.6
 waitress
 openpyxl
 Pillow
+requests
+beautifulsoup4

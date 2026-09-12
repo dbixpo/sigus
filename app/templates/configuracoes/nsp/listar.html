@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Listas — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-user-shield me-2"></i>Segurança do Paciente — listas</h1>
+        <p class="text-muted small mb-0">Tudo o que aparece nos selects da notificação. Desative o que a rede não for usar; cadastre o que faltar.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('configuracoes.nsp_catalogo_novo', grupo=grupo) }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i>Novo item
+        </a>
+        <a href="{{ url_for('configuracoes.index') }}" class="btn btn-outline-secondary">Voltar</a>
+    </div>
+</div>
+
+<ul class="nav nav-pills flex-wrap gap-1 mb-3">
+    {% for g, label in grupos %}
+    <li class="nav-item">
+        <a class="nav-link {{ 'active' if g == grupo }}" href="{{ url_for('configuracoes.nsp_catalogos', grupo=g) }}">{{ label }}</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:60px">Ordem</th>
+                    <th>Identificador</th>
+                    <th>Nome</th>
+                    <th>Flags</th>
+                    <th class="text-center">Ativo</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in itens %}
+                <tr class="{{ 'table-secondary text-muted' if not s.ativo }}">
+                    <td class="text-center">{{ s.ordem }}</td>
+                    <td><code>{{ s.slug }}</code></td>
+                    <td><span class="badge bg-{{ s.cor }}">{{ s.nome }}</span></td>
+                    <td class="small">
+                        {% if s.exige_texto %}<span class="badge bg-light text-dark border">pede texto</span>{% endif %}
+                        {% if s.never_event %}<span class="badge bg-danger">jamais deveria ocorrer</span>{% endif %}
+                        {% if s.encerra %}<span class="badge bg-success">encerra</span>{% endif %}
+                        {% if s.padrao %}<span class="badge bg-warning text-dark">padrão lista</span>{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <form method="POST" action="{{ url_for('configuracoes.nsp_catalogo_toggle', id=s.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm {{ 'btn-success' if s.ativo else 'btn-outline-danger' }}">
+                                <i class="fas {{ 'fa-toggle-on' if s.ativo else 'fa-toggle-off' }}"></i>
+                            </button>
+                        </form>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('configuracoes.nsp_catalogo_editar', id=s.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-pencil-alt"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Nenhum item neste grupo.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<p class="small text-muted mt-3">
+    Desativar oculta o item dos formulários novos, sem apagar o histórico das notificações antigas.
+</p>
+{% endblock %}

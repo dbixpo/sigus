@@ -11,6 +11,9 @@ TIPOS_NOTIFICACAO = {
     'chamado_cancelado':   ('Chamado cancelado',                      'bi-x-circle',               'secondary'),
     # Alertas de Planejamento (ações vencendo hoje ou em 3 dias)
     'alerta_planejamento': ('Ação de planejamento próxima do prazo',  'bi-clipboard2-check',       'warning'),
+    'nsp_novo':            ('Nova notificação de segurança do paciente', 'bi-heart-pulse',          'danger'),
+    'nsp_encaminhado':     ('Ocorrência encaminhada ao seu setor',     'bi-arrow-up-right-circle',  'warning'),
+    'nsp_andamento':       ('Atualização em segurança do paciente',    'bi-chat-left-text',         'info'),
 }
 
 
@@ -23,11 +26,13 @@ class Notificacao(db.Model):
     titulo      = db.Column(db.String(200), nullable=False)
     texto       = db.Column(db.Text)
     chamado_id  = db.Column(db.Integer, db.ForeignKey('chamados.id', ondelete='CASCADE'))
+    nsp_ocorrencia_id = db.Column(db.Integer, db.ForeignKey('nsp_ocorrencias.id', ondelete='CASCADE'))
     lida        = db.Column(db.Boolean, nullable=False, default=False)
     criado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
     chamado = db.relationship('Chamado', foreign_keys=[chamado_id])
+    nsp_ocorrencia = db.relationship('NspOcorrencia', foreign_keys=[nsp_ocorrencia_id])
 
     @property
     def icone(self):
@@ -39,6 +44,8 @@ class Notificacao(db.Model):
 
     @property
     def url(self):
+        if self.nsp_ocorrencia_id:
+            return prefixed_static_url(f'/seguranca-paciente/{self.nsp_ocorrencia_id}')
         if self.chamado_id:
             return prefixed_static_url(f'/chamados/{self.chamado_id}')
         return '#'

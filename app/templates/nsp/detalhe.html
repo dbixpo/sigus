@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% block title %}{{ o.protocolo }} — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('nsp.index') }}">Segurança do Paciente</a></li>
+        <li class="breadcrumb-item active">{{ o.protocolo }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h1 class="flex-wrap">
+            <i class="fas fa-user-shield me-2"></i>{{ o.protocolo }}
+            <span class="badge bg-{{ o.status_cor }} fs-6">{{ o.status_nome }}</span>
+            <span class="badge bg-{{ o.classificacao_cor }} fs-6">{{ o.classificacao_nome }}</span>
+            {% if o.never_event %}<span class="badge bg-danger fs-6">Jamais deveria ocorrer</span>{% endif %}
+        </h1>
+        <p class="text-muted small mb-0">
+            {{ o.unidade.nome if o.unidade else '—' }}
+            · {{ o.data_ocorrencia.strftime('%d/%m/%Y') if o.data_ocorrencia else '—' }}
+            {% if o.hora_ocorrencia %} {{ o.hora_ocorrencia.strftime('%H:%M') }}{% endif %}
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                onclick="abrirImpresso('{{ url_for('nsp.imprimir', id=o.id) }}', '{{ o.protocolo }} — Segurança do Paciente')">
+            <i class="fas fa-print me-1"></i>Imprimir
+        </button>
+    </div>
+</div>
+
+{% if o.exige_investigacao and not o.investigacao_preenchida %}
+<div class="alert alert-danger">
+    <i class="fas fa-exclamation-triangle me-1"></i>
+    Óbito, dano grave ou evento que nunca deveria ocorrer: complete as 6 etapas da investigação da Anvisa antes de encerrar.
+</div>
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Registro</div>
+            <div class="card-body">
+                <div class="row g-3 small">
+                    <div class="col-md-6"><span class="text-muted d-block">Notificante</span><strong>{{ o.notificante_nome }}</strong></div>
+                    <div class="col-md-6"><span class="text-muted d-block">Setor notificante</span>{{ o.setor_notificante.nome if o.setor_notificante else '—' }}{% if o.setor_notificante_outro %} ({{ o.setor_notificante_outro }}){% endif %}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Pessoa afetada</span>{{ o.nome_afetado or '—' }} · {{ o.tipo_pessoa.nome if o.tipo_pessoa else '—' }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Prontuário</span>{{ o.prontuario or '—' }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">CNS</span>{{ o.cns or '—' }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">CPF</span>{{ o.cpf or '—' }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Setor da ocorrência</span>{{ o.setor_ocorrencia_nome }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Departamento</span>{{ o.departamento.nome if o.departamento else '—' }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Tipo de incidente</span>{{ o.tipo_incidente_nome }}</div>
+                    <div class="col-md-6"><span class="text-muted d-block">Setor notificado</span>{{ o.setor_notificado.nome if o.setor_notificado else '—' }}</div>
+                    <div class="col-12">
+                        <span class="text-muted d-block">Descrição</span>
+                        <div class="mt-1" style="white-space:pre-wrap">{{ o.descricao }}</div>
+                    </div>
+                    <div class="col-12">
+                        <span class="text-muted d-block">Ação imediata</span>
+                        <div class="mt-1" style="white-space:pre-wrap">{{ o.acao_imediata }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if pode_editar %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Investigação (etapas 5 a 10 da Anvisa)</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nsp.salvar_analise', id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Resumo da análise</label>
+                        <textarea name="analise_resumo" class="form-control" rows="2">{{ o.analise_resumo or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">5. Fatores contribuintes</label>
+                        <textarea name="fatores_contribuintes" class="form-control" rows="2">{{ o.fatores_contribuintes or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">6. Consequências organizacionais</label>
+                        <textarea name="consequencias_organizacionais" class="form-control" rows="2">{{ o.consequencias_organizacionais or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">7. Detecção</label>
+                        <textarea name="deteccao" class="form-control" rows="2">{{ o.deteccao or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">8. Fatores atenuantes do dano</label>
+                        <textarea name="fatores_atenuantes" class="form-control" rows="2">{{ o.fatores_atenuantes or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">9. Ações de melhoria</label>
+                        <textarea name="acoes_melhoria" class="form-control" rows="2">{{ o.acoes_melhoria or '' }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">10. Ações para reduzir o risco</label>
+                        <textarea name="acoes_reducao_risco" class="form-control" rows="2">{{ o.acoes_reducao_risco or '' }}</textarea>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="never_event" value="1" id="nv" {% if o.never_event %}checked{% endif %}>
+                        <label class="form-check-label" for="nv">Evento que nunca deveria ocorrer</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="notivisa_notificado" value="1" id="ntv" {% if o.notivisa_notificado %}checked{% endif %}>
+                        <label class="form-check-label" for="ntv">Já notificado no Notivisa (Anvisa)</label>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Nº Notivisa</label>
+                            <input type="text" name="notivisa_numero" class="form-control" value="{{ o.notivisa_numero or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Data Notivisa</label>
+                            <input type="date" name="notivisa_em" class="form-control" value="{{ o.notivisa_em.isoformat() if o.notivisa_em else '' }}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-save me-1"></i>Salvar análise</button>
+                    {% if o.analista %}
+                    <span class="small text-muted ms-2">Última por {{ o.analista.nome }} em {{ o.analise_em | br_datetime }}</span>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% elif o.analise_resumo or o.fatores_contribuintes %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Investigação</div>
+            <div class="card-body small">
+                {% if o.analise_resumo %}<p><strong>Resumo:</strong> {{ o.analise_resumo }}</p>{% endif %}
+                {% if o.fatores_contribuintes %}<p><strong>Fatores contribuintes:</strong> {{ o.fatores_contribuintes }}</p>{% endif %}
+                {% if o.acoes_melhoria %}<p><strong>Ações de melhoria:</strong> {{ o.acoes_melhoria }}</p>{% endif %}
+                {% if o.acoes_reducao_risco %}<p><strong>Redução de risco:</strong> {{ o.acoes_reducao_risco }}</p>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Plano de ação</div>
+            <div class="card-body p-0">
+                {% if o.acoes %}
+                <table class="table table-sm mb-0">
+                    <thead><tr><th></th><th>Ação</th><th>Responsável</th><th>Prazo</th></tr></thead>
+                    <tbody>
+                    {% for a in o.acoes %}
+                    <tr class="{{ 'text-muted' if a.concluida }}">
+                        <td style="width:42px">
+                            {% if pode_editar %}
+                            <form method="POST" action="{{ url_for('nsp.concluir_acao', id=o.id, acao_id=a.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm {{ 'btn-success' if a.concluida else 'btn-outline-secondary' }}" title="Concluir">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% else %}
+                            <i class="fas {{ 'fa-check-circle text-success' if a.concluida else 'fa-circle text-muted' }}"></i>
+                            {% endif %}
+                        </td>
+                        <td>{{ a.descricao }}</td>
+                        <td class="small">{{ a.responsavel_nome or '—' }}</td>
+                        <td class="small">{{ a.prazo.strftime('%d/%m/%Y') if a.prazo else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-muted small p-3 mb-0">Nenhuma ação cadastrada.</p>
+                {% endif %}
+                {% if pode_editar %}
+                <form method="POST" action="{{ url_for('nsp.nova_acao', id=o.id) }}" class="p-3 border-top">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-2">
+                        <div class="col-md-6"><input type="text" name="descricao" class="form-control form-control-sm" required placeholder="Nova ação"></div>
+                        <div class="col-md-3"><input type="text" name="responsavel_nome" class="form-control form-control-sm" placeholder="Responsável"></div>
+                        <div class="col-md-2"><input type="date" name="prazo" class="form-control form-control-sm"></div>
+                        <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit"><i class="fas fa-plus"></i></button></div>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Linha do tempo</div>
+            <div class="card-body">
+                {% if pode_comentar and not o.encerrada %}
+                <form method="POST" action="{{ url_for('nsp.comentario', id=o.id) }}" class="mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <textarea name="texto" class="form-control mb-2" rows="2" required placeholder="Registrar andamento…"></textarea>
+                    <button class="btn btn-outline-primary btn-sm" type="submit">Comentar</button>
+                </form>
+                {% endif %}
+                {% for a in o.andamentos %}
+                <div class="border-start border-3 ps-3 mb-3" style="border-color:#1A82B8 !important">
+                    <div class="small text-muted">{{ a.tipo_label }} · {{ a.criado_em | br_datetime }} · {{ a.autor.nome if a.autor else '—' }}</div>
+                    <div>{{ a.texto }}</div>
+                </div>
+                {% else %}
+                <p class="text-muted small mb-0">Sem andamentos.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if pode_editar %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Status</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nsp.mudar_status', id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <select name="status_id" class="form-select mb-2">
+                        {% for s in catalogos.get('status', []) %}
+                        <option value="{{ s.id }}" {% if o.status_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary btn-sm w-100" type="submit">Atualizar status</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Encaminhar a outro setor</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nsp.encaminhar', id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="form-label small">Destino</label>
+                    <select name="destino_id" class="form-select mb-2 js-exige" data-outro="destino_outro" required>
+                        <option value="">Selecione…</option>
+                        {% for c in catalogos.get('setor_destino', []) %}
+                        <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}">{{ c.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="text" name="destino_outro" id="destino_outro" class="form-control mb-2 d-none" placeholder="Qual destino?">
+                    <label class="form-label small">Unidade de destino</label>
+                    <select name="unidade_destino_id" class="form-select mb-2">
+                        {% for u in unidades %}
+                        <option value="{{ u.id }}" {% if u.id == o.unidade_id %}selected{% endif %}>{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    <textarea name="texto" class="form-control mb-2" rows="2" placeholder="Motivo / o que se espera do setor"></textarea>
+                    <button class="btn btn-outline-primary btn-sm w-100" type="submit">
+                        <i class="fas fa-share me-1"></i>Encaminhar
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if o.encaminhamentos %}
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Encaminhamentos</div>
+            <ul class="list-group list-group-flush small">
+                {% for e in o.encaminhamentos %}
+                <li class="list-group-item">
+                    <strong>{{ e.destino_nome }}</strong>
+                    {% if e.unidade_destino %} · {{ e.unidade_destino.nome }}{% endif %}
+                    <div class="text-muted">{{ e.criado_em | br_datetime }}{% if e.autor %} · {{ e.autor.nome }}{% endif %}</div>
+                    {% if e.texto %}<div>{{ e.texto }}</div>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Anexos</div>
+            <ul class="list-group list-group-flush small">
+                {% for a in o.anexos %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <a href="{{ url_for('nsp.baixar_anexo', id=a.id) }}">{{ a.original or a.filename }}</a>
+                    <span class="text-muted">{{ a.tamanho_label }}</span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">Nenhum anexo.</li>
+                {% endfor %}
+            </ul>
+            {% if not o.encerrada and (current_user.pode('editar_nsp') or current_user.pode('adicionar_nsp')) %}
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('nsp.anexar', id=o.id) }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="file" name="anexos" class="form-control form-control-sm mb-2" multiple>
+                    <button class="btn btn-outline-secondary btn-sm w-100" type="submit">Enviar</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.js-exige').forEach(function (sel) {
+    function toggle() {
+        const opt = sel.options[sel.selectedIndex];
+        const alvo = document.getElementById(sel.dataset.outro);
+        if (!alvo) return;
+        alvo.classList.toggle('d-none', !(opt && opt.dataset.exige === '1'));
+    }
+    sel.addEventListener('change', toggle);
+    toggle();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% block title %}Nova notificação — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('nsp.index') }}">Segurança do Paciente</a></li>
+        <li class="breadcrumb-item active">Nova notificação</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-user-shield me-2"></i>Nova notificação</h1>
+        <p class="text-muted small mb-0">A notificação é da unidade. Não use este canal para punir profissionais — descreva o que aconteceu e o que foi feito na hora.</p>
+    </div>
+</div>
+
+<form method="POST" enctype="multipart/form-data" class="pb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-section">
+        <div class="form-section-title">Unidade</div>
+        <div class="row g-3">
+            <div class="col-md-12">
+                <label class="form-label">Unidade da ocorrência *</label>
+                <select name="unidade_id" class="form-select" required>
+                    <option value="">Selecione…</option>
+                    {% for u in unidades %}
+                    <option value="{{ u.id }}" {% if (form and form.get('unidade_id')|int == u.id) or (not form and unidade_padrao_id == u.id) %}selected{% endif %}>{{ u.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section-title">Notificante</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nome do notificante *</label>
+                <input type="text" name="notificante_nome" class="form-control" required maxlength="150"
+                       value="{{ form.get('notificante_nome') if form else current_user.nome }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tipo de setor</label>
+                {% set opts = catalogos.get('tipo_setor', []) %}
+                <select name="tipo_setor_notificante_id" class="form-select">
+                    <option value="">Selecione…</option>
+                    {% for c in opts %}
+                    <option value="{{ c.id }}" {% if form and form.get('tipo_setor_notificante_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Setor notificante</label>
+                <select name="setor_notificante_id" class="form-select js-exige" data-outro="setor_notificante_outro">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('setor', []) %}
+                    <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}" {% if form and form.get('setor_notificante_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="setor_notificante_outro" id="setor_notificante_outro" class="form-control mt-2 d-none" placeholder="Qual o setor?" maxlength="150" value="{{ form.get('setor_notificante_outro','') if form else '' }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section-title">Pessoa afetada</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tipo de pessoa *</label>
+                <select name="tipo_pessoa_id" id="tipo_pessoa_id" class="form-select js-exige" data-outro="tipo_pessoa_outro" required>
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('tipo_pessoa', []) %}
+                    <option value="{{ c.id }}" data-slug="{{ c.slug }}" data-exige="{{ 1 if c.exige_texto else 0 }}"
+                            {% if form and form.get('tipo_pessoa_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="tipo_pessoa_outro" id="tipo_pessoa_outro" class="form-control mt-2 d-none" placeholder="Qual?" maxlength="150" value="{{ form.get('tipo_pessoa_outro','') if form else '' }}">
+                <p class="small text-muted mt-2 mb-0">Paciente: busca no SIS por CPF, CNS ou prontuário. Se não achar, preenche na mão. Outros tipos: só nome e nascimento.</p>
+            </div>
+        </div>
+
+        {% if sis_ok %}
+        <div id="blocoSis" class="mt-3 d-none">
+            <label class="form-label">Como identificar o paciente no SIS?</label>
+            <div class="d-flex flex-wrap gap-3 mb-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sis_tipo_busca" id="sisTipoCpf" value="cpf">
+                    <label class="form-check-label" for="sisTipoCpf">CPF</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sis_tipo_busca" id="sisTipoCns" value="cns">
+                    <label class="form-check-label" for="sisTipoCns">CNS</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="sis_tipo_busca" id="sisTipoPront" value="prontuario">
+                    <label class="form-check-label" for="sisTipoPront">Prontuário</label>
+                </div>
+            </div>
+            <div id="blocoSisBusca" class="row g-2 align-items-end d-none">
+                <div class="col-md-8">
+                    <label class="form-label" id="sisBuscaLabel">Dado para busca</label>
+                    <input type="text" id="sisBusca" class="form-control" autocomplete="off">
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-primary w-100" id="btnSisBusca">
+                        <i class="fas fa-search me-1"></i>Buscar no SIS
+                    </button>
+                </div>
+            </div>
+            <p class="small mb-0 mt-2" id="sisStatus"></p>
+            <button type="button" class="btn btn-link btn-sm px-0 d-none" id="btnSisManual">Não achei / preencher na mão</button>
+        </div>
+        {% endif %}
+
+        <div id="blocoDadosPessoa" class="row g-3 mt-1 d-none">
+            <div class="col-md-6">
+                <label class="form-label">Nome da pessoa afetada</label>
+                <input type="text" name="nome_afetado" id="nome_afetado" class="form-control" maxlength="150" value="{{ form.get('nome_afetado','') if form else '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Nascimento</label>
+                <input type="date" name="data_nascimento" id="data_nascimento" class="form-control" value="{{ form.get('data_nascimento','') if form else '' }}">
+            </div>
+            <div class="col-md-3 js-campo-paciente">
+                <label class="form-label">Prontuário</label>
+                <input type="text" name="prontuario" id="prontuario" class="form-control" maxlength="40" value="{{ form.get('prontuario','') if form else '' }}">
+            </div>
+            <div class="col-md-3 js-campo-paciente">
+                <label class="form-label">CNS</label>
+                <input type="text" name="cns" id="cns" class="form-control" maxlength="20" value="{{ form.get('cns','') if form else '' }}">
+            </div>
+            <div class="col-md-3 js-campo-paciente">
+                <label class="form-label">CPF</label>
+                <input type="text" name="cpf" id="cpf" class="form-control" maxlength="14" value="{{ form.get('cpf','') if form else '' }}">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section-title">Ocorrência</div>
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Data da ocorrência *</label>
+                <input type="date" name="data_ocorrencia" class="form-control" required value="{{ form.get('data_ocorrencia','') if form else '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Hora</label>
+                <input type="time" name="hora_ocorrencia" class="form-control" value="{{ form.get('hora_ocorrencia','') if form else '' }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tipo de setor da ocorrência</label>
+                <select name="tipo_setor_ocorrencia_id" class="form-select">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('tipo_setor', []) %}
+                    <option value="{{ c.id }}" {% if form and form.get('tipo_setor_ocorrencia_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Setor da ocorrência</label>
+                <select name="setor_ocorrencia_id" class="form-select js-exige" data-outro="setor_ocorrencia_outro">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('setor', []) %}
+                    <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}" {% if form and form.get('setor_ocorrencia_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="setor_ocorrencia_outro" id="setor_ocorrencia_outro" class="form-control mt-2 d-none" placeholder="Qual o setor?" maxlength="150" value="{{ form.get('setor_ocorrencia_outro','') if form else '' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Departamento</label>
+                <select name="departamento_id" class="form-select js-exige" data-outro="departamento_outro_dummy">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('departamento', []) %}
+                    <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}" {% if form and form.get('departamento_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Tipo de incidente</label>
+                <select name="tipo_incidente_id" class="form-select">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('tipo_incidente', []) %}
+                    <option value="{{ c.id }}" {% if form and form.get('tipo_incidente_id')|int == c.id %}selected{% endif %}>{{ c.nome }}{% if c.never_event %} (jamais deveria ocorrer){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Classificação da ocorrência *</label>
+                <select name="classificacao_id" class="form-select" required>
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('classificacao', []) %}
+                    <option value="{{ c.id }}" {% if form and form.get('classificacao_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="never_event" value="1" id="chkNever" {% if form and form.get('never_event') %}checked{% endif %}>
+                    <label class="form-check-label" for="chkNever">Evento que nunca deveria ocorrer</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descrição detalhada da ocorrência *</label>
+                <textarea name="descricao" class="form-control" rows="4" required placeholder="O que aconteceu, onde, com quem, em que circunstância…">{{ form.get('descricao','') if form else '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Ação imediata (encaminhamento, exames, procedimentos e resultados) *</label>
+                <textarea name="acao_imediata" class="form-control" rows="3" required placeholder="O que foi feito na hora para proteger o paciente e conter o risco…">{{ form.get('acao_imediata','') if form else '' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Arquivos (até 10 MB cada)</label>
+                <input type="file" name="anexos" class="form-control" multiple>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-section-title">Setor notificado</div>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Tipo de setor</label>
+                <select name="tipo_setor_notificado_id" class="form-select">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('tipo_setor', []) %}
+                    <option value="{{ c.id }}" {% if form and form.get('tipo_setor_notificado_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Setor notificado</label>
+                <select name="setor_notificado_id" class="form-select js-exige" data-outro="setor_notificado_outro">
+                    <option value="">Selecione…</option>
+                    {% for c in catalogos.get('setor', []) %}
+                    <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}" {% if form and form.get('setor_notificado_id')|int == c.id %}selected{% endif %}>{{ c.nome }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="setor_notificado_outro" id="setor_notificado_outro" class="form-control mt-2 d-none" placeholder="Qual o setor?" maxlength="150" value="{{ form.get('setor_notificado_outro','') if form else '' }}">
+            </div>
+        </div>
+    </div>
+
+    <p class="small text-muted mb-3">
+        Os dados são usados para gestão da segurança do paciente na rede municipal. Evite incluir informações desnecessárias. Óbito e evento que nunca deveria ocorrer exigem investigação completa depois do registro.
+    </p>
+
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('nsp.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane me-1"></i>Registrar notificação
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.js-exige').forEach(function (sel) {
+    function toggle() {
+        const opt = sel.options[sel.selectedIndex];
+        const alvo = document.getElementById(sel.dataset.outro);
+        if (!alvo) return;
+        const show = opt && opt.dataset.exige === '1';
+        alvo.classList.toggle('d-none', !show);
+        if (!show) alvo.value = '';
+    }
+    sel.addEventListener('change', toggle);
+    toggle();
+});
+
+(function () {
+    const selTipo = document.getElementById('tipo_pessoa_id');
+    const blocoSis = document.getElementById('blocoSis');
+    const blocoBusca = document.getElementById('blocoSisBusca');
+    const blocoDados = document.getElementById('blocoDadosPessoa');
+    const btn = document.getElementById('btnSisBusca');
+    const btnManual = document.getElementById('btnSisManual');
+    const campo = document.getElementById('sisBusca');
+    const status = document.getElementById('sisStatus');
+    const labelBusca = document.getElementById('sisBuscaLabel');
+    const csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+    const url = {{ url_for('nsp.buscar_sis')|tojson }};
+    const sisOk = {{ sis_ok|tojson }};
+    const rotulos = {
+        cpf: 'CPF do paciente',
+        cns: 'CNS do paciente',
+        prontuario: 'Prontuário do paciente'
+    };
+
+    function slugTipo() {
+        const opt = selTipo?.options[selTipo.selectedIndex];
+        return (opt && opt.dataset.slug) || '';
+    }
+    function ehPaciente() {
+        return slugTipo() === 'paciente';
+    }
+    function tipoBusca() {
+        const marcado = document.querySelector('input[name=sis_tipo_busca]:checked');
+        return marcado ? marcado.value : '';
+    }
+    function setStatus(texto, ok) {
+        if (!status) return;
+        status.textContent = texto || '';
+        status.className = 'small mb-0 mt-2 ' + (ok === true ? 'text-success' : ok === false ? 'text-danger' : 'text-muted');
+    }
+    function mostrarDados(visivel) {
+        if (!blocoDados) return;
+        blocoDados.classList.toggle('d-none', !visivel);
+    }
+    function camposPaciente(visivel) {
+        document.querySelectorAll('.js-campo-paciente').forEach(function (el) {
+            el.classList.toggle('d-none', !visivel);
+        });
+    }
+
+    function atualizarTela() {
+        const paciente = ehPaciente();
+        const temTipo = !!(selTipo && selTipo.value);
+        camposPaciente(paciente);
+        if (blocoSis) blocoSis.classList.toggle('d-none', !(sisOk && paciente));
+        if (!temTipo) {
+            mostrarDados(false);
+            if (btnManual) btnManual.classList.add('d-none');
+            setStatus('', null);
+            return;
+        }
+        if (!paciente) {
+            ['prontuario', 'cns', 'cpf'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            mostrarDados(true);
+            if (btnManual) btnManual.classList.add('d-none');
+            setStatus('', null);
+            return;
+        }
+        const tipo = tipoBusca();
+        if (blocoBusca) blocoBusca.classList.toggle('d-none', !tipo);
+        if (labelBusca && tipo) labelBusca.textContent = rotulos[tipo] || 'Dado para busca';
+        if (campo && tipo) {
+            campo.placeholder = tipo === 'cpf' ? '000.000.000-00' : tipo === 'cns' ? '15 números' : 'Número do prontuário';
+        }
+        const jaTemNome = !!(document.getElementById('nome_afetado')?.value);
+        mostrarDados(jaTemNome || !sisOk);
+        if (btnManual) btnManual.classList.toggle('d-none', !sisOk || jaTemNome);
+    }
+
+    function abrirCamposManuais() {
+        mostrarDados(true);
+        if (btnManual) btnManual.classList.add('d-none');
+        setStatus('Pode registrar os dados na mão. Se o SIS não encontrou, isso é esperado.', null);
+        document.getElementById('nome_afetado')?.focus();
+    }
+
+    async function buscar() {
+        const tipo = tipoBusca();
+        const q = (campo.value || '').trim();
+        if (!tipo) {
+            setStatus('Escolha CPF, CNS ou prontuário.', false);
+            return;
+        }
+        if (!q) {
+            setStatus('Informe o ' + (rotulos[tipo] || 'dado') + '.', false);
+            return;
+        }
+        btn.disabled = true;
+        setStatus('Consultando o SIS… isso pode levar alguns segundos.', null);
+        try {
+            const fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fd.append('q', q);
+            fd.append('tipo', tipo);
+            const resp = await fetch(url, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            const dados = await resp.json();
+            mostrarDados(true);
+            if (btnManual) btnManual.classList.remove('d-none');
+            if (!resp.ok || !dados.ok) {
+                setStatus((dados.erro || 'Não encontrado no SIS.') + ' Pode preencher os campos abaixo e registrar mesmo assim.', false);
+                if (tipo === 'cpf') document.getElementById('cpf').value = q;
+                if (tipo === 'cns') document.getElementById('cns').value = q;
+                if (tipo === 'prontuario') document.getElementById('prontuario').value = q;
+                return;
+            }
+            document.getElementById('nome_afetado').value = dados.nome || '';
+            document.getElementById('data_nascimento').value = dados.data_nascimento || '';
+            document.getElementById('prontuario').value = dados.prontuario || '';
+            document.getElementById('cns').value = dados.cns || '';
+            document.getElementById('cpf').value = dados.cpf || '';
+            if (btnManual) btnManual.classList.add('d-none');
+            setStatus('Dados importados do SIS. Confira antes de registrar.', true);
+        } catch (err) {
+            mostrarDados(true);
+            if (btnManual) btnManual.classList.remove('d-none');
+            setStatus('Não deu para consultar o SIS. Preencha os campos abaixo e registre mesmo assim.', false);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    selTipo?.addEventListener('change', atualizarTela);
+    document.querySelectorAll('input[name=sis_tipo_busca]').forEach(function (r) {
+        r.addEventListener('change', atualizarTela);
+    });
+    btn?.addEventListener('click', buscar);
+    btnManual?.addEventListener('click', abrirCamposManuais);
+    campo?.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+            ev.preventDefault();
+            buscar();
+        }
+    });
+    atualizarTela();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Relatórios — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-chart-line me-2"></i>Relatórios de segurança do paciente</h1>
+        <p class="text-muted small mb-0">Acompanhamento das notificações da rede (ou das suas unidades).</p>
+    </div>
+    <div class="btn-group btn-group-sm">
+        <a class="btn btn-outline-success" href="{{ url_for('nsp.exportar', formato='xlsx') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">Excel</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('nsp.exportar', formato='csv') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">CSV</a>
+        <a class="btn btn-outline-secondary" href="{{ url_for('nsp.index') }}">Voltar</a>
+    </div>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">De</label>
+            <input type="date" name="de" class="form-control form-control-sm" value="{{ filtros.get('de','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Até</label>
+            <input type="date" name="ate" class="form-control form-control-sm" value="{{ filtros.get('ate','') }}">
+        </div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtros.getlist('unidade')|map('int')|list, 'Todas') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_opts, filtros.getlist('status')|map('int')|list, 'Todos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Classificação', 'classificacao', classificacoes, filtros.getlist('classificacao')|map('int')|list, 'Todas') }}</div>
+        <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit"><i class="fas fa-search"></i></button></div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-primary-soft"><i class="fas fa-list"></i></div><div><div class="stat-value">{{ ocorrencias | length }}</div><div class="stat-label">No filtro</div></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-danger-soft"><i class="fas fa-exclamation"></i></div><div><div class="stat-value">{{ totais.abertas }}</div><div class="stat-label">Em aberto (geral visível)</div></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-warning-soft"><i class="fas fa-heart-pulse"></i></div><div><div class="stat-value">{{ totais.graves }}</div><div class="stat-label">Grave / óbito</div></div></div></div>
+    <div class="col-md-3"><div class="stat-card"><div class="stat-icon bg-info-soft"><i class="fas fa-ban"></i></div><div><div class="stat-value">{{ totais.never }}</div><div class="stat-label">Jamais deveriam ocorrer</div></div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Por classificação</div>
+            <ul class="list-group list-group-flush">
+                {% for (nome, cor), n in por_class %}
+                <li class="list-group-item d-flex justify-content-between"><span class="badge bg-{{ cor }}">{{ nome }}</span><strong>{{ n }}</strong></li>
+                {% else %}
+                <li class="list-group-item text-muted">Sem dados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Por status</div>
+            <ul class="list-group list-group-flush">
+                {% for (nome, cor), n in por_status %}
+                <li class="list-group-item d-flex justify-content-between"><span class="badge bg-{{ cor }}">{{ nome }}</span><strong>{{ n }}</strong></li>
+                {% else %}
+                <li class="list-group-item text-muted">Sem dados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Por tipo de incidente</div>
+            <ul class="list-group list-group-flush">
+                {% for nome, n in por_tipo %}
+                <li class="list-group-item d-flex justify-content-between"><span>{{ nome }}</span><strong>{{ n }}</strong></li>
+                {% else %}
+                <li class="list-group-item text-muted">Sem dados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-semibold">Por unidade</div>
+            <ul class="list-group list-group-flush">
+                {% for nome, n in por_unidade %}
+                <li class="list-group-item d-flex justify-content-between"><span>{{ nome }}</span><strong>{{ n }}</strong></li>
+                {% else %}
+                <li class="list-group-item text-muted">Sem dados.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold">Ocorrências do filtro</div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+            <thead><tr><th>Protocolo</th><th>Unidade</th><th>Data</th><th>Classificação</th><th>Tipo</th><th>Status</th><th class="text-end" style="width:56px"></th></tr></thead>
+            <tbody>
+            {% for o in ocorrencias %}
+            <tr onclick="window.location='{{ url_for('nsp.detalhe', id=o.id) }}'" style="cursor:pointer">
+                <td class="text-primary small">{{ o.protocolo }}</td>
+                <td class="small">{{ o.unidade.nome | truncate(24) if o.unidade else '—' }}</td>
+                <td class="small">{{ o.data_ocorrencia.strftime('%d/%m/%Y') if o.data_ocorrencia else '—' }}</td>
+                <td><span class="badge bg-{{ o.classificacao_cor }}">{{ o.classificacao_nome }}</span></td>
+                <td class="small">{{ o.tipo_incidente_nome | truncate(28) }}</td>
+                <td><span class="badge bg-{{ o.status_cor }}">{{ o.status_nome }}</span></td>
+                <td class="text-end" onclick="event.stopPropagation()">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Imprimir"
+                            onclick="abrirImpresso('{{ url_for('nsp.imprimir', id=o.id) }}', '{{ o.protocolo }} — Segurança do Paciente')">
+                        <i class="fas fa-print"></i>
+                    </button>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="text-muted text-center py-4">Nada no filtro.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

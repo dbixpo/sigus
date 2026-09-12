@@ -227,6 +227,25 @@
         </div>
     </div>
 
+    <!-- Segurança do Paciente -->
+    <div class="col-md-4 col-lg-3">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-user-shield fs-1 text-danger d-block mb-3"></i>
+                <h5 class="fw-bold">Segurança do Paciente</h5>
+                <p class="text-muted small mb-3">
+                    Listas dos selects: status, classificação, setores, destinos de encaminhamento.
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-danger fs-6">{{ total_nsp_catalogos | default(0) }} item(ns) ativo(s)</span>
+                </div>
+                <a href="{{ url_for('configuracoes.nsp_catalogos') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Status de Chamados -->
     <div class="col-md-4 col-lg-3">
         <div class="card h-100">

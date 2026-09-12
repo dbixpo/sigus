@@ -28,6 +28,7 @@ SECOES = [
     ('GESTÃO',         'GESTÃO',          'clipboard-check', None),
     ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
     ('Agenda',         'Agenda',          'calendar-event', 'GESTÃO'),
+    ('SegurancaPaciente', 'Segurança do Paciente', 'heart-pulse', 'GESTÃO'),
     ('Relatórios',     'Relatórios',      'bar-chart-line', 'GESTÃO'),
     # OUTROS (seção pai)
     ('OUTROS',         'OUTROS',          'three-dots-vertical', None),
@@ -108,6 +109,10 @@ ACAO_PARA_SECAO_TIPO = {
     'ver_agenda':         ('Agenda', 'ver'),
     'editar_agenda':      ('Agenda', 'editar'),
     'adicionar_agenda':   ('Agenda', 'adicionar'),
+    # GESTÃO - Segurança do Paciente
+    'ver_nsp':            ('SegurancaPaciente', 'ver'),
+    'editar_nsp':         ('SegurancaPaciente', 'editar'),
+    'adicionar_nsp':      ('SegurancaPaciente', 'adicionar'),
     # GESTÃO - Relatórios
     'emitir_relatorios':   ('Relatórios', 'ver'),
     'ver_dashboard_geral': ('Relatórios', 'ver'),

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Consultar protocolo — Segurança do Paciente{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-search me-2"></i>Consultar protocolo</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-muted small">Informe o número gerado no registro (ex.: SP-2026-00001). Só aparecem ocorrências das unidades que você pode ver.</p>
+                <form method="GET">
+                    <label class="form-label">Protocolo</label>
+                    <input type="text" name="protocolo" class="form-control mb-3" required value="{{ protocolo }}" placeholder="SP-2026-00001" autofocus>
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('nsp.index') }}" class="btn btn-outline-secondary">Voltar</a>
+                        <button class="btn btn-primary" type="submit">Consultar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

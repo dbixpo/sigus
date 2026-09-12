@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Segurança do Paciente{% endblock %}
+
+{% block head %}
+<style>
+.nsp-totais { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:.6rem; margin-bottom:1.1rem; }
+.nsp-card { border-radius:12px; padding:.75rem .9rem; color:#fff; text-decoration:none; display:block; }
+.nsp-card:hover { opacity:.9; color:#fff; }
+.nsp-card .n { font-size:1.55rem; font-weight:700; line-height:1; }
+.nsp-card .l { font-size:.72rem; text-transform:uppercase; letter-spacing:.4px; opacity:.9; margin-top:.2rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1><i class="fas fa-user-shield me-2"></i>Segurança do Paciente</h1>
+        <p class="text-muted small mb-0">Notificações internas do Núcleo de Segurança do Paciente da unidade. Cultura não punitiva — o foco é o aprendizado.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('nsp.consultar') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-search me-1"></i>Consultar protocolo
+        </a>
+        <a href="{{ url_for('nsp.relatorios') }}" class="btn btn-outline-primary">
+            <i class="fas fa-chart-line me-1"></i>Relatórios
+        </a>
+        {% if current_user.pode('adicionar_nsp') %}
+        <a href="{{ url_for('nsp.nova') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i>Nova notificação
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="nsp-totais">
+    <a class="nsp-card" style="background:#1A82B8" href="{{ url_for('nsp.index') }}">
+        <div class="n">{{ totais.total }}</div><div class="l">Total visível</div>
+    </a>
+    <a class="nsp-card" style="background:#E63030" href="{{ url_for('nsp.index', abertas=1) }}">
+        <div class="n">{{ totais.abertas }}</div><div class="l">Em aberto</div>
+    </a>
+    <a class="nsp-card" style="background:#0D3B5E" href="{{ url_for('nsp.index') }}">
+        <div class="n">{{ totais.graves }}</div><div class="l">Grave / óbito</div>
+    </a>
+    <a class="nsp-card" style="background:#c05621" href="{{ url_for('nsp.index', never_event=1) }}">
+        <div class="n">{{ totais.never }}</div><div class="l">Jamais deveriam ocorrer</div>
+    </a>
+    <a class="nsp-card" style="background:#19A88B" href="{{ url_for('nsp.index') }}">
+        <div class="n">{{ totais.encaminhadas }}</div><div class="l">Encaminhadas</div>
+    </a>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Protocolo</label>
+            <input type="text" name="protocolo" class="form-control form-control-sm" placeholder="SP-2026-00001" value="{{ filtros.get('protocolo','') }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Busca</label>
+            <input type="text" name="q" class="form-control form-control-sm" placeholder="Descrição, pessoa…" value="{{ filtros.get('q','') }}">
+        </div>
+        <div class="col-md-2">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtros.getlist('unidade')|map('int')|list, 'Todas') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_opts, filtros.getlist('status')|map('int')|list, 'Todos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Classificação', 'classificacao', classificacoes, filtros.getlist('classificacao')|map('int')|list, 'Todas') }}</div>
+        <div class="col-md-2 d-flex gap-1">
+            <button class="btn btn-primary btn-sm flex-fill" type="submit"><i class="fas fa-search"></i></button>
+            <a href="{{ url_for('nsp.index') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if ocorrencias %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Protocolo</th>
+                        <th>Unidade</th>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Notificante</th>
+                        <th class="text-end" style="width:56px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in ocorrencias %}
+                    <tr onclick="window.location='{{ url_for('nsp.detalhe', id=o.id) }}'" style="cursor:pointer">
+                        <td class="small fw-semibold text-primary">
+                            {{ o.protocolo }}
+                            {% if o.never_event %}<span class="badge bg-danger ms-1">Jamais deveria ocorrer</span>{% endif %}
+                        </td>
+                        <td class="small">{{ o.unidade.nome | truncate(28) if o.unidade else '—' }}</td>
+                        <td class="small text-muted">{{ o.data_ocorrencia.strftime('%d/%m/%Y') if o.data_ocorrencia else '—' }}</td>
+                        <td class="small">{{ o.tipo_incidente_nome | truncate(32) }}</td>
+                        <td><span class="badge bg-{{ o.classificacao_cor }}">{{ o.classificacao_nome }}</span></td>
+                        <td><span class="badge bg-{{ o.status_cor }}">{{ o.status_nome }}</span></td>
+                        <td class="small text-muted">{{ o.notificante_nome | truncate(24) }}</td>
+                        <td class="text-end" onclick="event.stopPropagation()">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" title="Imprimir"
+                                    onclick="abrirImpresso('{{ url_for('nsp.imprimir', id=o.id) }}', '{{ o.protocolo }} — Segurança do Paciente')">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-5 text-center text-muted">
+            <i class="fas fa-user-shield fs-1 d-block mb-2"></i>
+            <p class="mb-2">Nenhuma notificação encontrada.</p>
+            {% if current_user.pode('adicionar_nsp') %}
+            <a href="{{ url_for('nsp.nova') }}" class="btn btn-primary btn-sm">Abrir a primeira notificação</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -31,3 +31,6 @@ from app.models.sueq import (
     SueqParlamentar, SueqUnidade, SueqProcesso, SueqEmenda, SueqEmendaItem,
     SueqChamado, SueqChamadoControle,
 )
+from app.models.nsp import (
+    NspCatalogo, NspOcorrencia, NspAnexo, NspAndamento, NspEncaminhamento, NspAcao,
+)

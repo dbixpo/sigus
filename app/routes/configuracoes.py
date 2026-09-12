@@ -18,6 +18,7 @@ from app.models.predio import Predio
 from app.models.feriado import (
     Feriado, TIPOS_FOLGA, NATUREZAS, TIPO_FERIADO, NATUREZA_NACIONAL,
 )
+from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
 
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
@@ -100,6 +101,7 @@ def index():
     total_setores = SetorManutencao.query.count()
     total_cbos = CBO.query.count()
     total_feriados = Feriado.query.filter_by(ativo=True).count()
+    total_nsp_catalogos = NspCatalogo.query.filter_by(ativo=True).count()
     return render_template('configuracoes/index.html',
                            total_unidades=total_unidades,
                            total_predios=total_predios,
@@ -115,7 +117,8 @@ def index():
                            total_divisoes=total_divisoes,
                            total_setores=total_setores,
                            total_cbos=total_cbos,
-                           total_feriados=total_feriados)
+                           total_feriados=total_feriados,
+                           total_nsp_catalogos=total_nsp_catalogos)
 
 
 # ══════════════════════════════════════════════════════════
@@ -1484,4 +1487,114 @@ def excluir_feriado(id):
     db.session.commit()
     flash(f'Feriado "{nome}" excluído.', 'info')
     return redirect(url_for('configuracoes.feriados', ano=ano))
+
+
+# ══════════════════════════════════════════════════════════
+#  SEGURANÇA DO PACIENTE — CATÁLOGOS (SELECTS)
+# ══════════════════════════════════════════════════════════
+
+def _slugify_catalogo(valor):
+    import re
+    from unicodedata import normalize, combining
+    s = normalize('NFKD', (valor or '').strip().lower())
+    s = ''.join(c for c in s if not combining(c))
+    s = re.sub(r'[^a-z0-9]+', '_', s).strip('_')
+    return (s or 'item')[:50]
+
+
+@configuracoes_bp.route('/seguranca-paciente')
+@login_required
+def nsp_catalogos():
+    _exigir_admin()
+    grupo = request.args.get('grupo') or 'status'
+    if grupo not in GRUPOS_LABELS:
+        grupo = 'status'
+    itens = NspCatalogo.query.filter_by(grupo=grupo).order_by(NspCatalogo.ordem, NspCatalogo.nome).all()
+    return render_template(
+        'configuracoes/nsp/listar.html',
+        grupo=grupo,
+        grupos=GRUPOS_CATALOGO,
+        itens=itens,
+        badge_cores=NSP_BADGE_CORES,
+    )
+
+
+@configuracoes_bp.route('/seguranca-paciente/novo', methods=['GET', 'POST'])
+@login_required
+def nsp_catalogo_novo():
+    _exigir_admin()
+    grupo = request.args.get('grupo') or request.form.get('grupo') or 'status'
+    if grupo not in GRUPOS_LABELS:
+        grupo = 'status'
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        slug = (request.form.get('slug') or '').strip().lower().replace(' ', '_') or _slugify_catalogo(nome)
+        if not nome:
+            flash('Informe o nome.', 'danger')
+        elif NspCatalogo.query.filter_by(grupo=grupo, slug=slug).first():
+            flash('Já existe um item com esse identificador neste grupo.', 'danger')
+        else:
+            max_ordem = db.session.query(db.func.max(NspCatalogo.ordem)).filter_by(grupo=grupo).scalar() or 0
+            db.session.add(NspCatalogo(
+                grupo=grupo,
+                slug=slug,
+                nome=nome,
+                descricao=(request.form.get('descricao') or '').strip() or None,
+                ordem=request.form.get('ordem', type=int) or (max_ordem + 1),
+                cor=request.form.get('cor') or 'secondary',
+                exige_texto=request.form.get('exige_texto') == '1',
+                never_event=request.form.get('never_event') == '1',
+                encerra=request.form.get('encerra') == '1',
+                padrao=request.form.get('padrao') == '1',
+                ativo=True,
+            ))
+            db.session.commit()
+            flash(f'"{nome}" cadastrado.', 'success')
+            return redirect(url_for('configuracoes.nsp_catalogos', grupo=grupo))
+    max_ordem = db.session.query(db.func.max(NspCatalogo.ordem)).filter_by(grupo=grupo).scalar() or 0
+    return render_template(
+        'configuracoes/nsp/form.html',
+        item=None, grupo=grupo, grupos=GRUPOS_CATALOGO,
+        badge_cores=NSP_BADGE_CORES, proximo_ordem=max_ordem + 1,
+    )
+
+
+@configuracoes_bp.route('/seguranca-paciente/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def nsp_catalogo_editar(id):
+    _exigir_admin()
+    item = NspCatalogo.query.get_or_404(id)
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome.', 'danger')
+        else:
+            item.nome = nome
+            item.descricao = (request.form.get('descricao') or '').strip() or None
+            item.ordem = request.form.get('ordem', type=int) or item.ordem
+            item.cor = request.form.get('cor') or 'secondary'
+            item.exige_texto = request.form.get('exige_texto') == '1'
+            item.never_event = request.form.get('never_event') == '1'
+            item.encerra = request.form.get('encerra') == '1'
+            item.padrao = request.form.get('padrao') == '1'
+            item.ativo = request.form.get('ativo') == '1'
+            db.session.commit()
+            flash(f'"{item.nome}" atualizado.', 'success')
+            return redirect(url_for('configuracoes.nsp_catalogos', grupo=item.grupo))
+    return render_template(
+        'configuracoes/nsp/form.html',
+        item=item, grupo=item.grupo, grupos=GRUPOS_CATALOGO,
+        badge_cores=NSP_BADGE_CORES, proximo_ordem=item.ordem,
+    )
+
+
+@configuracoes_bp.route('/seguranca-paciente/<int:id>/toggle', methods=['POST'])
+@login_required
+def nsp_catalogo_toggle(id):
+    _exigir_admin()
+    item = NspCatalogo.query.get_or_404(id)
+    item.ativo = not item.ativo
+    db.session.commit()
+    flash(f'"{item.nome}" {"ativado" if item.ativo else "desativado"}.', 'info')
+    return redirect(url_for('configuracoes.nsp_catalogos', grupo=item.grupo))
 

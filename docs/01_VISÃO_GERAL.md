@@ -24,6 +24,8 @@ O **SIGUS** (Sistema de Gestão de Unidades de Saúde) é uma aplicação web pa
 
 ### Gestão
 - **Planejamentos** — Projetos em Kanban com priorização GUT
+- **Agenda** — Compromissos e reuniões da unidade
+- **Segurança do Paciente** — Notificações de incidente/evento adverso do NSP da unidade, investigação, encaminhamento e relatórios
 - **Relatórios** — Inventário, salas, contratos, profissionais, exportação Excel
 
 ### Configurações (administrador)
@@ -31,6 +33,7 @@ O **SIGUS** (Sistema de Gestão de Unidades de Saúde) é uma aplicação web pa
 - Marcas e modelos
 - Perfis de acesso
 - Status de chamados
+- Listas da Segurança do Paciente (status, classificação, setores, destinos)
 - Links úteis
 - Auditoria
 
