@@ -8,14 +8,23 @@ O módulo de relatórios oferece consultas filtradas e exportações em **Excel 
 
 ## Relatórios Disponíveis
 
+Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
+
 | Relatório | Rota | Descrição |
 |-----------|------|-----------|
-| Índice | `/relatorios/` | Página inicial com links |
+| Índice | `/relatorios/` | Hub com cards |
 | Inventário | `/relatorios/inventario` | Equipamentos por unidade/sala |
-| Salas | `/relatorios/salas` | Salas por unidade |
+| Salas | `/relatorios/salas` | Salas por unidade; filtro de chamado aberto |
 | Contratos | `/relatorios/contratos` | Contratos vigentes |
 | Profissionais | `/relatorios/profissionais` | Profissionais por unidade |
 | Empenhos | `/relatorios/empenhos` | Controle financeiro (ContratoFinanceiro) |
+| Segurança do Paciente | `nsp.relatorios` (`/seguranca-paciente/relatorios`) | Notificações NSP |
+| Chamados | `/relatorios/chamados` | Chamados da rede |
+| Aniversariantes | `/relatorios/aniversariantes` | Aniversários do mês por unidade |
+| Usuários | `/relatorios/usuarios` | Usuários do sistema |
+| Unidades | `/relatorios/unidades` | Unidades |
+| Faltas abonadas | `/relatorios/faltas-abonadas` | RH |
+| Mapa da Saúde | `/relatorios/mapa-saude` (interno) e `/mapa-da-saude` (público) | Rede no mapa |
 
 ---
 

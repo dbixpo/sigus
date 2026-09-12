@@ -28,6 +28,9 @@ database/sigus_dump.sql
 database/sueq_data.sql
 app/static/uploads/sueq/
 app/static/uploads/nsp/
+app/static/uploads/chamados/
+app/static/uploads/manuais_tmp/
+app/static/uploads/perfis/
 
 # IDE / Editor
 .idea/

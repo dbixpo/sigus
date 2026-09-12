@@ -56,4 +56,6 @@ Ver `migrations/add_nsp.py`. Anexos em `app/static/uploads/nsp/` (até 10 MB; n�
 
 ## Atualizar o servidor
 
-Seguir `ATUALIZACAO-SERVIDOR.md` (pull + `pip install -r requirements.txt` + `add_nsp.py` + `add_nsp_sis.py` + `add_nsp_tipos_infra.py` + `.env` SIS + reinício IIS).
+Seguir [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md). Neste módulo, se as tabelas ainda não existirem: `add_nsp.py`, `add_nsp_sis.py`, `add_nsp_tipos_infra.py`, variáveis SIS no `.env`, reciclar o pool IIS.
+
+Manual da ponta: livro na Estante SES ([MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md)).
