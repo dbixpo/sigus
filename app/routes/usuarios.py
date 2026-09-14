@@ -160,13 +160,15 @@ def novo():
 
     # Busca CBOs ativos do banco de dados
     cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()]
+    from app.sis_consulta import configurado as sis_configurado
     return render_template('usuarios/form.html', usuario=None,
                            perfis=perfis_disponiveis,
                            escolaridades=ESCOLARIDADES,
                            cbos=cbos_ativos,
                            matriculas=[],
                            pode_alterar_perfil=True,
-                           is_admin=current_user.pode('gerenciar_usuarios'))
+                           is_admin=current_user.pode('gerenciar_usuarios'),
+                           sis_ok=sis_configurado())
 
 
 @usuarios_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
@@ -229,13 +231,15 @@ def editar(id):
                   .all())
     # Busca CBOs ativos do banco de dados
     cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()]
+    from app.sis_consulta import configurado as sis_configurado
     return render_template('usuarios/form.html', usuario=usuario,
                            perfis=perfis_disponiveis if not is_admin else PERFIS,
                            escolaridades=ESCOLARIDADES,
                            cbos=cbos_ativos,
                            matriculas=matriculas,
                            pode_alterar_perfil=pode_alterar_perfil,
-                           is_admin=is_admin)
+                           is_admin=is_admin,
+                           sis_ok=sis_configurado())
 
 
 @usuarios_bp.route('/<int:id>/fichas')
@@ -406,3 +410,48 @@ def atualizar_matricula(uid, mid):
     m.ativo         = bool(data.get('ativo', True))
     db.session.commit()
     return jsonify(ok=True)
+
+
+@usuarios_bp.route('/importar-cadastro', methods=['POST'])
+@login_required
+def importar_cadastro():
+    if not current_user.pode('cadastrar_usuario') and not current_user.pode('gerenciar_usuarios'):
+        abort(403)
+    from app.sis_profissional import importar_cadastro as _importar
+    payload = request.get_json(silent=True) or {}
+    cpf = (request.form.get('cpf') or payload.get('cpf') or '').strip()
+    if not cpf:
+        return jsonify(ok=False, erro='Informe o CPF para importar os dados.'), 400
+    try:
+        dados = _importar(cpf)
+        if not dados.get('ok'):
+            return jsonify(
+                ok=False,
+                erro='Não encontramos esse CPF no SIS, no CADSUS nem no CNES. Preencha os campos na mão.',
+                sis=dados.get('sis'),
+                avisos=dados.get('avisos'),
+            ), 404
+        return jsonify(dados)
+    except ValueError as exc:
+        return jsonify(ok=False, erro=str(exc)), 400
+    except Exception as exc:
+        return jsonify(ok=False, erro=str(exc) or 'Não foi possível consultar as bases cadastrais.'), 502
+
+
+@usuarios_bp.route('/consultar-conselho-sis', methods=['POST'])
+@login_required
+def consultar_conselho_sis():
+    if not current_user.pode('cadastrar_usuario') and not current_user.pode('gerenciar_usuarios'):
+        abort(403)
+    from app.sis_profissional import consultar_conselho
+    payload = request.get_json(silent=True) or {}
+    cpf = (request.form.get('cpf') or payload.get('cpf') or '').strip()
+    if not cpf:
+        return jsonify(ok=False, erro='Informe o CPF da pessoa para consultar o conselho no SIS.'), 400
+    try:
+        dados = consultar_conselho(cpf)
+        return jsonify(dados)
+    except ValueError as exc:
+        return jsonify(ok=False, erro=str(exc)), 400
+    except Exception as exc:
+        return jsonify(ok=False, erro=str(exc) or 'Não foi possível consultar o profissional no SIS.'), 502

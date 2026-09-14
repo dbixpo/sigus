@@ -48,6 +48,24 @@
         <!-- ─── ABA ACESSO ──────────────────────────────────── -->
         <div class="tab-pane fade show active" id="tab-acesso">
             <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label fw-semibold">CPF</label>
+                    <div class="input-group">
+                        <input type="text" name="cpf" class="form-control" maxlength="14"
+                               value="{{ usuario.cpf or '' if usuario else '' }}"
+                               placeholder="000.000.000-00" id="campoCPF">
+                        {% if sis_ok %}
+                        <button type="button" class="btn btn-primary" id="btnImportarCadastro">
+                            <i class="fas fa-file-import me-1"></i>Importar dados cadastrais
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% if sis_ok %}
+                    <div id="statusImportarCadastro" class="small mt-2 mb-0"></div>
+                    {% else %}
+                    <div class="form-text">A senha inicial será o CPF (só os dígitos). A importação do SIS não está configurada neste ambiente.</div>
+                    {% endif %}
+                </div>
                 <div class="col-12 col-md-8">
                     <label class="form-label fw-semibold">Nome Completo <span class="text-danger">*</span></label>
                     <input type="text" name="nome" class="form-control"
@@ -123,16 +141,10 @@
         <div class="tab-pane fade" id="tab-pessoal">
             <div class="row g-3">
 
-                <!-- CPF + CNS -->
-                <div class="col-12 col-md-4">
-                    <label class="form-label fw-semibold">CPF</label>
-                    <input type="text" name="cpf" class="form-control" maxlength="14"
-                           value="{{ usuario.cpf or '' if usuario else '' }}"
-                           placeholder="000.000.000-00" id="campoCPF">
-                </div>
-                <div class="col-12 col-md-4">
+                <!-- CNS -->
+                <div class="col-12 col-md-8">
                     <label class="form-label fw-semibold">CNS <span class="text-muted small fw-normal">(Cartão Nac. de Saúde)</span></label>
-                    <input type="text" name="cns" class="form-control" maxlength="20"
+                    <input type="text" name="cns" class="form-control" maxlength="20" id="campoCNS"
                            value="{{ usuario.cns or '' if usuario else '' }}"
                            placeholder="000 0000 0000 0000">
                 </div>
@@ -462,6 +474,14 @@
                             <label class="form-label fw-semibold">Órgão Emissor</label>
                             <input type="text" class="form-control" id="matOrgao" maxlength="50" placeholder="CRM-SP, COREN-SP...">
                         </div>
+                        {% if sis_ok %}
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="btnImportarConselho">
+                                <i class="fas fa-search me-1"></i>Consultar conselho no SIS
+                            </button>
+                            <div id="statusConselhoSis" class="small mt-2 mb-0"></div>
+                        </div>
+                        {% endif %}
                         <div class="col-12 d-flex align-items-center gap-2 mt-1" id="blocoAtivoMatricula" style="display:none!important">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="matAtivo" checked>
@@ -475,6 +495,23 @@
                     <button type="button" class="btn btn-primary" id="btnSalvarMatricula">
                         <i class="fas fa-check-circle me-1"></i>Salvar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if usuario and sis_ok %}
+    <div class="modal fade" id="modalEscolherProfissional" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Qual cadastro de profissional importar?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">O SIS devolveu mais de um profissional para este CPF. Escolha o conselho que entra nesta matrícula. Os campos continuam editáveis.</p>
+                    <div class="list-group" id="listaProfissionaisSis"></div>
                 </div>
             </div>
         </div>
@@ -537,6 +574,99 @@
     }, { capture: true });
 })();
 
+function mascararCpfSigus(v) {
+    const d = (v || '').replace(/\D/g, '').slice(0, 11);
+    return d.replace(/^(\d{3})(\d)/, '$1.$2')
+            .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1-$2');
+}
+function mascararFoneSigus(v) {
+    const d = (v || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length <= 2)  return d.replace(/^(\d{0,2})/, '($1');
+    if (d.length <= 7)  return d.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+    if (d.length <= 10) return d.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+    return d.replace(/^(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+}
+function setCampoUsuario(nome, valor) {
+    if (valor === null || valor === undefined || valor === '') return;
+    if (nome === 'sexo') {
+        const radio = document.querySelector(`input[name="sexo"][value="${valor}"]`);
+        if (radio) radio.checked = true;
+        return;
+    }
+    if (nome === 'frequenta_escola') {
+        const radio = document.querySelector(`input[name="frequenta_escola"][value="${valor}"]`);
+        if (radio) radio.checked = true;
+        return;
+    }
+    if (nome === 'nacionalidade') {
+        const radio = document.querySelector(`input[name="nacionalidade"][value="${valor}"]`);
+        if (radio) {
+            radio.checked = true;
+            toggleNacionalidade(valor);
+        }
+        return;
+    }
+    const el = document.querySelector(`[name="${nome}"]`);
+    if (!el) return;
+    if (nome === 'cpf') el.value = mascararCpfSigus(valor);
+    else if (nome === 'whatsapp') el.value = mascararFoneSigus(valor);
+    else el.value = valor;
+}
+
+{% if sis_ok %}
+(function () {
+    const btn = document.getElementById('btnImportarCadastro');
+    const status = document.getElementById('statusImportarCadastro');
+    const csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+    const url = {{ url_for('usuarios.importar_cadastro')|tojson }};
+    if (!btn) return;
+
+    function setStatus(texto, ok) {
+        if (!status) return;
+        status.textContent = texto || '';
+        status.className = 'small mt-2 mb-0 ' + (ok === true ? 'text-success' : ok === false ? 'text-danger' : 'text-muted');
+    }
+
+    btn.addEventListener('click', async function () {
+        const cpf = (document.getElementById('campoCPF')?.value || '').trim();
+        if (!cpf.replace(/\D/g, '')) {
+            setStatus('Informe o CPF para importar.', false);
+            document.getElementById('campoCPF')?.focus();
+            return;
+        }
+        btn.disabled = true;
+        setStatus('Consultando SIS, CADSUS e CNES… isso pode levar alguns segundos.', null);
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({ cpf }),
+            });
+            const dados = await resp.json();
+            if (!resp.ok || !dados.ok) {
+                setStatus(dados.erro || 'Não encontramos esse CPF. Preencha os campos na mão.', false);
+                return;
+            }
+            const campos = dados.campos || {};
+            Object.keys(campos).forEach(function (k) { setCampoUsuario(k, campos[k]); });
+            const n = Object.keys(campos).filter(function (k) { return campos[k]; }).length;
+            let msg = 'Importamos ' + n + ' campos. Confira as abas — nada fica travado.';
+            const conselhos = dados.conselho || [];
+            if (conselhos.length) {
+                const c = conselhos[0];
+                msg += ' Conselho ' + [c.orgao_emissor, c.reg_conselho].filter(Boolean).join(' ') + ' — depois de criar o usuário, importe na aba Matrículas.';
+            }
+            setStatus(msg, true);
+        } catch (err) {
+            setStatus('Não deu para consultar agora. Preencha os campos na mão.', false);
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+{% endif %}
+
 // Validação do formulário com suporte a abas
 document.getElementById('formUsuario').addEventListener('submit', function (e) {
     const erros = [];
@@ -595,6 +725,81 @@ document.getElementById('btnLocalizarCNES')?.addEventListener('click', function 
 {% if usuario %}
 // ─── Matrículas ────────────────────────────────────────
 const USUARIO_ID = {{ usuario.id }};
+
+function aplicarConselhoSis(item) {
+    if (!item) return;
+    if (item.reg_conselho) document.getElementById('matConselho').value = item.reg_conselho;
+    if (item.orgao_emissor) document.getElementById('matOrgao').value = item.orgao_emissor;
+    const status = document.getElementById('statusConselhoSis');
+    if (status) {
+        status.textContent = 'Conselho importado do SIS. Confira e, se precisar, ajuste na mão.';
+        status.className = 'small mt-2 mb-0 text-success';
+    }
+}
+
+{% if sis_ok %}
+document.getElementById('btnImportarConselho')?.addEventListener('click', async function () {
+    const btn = this;
+    const status = document.getElementById('statusConselhoSis');
+    const cpf = (document.getElementById('campoCPF')?.value || '').trim();
+    const csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+    const url = {{ url_for('usuarios.consultar_conselho_sis')|tojson }};
+    function setStatus(texto, ok) {
+        if (!status) return;
+        status.innerHTML = texto || '';
+        status.className = 'small mt-2 mb-0 ' + (ok === true ? 'text-success' : ok === false ? 'text-danger' : 'text-muted');
+    }
+    if (!cpf.replace(/\D/g, '')) {
+        setStatus('Informe o CPF na aba Acesso para consultar o conselho.', false);
+        return;
+    }
+    btn.disabled = true;
+    setStatus('Consultando o cadastro de profissional no SIS…', null);
+    try {
+        const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ cpf }),
+        });
+        const dados = await resp.json();
+        const lista = dados.profissionais || [];
+        if (!resp.ok) {
+            setStatus(dados.erro || 'Não foi possível consultar o SIS.', false);
+            return;
+        }
+        if (!lista.length) {
+            setStatus('<div class="alert alert-warning py-2 px-3 mb-0">Não encontramos cadastro de profissional no SIS para este CPF. Coloque o número do conselho na mão.</div>', false);
+            return;
+        }
+        if (lista.length === 1) {
+            aplicarConselhoSis(lista[0]);
+            return;
+        }
+        const box = document.getElementById('listaProfissionaisSis');
+        if (box) {
+            box.innerHTML = lista.map(function (p, i) {
+                const titulo = [p.orgao_emissor, p.reg_conselho].filter(Boolean).join(' ') || ('Profissional ' + (p.codprofissional || i + 1));
+                const sub = [p.nome, p.codprofissional ? ('cód. ' + p.codprofissional) : ''].filter(Boolean).join(' · ');
+                return '<button type="button" class="list-group-item list-group-item-action" data-idx="' + i + '">'
+                    + '<div class="fw-semibold">' + titulo + '</div>'
+                    + '<div class="small text-muted">' + sub + '</div></button>';
+            }).join('');
+            box.querySelectorAll('button').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    aplicarConselhoSis(lista[parseInt(this.dataset.idx, 10)]);
+                    bootstrap.Modal.getInstance(document.getElementById('modalEscolherProfissional'))?.hide();
+                });
+            });
+        }
+        new bootstrap.Modal(document.getElementById('modalEscolherProfissional')).show();
+        setStatus('Há mais de um profissional no SIS. Escolha qual conselho importar.', null);
+    } catch (err) {
+        setStatus('<div class="alert alert-warning py-2 px-3 mb-0">Não deu para consultar o SIS. Coloque o número do conselho na mão.</div>', false);
+    } finally {
+        btn.disabled = false;
+    }
+});
+{% endif %}
 
 function normalizarNumeroMatricula(v) {
     return (v || '').toString().trim().toUpperCase().replace(/\s+/g, ' ');

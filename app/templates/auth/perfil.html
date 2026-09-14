@@ -197,6 +197,35 @@
     </div>
 
 </div>
+
+<div class="card mt-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span><i class="fas fa-database me-2"></i>Cadastro no SIS</span>
+    </div>
+    <div class="card-body">
+        <p class="small text-muted mb-3">
+            Consulta só para ver como o seu cadastro está no SIS, no CADSUS e no CNES.
+            O SIGUS não altera nada lá. Se algum dado estiver errado, abra um chamado para a coordenação ou a TI atualizar no SIS.
+        </p>
+        {% if sis_ok and current_user.cpf %}
+        <button type="button" class="btn btn-outline-primary" id="btnConsultarSis">
+            <i class="fas fa-search me-1"></i>Verificar dados de cadastro no SIS
+        </button>
+        <div id="statusSisPerfil" class="small mt-2 mb-0"></div>
+        <div id="painelSisPerfil" class="mt-3 d-none"></div>
+        {% elif not current_user.cpf %}
+        <div class="alert alert-warning py-2 px-3 mb-0 small">
+            Seu cadastro no SIGUS ainda não tem CPF, então não dá para consultar o SIS por aqui.
+            Peça à coordenação para completar o cadastro ou abra um chamado.
+        </div>
+        {% else %}
+        <div class="alert alert-info py-2 px-3 mb-0 small">
+            A consulta ao SIS não está configurada neste ambiente.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -225,5 +254,66 @@
         document.getElementById('formFoto').submit();
     });
 })();
+
+{% if sis_ok and current_user.cpf %}
+(function () {
+    const btn = document.getElementById('btnConsultarSis');
+    const status = document.getElementById('statusSisPerfil');
+    const painel = document.getElementById('painelSisPerfil');
+    const csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+    const url = {{ url_for('auth.consultar_sis_perfil')|tojson }};
+    function esc(s) {
+        return String(s || '').replace(/[&<>"']/g, function (c) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+        });
+    }
+    btn?.addEventListener('click', async function () {
+        btn.disabled = true;
+        if (status) {
+            status.textContent = 'Consultando o SIS… isso pode levar alguns segundos.';
+            status.className = 'small mt-2 mb-0 text-muted';
+        }
+        try {
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify({}),
+            });
+            const dados = await resp.json();
+            if (!resp.ok || !dados.ok) {
+                if (status) {
+                    status.textContent = dados.erro || 'Não foi possível consultar o SIS.';
+                    status.className = 'small mt-2 mb-0 text-danger';
+                }
+                return;
+            }
+            if (status) {
+                status.textContent = 'Consulta concluída. Isso é só visualização — o SIGUS não altera o SIS.';
+                status.className = 'small mt-2 mb-0 text-success';
+            }
+            const html = (dados.blocos || []).map(function (b) {
+                if (!b.encontrado) {
+                    return '<div class="alert alert-light border py-2 px-3 mb-2"><div class="fw-semibold small mb-1">' + esc(b.titulo) + '</div><div class="small text-muted">' + esc(b.extra || 'Não encontrado.') + '</div></div>';
+                }
+                const linhas = (b.campos || []).map(function (c) {
+                    return '<div class="d-flex justify-content-between gap-3 py-1 border-bottom"><span class="text-muted small">' + esc(c.label) + '</span><span class="small text-end">' + esc(c.valor) + '</span></div>';
+                }).join('');
+                return '<div class="card mb-2"><div class="card-header py-2 small fw-semibold">' + esc(b.titulo) + '</div><div class="card-body py-2">' + linhas + '</div></div>';
+            }).join('');
+            if (painel) {
+                painel.innerHTML = html;
+                painel.classList.remove('d-none');
+            }
+        } catch (err) {
+            if (status) {
+                status.textContent = 'Não deu para consultar o SIS agora.';
+                status.className = 'small mt-2 mb-0 text-danger';
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+{% endif %}
 </script>
 {% endblock %}

@@ -67,7 +67,16 @@ def configurado() -> bool:
     return bool(os.environ.get('SIS_USUARIO', '').strip() and os.environ.get('SIS_SENHA', '').strip())
 
 
-def _carregar_pacote():
+def _ssl_verify():
+    ssl_bruto = (os.environ.get('SIS_SSL_VERIFY') or '').strip().lower()
+    if ssl_bruto in {'0', 'false', 'nao', 'não', 'n'}:
+        return False
+    if ssl_bruto in {'1', 'true', 'sim', 's'}:
+        return True
+    return None
+
+
+def _garantir_path_robo():
     raiz = Path(os.environ.get('SIS_CONSULTA_PATH') or _DEFAULT_SIS_PATH)
     if not raiz.is_dir():
         raise RuntimeError(
@@ -77,39 +86,45 @@ def _carregar_pacote():
     caminho = str(raiz.resolve())
     if caminho not in sys.path:
         sys.path.insert(0, caminho)
+    return raiz
+
+
+def _carregar_pacote():
+    _garantir_path_robo()
     from sis.cliente import ClienteSIS
     from sis.paciente import buscar_paciente_id
     return ClienteSIS, buscar_paciente_id
 
 
-def buscar_paciente(valor: str, tipo: str | None = None) -> dict:
-    """Devolve identificação mínima para o formulário do NSP."""
+def abrir_cliente():
+    """Sessão logada no SISWEB. Quem chama precisa fazer logout."""
     if not configurado():
         raise RuntimeError('Consulta ao SIS não configurada (SIS_USUARIO / SIS_SENHA no .env).')
-
-    criterio = _criterio(valor, tipo)
-    ClienteSIS, buscar_paciente_id = _carregar_pacote()
-    usuario = os.environ.get('SIS_USUARIO', '').strip()
-    senha = os.environ.get('SIS_SENHA', '').strip()
-    ambiente = (os.environ.get('SIS_AMBIENTE') or 'producao').strip().lower()
-    ssl_bruto = (os.environ.get('SIS_SSL_VERIFY') or '').strip().lower()
-    ssl_verify = None
-    if ssl_bruto in {'0', 'false', 'nao', 'não', 'n'}:
-        ssl_verify = False
-    elif ssl_bruto in {'1', 'true', 'sim', 's'}:
-        ssl_verify = True
-
-    cliente = ClienteSIS(usuario, senha, ambiente=ambiente, ssl_verify=ssl_verify)
+    ClienteSIS, _buscar = _carregar_pacote()
+    cliente = ClienteSIS(
+        os.environ.get('SIS_USUARIO', '').strip(),
+        os.environ.get('SIS_SENHA', '').strip(),
+        ambiente=(os.environ.get('SIS_AMBIENTE') or 'producao').strip().lower(),
+        ssl_verify=_ssl_verify(),
+    )
     cliente.login()
+    return cliente
+
+
+def buscar_paciente(valor: str, tipo: str | None = None) -> dict:
+    """Devolve identificação mínima para o formulário do NSP."""
+    criterio = _criterio(valor, tipo)
+    _ClienteSIS, buscar_paciente_id = _carregar_pacote()
+    cliente = abrir_cliente()
     try:
         _pid, consulta, _primeiro = buscar_paciente_id(cliente, **criterio)
+        resumo = consulta.get('resumo_pesquisa') or {}
     finally:
         try:
             cliente.logout()
         except Exception:
             pass
 
-    resumo = consulta.get('resumo_pesquisa') or {}
     nome = (resumo.get('nome') or '').strip()
     if not nome:
         raise RuntimeError('O SIS não devolveu o nome do usuário.')

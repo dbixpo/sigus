@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 import os, uuid, mimetypes
 from app import db
@@ -147,4 +147,27 @@ def perfil():
                     .filter_by(usuario_id=current_user.id)
                     .order_by(Notificacao.criado_em.desc())
                     .limit(50).all())
-    return render_template('auth/perfil.html', notificacoes=notificacoes)
+    from app.sis_consulta import configurado as sis_configurado
+    return render_template(
+        'auth/perfil.html',
+        notificacoes=notificacoes,
+        sis_ok=sis_configurado(),
+    )
+
+
+@auth_bp.route('/perfil/consultar-sis', methods=['POST'])
+@login_required
+def consultar_sis_perfil():
+    from app.sis_profissional import consultar_cadastro_sis
+    cpf = (current_user.cpf or '').strip()
+    if not cpf:
+        return jsonify(
+            ok=False,
+            erro='Seu cadastro no SIGUS ainda não tem CPF. Peça à coordenação para completar ou abra um chamado.',
+        ), 400
+    try:
+        return jsonify(consultar_cadastro_sis(cpf))
+    except ValueError as exc:
+        return jsonify(ok=False, erro=str(exc)), 400
+    except Exception as exc:
+        return jsonify(ok=False, erro=str(exc) or 'Não foi possível consultar o SIS.'), 502

@@ -8,13 +8,18 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
 BASE = 'https://estante-ses.sorocaba.sp.gov.br'
 BOOK_ID = 45
 SIGUS_URL = 'https://saudedigital.sorocaba.sp.gov.br/sigus'
+SHOT = Path(__file__).resolve().parents[1] / 'app' / 'static' / 'uploads' / 'manuais_tmp'
 
 
 def c(kind: str, titulo: str, texto: str) -> str:
@@ -45,10 +50,44 @@ def session_login() -> requests.Session:
 
 
 def api(s: requests.Session, method: str, path: str, **kw):
-    r = s.request(method, f'{BASE}/api{path}', timeout=60, **kw)
+    r = s.request(method, f'{BASE}/api{path}', timeout=90, **kw)
     if r.status_code >= 400:
         raise RuntimeError(f'{method} {path} -> {r.status_code}: {r.text[:800]}')
     return r.json() if r.content else {}
+
+
+def fig(url: str, alt: str) -> str:
+    return (
+        f'<p><a href="{url}" target="_blank" rel="noopener">'
+        f'<img src="{url}" alt="{alt}"></a></p>'
+    )
+
+
+def upload_shot(s: requests.Session, page_id: int, stem: str, alt: str) -> str:
+    path = SHOT / f'{stem}.png'
+    if not path.exists():
+        print(f'  aviso: print ausente {path.name}')
+        return ''
+    with path.open('rb') as f:
+        r = s.post(
+            f'{BASE}/api/image-gallery',
+            data={'type': 'gallery', 'uploaded_to': str(page_id), 'name': f'{stem}.png'},
+            files={'image': (f'{stem}.png', f, 'image/png')},
+            timeout=90,
+        )
+    if r.status_code >= 400:
+        raise RuntimeError(f'upload {stem}: {r.status_code} {r.text[:400]}')
+    data = r.json()
+    url = ((data.get('thumbs') or {}).get('display')) or data.get('url')
+    if not url:
+        raise RuntimeError(f'upload {stem}: resposta sem URL ({data!r})')
+    return fig(url, alt)
+
+
+def strip_shot_placeholders(html: str) -> str:
+    for i in range(16):
+        html = html.replace(f'{{SHOT{i}}}', '')
+    return html
 
 
 BOOK_DESC = (
@@ -130,7 +169,11 @@ CHAPTERS = [
             },
             {
                 'name': 'Unidade de trabalho, perfil e senha',
-                'html': '''
+                'shots': [
+                    ('usr-perfil-sis', 'Cartão Cadastro no SIS no final da tela Meu Perfil, com o botão de verificar'),
+                    ('usr-perfil-sis-resultado', 'Exemplo de consulta concluída: pessoa, profissional e CNS (dados ilustrativos)'),
+                ],
+                'html': f'''
 <p>Depois de entrar, o SIGUS precisa saber <strong>em qual unidade você está trabalhando agora</strong>. Isso vale especialmente se você atua em mais de um serviço.</p>
 <h2>Unidade padrão</h2>
 <p>No topo da tela há o seletor de unidade. A unidade escolhida vira o contexto de:</p>
@@ -150,9 +193,17 @@ CHAPTERS = [
 <p>No canto superior direito, abra o seu nome e clique em <strong>Meu Perfil</strong>. Lá você:</p>
 <ul>
 <li>confere nome, e-mail e foto;</li>
-<li>altera a senha (senha atual + nova senha duas vezes);</li>
-<li>vê unidades às quais está vinculado.</li>
+<li>altera a senha (informe a senha atual e a nova);</li>
+<li>vê unidades às quais está vinculado;</li>
+<li>consulta, só para leitura, como o seu cadastro está no <strong>SIS</strong>, no <strong>CADSUS</strong> e no <strong>CNES</strong>.</li>
 </ul>
+<h3>Verificar dados de cadastro no SIS</h3>
+<p>Role a tela de perfil até o cartão <strong>Cadastro no SIS</strong>, no final da página. Se o seu usuário no SIGUS já tem CPF, o botão <strong>Verificar dados de cadastro no SIS</strong> aparece. Clique e espere alguns segundos.</p>
+{{SHOT0}}
+<p>O sistema busca pessoa, operador, profissional, CADSUS, CNES e o cadastro de usuário do SIS. O resultado aparece em cartões, campo a campo. Nada disso grava de volta no SIGUS nem no SIS — é só para você conferir.</p>
+{{SHOT1}}
+{c('info', 'Só consulta:', 'Essa tela não altera o SIS e não trava nenhum campo do SIGUS. Se telefone, e-mail, conselho ou perfil no SIS estiver errado, abra um chamado para a coordenação ou a TI atualizar lá.')}
+{c('warning', 'ATENÇÃO:', 'Sem CPF no cadastro do SIGUS a consulta não abre. Peça à coordenação para completar o seu usuário ou abra um chamado.')}
 <h2>Sino de notificações</h2>
 <p>O sino no topo avisa quando chega encaminhamento, andamento de chamado, pedido de vínculo ou mensagem da segurança do paciente. Clique para ler e, se quiser, marque todas como lidas.</p>
 <h2>O menu muda de pessoa para pessoa</h2>
@@ -430,7 +481,7 @@ CHAPTERS = [
     },
     {
         'name': 'Relatórios, contratos e configurações',
-        'description': 'Exportar dados, olhar contratos e ajustar o que a unidade vê nos selects.',
+        'description': 'Exportar dados, contratos, cadastro de usuários (importação SIS) e o que a unidade vê nos selects.',
         'pages': [
             {
                 'name': 'Relatórios e exportação',
@@ -463,9 +514,75 @@ CHAPTERS = [
 <h2>Listas da Segurança do Paciente</h2>
 <p>Os selects da notificação (status, classificação, tipo de incidente, setor, destino…) não estão fixos no código. Inclua, desative ou marque “pede texto Outro” e “jamais deveria ocorrer” em <strong>Configurações → Segurança do Paciente</strong>. Item desativado some dos formulários novos e permanece no histórico antigo.</p>
 <h2>Feriados, usuários, links úteis</h2>
-<p>Feriados alimentam a agenda. Usuários: alta, inativação, vínculo. Links úteis: atalhos que a equipe vê no menu da unidade.</p>
+<p>Feriados alimentam a agenda. Links úteis: atalhos que a equipe vê no menu da unidade.</p>
+<p>O cadastro de usuários (alta, importação do SIS, matrícula e conselho de classe) está no passo a passo <strong>Cadastro de usuários no SIGUS</strong>, neste mesmo capítulo — é a rotina de quem administra o sistema.</p>
 <h2>Auditoria</h2>
 <p>Quase toda ação relevante (login, alteração, exclusão) pode ser consultada em <strong>Configurações → Auditoria</strong>, por quem tiver permissão. Por isso o login precisa ser individual.</p>
+'''
+            },
+            {
+                'name': 'Cadastro de usuários no SIGUS',
+                'shots': [
+                    ('usr-lista', 'Menu Configurações aberto no item Usuários e lista com busca e botão Novo Usuário'),
+                    ('usr-novo-acesso', 'Aba Acesso do cadastro novo: CPF na frente e botão Importar dados cadastrais'),
+                    ('usr-novo-importado', 'Depois da importação: mensagem de sucesso e campos preenchidos, ainda editáveis'),
+                    ('usr-novo-pessoal', 'Aba Dados Pessoais: CNS, Localizar no CNES, filiação, RG e nascimento'),
+                    ('usr-novo-endereco', 'Aba Endereço preenchida com o cadastro de usuário do SIS'),
+                    ('usr-matriculas', 'Aba Matrículas depois que o usuário já existe, com Adicionar Matrícula'),
+                    ('usr-matricula-modal', 'Modal de nova matrícula com Consultar conselho no SIS'),
+                ],
+                'html': f'''
+<p>Esta página é para quem <strong>cadastra e edita usuários</strong> no SIGUS — administrador, gestor central e quem tiver a permissão de cadastrar usuário. O profissional da ponta não usa esta tela no dia a dia.</p>
+<h2>Onde fica</h2>
+<p>No menu da esquerda: <strong>Configurações → Usuários</strong>. Se o grupo Configurações estiver fechado, clique no título para abrir. Se o item não aparecer, o seu perfil não tem permissão — peça a um administrador.</p>
+<p>A lista traz nome, e-mail, WhatsApp, perfil, matrícula/CBO e se o usuário está ativo. A busca (nome ou parte do e-mail) atualiza sozinha depois que você para de digitar. O botão <strong>Novo Usuário</strong> fica no alto, à direita.</p>
+{{SHOT0}}
+<h2>Como criar um usuário (passo a passo)</h2>
+<ol>
+<li>Clique em <strong>Novo Usuário</strong>.</li>
+<li>Você cai na aba <strong>Acesso</strong>. O <strong>primeiro campo é o CPF</strong> — não comece pelo nome.</li>
+<li>Digite o CPF (com ou sem pontuação: <em>000.000.000-00</em> ou só os 11 dígitos).</li>
+<li>Clique no botão azul <strong>Importar dados cadastrais</strong>, ao lado do CPF.</li>
+</ol>
+{{SHOT1}}
+<p>Espere alguns segundos. Uma mensagem verde confirma quantos campos vieram. O SIGUS consulta, nesta ordem, o que existir:</p>
+<ul>
+<li>cadastro de <strong>pessoa</strong> no SIS — nome, mãe, pai, RG, escolaridade, nascimento;</li>
+<li><strong>CADSUS</strong> — útil quando a pessoa ainda não está no SIS;</li>
+<li>cadastro de <strong>profissional</strong> e de <strong>operador</strong> no SIS — e-mail, conselho, login;</li>
+<li>cadastro de <strong>usuário</strong> no SIS — <strong>endereço e telefone mandam</strong> (é o que a ponta costuma manter atualizado);</li>
+<li><strong>CNES</strong> — CNS do profissional (o número “de verdade” do DATASUS, não o CNS provisório do CADSUS).</li>
+</ul>
+{{SHOT2}}
+<ol start="5">
+<li>Olhe as abas <strong>Dados Pessoais</strong> e <strong>Endereço</strong>. Nada fica travado: se um campo veio errado ou vazio, você corrige na mão.</li>
+<li>Na aba Acesso, escolha o <strong>perfil de acesso</strong> e complete o e-mail se a importação não trouxe (pode ser só a parte antes do @).</li>
+<li>Clique em <strong>Criar Usuário</strong>.</li>
+</ol>
+{c('info', 'Senha inicial:', 'A senha de quem acaba de ser criado é o CPF <strong>só com os dígitos</strong>, sem pontos nem traço. A pessoa troca em Meu Perfil no primeiro acesso. Avise isso na hora de entregar o login.')}
+{c('success', 'Dica:', 'Se o SIS não tiver a pessoa, o CADSUS e o CNES ainda podem preencher nome, filiação, endereço e CNS. Se nenhuma base achar o CPF, preencha na mão — o usuário nasce do mesmo jeito.')}
+{c('warning', 'ATENÇÃO:', 'A importação só lê. O SIGUS não grava nada no SIS, no CADSUS nem no CNES. Dado importado não significa dado conferido: olhe nome, e-mail e CPF antes de criar.')}
+<h2>Aba Dados pessoais</h2>
+<p>Aqui entram CNS, filiação, sexo, nascimento, RG, escolaridade e nacionalidade. O botão <strong>Localizar no CNES</strong> abre o site do DATASUS numa nova aba, para você conferir na fonte se quiser. Ele não grava sozinho — copie o que precisar.</p>
+{{SHOT3}}
+<h2>Aba Endereço</h2>
+<p>Logradouro, número, bairro, município, UF, CEP, telefone e WhatsApp. Quando existe cadastro de usuário no SIS, o endereço vem de lá. Se a ponta atualizou o telefone no SIS e o SIGUS ainda está velho, importe de novo (o botão também funciona na edição).</p>
+{{SHOT4}}
+<h2>Aba Matrículas (depois de criar)</h2>
+<p>Essa aba <strong>só aparece depois</strong> que o usuário já existe. Cada matrícula é um vínculo empregatício (estatutário, contrato, residência, estágio), com CBO e conselho de classe. Sem matrícula, o vínculo com a unidade fica incompleto.</p>
+{{SHOT5}}
+<h2>Conselho de classe na matrícula</h2>
+<ol>
+<li>Abra o usuário → aba <strong>Matrículas</strong> → <strong>Adicionar Matrícula</strong>.</li>
+<li>Preencha vínculo, tipo e, se for o caso, o número da matrícula.</li>
+<li>Clique em <strong>Consultar conselho no SIS</strong>. O SIGUS usa o CPF da aba Acesso e busca o cadastro de profissional.</li>
+<li><strong>Nenhum encontrado</strong> — o sistema avisa para preencher órgão e número na mão.</li>
+<li><strong>Um encontrado</strong> — preenche órgão (ex.: COREN-SP) e número. Você ainda pode alterar.</li>
+<li><strong>Mais de um</strong> — abre um modal para você escolher qual conselho entra nesta matrícula.</li>
+</ol>
+{{SHOT6}}
+{c('info', 'Campos com *:', 'Nome e e-mail são obrigatórios para criar o usuário. Número da matrícula é obrigatório no modal, salvo contrato por prazo determinado (aí pode ficar “Sem Matrícula”).')}
+{c('success', 'Dica:', 'O próprio profissional pode conferir o cadastro no SIS em Meu Perfil → Verificar dados de cadastro no SIS. Se algo estiver desatualizado lá, oriente a abrir um chamado — o SIGUS não corrige o SIS.')}
 '''
             },
         ],
@@ -501,21 +618,42 @@ def publish(s: requests.Session) -> None:
             print(f'Capítulo criado: {ch["name"]} (id={cid})')
 
         for j, pg in enumerate(ch['pages'], start=1):
+            html = pg['html']
+            shots = pg.get('shots') or []
+            payload_html = strip_shot_placeholders(html) if shots else html
             if pg['name'] in pages_exist:
                 pid = pages_exist[pg['name']]['id']
-                api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': pg['html']})
+                api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': payload_html})
                 print(f'  página atualizada: {pg["name"]}')
             else:
                 created = api(s, 'POST', '/pages', json={
                     'chapter_id': cid,
                     'name': pg['name'],
-                    'html': pg['html'],
+                    'html': payload_html,
                     'priority': j,
                 })
+                pid = created['id']
+                pages_exist[pg['name']] = {'id': pid}
                 print(f'  página criada: {pg["name"]} -> {created.get("url") or created.get("slug")}')
+            if shots:
+                for idx, (stem, alt) in enumerate(shots):
+                    print(f'    print {stem}...')
+                    html = html.replace(f'{{SHOT{idx}}}', upload_shot(s, pid, stem, alt))
+                api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': html})
+                print(f'    html+prints ok')
 
 
 def main():
+    missing = [
+        stem
+        for ch in CHAPTERS
+        for pg in ch['pages']
+        for stem, _alt in (pg.get('shots') or [])
+        if not (SHOT / f'{stem}.png').exists()
+    ]
+    if missing:
+        print('Prints faltando:', ', '.join(missing))
+        sys.exit(1)
     s = session_login()
     publish(s)
     print('OK. Abra', f'{BASE}/books/manuais-de-utilizacao-do-sigus')
