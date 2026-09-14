@@ -121,6 +121,10 @@ if (cpf) cpf.checked = true;
 """
 
 JS_DASH = JS_NAV + """
+document.querySelectorAll('.com-card').forEach((li) => {
+  const t = ((li.querySelector('a.fw-semibold') || {}).textContent || '');
+  if (/teste/i.test(t)) li.remove();
+});
 const aniv = document.getElementById('cardAniversario');
 if (aniv) aniv.remove();
 document.querySelectorAll('.dash-pessoa-nome').forEach((el, i) => {
@@ -199,6 +203,40 @@ document.querySelectorAll('.mural-post-foot, .mural-foot').forEach((el) => {
       n.textContent = n.textContent.replace(/· [A-Za-zÀ-ÿ]+/g, '· Profissional');
     }
   });
+});
+"""
+
+JS_MURAL_POST = """
+const nome = document.getElementById('muralIgNome');
+if (nome) nome.textContent = 'Profissional exemplo';
+const meta = document.getElementById('muralIgMeta');
+if (meta && meta.textContent) meta.textContent = 'Unidade exemplo';
+document.querySelectorAll('.mural-ig-av').forEach((el) => {
+  if (el.tagName === 'IMG') {
+    const span = document.createElement('span');
+    span.className = 'mural-ig-av';
+    span.textContent = 'P';
+    el.replaceWith(span);
+  } else {
+    el.textContent = 'P';
+  }
+});
+document.querySelectorAll('.mural-ig-cmt-txt strong').forEach((el) => {
+  el.textContent = 'Profissional exemplo';
+});
+document.querySelectorAll('.mural-ig-cmt-txt').forEach((el, i) => {
+  const strong = el.querySelector('strong');
+  const quando = el.querySelector('.mural-ig-cmt-quando');
+  el.childNodes.forEach((n) => {
+    if (n.nodeType === 3 && (n.textContent || '').trim()) {
+      n.textContent = ' Comentário de exemplo para o manual.';
+    }
+  });
+  if (quando) {
+    const apagar = quando.querySelector('.mural-ig-cmt-apagar');
+    quando.textContent = '14/09 10:00 ';
+    if (apagar) quando.appendChild(apagar);
+  }
 });
 """
 
@@ -342,13 +380,24 @@ def main() -> None:
                 const tgl = document.querySelector('.sigus-navbar .dropdown-toggle.show');
                 if (tgl) tgl.classList.remove('show');
             """)
-            thumbs = drv.find_elements(By.CSS_SELECTOR, '.mural-thumb')
+            thumbs = drv.find_elements(By.CSS_SELECTOR, '.mural-thumb[data-acao-id]')
             if thumbs:
-                thumbs[0].click()
-                time.sleep(0.6)
-                shot('dash-mural-foto')
+                drv.execute_script(
+                    "if (window.abrirPostMural) window.abrirPostMural(arguments[0], 0);",
+                    thumbs[0].get_attribute('data-acao-id'),
+                )
+                try:
+                    wait.until(EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, '#modalMuralPost.show')
+                    ))
+                    time.sleep(0.8)
+                    drv.execute_script(JS_MURAL_POST)
+                    time.sleep(0.25)
+                    shot('dash-mural-foto')
+                except Exception:
+                    print('  timeout modal mural no dashboard')
                 drv.execute_script("""
-                    const el = document.getElementById('modalMuralFoto');
+                    const el = document.getElementById('modalMuralPost');
                     if (el && window.bootstrap) {
                       const m = bootstrap.Modal.getInstance(el);
                       if (m) m.hide();
@@ -394,6 +443,30 @@ def main() -> None:
                 print('  timeout imprimir comunicado')
         if goto('/mural', '.page-header', JS_MURAL):
             shot('mural')
+            thumbs = drv.find_elements(By.CSS_SELECTOR, '.mural-thumb[data-acao-id]')
+            if thumbs:
+                drv.execute_script(
+                    "if (window.abrirPostMural) window.abrirPostMural(arguments[0], 0);",
+                    thumbs[0].get_attribute('data-acao-id'),
+                )
+                try:
+                    wait.until(EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, '#modalMuralPost.show')
+                    ))
+                    time.sleep(0.8)
+                    drv.execute_script(JS_MURAL_POST)
+                    time.sleep(0.25)
+                    shot('mural-post')
+                except Exception:
+                    print('  timeout modal mural na página do mural')
+                drv.execute_script("""
+                    const el = document.getElementById('modalMuralPost');
+                    if (el && window.bootstrap) {
+                      const m = bootstrap.Modal.getInstance(el);
+                      if (m) m.hide();
+                    }
+                """)
+                time.sleep(0.3)
         if goto('/acoes/nova', '.page-header'):
             shot('acao-nova')
 

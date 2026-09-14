@@ -6,6 +6,7 @@ from app.utils import prefixed_static_url
 
 
 DESCRICAO_ACAO_MAX = 400
+COMENTARIO_ACAO_MAX = 280
 FOTOS_ACAO_MAX = 4
 ANEXOS_COMUNICADO_MAX = 5
 
@@ -233,10 +234,28 @@ class AcaoLocal(db.Model):
         cascade='all, delete-orphan',
         order_by='AcaoLocalFoto.ordem',
     )
+    curtidas = db.relationship(
+        'AcaoLocalCurtida',
+        back_populates='acao',
+        cascade='all, delete-orphan',
+        lazy='dynamic',
+    )
+    comentarios = db.relationship(
+        'AcaoLocalComentario',
+        back_populates='acao',
+        cascade='all, delete-orphan',
+        lazy='dynamic',
+        order_by='AcaoLocalComentario.criado_em',
+    )
 
     @property
     def capa(self):
         return self.fotos[0] if self.fotos else None
+
+    def usuario_curtiu(self, usuario_id):
+        if not usuario_id:
+            return False
+        return self.curtidas.filter_by(usuario_id=usuario_id).first() is not None
 
     def __repr__(self):
         return f'<AcaoLocal {self.id} u={self.unidade_id}>'
@@ -262,3 +281,39 @@ class AcaoLocalFoto(db.Model):
     @property
     def url(self):
         return prefixed_static_url(f'/static/uploads/acoes/{self.filename}')
+
+
+class AcaoLocalCurtida(db.Model):
+    __tablename__ = 'acao_local_curtidas'
+    __table_args__ = (
+        db.UniqueConstraint('acao_id', 'usuario_id', name='uq_acao_curtida'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    acao_id = db.Column(
+        db.Integer, db.ForeignKey('acoes_locais.id', ondelete='CASCADE'), nullable=False
+    )
+    usuario_id = db.Column(
+        db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False
+    )
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    acao = db.relationship('AcaoLocal', back_populates='curtidas')
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
+
+
+class AcaoLocalComentario(db.Model):
+    __tablename__ = 'acao_local_comentarios'
+
+    id = db.Column(db.Integer, primary_key=True)
+    acao_id = db.Column(
+        db.Integer, db.ForeignKey('acoes_locais.id', ondelete='CASCADE'), nullable=False
+    )
+    usuario_id = db.Column(
+        db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False
+    )
+    texto = db.Column(db.String(COMENTARIO_ACAO_MAX), nullable=False)
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    acao = db.relationship('AcaoLocal', back_populates='comentarios')
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id])

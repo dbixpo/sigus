@@ -1,4 +1,4 @@
-{% macro thumbs(fotos, gallery_id) %}
+{% macro thumbs(fotos, gallery_id, acao_id=None) %}
 {% if fotos %}
 <div class="mural-thumbs">
     {% for f in fotos %}
@@ -6,10 +6,26 @@
             data-gallery="{{ gallery_id }}"
             data-index="{{ loop.index0 }}"
             data-src="{{ f.url }}"
-            title="Ver foto">
+            {% if acao_id %}data-acao-id="{{ acao_id }}"{% endif %}
+            title="Ver publicação">
         <img src="{{ f.url }}" alt="">
     </button>
     {% endfor %}
 </div>
 {% endif %}
+{% endmacro %}
+
+{% macro reacts(acao_id, st) %}
+<div class="mural-react">
+    <button type="button" class="mural-like-btn{% if st.curtiu %} is-on{% endif %}"
+            data-acao-id="{{ acao_id }}" aria-pressed="{{ 'true' if st.curtiu else 'false' }}"
+            title="Curtir">
+        <i class="{{ 'fas' if st.curtiu else 'far' }} fa-heart"></i>
+        <span class="mural-like-n">{{ st.n_curtidas or 0 }}</span>
+    </button>
+    <button type="button" class="mural-cmt-btn" data-acao-id="{{ acao_id }}" title="Comentários">
+        <i class="far fa-comment"></i>
+        <span class="mural-cmt-n">{{ st.n_comentarios or 0 }}</span>
+    </button>
+</div>
 {% endmacro %}

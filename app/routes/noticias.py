@@ -5,10 +5,11 @@ import uuid
 import mimetypes
 from datetime import date, datetime
 from flask import (
-    Blueprint, render_template, redirect, url_for, flash, request, abort,
+    Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify,
 )
 from flask_login import login_required, current_user
-from sqlalchemy import extract
+from sqlalchemy import extract, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 from app import db
 from app.utils import agora_local
@@ -17,9 +18,9 @@ from app.models.usuario import Usuario
 from app.models.notificacao import Notificacao
 from app.models.noticias import (
     TipoAcao, Comunicado, ComunicadoAnexo, ComunicadoCiencia,
-    AcaoLocal, AcaoLocalFoto,
+    AcaoLocal, AcaoLocalFoto, AcaoLocalCurtida, AcaoLocalComentario,
     DESCRICAO_ACAO_MAX, FOTOS_ACAO_MAX, ANEXOS_COMUNICADO_MAX,
-    PERFIS_PUBLICAR, PERFIS_COMPARTILHAR,
+    COMENTARIO_ACAO_MAX, PERFIS_PUBLICAR, PERFIS_COMPARTILHAR,
 )
 from app.models.transferencia import ItemLojinha
 
@@ -353,6 +354,93 @@ def feed_mural(limite=20, unidade_id=None, tipo_id=None, ano=None, mes=None, so_
     return feed[:limite]
 
 
+def _usuario_mural(u):
+    if not u:
+        return {'nome': '—', 'inicial': '?', 'foto': None}
+    return {
+        'nome': u.nome,
+        'inicial': u.inicial,
+        'foto': u.foto_url,
+    }
+
+
+def stats_acoes(acoes, usuario_id):
+    ids = [a.id for a in acoes]
+    if not ids:
+        return {}
+    n_curt = dict(
+        db.session.query(AcaoLocalCurtida.acao_id, func.count(AcaoLocalCurtida.id))
+        .filter(AcaoLocalCurtida.acao_id.in_(ids))
+        .group_by(AcaoLocalCurtida.acao_id)
+        .all()
+    )
+    n_cmt = dict(
+        db.session.query(AcaoLocalComentario.acao_id, func.count(AcaoLocalComentario.id))
+        .filter(AcaoLocalComentario.acao_id.in_(ids))
+        .group_by(AcaoLocalComentario.acao_id)
+        .all()
+    )
+    meus = set()
+    if usuario_id:
+        meus = {
+            r[0] for r in db.session.query(AcaoLocalCurtida.acao_id)
+            .filter(
+                AcaoLocalCurtida.acao_id.in_(ids),
+                AcaoLocalCurtida.usuario_id == usuario_id,
+            )
+            .all()
+        }
+    return {
+        i: {
+            'n_curtidas': int(n_curt.get(i) or 0),
+            'n_comentarios': int(n_cmt.get(i) or 0),
+            'curtiu': i in meus,
+        }
+        for i in ids
+    }
+
+
+def stats_acoes_feed(feed, usuario_id):
+    return stats_acoes(
+        [e['acao'] for e in feed if e.get('tipo') == 'acao'],
+        usuario_id,
+    )
+
+
+def _acao_payload(acao, foto_idx=0):
+    comentarios = (
+        AcaoLocalComentario.query.options(joinedload(AcaoLocalComentario.usuario))
+        .filter_by(acao_id=acao.id)
+        .order_by(AcaoLocalComentario.criado_em.asc())
+        .all()
+    )
+    pode_moderar = pode_publicar() or acao.autor_id == current_user.id
+    return {
+        'id': acao.id,
+        'tema': acao.tipo.nome if acao.tipo else 'Ação',
+        'descricao': acao.descricao,
+        'data': acao.data_acao.strftime('%d/%m/%Y') if acao.data_acao else '',
+        'unidade': acao.unidade.nome if acao.unidade else '',
+        'autor': _usuario_mural(acao.autor),
+        'fotos': [f.url for f in (acao.fotos or [])],
+        'foto_idx': foto_idx,
+        'n_curtidas': acao.curtidas.count(),
+        'n_comentarios': len(comentarios),
+        'curtiu': acao.usuario_curtiu(current_user.id),
+        'comentarios': [
+            {
+                'id': c.id,
+                'texto': c.texto,
+                'quando': c.criado_em.strftime('%d/%m %H:%M') if c.criado_em else '',
+                'autor': _usuario_mural(c.usuario),
+                'meu': c.usuario_id == current_user.id,
+                'pode_apagar': pode_moderar or c.usuario_id == current_user.id,
+            }
+            for c in comentarios
+        ],
+    }
+
+
 def _ctx_acao(tipos, unidades, escolher_unidade):
     return dict(
         tipos=tipos,
@@ -620,4 +708,101 @@ def mural():
         filtro_tipo='lojinha' if so_lojinha else tipo_id,
         filtro_mes=mes_raw,
         pode_publicar=pode_publicar(),
+        mural_stats=stats_acoes_feed(feed, current_user.id),
     )
+
+
+@noticias_bp.route('/mural/acoes/<int:id>')
+@login_required
+def detalhe_acao_json(id):
+    acao = AcaoLocal.query.options(
+        selectinload(AcaoLocal.fotos),
+        joinedload(AcaoLocal.unidade),
+        joinedload(AcaoLocal.tipo),
+        joinedload(AcaoLocal.autor),
+    ).get_or_404(id)
+    try:
+        foto_idx = int(request.args.get('foto') or 0)
+    except (TypeError, ValueError):
+        foto_idx = 0
+    return jsonify(_acao_payload(acao, foto_idx))
+
+
+@noticias_bp.route('/mural/acoes/<int:id>/curtir', methods=['POST'])
+@login_required
+def curtir_acao(id):
+    acao = AcaoLocal.query.get_or_404(id)
+    rec = AcaoLocalCurtida.query.filter_by(
+        acao_id=acao.id, usuario_id=current_user.id
+    ).first()
+    if rec:
+        db.session.delete(rec)
+        curtiu = False
+    else:
+        db.session.add(AcaoLocalCurtida(
+            acao_id=acao.id,
+            usuario_id=current_user.id,
+            criado_em=agora_local(),
+        ))
+        curtiu = True
+    try:
+        db.session.commit()
+    except IntegrityError:
+        db.session.rollback()
+        curtiu = True
+    n = AcaoLocalCurtida.query.filter_by(acao_id=acao.id).count()
+    return jsonify({'ok': True, 'curtiu': curtiu, 'n_curtidas': n})
+
+
+@noticias_bp.route('/mural/acoes/<int:id>/comentarios', methods=['POST'])
+@login_required
+def comentar_acao(id):
+    acao = AcaoLocal.query.get_or_404(id)
+    data = request.get_json(silent=True) or {}
+    texto = (data.get('texto') or request.form.get('texto') or '').strip()
+    if not texto:
+        return jsonify({'ok': False, 'erro': 'Escreva um comentário.'}), 400
+    if len(texto) > COMENTARIO_ACAO_MAX:
+        return jsonify({
+            'ok': False,
+            'erro': f'O comentário pode ter no máximo {COMENTARIO_ACAO_MAX} caracteres.',
+        }), 400
+    rec = AcaoLocalComentario(
+        acao_id=acao.id,
+        usuario_id=current_user.id,
+        texto=texto,
+        criado_em=agora_local(),
+    )
+    db.session.add(rec)
+    db.session.commit()
+    return jsonify({
+        'ok': True,
+        'comentario': {
+            'id': rec.id,
+            'texto': rec.texto,
+            'quando': rec.criado_em.strftime('%d/%m %H:%M') if rec.criado_em else '',
+            'autor': _usuario_mural(current_user),
+            'meu': True,
+            'pode_apagar': True,
+        },
+        'n_comentarios': acao.comentarios.count(),
+    })
+
+
+@noticias_bp.route('/mural/comentarios/<int:id>', methods=['DELETE'])
+@login_required
+def apagar_comentario(id):
+    rec = AcaoLocalComentario.query.get_or_404(id)
+    acao = rec.acao
+    if not (
+        rec.usuario_id == current_user.id
+        or (acao and acao.autor_id == current_user.id)
+        or pode_publicar()
+    ):
+        abort(403)
+    acao_id = rec.acao_id
+    db.session.delete(rec)
+    db.session.commit()
+    n = AcaoLocalComentario.query.filter_by(acao_id=acao_id).count()
+    return jsonify({'ok': True, 'n_comentarios': n})
+

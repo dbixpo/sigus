@@ -8,6 +8,7 @@ from app.models.usuario import Usuario
 from app.models.falta_abonada import FaltaAbonada
 from app.routes.noticias import (
     pode_publicar, comunicados_da_unidade, montar_cards_comunicados, feed_mural,
+    stats_acoes_feed,
 )
 from datetime import date
 
@@ -99,6 +100,7 @@ def index():
         current_user.id,
     )
     mural = feed_mural(limite=30)
+    mural_stats = stats_acoes_feed(mural, current_user.id)
     meses = {
         1: 'janeiro', 2: 'fevereiro', 3: 'março', 4: 'abril',
         5: 'maio', 6: 'junho', 7: 'julho', 8: 'agosto',
@@ -128,6 +130,7 @@ def index():
         abonando=abonando,
         comunicados=comunicados,
         mural=mural,
+        mural_stats=mural_stats,
         meses=meses,
         pode_publicar=pode_publicar(),
         eh_meu_aniversario=eh_meu_aniversario,

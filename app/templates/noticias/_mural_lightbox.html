@@ -1,109 +1,454 @@
-<div class="modal fade" id="modalMuralFoto" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content bg-transparent border-0 shadow-none">
-            <div class="mural-lb">
-                <button type="button" class="mural-lb-fechar" data-bs-dismiss="modal" aria-label="Fechar">&times;</button>
-                <button type="button" class="mural-lb-nav mural-lb-prev" id="muralFotoPrev" aria-label="Anterior">
+<div class="modal fade" id="modalMuralPost" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog mural-ig-dialog modal-dialog-centered">
+        <div class="modal-content mural-ig">
+            <div class="mural-ig-foto" id="muralIgFotoBox">
+                <button type="button" class="mural-ig-nav mural-ig-prev" id="muralIgPrev" aria-label="Anterior">
                     <i class="fas fa-chevron-left"></i>
                 </button>
-                <img id="muralFotoImg" src="" alt="">
-                <button type="button" class="mural-lb-nav mural-lb-next" id="muralFotoNext" aria-label="Próxima">
+                <img id="muralIgImg" src="" alt="">
+                <span class="mural-ig-heart-pop" id="muralIgHeartPop"><i class="fas fa-heart"></i></span>
+                <button type="button" class="mural-ig-nav mural-ig-next" id="muralIgNext" aria-label="Próxima">
                     <i class="fas fa-chevron-right"></i>
                 </button>
-                <div class="mural-lb-cap" id="muralFotoCap"></div>
+                <div class="mural-ig-dots" id="muralIgDots"></div>
+            </div>
+            <div class="mural-ig-lado">
+                <header class="mural-ig-topo">
+                    <div class="mural-ig-av-wrap" id="muralIgAv"></div>
+                    <div class="min-w-0 flex-grow-1">
+                        <div class="mural-ig-nome" id="muralIgNome"></div>
+                        <div class="mural-ig-meta" id="muralIgMeta"></div>
+                    </div>
+                    <button type="button" class="mural-ig-fechar" data-bs-dismiss="modal" aria-label="Fechar">&times;</button>
+                </header>
+                <div class="mural-ig-legenda">
+                    <div class="mural-ig-tema" id="muralIgTema"></div>
+                    <div class="mural-ig-data" id="muralIgData"></div>
+                    <p class="mural-ig-desc" id="muralIgDesc"></p>
+                </div>
+                <div class="mural-ig-comentarios" id="muralIgComents"></div>
+                <footer class="mural-ig-rodape">
+                    <div class="mural-ig-acoes">
+                        <button type="button" class="mural-ig-like" id="muralIgLike" title="Curtir">
+                            <i class="far fa-heart"></i>
+                        </button>
+                        <span class="mural-ig-contagens" id="muralIgCounts"></span>
+                    </div>
+                    <form class="mural-ig-form" id="muralIgForm" autocomplete="off">
+                        <input type="text" id="muralIgInput" maxlength="280"
+                               placeholder="Escreva um comentário…" required>
+                        <button type="submit">Publicar</button>
+                    </form>
+                </footer>
             </div>
         </div>
     </div>
 </div>
 <style>
-.mural-lb {
+.mural-react {
+    display: flex; align-items: center; gap: 0.85rem;
+    margin-top: 0.45rem; font-size: 0.82rem; color: #718096;
+}
+.mural-like-btn, .mural-cmt-btn, .mural-ig-like {
+    border: 0; background: none; padding: 0; color: inherit;
+    display: inline-flex; align-items: center; gap: 0.28rem;
+    cursor: pointer; line-height: 1;
+}
+.mural-like-btn i, .mural-ig-like i { font-size: 1.05rem; }
+.mural-like-btn.is-on, .mural-ig-like.is-on { color: #E63030; }
+.mural-like-btn:hover, .mural-cmt-btn:hover, .mural-ig-like:hover { color: #E63030; }
+.mural-ig-dialog {
+    max-width: min(1080px, 96vw);
+    width: 96vw;
+    margin: 0.75rem auto;
+}
+.mural-ig {
+    display: flex; flex-direction: row;
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40vh;
+    height: min(86vh, 740px);
+    border: 0; border-radius: 12px; overflow: hidden;
+    background: #fff;
 }
-.mural-lb img {
-    max-width: min(92vw, 1100px);
-    max-height: 82vh;
-    width: auto;
-    height: auto;
-    object-fit: contain;
-    border-radius: 8px;
+.mural-ig-foto {
+    flex: 1 1 58%;
     background: #0D3B5E;
-    box-shadow: 0 12px 40px rgba(0,0,0,.45);
-}
-.mural-lb-fechar {
-    position: absolute; top: -8px; right: 4px; z-index: 2;
-    width: 36px; height: 36px; border: 0; border-radius: 50%;
-    background: rgba(13,59,94,.85); color: #fff; font-size: 1.4rem; line-height: 1;
-    cursor: pointer;
-}
-.mural-lb-nav {
-    position: absolute; top: 50%; transform: translateY(-50%);
-    width: 42px; height: 42px; border: 0; border-radius: 50%;
-    background: rgba(13,59,94,.8); color: #fff; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
+    position: relative; min-width: 0; user-select: none;
 }
-.mural-lb-prev { left: 8px; }
-.mural-lb-next { right: 8px; }
-.mural-lb-cap {
-    position: absolute; bottom: -28px; left: 0; right: 0;
-    text-align: center; color: #fff; font-size: .85rem;
+.mural-ig-foto img {
+    max-width: 100%; max-height: 100%;
+    width: auto; height: auto; object-fit: contain;
 }
-#modalMuralFoto .modal-content { background: transparent; }
+.mural-ig-fechar {
+    width: 32px; height: 32px; border: 0; border-radius: 50%;
+    background: transparent; color: #718096; font-size: 1.45rem; line-height: 1;
+    cursor: pointer; flex-shrink: 0;
+}
+.mural-ig-fechar:hover { color: #0D3B5E; background: #edf1f5; }
+.mural-ig-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 38px; height: 38px; border: 0; border-radius: 50%;
+    background: rgba(255,255,255,.92); color: #0D3B5E; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+.mural-ig-prev { left: 10px; }
+.mural-ig-next { right: 10px; }
+.mural-ig-dots {
+    position: absolute; bottom: 10px; left: 0; right: 0;
+    display: flex; justify-content: center; gap: 5px;
+}
+.mural-ig-dots span {
+    width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45);
+}
+.mural-ig-dots span.on { background: #fff; }
+.mural-ig-heart-pop {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%) scale(.4);
+    color: #fff; font-size: 5rem; opacity: 0; pointer-events: none;
+    text-shadow: 0 8px 24px rgba(0,0,0,.35);
+    transition: opacity .15s, transform .15s;
+}
+.mural-ig-heart-pop.show {
+    opacity: .95; transform: translate(-50%, -50%) scale(1);
+}
+.mural-ig-lado {
+    flex: 0 0 380px;
+    width: 380px;
+    display: flex; flex-direction: column;
+    background: #fff; color: #1E3A50; min-width: 0;
+}
+.mural-ig-topo {
+    display: flex; align-items: center; gap: 0.65rem;
+    padding: 0.85rem 1rem; border-bottom: 1px solid #edf1f5; flex-shrink: 0;
+}
+.mural-ig-av, .mural-ig-av-wrap .mural-ig-av {
+    width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+    background: #e8f4fb; color: #1A82B8; font-size: 0.85rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mural-ig-nome { font-weight: 600; font-size: .9rem; line-height: 1.2; }
+.mural-ig-meta { font-size: .72rem; color: #718096; }
+.mural-ig-legenda { padding: 0.85rem 1rem 0.5rem; flex-shrink: 0; }
+.mural-ig-tema {
+    font-size: .68rem; font-weight: 700; color: #1A82B8;
+    text-transform: uppercase; letter-spacing: .03em;
+}
+.mural-ig-data { font-size: .72rem; color: #718096; margin-top: 0.15rem; }
+.mural-ig-desc { font-size: .88rem; margin: 0.4rem 0 0; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mural-ig-comentarios {
+    flex: 1; min-height: 0; overflow-y: auto;
+    padding: 0.35rem 1rem 0.6rem; border-top: 1px solid #edf1f5;
+}
+.mural-ig-cmt { display: flex; gap: 0.5rem; padding: 0.45rem 0; }
+.mural-ig-cmt-txt { font-size: .82rem; line-height: 1.35; min-width: 0; }
+.mural-ig-cmt-txt strong { font-weight: 600; margin-right: .25rem; }
+.mural-ig-cmt-quando { font-size: .68rem; color: #718096; margin-top: 0.1rem; }
+.mural-ig-cmt-apagar {
+    border: 0; background: none; color: #718096; font-size: .68rem;
+    padding: 0; cursor: pointer; margin-left: .35rem;
+}
+.mural-ig-cmt-apagar:hover { color: #E63030; }
+.mural-ig-vazio { font-size: .8rem; color: #718096; padding: 0.75rem 0; }
+.mural-ig-rodape { border-top: 1px solid #edf1f5; flex-shrink: 0; }
+.mural-ig-acoes {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.55rem 1rem 0.2rem;
+}
+.mural-ig-like { color: #1E3A50; font-size: 1.25rem; }
+.mural-ig-contagens { font-size: .8rem; color: #1E3A50; font-weight: 600; }
+.mural-ig-form {
+    display: flex; gap: 0.4rem; padding: 0.45rem 0.75rem 0.7rem;
+}
+.mural-ig-form input {
+    flex: 1; border: 0; border-top: 0; outline: none;
+    font-size: .85rem; padding: 0.4rem 0.2rem; color: #1E3A50;
+}
+.mural-ig-form button {
+    border: 0; background: none; color: #1A82B8; font-weight: 600;
+    font-size: .85rem; padding: 0.35rem 0.4rem; cursor: pointer;
+}
+.mural-ig-form button:disabled { color: #a0aec0; cursor: default; }
+#modalMuralPost .modal-content { box-shadow: 0 16px 48px rgba(13,59,94,.28); }
+@media (max-width: 768px) {
+    .mural-ig { flex-direction: column; height: auto; max-height: 92vh; }
+    .mural-ig-foto { height: 42vh; flex: none; width: 100%; }
+    .mural-ig-lado { flex: none; width: 100%; max-width: none; max-height: 50vh; }
+}
 </style>
 <script>
 (function () {
-    var modalEl = document.getElementById('modalMuralFoto');
+    var modalEl = document.getElementById('modalMuralPost');
     if (!modalEl) return;
-    var img = document.getElementById('muralFotoImg');
-    var cap = document.getElementById('muralFotoCap');
-    var btnPrev = document.getElementById('muralFotoPrev');
-    var btnNext = document.getElementById('muralFotoNext');
-    var urls = [];
+    document.body.appendChild(modalEl);
+    var img = document.getElementById('muralIgImg');
+    var btnPrev = document.getElementById('muralIgPrev');
+    var btnNext = document.getElementById('muralIgNext');
+    var dotsEl = document.getElementById('muralIgDots');
+    var likeBtn = document.getElementById('muralIgLike');
+    var form = document.getElementById('muralIgForm');
+    var input = document.getElementById('muralIgInput');
+    var pop = document.getElementById('muralIgHeartPop');
+    var post = null;
     var idx = 0;
     var startX = 0;
-    document.body.appendChild(modalEl);
+    var likeBusy = false;
+    var lastTap = 0;
 
-    function show(i) {
-        if (!urls.length) return;
-        idx = (i + urls.length) % urls.length;
-        img.src = urls[idx];
-        cap.textContent = (idx + 1) + ' / ' + urls.length;
-        var several = urls.length > 1;
+    function baseUrl() {
+        return (window.SIGUS_BASE_URL || '/sigus').replace(/\/$/, '');
+    }
+    function csrfToken() {
+        var m = document.querySelector('meta[name="csrf-token"]');
+        return (m && (m.getAttribute('content') || m.content)) || '';
+    }
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+    function avatar(p) {
+        p = p || {};
+        if (p.foto) return '<img class="mural-ig-av" src="' + esc(p.foto) + '" alt="">';
+        return '<span class="mural-ig-av">' + esc(p.inicial || '?') + '</span>';
+    }
+    function headers() {
+        return {
+            'X-CSRFToken': csrfToken(),
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        };
+    }
+    function parseJson(r) {
+        var ct = r.headers.get('content-type') || '';
+        if (!r.ok || ct.indexOf('json') < 0) return Promise.reject();
+        return r.json();
+    }
+    function showFoto(i) {
+        if (!post || !post.fotos.length) return;
+        idx = (i + post.fotos.length) % post.fotos.length;
+        img.src = post.fotos[idx];
+        var several = post.fotos.length > 1;
         btnPrev.style.visibility = several ? 'visible' : 'hidden';
         btnNext.style.visibility = several ? 'visible' : 'hidden';
+        dotsEl.innerHTML = post.fotos.map(function (_, n) {
+            return '<span class="' + (n === idx ? 'on' : '') + '"></span>';
+        }).join('');
     }
-    function bindThumbs() {
-        document.querySelectorAll('.mural-thumb').forEach(function (btn) {
-            if (btn.dataset.lbBound) return;
-            btn.dataset.lbBound = '1';
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var gal = btn.getAttribute('data-gallery');
-                urls = Array.from(document.querySelectorAll('.mural-thumb[data-gallery="' + gal + '"]'))
-                    .map(function (b) { return b.getAttribute('data-src'); });
-                show(parseInt(btn.getAttribute('data-index'), 10) || 0);
-                bootstrap.Modal.getOrCreateInstance(modalEl).show();
-            });
+    function setLike(on, n) {
+        likeBtn.classList.toggle('is-on', !!on);
+        likeBtn.querySelector('i').className = on ? 'fas fa-heart' : 'far fa-heart';
+        var partes = [];
+        if (n) partes.push(n === 1 ? '1 curtida' : n + ' curtidas');
+        var nc = post ? post.n_comentarios : 0;
+        if (nc) partes.push(nc === 1 ? '1 comentário' : nc + ' comentários');
+        document.getElementById('muralIgCounts').textContent = partes.join(' · ') || 'Seja o primeiro a curtir';
+        syncCard(post && post.id, on, n, nc);
+    }
+    function syncCard(id, on, nLike, nCmt) {
+        if (!id) return;
+        document.querySelectorAll('.mural-like-btn[data-acao-id="' + id + '"]').forEach(function (btn) {
+            btn.classList.toggle('is-on', !!on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            var ic = btn.querySelector('i');
+            if (ic) ic.className = on ? 'fas fa-heart' : 'far fa-heart';
+            var sp = btn.querySelector('.mural-like-n');
+            if (sp && nLike != null) sp.textContent = nLike;
         });
+        if (nCmt != null) {
+            document.querySelectorAll('.mural-cmt-btn[data-acao-id="' + id + '"] .mural-cmt-n').forEach(function (sp) {
+                sp.textContent = nCmt;
+            });
+        }
     }
-    bindThumbs();
-    btnPrev.addEventListener('click', function () { show(idx - 1); });
-    btnNext.addEventListener('click', function () { show(idx + 1); });
+    function renderComents() {
+        var box = document.getElementById('muralIgComents');
+        if (!post.comentarios.length) {
+            box.innerHTML = '<div class="mural-ig-vazio">Nenhum comentário ainda. Que tal começar?</div>';
+            return;
+        }
+        box.innerHTML = post.comentarios.map(function (c) {
+            var apagar = c.pode_apagar
+                ? '<button type="button" class="mural-ig-cmt-apagar" data-cmt="' + c.id + '">apagar</button>'
+                : '';
+            return '<div class="mural-ig-cmt">' + avatar(c.autor) +
+                '<div class="mural-ig-cmt-txt"><strong>' + esc((c.autor && c.autor.nome) || '') + '</strong>' +
+                esc(c.texto) +
+                '<div class="mural-ig-cmt-quando">' + esc(c.quando) + apagar + '</div></div></div>';
+        }).join('');
+        box.querySelectorAll('.mural-ig-cmt-apagar').forEach(function (b) {
+            b.addEventListener('click', function () { apagarCmt(parseInt(b.getAttribute('data-cmt'), 10)); });
+        });
+        box.scrollTop = box.scrollHeight;
+    }
+    function renderPost() {
+        var a = post.autor || {};
+        document.getElementById('muralIgAv').innerHTML = avatar(a);
+        document.getElementById('muralIgNome').textContent = a.nome || '—';
+        document.getElementById('muralIgMeta').textContent = post.unidade || '';
+        document.getElementById('muralIgTema').textContent = post.tema || '';
+        document.getElementById('muralIgData').textContent = post.data ? ('Em ' + post.data) : '';
+        document.getElementById('muralIgDesc').textContent = post.descricao || '';
+        setLike(post.curtiu, post.n_curtidas);
+        renderComents();
+        showFoto(post.foto_idx || 0);
+    }
+    function abrir(id, fotoIdx) {
+        fetch(baseUrl() + '/mural/acoes/' + id + '?foto=' + (fotoIdx || 0), {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(parseJson)
+            .then(function (data) {
+                post = data;
+                post.foto_idx = fotoIdx || 0;
+                renderPost();
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            })
+            .catch(function () {});
+    }
+    function curtir(comPop) {
+        if (!post || likeBusy) return;
+        likeBusy = true;
+        fetch(baseUrl() + '/mural/acoes/' + post.id + '/curtir', {
+            method: 'POST', credentials: 'same-origin', headers: headers()
+        })
+            .then(parseJson)
+            .then(function (d) {
+                post.curtiu = d.curtiu;
+                post.n_curtidas = d.n_curtidas;
+                setLike(d.curtiu, d.n_curtidas);
+                if (comPop && d.curtiu) {
+                    pop.classList.add('show');
+                    setTimeout(function () { pop.classList.remove('show'); }, 450);
+                }
+            })
+            .catch(function () {})
+            .then(function () { likeBusy = false; });
+    }
+    function apagarCmt(id) {
+        fetch(baseUrl() + '/mural/comentarios/' + id, {
+            method: 'DELETE', credentials: 'same-origin', headers: headers()
+        })
+            .then(parseJson)
+            .then(function (d) {
+                post.comentarios = post.comentarios.filter(function (c) { return c.id !== id; });
+                post.n_comentarios = d.n_comentarios;
+                setLike(post.curtiu, post.n_curtidas);
+                renderComents();
+            })
+            .catch(function () {});
+    }
+
+    window.abrirPostMural = abrir;
+
+    btnPrev.addEventListener('click', function () { showFoto(idx - 1); });
+    btnNext.addEventListener('click', function () { showFoto(idx + 1); });
+    likeBtn.addEventListener('click', function () { curtir(false); });
     modalEl.addEventListener('keydown', function (e) {
-        if (e.key === 'ArrowLeft') show(idx - 1);
-        if (e.key === 'ArrowRight') show(idx + 1);
+        if (e.key === 'ArrowLeft') showFoto(idx - 1);
+        if (e.key === 'ArrowRight') showFoto(idx + 1);
     });
     img.addEventListener('touchstart', function (e) {
         startX = e.changedTouches[0].clientX;
     }, {passive: true});
     img.addEventListener('touchend', function (e) {
         var dx = e.changedTouches[0].clientX - startX;
-        if (dx > 40) show(idx - 1);
-        if (dx < -40) show(idx + 1);
+        if (dx > 40) showFoto(idx - 1);
+        else if (dx < -40) showFoto(idx + 1);
     }, {passive: true});
+    img.addEventListener('dblclick', function (e) {
+        e.preventDefault();
+        if (post && !post.curtiu) curtir(true);
+        else if (post) {
+            pop.classList.add('show');
+            setTimeout(function () { pop.classList.remove('show'); }, 450);
+        }
+    });
+    img.addEventListener('click', function () {
+        var now = Date.now();
+        if (now - lastTap < 280) {
+            if (post && !post.curtiu) curtir(true);
+        }
+        lastTap = now;
+    });
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!post) return;
+        var texto = (input.value || '').trim();
+        if (!texto) return;
+        var btn = form.querySelector('button[type=submit]');
+        btn.disabled = true;
+        fetch(baseUrl() + '/mural/acoes/' + post.id + '/comentarios', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: headers(),
+            body: JSON.stringify({ texto: texto })
+        })
+            .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+            .then(function (res) {
+                btn.disabled = false;
+                if (!res.ok) return;
+                post.comentarios.push(res.d.comentario);
+                post.n_comentarios = res.d.n_comentarios;
+                input.value = '';
+                setLike(post.curtiu, post.n_curtidas);
+                renderComents();
+            })
+            .catch(function () { btn.disabled = false; });
+    });
+
+    function bindFeed() {
+        document.querySelectorAll('.mural-thumb[data-acao-id]').forEach(function (btn) {
+            if (btn.dataset.postBound) return;
+            btn.dataset.postBound = '1';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                abrir(btn.getAttribute('data-acao-id'), parseInt(btn.getAttribute('data-index'), 10) || 0);
+            });
+        });
+        document.querySelectorAll('.mural-cmt-btn[data-acao-id]').forEach(function (btn) {
+            if (btn.dataset.postBound) return;
+            btn.dataset.postBound = '1';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                abrir(btn.getAttribute('data-acao-id'), 0);
+            });
+        });
+        document.querySelectorAll('.mural-like-btn[data-acao-id]').forEach(function (btn) {
+            if (btn.dataset.likeBound) return;
+            btn.dataset.likeBound = '1';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var id = btn.getAttribute('data-acao-id');
+                fetch(baseUrl() + '/mural/acoes/' + id + '/curtir', {
+                    method: 'POST', credentials: 'same-origin', headers: headers()
+                })
+                    .then(parseJson)
+                    .then(function (d) {
+                        if (post && String(post.id) === String(id)) {
+                            post.curtiu = d.curtiu;
+                            post.n_curtidas = d.n_curtidas;
+                            setLike(d.curtiu, d.n_curtidas);
+                        } else {
+                            var nCmtEl = document.querySelector('.mural-cmt-btn[data-acao-id="' + id + '"] .mural-cmt-n');
+                            var nCmt = nCmtEl ? parseInt(nCmtEl.textContent, 10) : null;
+                            syncCard(id, d.curtiu, d.n_curtidas, nCmt);
+                        }
+                    })
+                    .catch(function () {});
+            });
+        });
+    }
+    bindFeed();
+
+    var m = (location.hash || '').match(/^#acao-(\d+)/);
+    if (m) abrir(m[1], 0);
+    var q = new URLSearchParams(location.search).get('acao');
+    if (q) abrir(q, 0);
 })();
 </script>

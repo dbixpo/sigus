@@ -119,7 +119,7 @@ CHAPTERS = [
 <table>
 <thead><tr><th>Área do menu</th><th>Para que serve</th></tr></thead>
 <tbody>
-<tr><td>Dashboard</td><td>Dia a dia da unidade: comunicados com ciência, mural de ações, aniversariantes, quem abona hoje e chamados abertos.</td></tr>
+<tr><td>Dashboard</td><td>Dia a dia da unidade: comunicados com ciência, mural de ações (foto, curtida e comentário), aniversariantes, quem abona hoje e chamados abertos.</td></tr>
 <tr><td>Gestão da Unidade</td><td>Ficha da unidade, planejamentos, agenda, segurança do paciente, links úteis e relatórios.</td></tr>
 <tr><td>Recursos Humanos</td><td>Faltas abonadas e cadastro público de vínculo.</td></tr>
 <tr><td>Operações</td><td>Fila de gestão de chamados e transferências de equipamentos.</td></tr>
@@ -222,13 +222,13 @@ CHAPTERS = [
     },
     {
         'name': 'Dashboard, comunicados e mural',
-        'description': 'O dia a dia da unidade: recados com ciência, mural de ações e o que aparece na tela inicial.',
+        'description': 'O dia a dia da unidade: recados com ciência, mural de ações com curtida e comentário, e o que aparece na tela inicial.',
         'pages': [
             {
                 'name': 'O dashboard da unidade',
                 'shots': [
                     ('dash', 'Dashboard da unidade: comunicados à esquerda e mural da rede à direita'),
-                    ('dash-mural-foto', 'Foto do mural ampliada no lightbox, a partir do dashboard'),
+                    ('dash-mural-foto', 'Publicação do mural aberta: foto à esquerda, data, recado, curtidas e comentários à direita'),
                 ],
                 'html': '''
 <p>Depois do login, o <strong>Dashboard</strong> mostra o dia a dia da <strong>unidade em que você está logado</strong> — não um painel genérico da rede inteira.</p>
@@ -241,7 +241,7 @@ CHAPTERS = [
 <tr><td>Abonando hoje</td><td>Colegas com falta abonada neste dia — útil para a escala.</td></tr>
 <tr><td>Comunicados da unidade</td><td>Recados oficiais. Se pedir ciência e você ainda não assinou, o cartão fica destacado e o botão <strong>Dar ciência</strong> aparece.</td></tr>
 <tr><td>Chamados abertos</td><td>Pedidos de manutenção ainda em aberto da unidade.</td></tr>
-<tr><td>Mural da rede</td><td>Ações locais (foto + recado curto) e itens da Lojinha Interna, com o status (disponível, pego, retirado).</td></tr>
+<tr><td>Mural da rede</td><td>Ações locais (foto, recado, coração de curtida e comentários) e itens da Lojinha Interna, com o status (disponível, pego, retirado).</td></tr>
 </tbody>
 </table>
 <p>No computador, as duas colunas ocupam a altura da tela: a rolagem acontece <strong>dentro</strong> de cada cartão, não na página inteira. No celular os blocos empilham.</p>
@@ -251,10 +251,10 @@ CHAPTERS = [
 <li><strong>Novo comunicado</strong> — recado para a equipe, com ou sem ciência.</li>
 <li><strong>Registrar ação</strong> — foto e texto curto para o mural.</li>
 </ul>
-<p>Clique numa miniatura do mural para ver a foto grande (dá para passar para a próxima, se houver mais de uma).</p>
+<p>Clique na <strong>foto</strong> de uma ação (ou no balão de comentário) para abrir a publicação: foto à esquerda, quem publicou, a data, o recado, o coração e os comentários à direita. Se houver mais de uma foto, as setas (ou o dedo) passam de uma para a outra. Dois cliques na foto também curtem.</p>
 {SHOT1}
 <p class="callout info"><strong>Unidade no topo:</strong> se o seletor estiver em outra casa, você vê o dashboard dela. Confira antes de dar ciência ou de publicar.</p>
-<p class="callout success"><strong>Dica:</strong> O mural completo, com filtro por unidade, tema e mês, fica em <strong>Ver tudo</strong> no cartão do mural.</p>
+<p class="callout success"><strong>Dica:</strong> O mural completo, com filtro por unidade, tema e mês, fica em <strong>Ver tudo</strong> no cartão do mural. Item da Lojinha Interna continua no feed, mas não abre essa publicação — o atalho leva para Transferências.</p>
 '''
             },
             {
@@ -302,6 +302,7 @@ CHAPTERS = [
                 'shots': [
                     ('mural', 'Mural da rede com filtros de unidade, tema e mês'),
                     ('acao-nova', 'Formulário compacto Registrar ação: tema, data, descrição e fotos'),
+                    ('mural-post', 'Publicação aberta no mural: foto, data, recado, coração e comentários'),
                 ],
                 'html': '''
 <p>O <strong>mural</strong> é o feed da rede: ações que a unidade registrou (educação em saúde, grupo, mutirão…) e também os itens anunciados na <strong>Lojinha Interna</strong>.</p>
@@ -316,15 +317,25 @@ CHAPTERS = [
 <li>Envie. A ação aparece no mural da rede e no cartão do dashboard.</li>
 </ol>
 {SHOT1}
-<p>As fotos entram em miniatura. Clique para ampliar; se houver mais de uma, as setas (ou o dedo) passam de uma para a outra.</p>
+<h2>Curtir e comentar</h2>
+<p>No feed, cada ação com foto mostra o <strong>coração</strong> (quantas pessoas curtiram) e o <strong>balão</strong> (quantos comentários). Qualquer profissional logado pode:</p>
+<ol>
+<li>Clicar no coração para curtir ou desfazer a curtida (uma por pessoa, naquela publicação).</li>
+<li>Clicar na foto (ou no balão) para abrir a publicação.</li>
+<li>À esquerda: a foto. Se houver mais de uma, use as setas, os pontinhos ou o dedo. Dois cliques na foto também curtem.</li>
+<li>À direita: quem publicou, a unidade, a <strong>data</strong> da ação, o recado, a lista de comentários e o coração.</li>
+<li>Escreva um comentário (até 280 caracteres) e clique em <strong>Publicar</strong>.</li>
+</ol>
+{SHOT2}
+<p>Dá para apagar o próprio comentário. Quem publicou a ação (e quem pode publicar no mural) também apaga comentário de outra pessoa, se precisar.</p>
+<p class="callout info"><strong>Lojinha:</strong> item anunciado na Lojinha Interna continua no feed, com o status, mas <strong>não</strong> abre essa publicação. Use <strong>Ver lojinha</strong> — o passo a passo de anunciar e pegar item está no capítulo de patrimônio.</p>
 <h2>Lojinha no mural</h2>
-<p>Item anunciado na Lojinha Interna também entra no feed, com o status:</p>
+<p>Item anunciado na Lojinha Interna entra no feed com o status:</p>
 <ul>
 <li><strong>Disponível</strong> — ainda pode ser pedido.</li>
 <li><strong>Pego</strong> — outra unidade já reservou.</li>
 <li><strong>Retirado</strong> — saiu da vitrine.</li>
 </ul>
-<p>O atalho <strong>Ver lojinha</strong> abre a aba certa em Transferências. O passo a passo de anunciar e pegar item continua no capítulo de patrimônio deste livro.</p>
 <h2>Filtros</h2>
 <p>Em <strong>Ver tudo</strong> você filtra por unidade, tema (incluindo “Lojinha Interna”) e mês.</p>
 <p class="callout info"><strong>Temas:</strong> a lista vive em <strong>Configurações → Tipos de ação (mural)</strong>. Dá para incluir tema novo ou desativar o que não se usa mais. Tema desativado some do formulário e permanece no histórico.</p>

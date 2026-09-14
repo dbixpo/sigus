@@ -61,6 +61,7 @@ Dashboard da unidade + comunicados/mural de ações:
 .\venv\Scripts\python.exe migrations\add_ciencia_auditoria.py
 .\venv\Scripts\python.exe migrations\add_lojinha_destino.py
 .\venv\Scripts\python.exe migrations\add_ciencia_cpf.py
+.\venv\Scripts\python.exe migrations\add_mural_social.py
 ```
 
 ### Já aplicados na rede (não precisa repetir, a menos que o banco seja novo)

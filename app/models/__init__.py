@@ -37,5 +37,5 @@ from app.models.nsp import (
 from app.models.identidade import IdentidadeSistema, SistemaAsset
 from app.models.noticias import (
     TipoAcao, Comunicado, ComunicadoAnexo, ComunicadoCiencia,
-    AcaoLocal, AcaoLocalFoto,
+    AcaoLocal, AcaoLocalFoto, AcaoLocalCurtida, AcaoLocalComentario,
 )

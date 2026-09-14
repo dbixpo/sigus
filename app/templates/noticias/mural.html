@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'noticias/_mural_fotos.html' import thumbs %}
+{% from 'noticias/_mural_fotos.html' import thumbs, reacts %}
 {% block title %}Mural da rede{% endblock %}
 
 {% block head %}
@@ -90,12 +90,13 @@
     <article class="mural-card" id="acao-{{ a.id }}">
         <div class="mural-tema">{{ a.tipo.nome if a.tipo else 'Ação' }}</div>
         <div class="mural-desc">{{ a.descricao }}</div>
-        {{ thumbs(a.fotos, 'acao-' ~ a.id) }}
+        {{ thumbs(a.fotos, 'acao-' ~ a.id, a.id) }}
         <div class="mural-foot">
             {{ a.unidade.nome if a.unidade else '' }}
             · {{ a.data_acao.strftime('%d/%m/%Y') if a.data_acao else '' }}
             {% if a.autor %} · {{ a.autor.nome.split()[0] }}{% endif %}
         </div>
+        {{ reacts(a.id, mural_stats.get(a.id, {})) }}
     </article>
     {% else %}
     {% set item = entry.item %}
