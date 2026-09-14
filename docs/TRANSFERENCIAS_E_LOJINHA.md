@@ -14,6 +14,8 @@ Há dois fluxos:
 1. **Termo** (empréstimo, transferência ou doação) — lote ou um item.
 2. **Solicitar** a partir da ficha do equipamento (`/transferencias/solicitar/<id>`).
 
+Em `/transferencias/novo`, administrador e gestor central escolhem **qualquer** unidade de origem e de destino (independente do seletor do topo) e veem o inventário das duas para realocar bens na atualização cadastral. Coordenador e administrativo continuam só com as unidades vinculadas. Os selects de unidade são pesquisáveis; ao escolher origem/destino o SIGUS lista os equipamentos ativos de cada uma.
+
 A unidade de **destino** aceita em `/transferencias/documento/<id>/aceitar`, escolhe a **sala** e o SIGUS realoca (ou cadastra no inventário se o item veio “manual” com patrimônio). Recusa devolve o status sem mover.
 
 Abas da lista: Pendentes de aceite | Enviadas | Concluídas | Lojinha Interna.

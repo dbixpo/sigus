@@ -291,6 +291,15 @@ def _unidades_do_usuario():
     return current_user.ids_unidades_efetivos()
 
 
+def _pode_escolher_qualquer_unidade():
+    """Administrador e gestor central realocam inventário entre qualquer par da rede."""
+    return current_user.perfil in ('administrador', 'gestor_secretaria')
+
+
+def _unidades_ativas():
+    return Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
+
+
 # ──────────────────────────────────────────────
 #  LISTAR — pendentes recebidas + histórico
 # ──────────────────────────────────────────────
@@ -645,17 +654,16 @@ def documento_novo():
     if not current_user.pode('ver_transferencias'):
         abort(403)
     ids_unidades = _unidades_do_usuario()
-    if ids_unidades is None:
-        unidades_origem = Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
+    pode_qualquer = _pode_escolher_qualquer_unidade()
+    if pode_qualquer or ids_unidades is None:
+        unidades_origem = _unidades_ativas()
     else:
         unidades_origem = Unidade.query.filter(
             Unidade.id.in_(ids_unidades),
             Unidade.status == 'ativa'
         ).order_by(Unidade.nome).all()
 
-    unidades_destino = Unidade.query.filter(
-        Unidade.status == 'ativa'
-    ).order_by(Unidade.nome).all()
+    unidades_destino = _unidades_ativas()
 
     if request.method == 'POST':
         tipo = request.form.get('tipo')  # emprestimo | transferencia
@@ -672,7 +680,7 @@ def documento_novo():
         if unidade_origem_id == unidade_destino_id:
             flash('Origem e destino não podem ser iguais.', 'danger')
             return redirect(url_for('transferencias.documento_novo'))
-        if ids_unidades is not None and unidade_origem_id not in ids_unidades:
+        if not pode_qualquer and ids_unidades is not None and unidade_origem_id not in ids_unidades:
             abort(403)
 
         # Itens: items_json ou form items
@@ -735,7 +743,8 @@ def documento_novo():
 
     return render_template('transferencias/novo.html',
                            unidades_origem=unidades_origem,
-                           unidades_destino=unidades_destino)
+                           unidades_destino=unidades_destino,
+                           pode_qualquer_unidade=pode_qualquer)
 
 
 # ──────────────────────────────────────────────
@@ -947,13 +956,18 @@ def api_equipamentos_unidade(unidade_id):
     if not current_user.pode('ver_transferencias'):
         abort(403)
     ids_unidades = _unidades_do_usuario()
-    if ids_unidades is not None and unidade_id not in ids_unidades and not current_user.pode('ver_todas_unidades'):
+    if (
+        not _pode_escolher_qualquer_unidade()
+        and ids_unidades is not None
+        and unidade_id not in ids_unidades
+        and not current_user.pode('ver_todas_unidades')
+    ):
         abort(403)
     equips = (
         db.session.query(Equipamento)
         .join(Sala, Equipamento.sala_id == Sala.id)
         .filter(Sala.unidade_id == unidade_id, Equipamento.ativo == True)
-        .order_by(Equipamento.numero_patrimonio)
+        .order_by(Sala.nome, Equipamento.numero_patrimonio)
         .all()
     )
     return jsonify([{
@@ -961,6 +975,8 @@ def api_equipamentos_unidade(unidade_id):
         'nome': e.nome_display,
         'patrimonio': e.numero_patrimonio or '',
         'serie': e.numero_serie or '',
+        'sala': e.sala.nome if e.sala else '',
+        'status': e.status_label,
     } for e in equips])
 
 

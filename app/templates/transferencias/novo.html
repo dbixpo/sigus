@@ -29,10 +29,15 @@
                     </div>
                 </div>
             </div>
+            {% if pode_qualquer_unidade %}
+            <p class="small text-muted mb-2">
+                Como administrador ou gestor central, você escolhe <strong>qualquer unidade</strong> de origem e de destino — útil para realocar o inventário.
+            </p>
+            {% endif %}
             <div class="row g-2">
                 <div class="col-md-6">
                     <label class="form-label">Unidade de origem <span class="text-danger">*</span></label>
-                    <select name="unidade_origem_id" id="unidadeOrigem" class="form-select" required>
+                    <select name="unidade_origem_id" id="unidadeOrigem" class="form-select" data-singleselect data-placeholder="— Selecione —" required>
                         <option value="">— Selecione —</option>
                         {% for u in unidades_origem %}
                         <option value="{{ u.id }}">{{ u.nome }}</option>
@@ -41,12 +46,34 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Unidade de destino <span class="text-danger">*</span></label>
-                    <select name="unidade_destino_id" id="unidadeDestino" class="form-select" required>
+                    <select name="unidade_destino_id" id="unidadeDestino" class="form-select" data-singleselect data-placeholder="— Selecione —" required>
                         <option value="">— Selecione —</option>
                         {% for u in unidades_destino %}
                         <option value="{{ u.id }}">{{ u.nome }}</option>
                         {% endfor %}
                     </select>
+                </div>
+            </div>
+            <div class="row g-2 mt-3">
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold">Equipamentos da origem</span>
+                        <span class="small text-muted" id="origemCount"></span>
+                    </div>
+                    <input type="search" id="filtroOrigem" class="form-control form-control-sm mb-1" placeholder="Filtrar por nome, patrimônio ou sala" disabled>
+                    <div id="listaOrigem" class="border rounded bg-white" style="max-height:280px;overflow:auto">
+                        <p class="small text-muted p-2 mb-0">Selecione a unidade de origem para listar o inventário.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold">Equipamentos do destino</span>
+                        <span class="small text-muted" id="destinoCount"></span>
+                    </div>
+                    <input type="search" id="filtroDestino" class="form-control form-control-sm mb-1" placeholder="Filtrar por nome, patrimônio ou sala" disabled>
+                    <div id="listaDestino" class="border rounded bg-white" style="max-height:280px;overflow:auto">
+                        <p class="small text-muted p-2 mb-0">Selecione a unidade de destino para conferir o que já está lá.</p>
+                    </div>
                 </div>
             </div>
             <div class="mt-2">
@@ -183,7 +210,21 @@
     const corpo = document.getElementById('corpoItens');
     const itemsJson = document.getElementById('itemsJson');
     const unidadeOrigem = document.getElementById('unidadeOrigem');
+    const unidadeDestino = document.getElementById('unidadeDestino');
     const selectEquipamento = document.getElementById('selectEquipamento');
+    const listaOrigem = document.getElementById('listaOrigem');
+    const listaDestino = document.getElementById('listaDestino');
+    const filtroOrigem = document.getElementById('filtroOrigem');
+    const filtroDestino = document.getElementById('filtroDestino');
+    const origemCount = document.getElementById('origemCount');
+    const destinoCount = document.getElementById('destinoCount');
+    const baseUrl = (window.SIGUS_BASE_URL || '').replace(/\/$/, '');
+    let cacheOrigem = [];
+    let cacheDestino = [];
+
+    function equipamentosUrl(uid) {
+        return baseUrl + '/transferencias/api/equipamentos-unidade/' + uid;
+    }
 
     function serializar() {
         itemsJson.value = JSON.stringify(items);
@@ -202,6 +243,7 @@
             </tr>`;
         }).join('');
         serializar();
+        if (cacheOrigem.length) pintarListaOrigem();
     }
 
     function escapeHtml(s) {
@@ -211,13 +253,135 @@
         return div.innerHTML;
     }
 
+    function jaAdicionado(id) {
+        return items.some(it => it.equipamento_id === id);
+    }
+
+    function textoBusca(e) {
+        return ((e.nome || '') + ' ' + (e.patrimonio || '') + ' ' + (e.serie || '') + ' ' + (e.sala || '')).toLowerCase();
+    }
+
+    function renderLista(alvo, dados, filtroEl, countEl, permitirAdd) {
+        const q = (filtroEl.value || '').trim().toLowerCase();
+        const filtrados = q ? dados.filter(e => textoBusca(e).includes(q)) : dados;
+        countEl.textContent = dados.length ? (filtrados.length + ' de ' + dados.length) : '';
+        if (!dados.length) {
+            alvo.innerHTML = '<p class="small text-muted p-2 mb-0">Nenhum equipamento ativo nesta unidade.</p>';
+            return;
+        }
+        if (!filtrados.length) {
+            alvo.innerHTML = '<p class="small text-muted p-2 mb-0">Nenhum item com esse filtro.</p>';
+            return;
+        }
+        alvo.innerHTML = filtrados.map(e => {
+            const ident = e.patrimonio || e.serie || '—';
+            const extra = e.sala ? (' · ' + e.sala) : '';
+            const addBtn = permitirAdd
+                ? (jaAdicionado(e.id)
+                    ? '<span class="badge bg-success">No termo</span>'
+                    : `<button type="button" class="btn btn-sm btn-outline-primary btn-add-origem" data-id="${e.id}">Adicionar</button>`)
+                : '';
+            return `<div class="d-flex justify-content-between align-items-center gap-2 px-2 py-1 border-bottom" data-id="${e.id}">
+                <div class="small" style="min-width:0">
+                    <div class="text-truncate">${escapeHtml(e.nome)}</div>
+                    <div class="text-muted">${escapeHtml(ident)}${escapeHtml(extra)}</div>
+                </div>
+                <div class="flex-shrink-0">${addBtn}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function pintarListaOrigem() {
+        renderLista(listaOrigem, cacheOrigem, filtroOrigem, origemCount, true);
+    }
+
+    function pintarListaDestino() {
+        renderLista(listaDestino, cacheDestino, filtroDestino, destinoCount, false);
+    }
+
+    function carregarInventario(uid, lado) {
+        const alvo = lado === 'origem' ? listaOrigem : listaDestino;
+        const filtro = lado === 'origem' ? filtroOrigem : filtroDestino;
+        const countEl = lado === 'origem' ? origemCount : destinoCount;
+        if (!uid) {
+            if (lado === 'origem') cacheOrigem = [];
+            else cacheDestino = [];
+            filtro.value = '';
+            filtro.disabled = true;
+            countEl.textContent = '';
+            alvo.innerHTML = '<p class="small text-muted p-2 mb-0">Selecione a unidade para listar o inventário.</p>';
+            return;
+        }
+        alvo.innerHTML = '<p class="small text-muted p-2 mb-0">Carregando inventário...</p>';
+        filtro.disabled = true;
+        fetch(equipamentosUrl(uid))
+            .then(r => {
+                if (r.status === 403) throw new Error('sem_permissao');
+                if (!r.ok) throw new Error('falha');
+                return r.json();
+            })
+            .then(data => {
+                if (lado === 'origem') cacheOrigem = data;
+                else cacheDestino = data;
+                filtro.disabled = false;
+                if (lado === 'origem') pintarListaOrigem();
+                else pintarListaDestino();
+            })
+            .catch(err => {
+                const msg = err && err.message === 'sem_permissao'
+                    ? 'Sem permissão para ver o inventário desta unidade.'
+                    : 'Não foi possível carregar o inventário.';
+                alvo.innerHTML = '<p class="small text-danger p-2 mb-0">' + msg + '</p>';
+            });
+    }
+
+    function adicionarDoInventario(eq, qtd, classificacao) {
+        if (!eq || !eq.id) return;
+        if (jaAdicionado(eq.id)) return;
+        items.push({
+            equipamento_id: eq.id,
+            quantidade: qtd || 1,
+            descricao: '',
+            classificacao: classificacao || 'A',
+            numero_patrimonio: '',
+            numero_serie: '',
+            _display: eq.nome,
+            _patrimonio: eq.patrimonio,
+            _serie: eq.serie
+        });
+        renderizar();
+    }
+
+    unidadeOrigem.addEventListener('change', function() {
+        items.length = 0;
+        cacheOrigem = [];
+        corpo.innerHTML = '';
+        serializar();
+        carregarInventario(unidadeOrigem.value, 'origem');
+    });
+    unidadeDestino.addEventListener('change', function() {
+        carregarInventario(unidadeDestino.value, 'destino');
+    });
+    filtroOrigem.addEventListener('input', pintarListaOrigem);
+    filtroDestino.addEventListener('input', pintarListaDestino);
+
+    listaOrigem.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-add-origem');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.id, 10);
+        const eq = cacheOrigem.find(x => x.id === id);
+        adicionarDoInventario(eq, 1, 'A');
+    });
+
     document.getElementById('btnAddInventario').addEventListener('click', function() {
         const uid = unidadeOrigem.value;
         if (!uid) { alert('Selecione a unidade de origem primeiro.'); return; }
         selectEquipamento.innerHTML = '<option value="">Carregando...</option>';
-        fetch(`/transferencias/api/equipamentos-unidade/${uid}`)
+        fetch(equipamentosUrl(uid))
             .then(r => r.json())
             .then(data => {
+                cacheOrigem = data;
+                pintarListaOrigem();
                 selectEquipamento.innerHTML = '<option value="">— Selecione —</option>' +
                     data.map(e => `<option value="${e.id}" data-nome="${escapeHtml(e.nome)}" data-pat="${escapeHtml(e.patrimonio)}" data-serie="${escapeHtml(e.serie)}">${escapeHtml(e.nome)} ${e.patrimonio ? '· ' + e.patrimonio : ''}</option>`).join('');
                 document.getElementById('invQtd').value = 1;
@@ -228,20 +392,17 @@
     document.getElementById('btnConfirmInventario').addEventListener('click', function() {
         const opt = selectEquipamento.options[selectEquipamento.selectedIndex];
         if (!opt || !opt.value) { alert('Selecione um equipamento.'); return; }
+        const id = parseInt(opt.value, 10);
+        if (jaAdicionado(id)) { alert('Este equipamento já está no termo.'); return; }
         const qtd = parseInt(document.getElementById('invQtd').value) || 1;
         const cl = document.getElementById('invClass').value;
-        items.push({
-            equipamento_id: parseInt(opt.value),
-            quantidade: qtd,
-            descricao: '',
-            classificacao: cl,
-            numero_patrimonio: '',
-            numero_serie: '',
-            _display: opt.dataset.nome,
-            _patrimonio: opt.dataset.pat,
-            _serie: opt.dataset.serie
-        });
-        renderizar();
+        const eq = cacheOrigem.find(x => x.id === id) || {
+            id: id,
+            nome: opt.dataset.nome,
+            patrimonio: opt.dataset.pat,
+            serie: opt.dataset.serie
+        };
+        adicionarDoInventario(eq, qtd, cl);
         bootstrap.Modal.getInstance(document.getElementById('modalInventario')).hide();
     });
 
