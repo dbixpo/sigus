@@ -30,7 +30,7 @@ Em **Configurações → Gestão de Perfis** cada perfil ganha Ver / Editar / Ad
 
 ## Vínculo com unidade
 
-Perfis da ponta **exigem** pelo menos uma unidade ativa. Sem vínculo, o sistema manda para a tela de “sem vínculo”. Administrador / gestor central circulam na rede, mas **ações no nome de uma unidade** (aceite de termo, finalizar Lojinha, abrir NSP) usam o seletor do topo (`unidade_padrao_id`). Exceção: no termo novo (`/transferencias/novo`) esses dois perfis escolhem qualquer origem e qualquer destino, para realocar inventário entre unidades.
+Perfis da ponta **exigem** pelo menos uma unidade ativa. Sem vínculo, o sistema manda para a tela de “sem vínculo”. Administrador / gestor central circulam na rede, mas **ações no nome de uma unidade** (finalizar Lojinha, abrir NSP) usam o seletor do topo (`unidade_padrao_id`). Exceção: no termo de transferência (`/transferencias/novo` e o aceite) esses dois perfis operam qualquer origem/destino, para realocar inventário entre unidades.
 
 `Usuario.ids_unidades_efetivos()`:
 

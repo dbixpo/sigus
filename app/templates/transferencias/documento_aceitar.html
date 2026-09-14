@@ -70,13 +70,18 @@
                         <label class="form-label fw-semibold">
                             Alocar em qual sala? <span class="text-danger">*</span>
                         </label>
-                        <select name="sala_destino_id" class="form-select" required>
+                        <select name="sala_destino_id" class="form-select" data-singleselect data-placeholder="— Selecione a sala —" required>
                             <option value="">— Selecione a sala —</option>
                             {% for s in salas_destino %}
                             <option value="{{ s.id }}">{{ s.nome }}</option>
                             {% endfor %}
                         </select>
-                        <div class="form-text">Os equipamentos serão movidos para esta sala.</div>
+                        <div class="form-text">
+                            Os equipamentos serão movidos para esta sala em <strong>{{ doc.unidade_destino.nome }}</strong>.
+                            {% if pode_qualquer_unidade %}
+                            Administrador e gestor central podem aceitar sem trocar a unidade do topo.
+                            {% endif %}
+                        </div>
                     </div>
 
                     <div class="mb-3">

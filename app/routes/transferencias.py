@@ -296,6 +296,18 @@ def _pode_escolher_qualquer_unidade():
     return current_user.perfil in ('administrador', 'gestor_secretaria')
 
 
+def _pode_resolver_aceite(unidade_destino_id):
+    """Quem pode aceitar/recusar o termo na unidade destino."""
+    if current_user.perfil not in ('administrador', 'gestor_secretaria', 'coordenador', 'administrativo'):
+        return False
+    if not current_user.pode('aceitar_transferencia'):
+        return False
+    if _pode_escolher_qualquer_unidade():
+        return True
+    ids = _unidades_do_usuario()
+    return bool(ids) and unidade_destino_id in ids
+
+
 def _unidades_ativas():
     return Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
 
@@ -316,9 +328,16 @@ def listar():
     if aba not in ('pendentes', 'enviadas', 'concluidas', 'lojinha'):
         aba = 'pendentes'
 
-    # Filtro de unidade (admin/gestor central podem escolher)
+    # Filtro de unidade (admin/gestor central veem a rede; o dropdown ainda recorta)
+    pode_qualquer = _pode_escolher_qualquer_unidade()
     unidade_filtro = None
-    if current_user.pode('ver_todas_unidades') and unidade_id:
+    if pode_qualquer:
+        if unidade_id:
+            unidade_filtro = Unidade.query.get(unidade_id)
+            ids_filtro = [unidade_id] if unidade_filtro else None
+        else:
+            ids_filtro = None
+    elif current_user.pode('ver_todas_unidades') and unidade_id:
         unidade_filtro = Unidade.query.get(unidade_id)
         if unidade_filtro:
             ids_filtro = [unidade_id]
@@ -393,7 +412,8 @@ def listar():
                            lojinha_itens=lojinha_itens, lojinha_por_unidade=lojinha_por_unidade,
                            aba=aba, unidade_id=unidade_id, unidade_filtro=unidade_filtro, unidades=unidades,
                            unidades_lojinha=unidades_lojinha, lojinha_classificacao=lojinha_classificacao,
-                           status_concluida=status_concluida, ids_unidades_user=ids_unidades_user)
+                           status_concluida=status_concluida, ids_unidades_user=ids_unidades_user,
+                           pode_qualquer_unidade=pode_qualquer)
 
 
 # ──────────────────────────────────────────────
@@ -738,6 +758,12 @@ def documento_novo():
                 )
 
         db.session.commit()
+        if pode_qualquer:
+            flash(
+                f'Termo de {doc.tipo_label.lower()} criado. Confirme o aceite e a sala na unidade destino.',
+                'success'
+            )
+            return redirect(url_for('transferencias.documento_aceitar', id=doc.id))
         flash(f'Termo de {doc.tipo_label.lower()} criado! Aguardando aceite da unidade destino.', 'success')
         return redirect(url_for('transferencias.listar', aba='enviadas'))
 
@@ -758,13 +784,14 @@ def documento_aceitar(id):
         flash('Este documento já foi resolvido.', 'warning')
         return redirect(url_for('transferencias.listar'))
 
-    ids_unidades = _unidades_do_usuario()
-    if ids_unidades is None:
-        flash('Selecione uma unidade na barra superior para aceitar em nome dela.', 'warning')
-        return redirect(url_for('transferencias.listar', aba='pendentes'))
-    if doc.unidade_destino_id not in ids_unidades:
-        abort(403)
-    if current_user.perfil not in ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo']:
+    if not _pode_resolver_aceite(doc.unidade_destino_id):
+        if (
+            current_user.perfil in ('administrador', 'gestor_secretaria', 'coordenador', 'administrativo')
+            and not _pode_escolher_qualquer_unidade()
+            and _unidades_do_usuario() is None
+        ):
+            flash('Selecione uma unidade na barra superior para aceitar em nome dela.', 'warning')
+            return redirect(url_for('transferencias.listar', aba='pendentes'))
         abort(403)
 
     salas_destino = Sala.query.filter_by(
@@ -832,7 +859,8 @@ def documento_aceitar(id):
         return redirect(url_for('transferencias.listar'))
 
     return render_template('transferencias/documento_aceitar.html',
-                           doc=doc, salas_destino=salas_destino)
+                           doc=doc, salas_destino=salas_destino,
+                           pode_qualquer_unidade=_pode_escolher_qualquer_unidade())
 
 
 # ──────────────────────────────────────────────
@@ -877,10 +905,7 @@ def aceitar(id):
     if transf.status != 'pendente':
         flash('Esta transferência já foi resolvida.', 'warning')
         return redirect(url_for('transferencias.listar'))
-    ids_unidades = _unidades_do_usuario()
-    if ids_unidades is not None and transf.unidade_destino_id not in ids_unidades:
-        abort(403)
-    if current_user.perfil not in ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo']:
+    if not _pode_resolver_aceite(transf.unidade_destino_id):
         abort(403)
     salas_destino = Sala.query.filter_by(unidade_id=transf.unidade_destino_id, ativo=True).order_by(Sala.nome).all()
     if request.method == 'POST':

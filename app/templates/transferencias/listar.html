@@ -105,7 +105,7 @@
                         <td class="small">{{ doc.itens.count() }} item(ns)</td>
                         <td class="small text-muted">{{ doc.criado_em | br_date }}</td>
                         <td class="text-end">
-                            {% if current_user.pode('aceitar_transferencia') and ids_unidades_user and doc.unidade_destino_id in ids_unidades_user %}
+                            {% if current_user.pode('aceitar_transferencia') and (pode_qualquer_unidade or (ids_unidades_user and doc.unidade_destino_id in ids_unidades_user)) %}
                             <a href="{{ url_for('transferencias.documento_aceitar', id=doc.id) }}"
                                class="btn btn-sm btn-success">
                                 <i class="fas fa-check-circle me-1"></i>Resolver
@@ -168,6 +168,12 @@
                         <td class="small">{{ doc.itens.count() }} item(ns)</td>
                         <td class="small text-muted">{{ doc.criado_em | br_date }}</td>
                         <td class="text-end">
+                            {% if current_user.pode('aceitar_transferencia') and (pode_qualquer_unidade or (ids_unidades_user and doc.unidade_destino_id in ids_unidades_user)) %}
+                            <a href="{{ url_for('transferencias.documento_aceitar', id=doc.id) }}"
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-check-circle me-1"></i>Resolver
+                            </a>
+                            {% endif %}
                             {% if doc.criador and doc.criador.id == current_user.id or current_user.pode('ver_todas_unidades') %}
                             <form method="POST" action="{{ url_for('transferencias.documento_cancelar', id=doc.id) }}" class="d-inline" id="form-cancelar-{{ doc.id }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
