@@ -218,12 +218,12 @@
     const filtroDestino = document.getElementById('filtroDestino');
     const origemCount = document.getElementById('origemCount');
     const destinoCount = document.getElementById('destinoCount');
-    const baseUrl = (window.SIGUS_BASE_URL || '').replace(/\/$/, '');
+    const apiEquipamentosTpl = {{ url_for('transferencias.api_equipamentos_unidade', unidade_id=0) | tojson }};
     let cacheOrigem = [];
     let cacheDestino = [];
 
     function equipamentosUrl(uid) {
-        return baseUrl + '/transferencias/api/equipamentos-unidade/' + uid;
+        return apiEquipamentosTpl.replace(/\/0$/, '/' + encodeURIComponent(uid));
     }
 
     function serializar() {

@@ -117,6 +117,8 @@
     const itemsJson = document.getElementById('itemsJson');
     const unidadeOrigem = document.getElementById('unidadeOrigem');
     const selectEquipamento = document.getElementById('selectEquipamento');
+    const apiEquipamentosTpl = {{ url_for('transferencias.api_equipamentos_unidade', unidade_id=0) | tojson }};
+    function equipamentosUrl(uid) { return apiEquipamentosTpl.replace(/\/0$/, '/' + encodeURIComponent(uid)); }
     function serializar() { itemsJson.value = JSON.stringify(items); }
     function escapeHtml(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function renderizar() {
@@ -131,7 +133,7 @@
         const uid = unidadeOrigem.value;
         if (!uid) { alert('Selecione a unidade primeiro.'); return; }
         selectEquipamento.innerHTML = '<option value="">Carregando...</option>';
-        fetch(`/transferencias/api/equipamentos-unidade/${uid}`)
+        fetch(equipamentosUrl(uid))
             .then(r => r.json())
             .then(data => {
                 selectEquipamento.innerHTML = '<option value="">— Selecione —</option>' + data.map(e => `<option value="${e.id}" data-nome="${escapeHtml(e.nome)}" data-pat="${escapeHtml(e.patrimonio)}" data-serie="${escapeHtml(e.serie)}">${escapeHtml(e.nome)} ${e.patrimonio ? '· ' + e.patrimonio : ''}</option>`).join('');
