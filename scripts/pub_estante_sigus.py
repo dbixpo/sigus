@@ -109,9 +109,11 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'O que é o SIGUS',
+                'shots': [('dash', 'Dashboard do SIGUS depois do login, com os cartões da rede')],
                 'html': f'''
 <p>O <strong>SIGUS</strong> (Sistema Integrado de Gestão das Unidades de Saúde) é o sistema da Saúde Digital para organizar o dia a dia das unidades da rede municipal de Sorocaba: o prédio, as salas, os equipamentos, os chamados de manutenção, os planejamentos, a agenda, as pessoas e a segurança do paciente.</p>
 <p>Pense nele como a “gestão da casa”. O atendimento clínico do cidadão continua no <strong>SISWEB</strong>. O SIGUS cuida do que faz a unidade funcionar.</p>
+{{SHOT0}}
 <h2>O que você encontra no sistema</h2>
 <table>
 <thead><tr><th>Área do menu</th><th>Para que serve</th></tr></thead>
@@ -143,6 +145,7 @@ CHAPTERS = [
             },
             {
                 'name': 'Como entrar no sistema',
+                'shots': [('login', 'Tela de login do SIGUS com e-mail, senha, Lembrar-me e Entrar')],
                 'html': f'''
 <p>Neste capítulo você aprende a abrir o SIGUS, informar o e-mail, a senha e conferir se está na unidade certa.</p>
 <h2>Passo a passo do login</h2>
@@ -153,6 +156,7 @@ CHAPTERS = [
 <li>Se estiver no seu computador de trabalho, pode marcar <strong>Lembrar-me</strong>.</li>
 <li>Clique em <strong>Entrar</strong>.</li>
 </ol>
+{{SHOT0}}
 {c('info', 'Campos com *:', 'No SIGUS, o que é obrigatório vem marcado com asterisco. O sistema não deixa seguir se faltar dado essencial.')}
 <h2>Não consegui entrar</h2>
 <ul>
@@ -170,6 +174,7 @@ CHAPTERS = [
             {
                 'name': 'Unidade de trabalho, perfil e senha',
                 'shots': [
+                    ('dash-unidade', 'Seletor de unidade de trabalho no topo, aberto sobre o dashboard'),
                     ('usr-perfil-sis', 'Cartão Cadastro no SIS no final da tela Meu Perfil, com o botão de verificar'),
                     ('usr-perfil-sis-resultado', 'Exemplo de consulta concluída: pessoa, profissional e CNS (dados ilustrativos)'),
                 ],
@@ -188,6 +193,7 @@ CHAPTERS = [
 <li>Escolha a unidade do plantão ou do expediente de hoje.</li>
 <li>Confirme. O sistema grava essa escolha como unidade padrão.</li>
 </ol>
+{{SHOT0}}
 <p class="callout warning"><strong>IMPORTANTE:</strong> Administrador e gestor central enxergam a rede. Mesmo assim, ao registrar algo “da unidade”, confira o seletor — o registro nasce na unidade escolhida, não “na Secretaria inteira”.</p>
 <h2>Meu perfil</h2>
 <p>No canto superior direito, abra o seu nome e clique em <strong>Meu Perfil</strong>. Lá você:</p>
@@ -199,9 +205,9 @@ CHAPTERS = [
 </ul>
 <h3>Verificar dados de cadastro no SIS</h3>
 <p>Role a tela de perfil até o cartão <strong>Cadastro no SIS</strong>, no final da página. Se o seu usuário no SIGUS já tem CPF, o botão <strong>Verificar dados de cadastro no SIS</strong> aparece. Clique e espere alguns segundos.</p>
-{{SHOT0}}
-<p>O sistema busca pessoa, operador, profissional, CADSUS, CNES e o cadastro de usuário do SIS. O resultado aparece em cartões, campo a campo. Nada disso grava de volta no SIGUS nem no SIS — é só para você conferir.</p>
 {{SHOT1}}
+<p>O sistema busca pessoa, operador, profissional, CADSUS, CNES e o cadastro de usuário do SIS. O resultado aparece em cartões, campo a campo. Nada disso grava de volta no SIGUS nem no SIS — é só para você conferir.</p>
+{{SHOT2}}
 {c('info', 'Só consulta:', 'Essa tela não altera o SIS e não trava nenhum campo do SIGUS. Se telefone, e-mail, conselho ou perfil no SIS estiver errado, abra um chamado para a coordenação ou a TI atualizar lá.')}
 {c('warning', 'ATENÇÃO:', 'Sem CPF no cadastro do SIGUS a consulta não abre. Peça à coordenação para completar o seu usuário ou abra um chamado.')}
 <h2>Sino de notificações</h2>
@@ -219,6 +225,11 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'Como abrir a ficha da unidade',
+                'shots': [
+                    ('un-ficha', 'Ficha da unidade com as abas (Chamados, Segurança do Paciente, Equipamentos, Salas…)'),
+                    ('un-ficha-chamados', 'Aba Chamados da ficha da unidade'),
+                    ('un-ficha-info', 'Aba Informações da ficha da unidade'),
+                ],
                 'html': '''
 <p>A ficha da unidade é a “capa” do serviço no SIGUS. Quase tudo que é da casa passa por ela.</p>
 <h2>Como chegar</h2>
@@ -227,6 +238,7 @@ CHAPTERS = [
 <li>No menu <strong>Gestão da Unidade</strong>, clique no nome da unidade (ou em <strong>Unidades</strong>, se você vê a lista da rede).</li>
 <li>A ficha abre com várias abas.</li>
 </ol>
+{SHOT0}
 <h2>O que tem em cada aba</h2>
 <table>
 <thead><tr><th>Aba</th><th>O que você faz</th></tr></thead>
@@ -241,14 +253,21 @@ CHAPTERS = [
 <tr><td>Informações</td><td>Endereço, telefone, tipo de unidade e dados cadastrais.</td></tr>
 </tbody>
 </table>
+{SHOT1}
 <p class="callout info"><strong>Dica:</strong> Equipamento sem sala certa vira chamado e transferência confusos. Mantenha a aba de salas e a de equipamentos alinhadas com o que existe de verdade no prédio.</p>
 <h2>Impressos do SIGUS</h2>
 <p>Várias telas têm o botão <strong>Imprimir</strong>. No SIGUS o padrão é abrir um <strong>quadro (modal)</strong> com a pré-visualização do documento institucional (logo da Prefeitura, Secretaria da Saúde, campos e espaço para assinatura). De lá você escolhe <strong>Imprimir / Salvar PDF</strong>.</p>
+{SHOT2}
 <p class="callout success"><strong>Vale para:</strong> chamado, segurança do paciente, falta abonada, termo de transferência, planejamento e contrato — o visual é o mesmo padrão da casa.</p>
 '''
             },
             {
                 'name': 'Como abrir e acompanhar um chamado',
+                'shots': [
+                    ('ch-escolha', 'Tela Novo Chamado: escolha entre bem permanente, solicitação de equipamento ou predial'),
+                    ('ch-predial', 'Formulário de chamado predial'),
+                    ('ch-lista', 'Lista de chamados da unidade'),
+                ],
                 'html': '''
 <p>Chamado no SIGUS é pedido de manutenção ou de equipamento da unidade — não é notificação de incidente clínico (isso é Segurança do Paciente) e não é atendimento do cidadão (isso é SISWEB).</p>
 <h2>Quando abrir</h2>
@@ -267,13 +286,16 @@ CHAPTERS = [
 <li><strong>Predial</strong> — problema do prédio / infraestrutura.</li>
 </ul>
 </li>
+{SHOT0}
 <li>Preencha a descrição com o máximo de detalhe útil (o que acontece, desde quando, o que já tentaram).</li>
 <li>Anexe foto ou vídeo, se ajudar o técnico (há limite de tamanho por arquivo).</li>
 <li>Envie. O sistema gera um <strong>número de chamado</strong>.</li>
 </ol>
+{SHOT1}
 <p class="callout warning"><strong>ATENÇÃO:</strong> Se o chamado é de um bem permanente, escolha o equipamento certo na lista. Chamado “solto”, sem patrimônio, atrasa o atendimento e confunde a transferência depois.</p>
 <h2>Acompanhar</h2>
 <p>Na mesma aba você vê status, prioridade e última atualização. Abrindo o chamado, há a linha do tempo (andamentos) e o botão de impressão no padrão SIGUS.</p>
+{SHOT2}
 <p>Quem trabalha no setor de manutenção usa a tela <strong>Operações → Gestão de Chamados</strong> (fila da unidade que recebe o serviço), não só a aba da unidade solicitante.</p>
 <p class="callout info"><strong>Dica:</strong> O impresso do chamado traz identificação da unidade, local ou equipamento, descrição e histórico. Use-o quando precisar protocolar no físico ou enviar a um prestador.</p>
 '''
@@ -286,9 +308,11 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'O que é a Segurança do Paciente no SIGUS',
+                'shots': [('nsp-lista', 'Lista da Segurança do Paciente com totais, filtros, Nova notificação e consultar protocolo')],
                 'html': '''
 <p>O módulo <strong>Segurança do Paciente</strong> é o registro interno do <strong>Núcleo de Segurança do Paciente (NSP)</strong> da unidade. Serve para aprender com o que aconteceu e melhorar o cuidado — não para punir pessoas.</p>
 <p>Base: RDC 36/2013, classificação da OMS (ICPS) e orientações da Anvisa. O SIGUS <strong>não envia nada para o Notivisa</strong>. Se a unidade notificar a Anvisa, você só anota o número e a data no registro.</p>
+{SHOT0}
 <h2>O que deve ser notificado</h2>
 <ul>
 <li>Circunstância de risco (algo inseguro, mesmo sem erro).</li>
@@ -305,8 +329,13 @@ CHAPTERS = [
             },
             {
                 'name': 'Como abrir uma notificação',
+                'shots': [
+                    ('nsp-nova', 'Formulário Nova notificação: notificante e pessoa afetada'),
+                    ('nsp-nova-sis', 'Busca do paciente no SIS por CPF, CNS ou prontuário, com a opção de preencher na mão'),
+                ],
                 'html': '''
 <p>Menu <strong>Gestão da Unidade → Segurança do Paciente → Nova notificação</strong> (ou o botão na aba da ficha da unidade).</p>
+{SHOT0}
 <h2>1. Quem notifica e onde aconteceu</h2>
 <p>Confira a unidade. Informe o nome de quem está notificando, o tipo de setor (administrativo ou assistencial) e o setor. Se a lista não tiver o setor, use <strong>Outro</strong> e descreva.</p>
 <h2>2. Pessoa afetada</h2>
@@ -317,6 +346,7 @@ CHAPTERS = [
 <li>Digite só aquele dado e clique em <strong>Buscar no SIS</strong>. O sistema consulta o cadastro e preenche nome, nascimento, prontuário, CPF e CNS.</li>
 <li>Se o SIS não encontrar (ou a consulta falhar), clique em <strong>Não achei / preencher na mão</strong> e registre mesmo assim. O identificador que você digitou já entra no campo correspondente.</li>
 </ol>
+{SHOT1}
 <p class="callout warning"><strong>ATENÇÃO:</strong> A busca usa exatamente o critério que você marcou. Não adivinha pelo tamanho do número. CPF tem 11 dígitos; CNS, 15.</p>
 <p class="callout success"><strong>Dica:</strong> Sempre confira o nome que voltou do SIS antes de enviar. Dado importado não significa dado conferido.</p>
 <h2>3. Ocorrência</h2>
@@ -334,8 +364,10 @@ CHAPTERS = [
             },
             {
                 'name': 'Acompanhar, investigar, encaminhar e imprimir',
+                'shots': [('nsp-detalhe', 'Ficha da notificação: registro, investigação, status, encaminhar e imprimir')],
                 'html': '''
 <p>Abra a notificação pelo protocolo na lista, pela consulta de protocolo ou pela aba da unidade.</p>
+{SHOT0}
 <h2>Status</h2>
 <p>Quem edita pode mudar: aberto, em análise, encaminhado, plano de ação, concluído, arquivado. Encerrar sem investigação, nos casos graves, o sistema bloqueia.</p>
 <h2>Investigação (etapas 5 a 10 da Anvisa)</h2>
@@ -367,8 +399,10 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'Planejamentos da unidade',
+                'shots': [('plan', 'Tela Planejamentos e Projetos da unidade')],
                 'html': '''
 <p>O módulo de <strong>Planejamentos</strong> organiza projetos e ações da unidade em formato de quadro (colunas de status), com priorização.</p>
+{SHOT0}
 <h2>Para que serve</h2>
 <p>Combinar o que a equipe vai fazer, quem é responsável, até quando, e acompanhar o andamento sem perder o combinado em planilha solta.</p>
 <ol>
@@ -383,6 +417,7 @@ CHAPTERS = [
             },
             {
                 'name': 'Agenda da unidade',
+                'shots': [('agenda', 'Agenda da unidade com calendário, Novo evento e Nova reunião')],
                 'html': '''
 <p>A <strong>Agenda</strong> junta, no mesmo calendário:</p>
 <ul>
@@ -391,6 +426,7 @@ CHAPTERS = [
 <li>prazos de planejamentos;</li>
 <li>feriados cadastrados pela administração (com expediente especial, se houver).</li>
 </ul>
+{SHOT0}
 <h2>Como usar</h2>
 <ol>
 <li>Menu <strong>Gestão da Unidade → Agenda</strong>.</li>
@@ -410,8 +446,10 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'Gestão de chamados',
+                'shots': [('ch-gestao', 'Fila Gestão de Chamados com totais por status')],
                 'html': '''
 <p>A tela <strong>Operações → Gestão de Chamados</strong> é a fila de quem <strong>executa</strong> o serviço (manutenção da unidade que trata aquele tipo de chamado), não a lista de quem só abriu o pedido.</p>
+{SHOT0}
 <h2>O que você vê</h2>
 <ul>
 <li>Totais por status.</li>
@@ -424,15 +462,17 @@ CHAPTERS = [
             },
             {
                 'name': 'Transferência de equipamentos',
+                'shots': [('tr-lista', 'Tela Transferências de Equipamentos, com as abas e o botão Novo Termo')],
                 'html': '''
 <p>Quando um bem permanente precisa mudar de unidade (ou de local), use <strong>Operações → Transferências</strong>. Não “apague” o equipamento de uma lista e cadastre de novo na outra: o histórico patrimonial se perde.</p>
+{SHOT0}
 <ol>
 <li>Localize o equipamento na ficha da unidade de origem.</li>
 <li>Solicite a transferência, informando o destino e o motivo.</li>
 <li>A unidade de destino <strong>aceita</strong> (ou recusa) o termo.</li>
 <li>Imprima o termo de transferência pelo modal padrão do SIGUS e colete as assinaturas.</li>
 </ol>
-<p class="callout info"><strong>Dica:</strong> Conferir número de patrimônio e sala antes de enviar evita aceite de item errado.</p>
+<p class="callout info"><strong>Dica:</strong> Conferir número de patrimônio e sala antes de enviar evita aceite de item errado. O passo a passo tela a tela (pendentes, lojinha, aceitar termo) está no capítulo <strong>Patrimônio: salas, equipamentos, transferências e lojinha</strong> deste mesmo livro.</p>
 '''
             },
         ],
@@ -443,23 +483,32 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'Faltas abonadas',
+                'shots': [
+                    ('faltas', 'Tela Faltas Abonadas com o botão Nova Falta Abonada'),
+                    ('faltas-modal', 'Modal para registrar uma nova falta abonada'),
+                ],
                 'html': '''
 <p>Servidores estatutários têm direito a <strong>6 faltas abonadas no ano</strong>, no máximo <strong>1 por mês</strong>. O SIGUS controla esse limite para o seu usuário.</p>
+{SHOT0}
 <h2>Como registrar</h2>
 <ol>
 <li>Menu <strong>Recursos Humanos → Faltas Abonadas</strong>.</li>
+<li>Clique em <strong>Nova Falta Abonada</strong>.</li>
 <li>Escolha a data (o calendário já bloqueia mês em que você já usou abonada ativa).</li>
 <li>Informe função e unidade, se o sistema pedir.</li>
 <li>Salve e imprima o documento pelo modal (padrão institucional, para a chefia).</li>
 </ol>
+{SHOT1}
 <p class="callout warning"><strong>ATENÇÃO:</strong> A abonada deve ser combinada com a chefia com antecedência (regra da casa: em geral 2 dias úteis). O SIGUS registra o pedido; a autorização da escala continua sendo da chefia. Cargo de confiança segue a legislação específica — nem todo mundo acumula abonada para pagamento.</p>
 <p>Abonadas canceladas não contam no limite do ano e aparecem no histórico. Quem gerencia usuários pode ver a ficha de outra pessoa; o operador padrão vê a própria.</p>
 '''
             },
             {
                 'name': 'Cadastro público e vínculo na unidade',
+                'shots': [('vinculo', 'Formulário público de solicitação de vínculo profissional, sem precisar estar logado')],
                 'html': '''
 <p>Profissional que ainda não tem usuário no SIGUS pode pedir vínculo pelo formulário público (<strong>solicitar vínculo profissional</strong>). Não precisa estar logado.</p>
+{SHOT0}
 <h2>Quem pede</h2>
 <ol>
 <li>Abre o link divulgado pela unidade.</li>
@@ -485,16 +534,20 @@ CHAPTERS = [
         'pages': [
             {
                 'name': 'Relatórios e exportação',
+                'shots': [('relatorios', 'Tela Relatórios e Inventários com os cartões de cada relatório')],
                 'html': '''
 <p>Menu <strong>Gestão da Unidade → Relatórios</strong>. A tela inicial é um conjunto de cartões. Cada relatório traz filtro (unidade, período, status, conforme o tema) e exportação em Excel ou CSV.</p>
+{SHOT0}
 <p>Exemplos: inventário, salas, profissionais, contratos, empenhos, aniversariantes, faltas abonadas, <strong>segurança do paciente</strong>, mapa da saúde.</p>
 <p class="callout info"><strong>Permissão:</strong> quem não vê todas as unidades só exporta o que pode ver. Isso é regra de segurança, não filtro “quebrado”.</p>
 '''
             },
             {
                 'name': 'Contratos, empenho e empresas',
+                'shots': [('contratos', 'Lista de Contratos em Gestão Financeira')],
                 'html': '''
 <p>Essas telas ficam em <strong>Gestão Financeira</strong> e só aparecem para quem tem permissão.</p>
+{SHOT0}
 <ul>
 <li><strong>Contratos</strong> — vigência, identificador, mandado judicial quando houver. Há resumo para impressão.</li>
 <li><strong>Controle de empenho</strong> — fontes e empenhos ligados ao contrato.</li>
@@ -506,13 +559,21 @@ CHAPTERS = [
             },
             {
                 'name': 'Configurações, perfis e auditoria',
+                'shots': [
+                    ('cfg', 'Tela Configurações do Sistema, com os cartões (feriados, unidades, perfis…)'),
+                    ('cfg-perfis', 'Gestão de Perfis: Ver / Editar / Adicionar por seção'),
+                    ('cfg-nsp', 'Listas da Segurança do Paciente usadas nos selects da notificação'),
+                ],
                 'html': '''
 <p>Área sensível. Em geral é da Saúde Digital / administração do sistema, com apoio da coordenação.</p>
+{SHOT0}
 <h2>Gestão de perfis</h2>
 <p>Em <strong>Configurações → Gestão de Perfis</strong> cada perfil ganha Ver / Editar / Adicionar por seção. Mudar aqui altera o menu de todo mundo daquele perfil.</p>
+{SHOT1}
 <p class="callout warning"><strong>ATENÇÃO:</strong> Não “teste” permissão em produção no perfil de toda a rede. Ajuste com cuidado e comunique a coordenação.</p>
 <h2>Listas da Segurança do Paciente</h2>
 <p>Os selects da notificação (status, classificação, tipo de incidente, setor, destino…) não estão fixos no código. Inclua, desative ou marque “pede texto Outro” e “jamais deveria ocorrer” em <strong>Configurações → Segurança do Paciente</strong>. Item desativado some dos formulários novos e permanece no histórico antigo.</p>
+{SHOT2}
 <h2>Feriados, usuários, links úteis</h2>
 <p>Feriados alimentam a agenda. Links úteis: atalhos que a equipe vê no menu da unidade.</p>
 <p>O cadastro de usuários (alta, importação do SIS, matrícula e conselho de classe) está no passo a passo <strong>Cadastro de usuários no SIGUS</strong>, neste mesmo capítulo — é a rotina de quem administra o sistema.</p>
