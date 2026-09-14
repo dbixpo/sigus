@@ -6,6 +6,7 @@ import mimetypes
 from datetime import datetime, timedelta, date, timezone
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify, send_file
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload, selectinload, noload
 
 from app import db
 from app.utils import agora_local
@@ -14,6 +15,9 @@ from app.models.planejamento import (
     PlanejamentoAnexo, STATUS_ACAO, STATUS_ACAO_LABELS,
     planejamento_unidades, planejamento_tipos_unidade,
 )
+
+# Evita reprocessar alertas de prazo em todo GET da listagem (1x/dia por worker).
+_ALERTAS_PRAZO_DIA = {'data': None}
 
 planejamentos_bp = Blueprint('planejamentos', __name__, url_prefix='/planejamentos')
 
@@ -156,36 +160,165 @@ def _usuarios_unidade(unidade_id):
     return sorted(usuarios, key=lambda u: (u.nome or '').lower())
 
 
-def _usuarios_planejamento(planejamento):
-    """Usuários de todas as unidades vinculadas ao planejamento (unidades específicas + tipos de unidades)."""
-    from app.models.unidade import Unidade, UsuarioUnidade
-    usuarios_ids = set()
-    
-    # Usuários das unidades específicas vinculadas
-    for unidade in planejamento.unidades.all():
-        vincs = UsuarioUnidade.query.filter_by(unidade_id=unidade.id, ativo=True).all()
-        for v in vincs:
-            if v.usuario_id:
-                usuarios_ids.add(v.usuario_id)
-    
-    # Usuários das unidades do tipo selecionado
-    for tipo_unidade in planejamento.tipos_unidade.all():
-        unidades_tipo = Unidade.query.filter_by(tipo_unidade_id=tipo_unidade.id, status='ativa').all()
-        for unidade in unidades_tipo:
-            vincs = UsuarioUnidade.query.filter_by(unidade_id=unidade.id, ativo=True).all()
-            for v in vincs:
-                if v.usuario_id:
-                    usuarios_ids.add(v.usuario_id)
-    
-    # Também inclui usuários da unidade principal (para compatibilidade)
-    vincs = UsuarioUnidade.query.filter_by(unidade_id=planejamento.unidade_id, ativo=True).all()
-    for v in vincs:
-        if v.usuario_id:
-            usuarios_ids.add(v.usuario_id)
-    
+def _mapa_unidades_planejamentos(planejamentos):
+    """plano_id -> set(unidade_id) sem N+1."""
+    from app.models.unidade import Unidade
+    mapa = {p.id: {p.unidade_id} for p in planejamentos}
+    pids = list(mapa)
+    if not pids:
+        return mapa
+
+    for pid, uid in db.session.query(
+        planejamento_unidades.c.planejamento_id,
+        planejamento_unidades.c.unidade_id,
+    ).filter(planejamento_unidades.c.planejamento_id.in_(pids)):
+        mapa.setdefault(pid, set()).add(uid)
+
+    tipo_rows = db.session.query(
+        planejamento_tipos_unidade.c.planejamento_id,
+        planejamento_tipos_unidade.c.tipo_unidade_id,
+    ).filter(planejamento_tipos_unidade.c.planejamento_id.in_(pids)).all()
+    tipo_ids = {tid for _, tid in tipo_rows if tid}
+    unidades_por_tipo = {}
+    if tipo_ids:
+        for u in Unidade.query.filter(
+            Unidade.tipo_unidade_id.in_(tipo_ids),
+            Unidade.status == 'ativa',
+        ).all():
+            unidades_por_tipo.setdefault(u.tipo_unidade_id, []).append(u.id)
+    for pid, tid in tipo_rows:
+        for uid in unidades_por_tipo.get(tid, []):
+            mapa.setdefault(pid, set()).add(uid)
+    return mapa
+
+
+def _usuarios_por_planejamentos(planejamentos):
+    """plano_id -> lista de Usuario (ordenado), em poucas queries."""
+    from app.models.unidade import UsuarioUnidade
     from app.models.usuario import Usuario
-    usuarios = Usuario.query.filter(Usuario.id.in_(usuarios_ids)).all()
-    return sorted(usuarios, key=lambda u: (u.nome or '').lower())
+
+    mapa_u = _mapa_unidades_planejamentos(planejamentos)
+    all_unidade_ids = set()
+    for ids in mapa_u.values():
+        all_unidade_ids |= ids
+
+    users_by_id = {}
+    usuarios_por_unidade = {}
+    if all_unidade_ids:
+        vincs = UsuarioUnidade.query.filter(
+            UsuarioUnidade.unidade_id.in_(all_unidade_ids),
+            UsuarioUnidade.ativo.is_(True),
+        ).all()
+        user_ids = {v.usuario_id for v in vincs if v.usuario_id}
+        if user_ids:
+            users_by_id = {
+                u.id: u for u in Usuario.query.filter(Usuario.id.in_(user_ids)).all()
+            }
+        for v in vincs:
+            if v.usuario_id and v.usuario_id in users_by_id:
+                usuarios_por_unidade.setdefault(v.unidade_id, set()).add(v.usuario_id)
+
+    result = {}
+    for p in planejamentos:
+        ids = set()
+        for uid in mapa_u.get(p.id, ()):
+            ids |= usuarios_por_unidade.get(uid, set())
+        result[p.id] = sorted(
+            (users_by_id[i] for i in ids if i in users_by_id),
+            key=lambda u: (u.nome or '').lower(),
+        )
+    return result
+
+
+def _usuarios_planejamento(planejamento):
+    """Usuários de todas as unidades vinculadas ao planejamento."""
+    return _usuarios_por_planejamentos([planejamento]).get(planejamento.id, [])
+
+
+def _gerar_alertas_prazos():
+    """Cria notificações de prazo (hoje / em 3 dias) no máx. 1x por dia por worker.
+
+    Antes rodava em todo GET de /planejamentos/ com N queries por usuário — isso
+    deixava a listagem lenta. Agora usa poucas queries em lote.
+    """
+    hoje = date.today()
+    if _ALERTAS_PRAZO_DIA.get('data') == hoje:
+        return
+
+    from app.models.notificacao import Notificacao
+
+    tres_dias = hoje + timedelta(days=3)
+    acoes = (
+        AcaoPlanejamento.query.options(
+            selectinload(AcaoPlanejamento.responsaveis),
+            joinedload(AcaoPlanejamento.planejamento),
+        )
+        .filter(
+            AcaoPlanejamento.status.notin_(['concluido', 'cancelado']),
+            AcaoPlanejamento.prazo.in_([hoje, tres_dias]),
+        )
+        .all()
+    )
+    if not acoes:
+        _ALERTAS_PRAZO_DIA['data'] = hoje
+        return
+
+    planos = []
+    vistos = set()
+    for a in acoes:
+        p = a.planejamento
+        if p and p.id not in vistos:
+            vistos.add(p.id)
+            planos.append(p)
+    usuarios_por_plano = _usuarios_por_planejamentos(planos)
+
+    candidatos = []  # (usuario_id, titulo, texto)
+    for acao in acoes:
+        plano = acao.planejamento
+        if not plano:
+            continue
+        dias = 0 if acao.prazo == hoje else 3
+        responsaveis_nomes = []
+        for r in acao.responsaveis or []:
+            if r and r.nome:
+                responsaveis_nomes.append(r.nome.split()[0])
+        resp_txt = ', '.join(responsaveis_nomes) if responsaveis_nomes else '—'
+        titulo = 'Ação vence hoje' if dias == 0 else 'Ação vence em 3 dias'
+        texto = f'Plano: "{plano.titulo}" — Ação: "{acao.titulo}" — Responsável(is): {resp_txt}'
+        for usuario in usuarios_por_plano.get(plano.id, []):
+            if usuario and usuario.id:
+                candidatos.append((usuario.id, titulo, texto))
+
+    if not candidatos:
+        _ALERTAS_PRAZO_DIA['data'] = hoje
+        return
+
+    user_ids = {c[0] for c in candidatos}
+    existentes = set(
+        db.session.query(
+            Notificacao.usuario_id, Notificacao.titulo, Notificacao.texto
+        )
+        .filter(
+            Notificacao.tipo == 'alerta_planejamento',
+            Notificacao.usuario_id.in_(user_ids),
+        )
+        .all()
+    )
+    novos = []
+    ja = set(existentes)
+    for item in candidatos:
+        if item in ja:
+            continue
+        ja.add(item)
+        novos.append(Notificacao(
+            usuario_id=item[0],
+            tipo='alerta_planejamento',
+            titulo=item[1],
+            texto=item[2],
+        ))
+    if novos:
+        db.session.add_all(novos)
+    _ALERTAS_PRAZO_DIA['data'] = hoje
 
 
 def _resp_display_html(acao):
@@ -298,7 +431,9 @@ def listar():
     # Nota: acoes, unidades e tipos_unidade usam lazy='dynamic', não permitem joinedload
     if planejamento_ids:
         q = Planejamento.query.options(
-            db.joinedload(Planejamento.unidade),
+            joinedload(Planejamento.unidade),
+            joinedload(Planejamento.criador),
+            joinedload(Planejamento.ultimo_editor),
         ).filter(Planejamento.id.in_(planejamento_ids))
         q = q.order_by(
             db.desc(Planejamento.gravidade * Planejamento.urgencia * Planejamento.tendencia),
@@ -309,43 +444,32 @@ def listar():
         planejamentos_todos = []
 
     status_por_plano = {}
-    # Evita N+1: carrega ações de todos os planos em uma única query
-    acoes_por_plano = {}
+    # Contagem por aba: só id/status (sem carregar M2M nem observações)
     if planejamentos_todos:
         all_ids = [p.id for p in planejamentos_todos]
-        acoes_all = (
-            AcaoPlanejamento.query.filter(AcaoPlanejamento.planejamento_id.in_(all_ids))
-            .order_by(AcaoPlanejamento.planejamento_id, AcaoPlanejamento.ordem, AcaoPlanejamento.id)
-            .all()
-        )
-        for ac in acoes_all:
-            acoes_por_plano.setdefault(ac.planejamento_id, []).append(ac)
+        status_rows = db.session.query(
+            AcaoPlanejamento.planejamento_id,
+            AcaoPlanejamento.status,
+        ).filter(AcaoPlanejamento.planejamento_id.in_(all_ids)).all()
+        acoes_status_por_plano = {}
+        for pid, st in status_rows:
+            acoes_status_por_plano.setdefault(pid, []).append(st)
 
-    for p in planejamentos_todos:
-        acoes = acoes_por_plano.get(p.id, [])
-        total = len(acoes)
-        if total == 0:
-            status_por_plano[p.id] = 'abertos'
-            continue
-        concluidas = 0
-        canceladas = 0
-        em_andamento = 0
-        pendentes = 0
-        for a in acoes:
-            if a.status == 'concluido':
-                concluidas += 1
-            elif a.status == 'cancelado':
-                canceladas += 1
-            elif a.status == 'em_andamento':
-                em_andamento += 1
+        for p in planejamentos_todos:
+            statuses = acoes_status_por_plano.get(p.id, [])
+            total = len(statuses)
+            if total == 0:
+                status_por_plano[p.id] = 'abertos'
+                continue
+            canceladas = sum(1 for s in statuses if s == 'cancelado')
+            em_andamento = sum(1 for s in statuses if s == 'em_andamento')
+            pendentes = sum(1 for s in statuses if s == 'backlog')
+            if canceladas == total:
+                status_por_plano[p.id] = 'cancelados'
+            elif em_andamento or pendentes:
+                status_por_plano[p.id] = 'abertos'
             else:
-                pendentes += 1
-        if canceladas == total:
-            status_por_plano[p.id] = 'cancelados'
-        elif em_andamento or pendentes:
-            status_por_plano[p.id] = 'abertos'
-        else:
-            status_por_plano[p.id] = 'concluidos'
+                status_por_plano[p.id] = 'concluidos'
 
     contagem_por_aba = {'abertos': 0, 'concluidos': 0, 'cancelados': 0}
     for st in status_por_plano.values():
@@ -353,11 +477,12 @@ def listar():
 
     planejamentos = [p for p in planejamentos_todos if status_por_plano.get(p.id) == aba]
 
-    # Para cada planejamento: acoes, progresso, usuarios
+    # Ações completas só da aba atual (sem observações — carregam no expand via AJAX)
     planejamentos_dados = []
     planej_ids = [p.id for p in planejamentos]
     contagem_acoes_usuario = {}
     ids_com_minhas_acoes = set()
+    acoes_por_plano = {}
 
     if planej_ids:
         rows = db.session.query(
@@ -377,72 +502,53 @@ def listar():
             contagem_acoes_usuario[pid] = cnt
             ids_com_minhas_acoes.add(pid)
 
+        acoes_aba = (
+            AcaoPlanejamento.query.options(
+                selectinload(AcaoPlanejamento.responsaveis),
+                selectinload(AcaoPlanejamento.empresas),
+                noload(AcaoPlanejamento.observacoes),
+            )
+            .filter(AcaoPlanejamento.planejamento_id.in_(planej_ids))
+            .order_by(AcaoPlanejamento.planejamento_id, AcaoPlanejamento.ordem, AcaoPlanejamento.id)
+            .all()
+        )
+        for ac in acoes_aba:
+            acoes_por_plano.setdefault(ac.planejamento_id, []).append(ac)
+
     hoje = date.today()
     tres_dias = hoje + timedelta(days=3)
 
-    # Busca ações que vencem hoje ou em 3 dias (apenas ações ativas)
+    # Banner de prazos (leve) + geração de sininho no máx. 1x/dia por worker
     acoes_vencendo = []
     if planejamentos_todos:
-        from app.models.unidade import UsuarioUnidade
-        from app.models.notificacao import Notificacao
-
-        planej_ids = [p.id for p in planejamentos_todos]
-        acoes_proximas = AcaoPlanejamento.query.filter(
-            AcaoPlanejamento.planejamento_id.in_(planej_ids),
-            AcaoPlanejamento.status.notin_(['concluido', 'cancelado']),
-            AcaoPlanejamento.prazo.in_([hoje, tres_dias])
-        ).all()
-
-        # Cria um dicionário para acesso rápido aos planejamentos
         planos_dict = {p.id: p for p in planejamentos_todos}
-
+        planej_ids_todos = list(planos_dict)
+        acoes_proximas = (
+            AcaoPlanejamento.query.options(
+                selectinload(AcaoPlanejamento.responsaveis),
+            )
+            .filter(
+                AcaoPlanejamento.planejamento_id.in_(planej_ids_todos),
+                AcaoPlanejamento.status.notin_(['concluido', 'cancelado']),
+                AcaoPlanejamento.prazo.in_([hoje, tres_dias]),
+            )
+            .all()
+        )
         for acao in acoes_proximas:
             plano = planos_dict.get(acao.planejamento_id)
             if not plano:
                 continue
-
             dias = 0 if acao.prazo == hoje else 3
             acoes_vencendo.append({'acao': acao, 'plano': plano, 'dias': dias})
+        try:
+            _gerar_alertas_prazos()
+        except Exception:
+            # Listagem não deve falhar por alerta do sininho
+            db.session.rollback()
 
-            # Gera notificações no sininho para todos os usuários vinculados à unidade do plano
-            # (exceto concluídas/canceladas, já filtradas). Evita duplicar notificações
-            # idênticas pendentes para o mesmo usuário.
-            responsaveis_nomes = []
-            try:
-                for r in acao.responsaveis:
-                    if r and r.nome:
-                        responsaveis_nomes.append(r.nome.split()[0])
-            except Exception:
-                pass
-            resp_txt = ', '.join(responsaveis_nomes) if responsaveis_nomes else '—'
-
-            titulo = 'Ação vence hoje' if dias == 0 else 'Ação vence em 3 dias'
-            texto = f'Plano: \"{plano.titulo}\" — Ação: \"{acao.titulo}\" — Responsável(is): {resp_txt}'
-
-            # Busca usuários de todas as unidades vinculadas ao planejamento
-            usuarios_plano = _usuarios_planejamento(plano)
-            for usuario in usuarios_plano:
-                if not usuario.id:
-                    continue
-                # Evita duplicar a mesma notificação para o usuário, mesmo que ele já tenha marcado como lida.
-                # Uma vez avisado sobre aquela combinação plano/ação/prazo, não criamos novamente.
-                ja_existe = Notificacao.query.filter_by(
-                    usuario_id=usuario.id,
-                    tipo='alerta_planejamento',
-                    titulo=titulo,
-                    texto=texto,
-                ).first()
-                if ja_existe:
-                    continue
-                db.session.add(Notificacao(
-                    usuario_id=usuario.id,
-                    tipo='alerta_planejamento',
-                    titulo=titulo,
-                    texto=texto,
-                ))
-    
     from app.models.empresa import EmpresaContratada
     empresas_ativas = EmpresaContratada.query.filter_by(ativo=True).order_by(EmpresaContratada.razao_social).all()
+    usuarios_por_plano = _usuarios_por_planejamentos(planejamentos) if planejamentos else {}
 
     for p in planejamentos:
         acoes_flat = acoes_por_plano.get(p.id, [])
@@ -456,24 +562,20 @@ def listar():
         progresso_pct = round(100 * concluidas / total_ativas) if total_ativas else 0
         em_andamento_pct = round(100 * em_andamento / total_ativas) if total_ativas else 0
         pendentes_pct = round(100 * pendentes / total_ativas) if total_ativas else 0
-        
-        # Encontra a próxima ação pendente (primeira não concluída nem cancelada)
+
         proxima_acao = None
         for acao in acoes_flat:
             if acao.status not in ('concluido', 'cancelado'):
                 proxima_acao = acao
                 break
 
-        # Carrega usuários (usado em selects de responsáveis). Mantemos por enquanto,
-        # mas evitamos queries adicionais em unidades/tipos/anexos no template.
-        usuarios = _usuarios_planejamento(p)
         planejamentos_dados.append({
             'plano': p,
             'acoes_flat': acoes_flat,
             'progresso_pct': progresso_pct,
             'em_andamento_pct': em_andamento_pct,
             'pendentes_pct': pendentes_pct,
-            'usuarios': usuarios,
+            'usuarios': usuarios_por_plano.get(p.id, []),
             'empresas': empresas_ativas,
             'proxima_acao': proxima_acao,
             'status_resumo': {'atrasadas': atrasadas, 'pendentes': pendentes, 'em_andamento': em_andamento, 'concluidas': concluidas, 'canceladas': canceladas},
@@ -1003,6 +1105,30 @@ def atualizar_prazo_acao(id):
     })
 
 
+@planejamentos_bp.route('/acoes/<int:id>/observacoes', methods=['GET'])
+@login_required
+def listar_observacoes(id):
+    """HTML das observações de uma ação — carregado ao expandir (não no GET da lista)."""
+    acao = AcaoPlanejamento.query.get_or_404(id)
+    planejamento = acao.planejamento
+    if not _usuario_pode_editar_planejamento(planejamento):
+        abort(403)
+    obs_lista = (
+        AcaoObservacao.query.options(
+            joinedload(AcaoObservacao.usuario),
+            selectinload(AcaoObservacao.anexos),
+        )
+        .filter_by(acao_id=id)
+        .order_by(AcaoObservacao.criado_em.asc())
+        .all()
+    )
+    return render_template(
+        'planejamentos/_obs_lista.html',
+        acao=acao,
+        observacoes=obs_lista,
+    )
+
+
 @planejamentos_bp.route('/acoes/<int:id>/observacao', methods=['POST'])
 @login_required
 def criar_observacao(id):
@@ -1107,7 +1233,17 @@ def imprimir_projeto(plano_id):
     planejamento = Planejamento.query.get_or_404(plano_id)
     if not _usuario_pode_editar_planejamento(planejamento):
         abort(403)
-    acoes_flat = list(planejamento.acoes.order_by(AcaoPlanejamento.ordem, AcaoPlanejamento.id))
+    acoes_flat = (
+        AcaoPlanejamento.query.options(
+            selectinload(AcaoPlanejamento.responsaveis),
+            selectinload(AcaoPlanejamento.empresas),
+            selectinload(AcaoPlanejamento.observacoes).joinedload(AcaoObservacao.usuario),
+            selectinload(AcaoPlanejamento.observacoes).selectinload(AcaoObservacao.anexos),
+        )
+        .filter_by(planejamento_id=plano_id)
+        .order_by(AcaoPlanejamento.ordem, AcaoPlanejamento.id)
+        .all()
+    )
     total = len(acoes_flat)
     concluidas = sum(1 for a in acoes_flat if a.status == 'concluido')
     canceladas = sum(1 for a in acoes_flat if a.status == 'cancelado')

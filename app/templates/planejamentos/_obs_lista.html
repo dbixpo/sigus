@@ -1,0 +1,56 @@
+{# Fragmento AJAX: timeline de observações de uma ação #}
+{% if observacoes %}
+<table class="obs-tabelinha">
+    <thead>
+        <tr>
+            <th class="obs-col-texto">Observação</th>
+            <th class="obs-col-anexo">Anexo</th>
+            <th class="obs-col-resp">Responsável</th>
+            <th class="obs-col-data">Data da criação</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for obs in observacoes %}
+        <tr>
+            <td class="obs-col-texto"><div class="obs-texto">{{ obs.texto | safe }}</div></td>
+            <td class="obs-col-anexo">
+                {% if obs.anexos %}
+                <div class="d-flex flex-wrap gap-1">
+                {% for a in obs.anexos|sort(attribute='id') %}
+                <div class="obs-anexo">
+                    {% if a.eh_audio %}
+                    <audio controls preload="none" style="display:block; margin-top:.25rem; height:28px; max-width:260px;">
+                        <source src="{{ a.url }}" type="{{ a.mime_type or 'audio/mpeg' }}">
+                        Seu navegador nao suporta audio.
+                    </audio>
+                    {% else %}
+                    <a href="{{ a.url }}" target="_blank" rel="noopener" download="{{ a.original }}">
+                        <i class="{{ a.icone_classe }}"></i>
+                        {{ a.original }}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                </div>
+                {% else %}—{% endif %}
+            </td>
+            <td class="obs-col-resp">
+                {% if obs.usuario %}
+                <div class="resp-item">
+                    {% if obs.usuario.foto_url %}
+                    <img src="{{ obs.usuario.foto_url }}" alt="" class="resp-avatar">
+                    {% else %}
+                    <span class="resp-inicial">{{ obs.usuario.inicial }}</span>
+                    {% endif %}
+                    <span class="resp-nome">{{ ((obs.usuario.nome or '').split() + ['?'])[0] }}</span>
+                </div>
+                {% else %}<span class="text-muted">Sistema</span>{% endif %}
+            </td>
+            <td class="obs-col-data text-muted small">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted small mb-2">Nenhuma observação.</p>
+{% endif %}

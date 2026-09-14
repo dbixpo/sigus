@@ -170,19 +170,19 @@ class AcaoPlanejamento(db.Model):
         'Usuario',
         secondary=acacao_planejamento_responsaveis,
         backref=db.backref('acoes_planejamento_responsavel', lazy='dynamic'),
-        lazy='joined',
+        lazy='selectin',  # evita produto cartesiano do joined em listagens
     )
     empresas = db.relationship(
         'EmpresaContratada',
         secondary=acacao_planejamento_empresas,
         backref=db.backref('acoes_planejamento', lazy='dynamic'),
-        lazy='joined',
+        lazy='selectin',
     )
     observacoes   = db.relationship(
         'AcaoObservacao',
         back_populates='acao',
         order_by='AcaoObservacao.criado_em',
-        lazy='selectin',
+        lazy='select',  # listagem carrega sob demanda (GET /acoes/<id>/observacoes)
         cascade='all, delete-orphan',
     )
 

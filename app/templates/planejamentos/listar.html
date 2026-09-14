@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}Planejamentos e Projetos{% endblock %}
 
 {% block head %}
@@ -278,7 +278,8 @@
     {% set expanded = expand_id == p.id %}
     <div class="projeto-card"
          data-plano-id="{{ p.id }}"
-         data-minhas="{% if p.id in ids_com_minhas_acoes %}1{% else %}0{% endif %}">
+         data-minhas="{% if p.id in ids_com_minhas_acoes %}1{% else %}0{% endif %}"
+         data-busca="{{ (p.titulo ~ ' ' ~ (p.unidade.nome if p.unidade else '') ~ ' ' ~ (d.unidades_vinculadas|map(attribute='nome')|join(' ') if d.unidades_vinculadas is defined else '') ~ ' ' ~ (d.tipos_vinculados|map(attribute='sigla')|join(' ') if d.tipos_vinculados is defined else ''))|lower }}">
         <div class="projeto-header">
             <button type="button" class="btn btn-link btn-toggle p-0 text-decoration-none" aria-label="Expandir"
                     data-bs-toggle="collapse" data-bs-target="#projeto-{{ p.id }}" aria-expanded="{{ 'true' if expanded else 'false' }}">
@@ -514,62 +515,10 @@
                                 <div class="collapse acao-detail-collapse" id="acao-detail-{{ acao.id }}">
                                     <div class="acao-detail-inner p-3">
                                     <h6 class="text-muted small mb-2"><i class="fas fa-chat-left-text me-1"></i>Observações</h6>
-                                    <div class="obs-timeline mb-2" id="obs-list-{{ acao.id }}" style="max-height: 220px; overflow-y: auto;">
-                                        {% if acao.observacoes %}
-                                        <table class="obs-tabelinha">
-                                            <thead>
-                                                <tr>
-                                                    <th class="obs-col-texto">Observação</th>
-                                                    <th class="obs-col-anexo">Anexo</th>
-                                                    <th class="obs-col-resp">Responsável</th>
-                                                    <th class="obs-col-data">Data da criação</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for obs in acao.observacoes|sort(attribute='criado_em') %}
-                                                <tr>
-                                                    <td class="obs-col-texto"><div class="obs-texto">{{ obs.texto | safe }}</div></td>
-                                                    <td class="obs-col-anexo">
-                                                        {% if obs.anexos %}
-                                                        <div class="d-flex flex-wrap gap-1">
-                                                        {% for a in obs.anexos|sort(attribute='id') %}
-                                                        <div class="obs-anexo">
-                                                            {% if a.eh_audio %}
-                                                            <audio controls preload="none" style="display:block; margin-top:.25rem; height:28px; max-width:260px;">
-                                                                <source src="{{ a.url }}" type="{{ a.mime_type or 'audio/mpeg' }}">
-                                                                Seu navegador nao suporta audio.
-                                                            </audio>
-                                                            {% else %}
-                                                            <a href="{{ a.url }}" target="_blank" rel="noopener" download="{{ a.original }}">
-                                                                <i class="{{ a.icone_classe }}"></i>
-                                                                {{ a.original }}
-                                                            </a>
-                                                            {% endif %}
-                                                        </div>
-                                                        {% endfor %}
-                                                        </div>
-                                                        {% else %}—{% endif %}
-                                                    </td>
-                                                    <td class="obs-col-resp">
-                                                        {% if obs.usuario %}
-                                                        <div class="resp-item">
-                                                            {% if obs.usuario.foto_url %}
-                                                            <img src="{{ obs.usuario.foto_url }}" alt="" class="resp-avatar">
-                                                            {% else %}
-                                                            <span class="resp-inicial">{{ obs.usuario.inicial }}</span>
-                                                            {% endif %}
-                                                            <span class="resp-nome">{{ ((obs.usuario.nome or '').split() + ['?'])[0] }}</span>
-                                                        </div>
-                                                        {% else %}<span class="text-muted">Sistema</span>{% endif %}
-                                                    </td>
-                                                    <td class="obs-col-data text-muted small">{{ obs.criado_em | br_datetime if obs.criado_em else '—' }}</td>
-                                                </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                        {% else %}
-                                        <p class="text-muted small mb-2">Nenhuma observação.</p>
-                                        {% endif %}
+                                    <div class="obs-timeline mb-2" id="obs-list-{{ acao.id }}"
+                                         data-acao-id="{{ acao.id }}" data-loaded="0"
+                                         style="max-height: 220px; overflow-y: auto;">
+                                        <p class="text-muted small mb-2 obs-loading">Carregando observações…</p>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-add-obs-{{ acao.id }}" onclick="event.stopPropagation();">
                                         <i class="fas fa-plus-lg me-1"></i>Adicionar observação
@@ -1138,18 +1087,40 @@
 <script>
 (function () {
     document.addEventListener('trix-file-accept', function (e) { e.preventDefault(); });
+    var csrf = document.querySelector('meta[name=csrf-token]')?.content || document.getElementById('csrfPlanos')?.value || '';
+    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     document.querySelectorAll('.acao-detail-collapse').forEach(function (el) {
         el.addEventListener('show.bs.collapse', function () {
             var row = this.closest('tr').previousElementSibling;
             if (row && row.classList.contains('sortable-row')) row.classList.add('obs-expanded');
+            var list = this.querySelector('.obs-timeline');
+            if (!list || list.dataset.loaded === '1' || list.dataset.loading === '1') return;
+            var acaoId = list.dataset.acaoId;
+            if (!acaoId) return;
+            list.dataset.loading = '1';
+            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/observacoes', { credentials: 'same-origin' })
+                .then(function (r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.text();
+                })
+                .then(function (html) {
+                    list.innerHTML = html;
+                    list.dataset.loaded = '1';
+                    list.querySelectorAll('.obs-texto a').forEach(function (a) {
+                        a.setAttribute('target', '_blank');
+                        a.setAttribute('rel', 'noopener');
+                    });
+                })
+                .catch(function () {
+                    list.innerHTML = '<p class="text-danger small mb-2">Não foi possível carregar as observações.</p>';
+                })
+                .finally(function () { list.dataset.loading = '0'; });
         });
         el.addEventListener('hide.bs.collapse', function () {
             var row = this.closest('tr').previousElementSibling;
             if (row && row.classList.contains('sortable-row')) row.classList.remove('obs-expanded');
         });
     });
-    var csrf = document.querySelector('meta[name=csrf-token]')?.content || document.getElementById('csrfPlanos')?.value || '';
-    var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     document.querySelectorAll('.form-add-obs').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
@@ -1180,6 +1151,7 @@
                     if (data.ok) {
                         var list = document.getElementById('obs-list-' + acaoId);
                         if (!list) return;
+                        list.dataset.loaded = '1';
                         var vazia = list.querySelector('p.text-muted.small');
                         var tbody = list.querySelector('tbody');
                         var respHtml = '';
@@ -1255,6 +1227,7 @@
     if (!inputBusca && !chkMinhas) return;
 
     var urlDebounce = null;
+    var filtroDebounce = null;
 
     function normalizarTexto(txt) {
         return (txt || '').toLowerCase();
@@ -1264,7 +1237,7 @@
         var termo = normalizarTexto(inputBusca ? inputBusca.value : '');
         var somenteMinhas = chkMinhas ? chkMinhas.checked : false;
         document.querySelectorAll('.projeto-card').forEach(function (card) {
-            var texto = normalizarTexto(card.innerText || card.textContent || '');
+            var texto = normalizarTexto(card.getAttribute('data-busca') || card.dataset.busca || '');
             var ehMeu = card.dataset.minhas === '1';
 
             var passaTexto = !termo || texto.indexOf(termo) !== -1;
@@ -1272,6 +1245,11 @@
 
             card.style.display = (passaTexto && passaMinhas) ? '' : 'none';
         });
+    }
+
+    function agendarFiltro() {
+        clearTimeout(filtroDebounce);
+        filtroDebounce = setTimeout(aplicarFiltro, 120);
     }
 
     function syncQueryNaUrl() {
@@ -1299,7 +1277,7 @@
 
     if (inputBusca) {
         inputBusca.addEventListener('input', function () {
-            aplicarFiltro();
+            agendarFiltro();
             var vazio = !(inputBusca.value || '').trim();
             agendarSyncUrl(vazio);
         });
