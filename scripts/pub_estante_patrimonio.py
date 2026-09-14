@@ -13,6 +13,9 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
 BASE = 'https://estante-ses.sorocaba.sp.gov.br'
 BOOK_ID = 45
@@ -379,10 +382,11 @@ def pages():
             'html': f'''
 <p>Abra <strong>Operações → Transferências</strong>. Quatro abas: <strong>Pendentes de aceite</strong>, <strong>Enviadas</strong>, <strong>Concluídas</strong> e <strong>Lojinha Interna</strong>.</p>
 <p>A aba <strong>Pendentes de aceite</strong> é a caixa de entrada da <strong>unidade de destino</strong>: termos que alguém mandou para você e ainda não foram aceitos nem recusados.</p>
-<p>Colunas: tipo (transferência, empréstimo, doação), de, para, quem criou, quantos itens, data. Ações: cancelar (quando couber) e imprimir o termo no modal padrão do SIGUS.</p>
+<p>Colunas: tipo (transferência, empréstimo, doação), de, para, quem criou, quantos itens, data. Ações: <strong>Resolver</strong> (aceitar ou recusar), cancelar (quando couber) e imprimir o termo no modal padrão do SIGUS.</p>
 <p>O botão azul <strong>Novo Termo</strong> abre o cadastro de um documento novo.</p>
 {{SHOT0}}
-{c('warning', 'Unidade no topo:', 'Para aceitar em nome de uma unidade, selecione essa unidade no seletor do cabeçalho. Sem unidade de trabalho, o sistema não sabe em nome de quem você está aceitando.')}
+{c('success', 'Administrador e gestor central:', 'Vocês veem os pendentes da <strong>rede inteira</strong> (o filtro “Unidade” no alto da lista ainda recorta, se quiser). O botão Resolver aparece mesmo se a unidade do topo não for a destino — a mesma pessoa que criou o termo pode aceitar no prédio novo.')}
+{c('warning', 'Coordenador e apoio administrativo:', 'Para aceitar em nome de uma unidade, selecione essa unidade no seletor do cabeçalho. Sem unidade de trabalho, o sistema não sabe em nome de quem você está aceitando.')}
 {c('info', 'Impresso:', 'Use a impressora do SIGUS para o termo físico e as assinaturas. O documento digital continua no sistema.')}
 '''
         },
@@ -390,7 +394,8 @@ def pages():
             'name': 'Transferências — enviadas',
             'shots': [('tr-enviadas', 'Aba Enviadas aguardando aceite')],
             'html': f'''
-<p>A aba <strong>Enviadas</strong> mostra o que a sua origem já despachou e ainda espera o aceite do destino. Serve para cobrar: “o termo saiu daqui; está na caixa de pendentes da outra unidade”.</p>
+<p>A aba <strong>Enviadas</strong> mostra o que a origem já despachou e ainda espera o aceite do destino. Serve para cobrar: “o termo saiu daqui; está na caixa de pendentes da outra unidade”.</p>
+<p>Administrador e gestor central também encontram o botão <strong>Resolver</strong> nesta aba — dá para aceitar o termo que vocês mesmos acabaram de criar, sem mudar de tela de unidade.</p>
 {{SHOT0}}
 {c('success', 'Dica:', 'Se o destino não aceita, ligue e confira patrimônio e sala. Cancelar e refazer com o item errado é pior do que um telefonema.')}
 '''
@@ -409,14 +414,17 @@ def pages():
             'name': 'Novo termo de transferência ou empréstimo',
             'shots': [('termo-novo', 'Formulário Novo Termo')],
             'html': f'''
-<p>Em Transferências, clique em <strong>Novo Termo</strong>. Use quando for um lote (vários itens) ou quando o bem ainda não está “no botão Transferir” da ficha.</p>
+<p>Em Transferências, clique em <strong>Novo Termo</strong>. Use quando for um lote (vários itens) ou quando o bem ainda não está “no botão Transferir” da ficha. Também é a tela de quem está <strong>atualizando inventário</strong> e precisa alocar o equipamento no prédio certo.</p>
 <h2>Cabeçalho</h2>
 <ol>
 <li>Marque <strong>Empréstimo</strong> ou <strong>Transferência</strong> (obrigatório).</li>
-<li>Escolha <strong>unidade de origem *</strong> e <strong>unidade de destino *</strong>.</li>
+<li>Escolha <strong>unidade de origem *</strong> e <strong>unidade de destino *</strong> — os dois campos são pesquisáveis (digite parte do nome).</li>
 <li>Observação é opcional (motivo, estado do bem, instrução de retirada).</li>
 </ol>
-<h2>Materiais</h2>
+<p>Quem é <strong>administrador</strong> ou <strong>gestor central</strong> vê <strong>todas</strong> as unidades ativas nos dois lados, independente da unidade do topo. Coordenador e apoio administrativo só enviam a partir das unidades às quais estão vinculados.</p>
+<h2>Inventário das duas unidades</h2>
+<p>Ao escolher origem e destino, o SIGUS lista os equipamentos ativos de cada uma (nome, patrimônio ou série, sala). Dá para filtrar a lista e clicar em <strong>Adicionar</strong> no item da origem para incluir no termo. A lista do destino é só consulta — para você ver o que já está no prédio novo antes de mandar mais coisa.</p>
+<h2>Materiais (também pelos botões)</h2>
 <ul>
 <li><strong>Do inventário</strong> — busca o bem já cadastrado (patrimônio, tipo, sala).</li>
 <li><strong>Item manual</strong> — descreve o que ainda não está no cadastro (o aceite pode criar no inventário do destino).</li>
@@ -426,8 +434,9 @@ def pages():
 <li><strong>A</strong> — inservível ao setor, porém com plenas condições de uso.</li>
 <li><strong>B</strong> — inservível ao setor, usa, mas precisa de reparo.</li>
 </ul>
-<p>Clique em <strong>Criar documento</strong>. O termo aparece em Enviadas na origem e em Pendentes no destino.</p>
+<p>Clique em <strong>Criar documento</strong>. Coordenador vê o termo em Enviadas (origem) e Pendentes (destino). Administrador e gestor central vão <strong>direto para a tela de aceite</strong>: escolhem a sala do destino e concluem na hora.</p>
 {{SHOT0}}
+{c('success', 'Atualização de inventário:', 'Origem errada, destino certo, aceite na sequência — o bem muda de endereço no SIGUS sem apagar cadastro. Confira a plaqueta antes de adicionar.')}
 {c('warning', 'ATENÇÃO:', 'Empréstimo e transferência não são a mesma coisa. Empréstimo pressupõe volta; transferência muda o dono operacional do bem na rede.')}
 '''
         },
@@ -450,11 +459,12 @@ def pages():
             'name': 'Aceitar ou recusar o documento',
             'shots': [('tr-aceitar', 'Tela Resolver Termo: aceitar alocando em uma sala ou recusar')],
             'html': f'''
-<p>Na aba Pendentes, abra o termo. A tela <strong>Resolver Termo</strong> mostra os materiais, origem, destino, quem criou e a data.</p>
+<p>Na aba Pendentes (ou Enviadas, se você for administrador/gestor central), abra o termo. A tela <strong>Resolver Termo</strong> mostra os materiais, origem, destino, quem criou e a data.</p>
+<p>Quem criou o documento como administrador ou gestor central <strong>já cai nesta tela</strong> depois de clicar em Criar documento — não precisa mudar a unidade do topo nem esperar outra pessoa.</p>
 <h2>Aceitar</h2>
 <ol>
-<li>Confira se o patrimônio da lista é o que chegou na portaria.</li>
-<li>Em <strong>Alocar em qual sala? *</strong>, escolha a sala da <strong>sua</strong> unidade. O bem vai para essa sala na hora.</li>
+<li>Confira se o patrimônio da lista é o que chegou na portaria (ou o que você está realocando no inventário).</li>
+<li>Em <strong>Alocar em qual sala? *</strong>, escolha a sala da <strong>unidade destino</strong> (o nome dela aparece embaixo do campo). O bem vai para essa sala na hora.</li>
 <li>Observação de aceite é opcional.</li>
 <li>Clique em <strong>Aceitar e Alocar</strong>.</li>
 </ol>
@@ -462,8 +472,9 @@ def pages():
 <h2>Recusar</h2>
 <p>Informe o motivo e clique em <strong>Recusar</strong>. O bem permanece na origem.</p>
 {{SHOT0}}
-{c('warning', 'ATENÇÃO:', 'Aceite sem conferir a plaqueta coloca patrimônio errado na sua unidade. Recusar com motivo claro é melhor do que aceitar “para depois ver”.')}
-{c('info', 'Seu seletor de unidade:', 'O aceite é em nome da unidade de trabalho do topo. Se o termo é para o SAMU, trabalhe como SAMU; se é para a UBS, selecione a UBS.')}
+{c('warning', 'ATENÇÃO:', 'Aceite sem conferir a plaqueta coloca patrimônio errado na unidade destino. Recusar com motivo claro é melhor do que aceitar “para depois ver”.')}
+{c('success', 'Administrador e gestor central:', 'A mesma pessoa cria o termo e aceita no prédio novo, escolhendo a sala do destino. Não depende do seletor de unidade do cabeçalho.')}
+{c('info', 'Coordenador e apoio administrativo:', 'O aceite é em nome da unidade de trabalho do topo. Se o termo é para o SAMU, trabalhe como SAMU; se é para a UBS, selecione a UBS.')}
 '''
         },
         {
@@ -513,6 +524,39 @@ def pages():
     ]
 
 
+def figures_from_html(html: str) -> list[str]:
+    soup = BeautifulSoup(html or '', 'html.parser')
+    out = []
+    for img in soup.find_all('img'):
+        src = img.get('src') or ''
+        if src:
+            out.append(fig(src, img.get('alt') or ''))
+    return out
+
+
+def fill_shots(s: requests.Session, pid: int, html: str, shots: list) -> str:
+    existentes = []
+    if pid:
+        try:
+            atuais = api(s, 'GET', f'/pages/{pid}')
+            existentes = figures_from_html(atuais.get('html') or '')
+        except Exception as exc:
+            print(f'    aviso: não li prints atuais ({exc})')
+    for idx, (stem, alt) in enumerate(shots):
+        path = SHOT / f'{stem}.png'
+        if path.exists():
+            print(f'    print novo {stem}...')
+            bloco = upload_shot(s, pid, stem, alt)
+        elif idx < len(existentes):
+            print(f'    reusando print da Estante para {stem}')
+            bloco = existentes[idx]
+        else:
+            print(f'    aviso: sem print para {stem}')
+            bloco = ''
+        html = html.replace(f'{{SHOT{idx}}}', bloco)
+    return html
+
+
 def ensure_chapter(s: requests.Session) -> tuple[int, dict]:
     book = api(s, 'GET', f'/books/{BOOK_ID}')
     already = {c['name']: c for c in book.get('contents', []) if c.get('type') == 'chapter'}
@@ -550,16 +594,26 @@ def upsert_page(s, cid: int, exist: dict, name: str, html: str, priority: int) -
     return pid
 
 
-def publish(s: requests.Session) -> None:
+def publish(s: requests.Session, only_names: set[str] | None = None) -> None:
     cid, exist = ensure_chapter(s)
     for i, pg in enumerate(pages(), start=1):
+        if only_names and pg['name'] not in only_names:
+            continue
         html = pg['html']
-        pid = upsert_page(s, cid, exist, pg['name'], html.replace('{SHOT0}', '').replace('{SHOT1}', '').replace('{SHOT2}', ''), i)
+        pid = exist.get(pg['name'], {}).get('id')
+        if pid:
+            html = fill_shots(s, pid, html, pg['shots'])
+            api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': html})
+            print(f'  atualizada: {pg["name"]} ({pid})')
+        else:
+            pid = upsert_page(
+                s, cid, exist, pg['name'],
+                html.replace('{SHOT0}', '').replace('{SHOT1}', '').replace('{SHOT2}', ''),
+                i,
+            )
+            html = fill_shots(s, pid, html, pg['shots'])
+            api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': html})
         exist[pg['name']] = {'id': pid, 'name': pg['name']}
-        for idx, (stem, alt) in enumerate(pg['shots']):
-            print(f'    print {stem}...')
-            html = html.replace(f'{{SHOT{idx}}}', upload_shot(s, pid, stem, alt))
-        api(s, 'PUT', f'/pages/{pid}', json={'name': pg['name'], 'html': html})
         print(f'    html+prints ok')
 
     # Aponta a página curta antiga para este capítulo
@@ -569,8 +623,27 @@ def publish(s: requests.Session) -> None:
             continue
         for p in ch.get('pages', []):
             if p.get('name') == 'Transferência de equipamentos' and ch.get('name') != CHAPTER_NAME:
+                atuais = api(s, 'GET', f'/pages/{p["id"]}')
+                figs = figures_from_html(atuais.get('html') or '')
+                if (SHOT / 'tr-lista.png').exists():
+                    print_bloco = upload_shot(
+                        s, p['id'], 'tr-lista',
+                        'Tela Transferências de Equipamentos, com as abas e o botão Novo Termo',
+                    )
+                else:
+                    print_bloco = figs[0] if figs else ''
                 html = f'''
 <p>Quando um bem permanente precisa mudar de unidade, <strong>não apague</strong> o cadastro para criar de novo no destino. Use termo de transferência, empréstimo ou a Lojinha Interna.</p>
+{print_bloco}
+<ol>
+<li>Abra <strong>Novo Termo</strong> (ou <strong>Transferir</strong> na ficha do bem).</li>
+<li>Informe origem, destino e os itens (do inventário ou manuais).</li>
+<li>A unidade de destino <strong>aceita</strong> o termo e escolhe a <strong>sala</strong> — ou recusa.</li>
+<li>Imprima o termo pelo modal do SIGUS e colete as assinaturas.</li>
+</ol>
+<h2>Quem atualiza inventário da rede (administrador e gestor central)</h2>
+<p>Esses dois perfis escolhem <strong>qualquer unidade de origem e qualquer destino</strong>, mesmo com outra unidade no seletor do topo. Ao selecionar as unidades, o SIGUS lista o inventário de cada uma. Depois de criar o termo, a <strong>mesma pessoa</strong> cai na tela de aceite, escolhe a sala do prédio novo e conclui — não precisa esperar o coordenador da ponta nem trocar a unidade do cabeçalho.</p>
+<p>Coordenador e apoio administrativo continuam só com as unidades vinculadas: origem no topo, aceite em nome da unidade destino selecionada.</p>
 <p>O passo a passo <strong>tela a tela</strong> (pendentes, enviadas, novo termo, aceite, lojinha) está no capítulo <strong>{CHAPTER_NAME}</strong> deste mesmo livro.</p>
 {c('info', 'Atalho:', 'Abra o sumário do livro e entre em “Patrimônio: salas, equipamentos, transferências e lojinha”.')}
 '''
@@ -579,13 +652,25 @@ def publish(s: requests.Session) -> None:
                 break
 
 
+PAGINAS_TRANSFERENCIA = {
+    'Transferências — pendentes de aceite',
+    'Transferências — enviadas',
+    'Novo termo de transferência ou empréstimo',
+    'Aceitar ou recusar o documento',
+}
+
+
 def main():
-    missing = [p for pg in pages() for p, _ in pg['shots'] if not (SHOT / f'{p}.png').exists()]
-    if missing:
-        print('Prints faltando:', ', '.join(missing))
-        sys.exit(1)
+    only = None
+    if '--somente-transferencias' in sys.argv:
+        only = PAGINAS_TRANSFERENCIA
+    else:
+        missing = [p for pg in pages() for p, _ in pg['shots'] if not (SHOT / f'{p}.png').exists()]
+        if missing:
+            print('Prints faltando:', ', '.join(missing))
+            sys.exit(1)
     s = session_login()
-    publish(s)
+    publish(s, only_names=only)
     print('OK.', f'{BASE}/books/manuais-de-utilizacao-do-sigus')
 
 

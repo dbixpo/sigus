@@ -467,12 +467,15 @@ CHAPTERS = [
 <p>Quando um bem permanente precisa mudar de unidade (ou de local), use <strong>Operações → Transferências</strong>. Não “apague” o equipamento de uma lista e cadastre de novo na outra: o histórico patrimonial se perde.</p>
 {SHOT0}
 <ol>
-<li>Localize o equipamento na ficha da unidade de origem.</li>
-<li>Solicite a transferência, informando o destino e o motivo.</li>
-<li>A unidade de destino <strong>aceita</strong> (ou recusa) o termo.</li>
-<li>Imprima o termo de transferência pelo modal padrão do SIGUS e colete as assinaturas.</li>
+<li>Abra <strong>Novo Termo</strong> (ou <strong>Transferir</strong> na ficha do bem).</li>
+<li>Informe origem, destino e os itens (do inventário ou manuais).</li>
+<li>A unidade de destino <strong>aceita</strong> o termo e escolhe a <strong>sala</strong> — ou recusa.</li>
+<li>Imprima o termo pelo modal do SIGUS e colete as assinaturas.</li>
 </ol>
-<p class="callout info"><strong>Dica:</strong> Conferir número de patrimônio e sala antes de enviar evita aceite de item errado. O passo a passo tela a tela (pendentes, lojinha, aceitar termo) está no capítulo <strong>Patrimônio: salas, equipamentos, transferências e lojinha</strong> deste mesmo livro.</p>
+<h2>Quem atualiza inventário da rede (administrador e gestor central)</h2>
+<p>Esses dois perfis escolhem <strong>qualquer unidade de origem e qualquer destino</strong>, mesmo com outra unidade no seletor do topo. Ao selecionar as unidades, o SIGUS lista o inventário de cada uma. Depois de criar o termo, a <strong>mesma pessoa</strong> cai na tela de aceite, escolhe a sala do prédio novo e conclui — não precisa esperar o coordenador da ponta nem trocar a unidade do cabeçalho.</p>
+<p>Coordenador e apoio administrativo continuam só com as unidades vinculadas: origem no topo, aceite em nome da unidade destino selecionada.</p>
+<p class="callout info"><strong>Dica:</strong> Conferir número de patrimônio e sala antes de enviar evita aceite de item errado. O passo a passo tela a tela (pendentes, novo termo, aceite, lojinha) está no capítulo <strong>Patrimônio: salas, equipamentos, transferências e lojinha</strong> deste mesmo livro.</p>
 '''
             },
         ],

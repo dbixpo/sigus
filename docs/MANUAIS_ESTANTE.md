@@ -24,4 +24,10 @@ Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha
 
 Os scripts fazem login na sessão web da Estante e usam `/api/chapters`, `/api/pages`, `/api/image-gallery`. Capítulo existente é atualizado pelo nome; página existente idem.
 
+Para atualizar só o fluxo de transferência (textos + prints que já estão no livro, sem republicar o capítulo inteiro):
+
+```powershell
+.\venv\Scripts\python.exe scripts\pub_estante_patrimonio.py --somente-transferencias
+```
+
 Não subir print de notificação NSP com nome de cidadão. Não commitar credencial da Estante.
