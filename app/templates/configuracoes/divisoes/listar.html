@@ -10,7 +10,7 @@
 </nav>
 
 <div class="page-header">
-    <h1><i class="fas fa-diagram-3"></i> Divisões</h1>
+    <h1><i class="fas fa-sitemap"></i> Divisões</h1>
     <a href="{{ url_for('configuracoes.nova_divisao') }}" class="btn btn-primary btn-sm">
         <i class="fas fa-plus-circle me-1"></i>Nova Divisão
     </a>
@@ -85,7 +85,7 @@
         </div>
         {% else %}
         <div class="empty-state py-4">
-            <i class="fas fa-diagram-3 fs-1 text-muted"></i>
+            <i class="fas fa-sitemap fs-1 text-muted"></i>
             <h6>Nenhuma divisão cadastrada</h6>
             <p class="text-muted small">Cadastre divisões (ex.: SUEQ Predial, Divisão APS) para organizar setores e visibilidade de chamados.</p>
             <a href="{{ url_for('configuracoes.nova_divisao') }}" class="btn btn-primary mt-2">

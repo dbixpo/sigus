@@ -94,7 +94,8 @@ BOOK_DESC = (
     '<p>Aqui você encontra os manuais operacionais do <strong>SIGUS</strong> — '
     'Sistema Integrado de Gestão das Unidades de Saúde da Secretaria da Saúde de Sorocaba.</p>'
     '<p>O SIGUS é a ferramenta da Saúde Digital para a gestão da unidade: patrimônio, '
-    'chamados, planejamentos, agenda, segurança do paciente, pessoas e contratos. '
+    'chamados, planejamentos, agenda, segurança do paciente, pessoas, contratos, '
+    'comunicados com ciência e o mural de ações da rede. '
     'Ele <strong>não substitui o SISWEB</strong> (prontuário e atendimento). Os dois sistemas se complementam.</p>'
     f'<p>Acesso: <a href="{SIGUS_URL}">{SIGUS_URL}</a></p>'
     + c('info', 'Como usar este livro:',
@@ -118,7 +119,7 @@ CHAPTERS = [
 <table>
 <thead><tr><th>Área do menu</th><th>Para que serve</th></tr></thead>
 <tbody>
-<tr><td>Dashboard</td><td>Visão inicial depois do login.</td></tr>
+<tr><td>Dashboard</td><td>Dia a dia da unidade: comunicados com ciência, mural de ações, aniversariantes, quem abona hoje e chamados abertos.</td></tr>
 <tr><td>Gestão da Unidade</td><td>Ficha da unidade, planejamentos, agenda, segurança do paciente, links úteis e relatórios.</td></tr>
 <tr><td>Recursos Humanos</td><td>Faltas abonadas e cadastro público de vínculo.</td></tr>
 <tr><td>Operações</td><td>Fila de gestão de chamados e transferências de equipamentos.</td></tr>
@@ -220,6 +221,119 @@ CHAPTERS = [
         ],
     },
     {
+        'name': 'Dashboard, comunicados e mural',
+        'description': 'O dia a dia da unidade: recados com ciência, mural de ações e o que aparece na tela inicial.',
+        'pages': [
+            {
+                'name': 'O dashboard da unidade',
+                'shots': [
+                    ('dash', 'Dashboard da unidade: comunicados à esquerda e mural da rede à direita'),
+                    ('dash-mural-foto', 'Foto do mural ampliada no lightbox, a partir do dashboard'),
+                ],
+                'html': '''
+<p>Depois do login, o <strong>Dashboard</strong> mostra o dia a dia da <strong>unidade em que você está logado</strong> — não um painel genérico da rede inteira.</p>
+{SHOT0}
+<h2>O que tem na tela</h2>
+<table>
+<thead><tr><th>Bloco</th><th>Para que serve</th></tr></thead>
+<tbody>
+<tr><td>Aniversariantes hoje / do mês</td><td>Quem da unidade faz aniversário. Se for o seu dia, aparece um cartão de parabéns no alto.</td></tr>
+<tr><td>Abonando hoje</td><td>Colegas com falta abonada neste dia — útil para a escala.</td></tr>
+<tr><td>Comunicados da unidade</td><td>Recados oficiais. Se pedir ciência e você ainda não assinou, o cartão fica destacado e o botão <strong>Dar ciência</strong> aparece.</td></tr>
+<tr><td>Chamados abertos</td><td>Pedidos de manutenção ainda em aberto da unidade.</td></tr>
+<tr><td>Mural da rede</td><td>Ações locais (foto + recado curto) e itens da Lojinha Interna, com o status (disponível, pego, retirado).</td></tr>
+</tbody>
+</table>
+<p>No computador, as duas colunas ocupam a altura da tela: a rolagem acontece <strong>dentro</strong> de cada cartão, não na página inteira. No celular os blocos empilham.</p>
+<h2>Atalhos de quem publica</h2>
+<p>Coordenação, apoio administrativo, gestor central e administrador veem no alto:</p>
+<ul>
+<li><strong>Novo comunicado</strong> — recado para a equipe, com ou sem ciência.</li>
+<li><strong>Registrar ação</strong> — foto e texto curto para o mural.</li>
+</ul>
+<p>Clique numa miniatura do mural para ver a foto grande (dá para passar para a próxima, se houver mais de uma).</p>
+{SHOT1}
+<p class="callout info"><strong>Unidade no topo:</strong> se o seletor estiver em outra casa, você vê o dashboard dela. Confira antes de dar ciência ou de publicar.</p>
+<p class="callout success"><strong>Dica:</strong> O mural completo, com filtro por unidade, tema e mês, fica em <strong>Ver tudo</strong> no cartão do mural.</p>
+'''
+            },
+            {
+                'name': 'Como publicar e dar ciência em um comunicado',
+                'shots': [
+                    ('com-novo', 'Formulário Novo comunicado: título, texto, busca de unidades, anexos e cobrar ciência'),
+                    ('com-ciencia', 'Tela do comunicado com CPF, campo de assinatura e o botão Registrar ciência'),
+                    ('com-imprimir', 'Termo de ciência no padrão SIGUS, com CPF anonimizado embaixo do nome'),
+                ],
+                'html': '''
+<p>Comunicado é o recado oficial da unidade (ou da Secretaria, quando o gestor central compartilha). Não substitui e-mail nem o SISWEB: serve para a equipe <strong>ler e, se pedido, dar ciência</strong> com trilha de auditoria.</p>
+<h2>Quem publica</h2>
+<p>Apoio administrativo, coordenador, gestor central e administrador. Quem só opera a unidade lê e dá ciência; não cria comunicado.</p>
+<h2>Como publicar</h2>
+<ol>
+<li>No dashboard, clique em <strong>Novo comunicado</strong>.</li>
+<li>Escreva o <strong>título</strong> (obrigatório) e o texto, se quiser.</li>
+<li>Anexe até 5 arquivos (PDF, Word ou imagem, 10 MB cada). Foto entra no impresso; o nome do arquivo sozinho não basta.</li>
+<li>Marque <strong>Cobrar ciência de todo mundo com vínculo ativo nas unidades</strong> se o recado precisar de confirmação (é o padrão).</li>
+<li>Clique em <strong>Publicar</strong>.</li>
+</ol>
+{SHOT0}
+<p>Gestor central e administrador escolhem as unidades na lista, com <strong>busca em tempo real</strong> pelo nome. Coordenação e apoio administrativo publicam só na unidade do topo.</p>
+<p class="callout warning"><strong>ATENÇÃO:</strong> Quem publica <strong>não ganha ciência automática</strong>. Se o comunicado cobra ciência e você também é destinatário, o sistema te leva para assinar — o autor assina igual a todo mundo.</p>
+<h2>Como dar ciência</h2>
+<p>Abra o comunicado (pelo dashboard, pelo sino ou pelo botão <strong>Dar ciência</strong>). Role até o bloco de ciência e:</p>
+<ol>
+<li>Digite o <strong>CPF cadastrado no SIGUS</strong> (máscara 000.000.000-00). Tem que ser o seu — o sistema confere com o cadastro.</li>
+<li>Assine no quadro com o mouse ou o dedo (no tablet).</li>
+<li>Clique em <strong>Registrar ciência</strong>.</li>
+</ol>
+{SHOT1}
+<p class="callout warning"><strong>IMPORTANTE:</strong> Sem CPF no seu cadastro o SIGUS não registra a ciência. Peça à coordenação para completar o perfil. CPF de outra pessoa é recusado.</p>
+<p>Ficam gravados: data e hora, IP, unidade em que você estava logado, origem (assinatura na tela) e a imagem da assinatura.</p>
+<h2>Quem já assinou e o impresso</h2>
+<p>Quem publica (e o autor) vê, à direita, quem ainda falta e quem já cientificou — com a assinatura. O botão <strong>Imprimir</strong> abre o modal padrão do SIGUS (logo da Prefeitura, termo de ciência).</p>
+{SHOT2}
+<p>No impresso, o <strong>CPF aparece anonimizado</strong> embaixo do nome, no formato da LGPD: <em>000.***.**0-00</em> (só o começo, o 9º dígito e os dois finais). A coluna <strong>Origem</strong> continua (assinatura na tela, autor na publicação etc.).</p>
+<p class="callout info"><strong>LGPD:</strong> o CPF completo fica só no registro interno de auditoria. Papel e PDF da equipe não levam o número inteiro.</p>
+<p class="callout success"><strong>Dica:</strong> Depois de assinar, o cartão no dashboard muda para <strong>Ciência ok</strong>. Se o recado não pedir ciência, não há o que assinar.</p>
+'''
+            },
+            {
+                'name': 'Mural de ações da rede',
+                'shots': [
+                    ('mural', 'Mural da rede com filtros de unidade, tema e mês'),
+                    ('acao-nova', 'Formulário compacto Registrar ação: tema, data, descrição e fotos'),
+                ],
+                'html': '''
+<p>O <strong>mural</strong> é o feed da rede: ações que a unidade registrou (educação em saúde, grupo, mutirão…) e também os itens anunciados na <strong>Lojinha Interna</strong>.</p>
+{SHOT0}
+<h2>Como registrar uma ação</h2>
+<p>Quem publica (coordenação, apoio administrativo, gestor central, administrador):</p>
+<ol>
+<li>No dashboard, <strong>Registrar ação</strong> — ou, no mural, o mesmo botão.</li>
+<li>Confira a unidade (gestor central e administrador podem escolher outra).</li>
+<li>Escolha o <strong>tema</strong> (lista no padrão dos temas para saúde da Ficha de Atividade Coletiva do e-SUS APS).</li>
+<li>Informe a data, um recado curto (até 400 caracteres) e de <strong>1 a 4 fotos</strong>.</li>
+<li>Envie. A ação aparece no mural da rede e no cartão do dashboard.</li>
+</ol>
+{SHOT1}
+<p>As fotos entram em miniatura. Clique para ampliar; se houver mais de uma, as setas (ou o dedo) passam de uma para a outra.</p>
+<h2>Lojinha no mural</h2>
+<p>Item anunciado na Lojinha Interna também entra no feed, com o status:</p>
+<ul>
+<li><strong>Disponível</strong> — ainda pode ser pedido.</li>
+<li><strong>Pego</strong> — outra unidade já reservou.</li>
+<li><strong>Retirado</strong> — saiu da vitrine.</li>
+</ul>
+<p>O atalho <strong>Ver lojinha</strong> abre a aba certa em Transferências. O passo a passo de anunciar e pegar item continua no capítulo de patrimônio deste livro.</p>
+<h2>Filtros</h2>
+<p>Em <strong>Ver tudo</strong> você filtra por unidade, tema (incluindo “Lojinha Interna”) e mês.</p>
+<p class="callout info"><strong>Temas:</strong> a lista vive em <strong>Configurações → Tipos de ação (mural)</strong>. Dá para incluir tema novo ou desativar o que não se usa mais. Tema desativado some do formulário e permanece no histórico.</p>
+<p class="callout success"><strong>Dica:</strong> O mural é compacto de propósito. Comunicado longo, com anexo e ciência, vai em <strong>Novo comunicado</strong> — não no registrar ação.</p>
+'''
+            },
+        ],
+    },
+    {
         'name': 'A ficha da sua unidade',
         'description': 'Salas, equipamentos, profissionais, chamados e as abas do dia a dia.',
         'pages': [
@@ -258,7 +372,7 @@ CHAPTERS = [
 <h2>Impressos do SIGUS</h2>
 <p>Várias telas têm o botão <strong>Imprimir</strong>. No SIGUS o padrão é abrir um <strong>quadro (modal)</strong> com a pré-visualização do documento institucional (logo da Prefeitura, Secretaria da Saúde, campos e espaço para assinatura). De lá você escolhe <strong>Imprimir / Salvar PDF</strong>.</p>
 {SHOT2}
-<p class="callout success"><strong>Vale para:</strong> chamado, segurança do paciente, falta abonada, termo de transferência, planejamento e contrato — o visual é o mesmo padrão da casa.</p>
+<p class="callout success"><strong>Vale para:</strong> chamado, segurança do paciente, falta abonada, termo de transferência, planejamento, contrato e <strong>termo de ciência de comunicado</strong> — o visual é o mesmo padrão da casa.</p>
 '''
             },
             {
@@ -566,6 +680,8 @@ CHAPTERS = [
                     ('cfg', 'Tela Configurações do Sistema, com os cartões (feriados, unidades, perfis…)'),
                     ('cfg-perfis', 'Gestão de Perfis: Ver / Editar / Adicionar por seção'),
                     ('cfg-nsp', 'Listas da Segurança do Paciente usadas nos selects da notificação'),
+                    ('cfg-identidade', 'Identidade da instalação: textos do município e galeria de logos, favicon e brasão'),
+                    ('cfg-tipos', 'Tipos de ação do mural, no padrão dos temas para saúde do e-SUS APS'),
                 ],
                 'html': '''
 <p>Área sensível. Em geral é da Saúde Digital / administração do sistema, com apoio da coordenação.</p>
@@ -577,6 +693,12 @@ CHAPTERS = [
 <h2>Listas da Segurança do Paciente</h2>
 <p>Os selects da notificação (status, classificação, tipo de incidente, setor, destino…) não estão fixos no código. Inclua, desative ou marque “pede texto Outro” e “jamais deveria ocorrer” em <strong>Configurações → Segurança do Paciente</strong>. Item desativado some dos formulários novos e permanece no histórico antigo.</p>
 {SHOT2}
+<h2>Identidade da instalação</h2>
+<p>Em <strong>Configurações → Identidade e assets</strong> (só administrador) ficam município, secretaria, domínio de e-mail e as imagens do login, da barra lateral e dos impressos (logo, favicon, brasão). Sem arquivo enviado, vale o padrão de Sorocaba. A paleta de cores do SIGUS não muda nesta tela.</p>
+{SHOT3}
+<h2>Tipos de ação (mural)</h2>
+<p>Os temas do mural seguem a Ficha de Atividade Coletiva do e-SUS APS e podem ganhar item novo ou ser desativados em <strong>Configurações → Tipos de ação (mural)</strong>.</p>
+{SHOT4}
 <h2>Feriados, usuários, links úteis</h2>
 <p>Feriados alimentam a agenda. Links úteis: atalhos que a equipe vê no menu da unidade.</p>
 <p>O cadastro de usuários (alta, importação do SIS, matrícula e conselho de classe) está no passo a passo <strong>Cadastro de usuários no SIGUS</strong>, neste mesmo capítulo — é a rotina de quem administra o sistema.</p>
@@ -654,7 +776,31 @@ CHAPTERS = [
 ]
 
 
-def publish(s: requests.Session) -> None:
+PAGES_SOMENTE_NOTICIAS = {
+    'O que é o SIGUS',
+    'O dashboard da unidade',
+    'Como publicar e dar ciência em um comunicado',
+    'Mural de ações da rede',
+    'Como abrir a ficha da unidade',
+    'Configurações, perfis e auditoria',
+}
+
+
+def chapters_para_publicar(somente_noticias: bool):
+    if not somente_noticias:
+        return CHAPTERS
+    out = []
+    for ch in CHAPTERS:
+        pages = [p for p in ch['pages'] if p['name'] in PAGES_SOMENTE_NOTICIAS]
+        if pages:
+            item = dict(ch)
+            item['pages'] = pages
+            out.append(item)
+    return out
+
+
+def publish(s: requests.Session, chapters=None) -> None:
+    chapters = chapters or CHAPTERS
     api(s, 'PUT', f'/books/{BOOK_ID}', json={
         'name': 'Manuais de utilização do SIGUS',
         'description_html': BOOK_DESC,
@@ -664,7 +810,7 @@ def publish(s: requests.Session) -> None:
     existing = api(s, 'GET', f'/books/{BOOK_ID}')
     already = {c['name']: c for c in existing.get('contents', []) if c.get('type') == 'chapter'}
 
-    for i, ch in enumerate(CHAPTERS, start=1):
+    for i, ch in enumerate(chapters, start=1):
         if ch['name'] in already:
             chapter = already[ch['name']]
             cid = chapter['id']
@@ -708,9 +854,18 @@ def publish(s: requests.Session) -> None:
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--somente-noticias',
+        action='store_true',
+        help='Atualiza dashboard, comunicados, mural e páginas ligadas.',
+    )
+    args = parser.parse_args()
+    chapters = chapters_para_publicar(args.somente_noticias)
     missing = [
         stem
-        for ch in CHAPTERS
+        for ch in chapters
         for pg in ch['pages']
         for stem, _alt in (pg.get('shots') or [])
         if not (SHOT / f'{stem}.png').exists()
@@ -719,7 +874,7 @@ def main():
         print('Prints faltando:', ', '.join(missing))
         sys.exit(1)
     s = session_login()
-    publish(s)
+    publish(s, chapters)
     print('OK. Abra', f'{BASE}/books/manuais-de-utilizacao-do-sigus')
 
 

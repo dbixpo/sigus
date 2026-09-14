@@ -2,7 +2,6 @@ from datetime import date
 from urllib.parse import quote
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
-from sqlalchemy import or_
 from app import db
 from app.models.usuario import Usuario, PERFIS, CBOS, VINCULOS, TIPOS_VINCULO, ESCOLARIDADES
 from app.models.cbo import CBO
@@ -89,35 +88,47 @@ def listar():
     if not current_user.pode('cadastrar_usuario') and not current_user.pode('gerenciar_usuarios'):
         abort(403)
 
-    page = request.args.get('page', 1, type=int)
-    per_page = min(max(request.args.get('per_page', 50, type=int), 10), 200)
-    q_busca = (request.args.get('q') or '').strip()
-
-    # Administradores não aparecem para quem não pode gerenciá-los (evita lista “óbvia” para apoio).
-    # Quem tem gerenciar_usuários (perfil Administrador na matriz padrão) vê todos, inclusive outros admins.
     query = Usuario.query
     if not current_user.pode('gerenciar_usuarios'):
         query = query.filter(Usuario.perfil != 'administrador')
 
-    if q_busca:
-        like = f'%{q_busca}%'
-        query = query.filter(
-            or_(Usuario.nome.ilike(like), Usuario.email.ilike(like))
+    usuarios = query.order_by(Usuario.nome).all()
+    ids = [u.id for u in usuarios]
+    matriculas_por_usuario = {}
+    cbo_mapa = {}
+    if ids:
+        mats = (
+            MatriculaProfissional.query
+            .filter(MatriculaProfissional.usuario_id.in_(ids))
+            .order_by(MatriculaProfissional.numero)
+            .all()
         )
-
-    query = query.order_by(Usuario.nome)
-    paginacao = query.paginate(page=page, per_page=per_page, error_out=False)
-    usuarios = paginacao.items
+        from collections import defaultdict
+        agrupadas = defaultdict(list)
+        codigos = set()
+        for m in mats:
+            agrupadas[m.usuario_id].append(m)
+            if m.cbo:
+                codigos.add(m.cbo)
+        for u in usuarios:
+            if u.cbo:
+                codigos.add(u.cbo)
+        matriculas_por_usuario = dict(agrupadas)
+        if codigos:
+            cbo_mapa = {
+                c.codigo: c.descricao
+                for c in CBO.query.filter(CBO.codigo.in_(codigos)).all()
+            }
 
     pode_cadastrar = current_user.pode('cadastrar_usuario')
     return render_template(
         'usuarios/listar.html',
         usuarios=usuarios,
+        matriculas_por_usuario=matriculas_por_usuario,
+        cbo_mapa=cbo_mapa,
         perfis=PERFIS,
         pode_cadastrar=pode_cadastrar,
         is_admin=current_user.pode('gerenciar_usuarios'),
-        paginacao=paginacao,
-        q_busca=q_busca,
     )
 
 
@@ -130,10 +141,8 @@ def novo():
     perfis_disponiveis = _perfis_disponiveis()
 
     if request.method == 'POST':
-        email = request.form['email'].strip().lower()
-        # Se não tiver @, adiciona o domínio padrão
-        if '@' not in email:
-            email = email + '@sorocaba.sp.gov.br'
+        from app.models.identidade import completar_email
+        email = completar_email(request.form.get('email', ''))
         if Usuario.query.filter_by(email=email).first():
             flash('Este e-mail já está cadastrado.', 'danger')
             return redirect(url_for('usuarios.novo'))
@@ -194,10 +203,8 @@ def editar(id):
 
             # Apenas administrador pode alterar o e-mail
             if is_admin:
-                novo_email = request.form.get('email', '').strip().lower()
-                # Se não tiver @, adiciona o domínio padrão
-                if '@' not in novo_email:
-                    novo_email = novo_email + '@sorocaba.sp.gov.br'
+                from app.models.identidade import completar_email
+                novo_email = completar_email(request.form.get('email', ''))
                 # Verifica se o novo e-mail já existe (exceto o próprio usuário)
                 if novo_email != usuario.email:
                     if Usuario.query.filter(Usuario.email == novo_email, Usuario.id != usuario.id).first():

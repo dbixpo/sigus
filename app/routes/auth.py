@@ -24,10 +24,8 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard.index'))
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        # Se não tiver @, adiciona o domínio padrão
-        if '@' not in email:
-            email = email + '@sorocaba.sp.gov.br'
+        from app.models.identidade import completar_email
+        email = completar_email(request.form.get('email', ''))
         senha = request.form.get('senha', '')
         lembrar = request.form.get('lembrar') == 'on'
 

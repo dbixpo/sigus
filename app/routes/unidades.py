@@ -12,6 +12,7 @@ from app.models.usuario import Usuario, CBOS, VINCULOS, TIPOS_VINCULO
 from app.models.cbo import CBO
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.nsp import NspOcorrencia, NspCatalogo
+from app.models.identidade import cidade_padrao
 from app.utils import _montar_corpo_email_ficha, _montar_corpo_email_rede, agora_local
 
 _CNES_DEST = 'cnes@sorocaba.sp.gov.br,suportesis.sorocaba@sorocaba.sp.gov.br'
@@ -103,7 +104,7 @@ def nova():
             numero=request.form.get('numero', '').strip(),
             complemento=request.form.get('complemento', '').strip() or None,
             bairro=request.form.get('bairro', '').strip(),
-            cidade=request.form.get('cidade', 'Sorocaba').strip(),
+            cidade=request.form.get('cidade', '').strip() or cidade_padrao(),
             uf=request.form.get('uf', 'SP').upper(),
             cep=request.form.get('cep', '').strip(),
             telefone=request.form.get('telefone', '').strip(),
@@ -317,7 +318,7 @@ def editar(id):
         unidade.numero = request.form.get('numero', '').strip()
         unidade.complemento = request.form.get('complemento', '').strip() or None
         unidade.bairro = request.form.get('bairro', '').strip()
-        unidade.cidade = request.form.get('cidade', 'Sorocaba').strip()
+        unidade.cidade = request.form.get('cidade', '').strip() or cidade_padrao()
         unidade.uf = request.form.get('uf', 'SP').upper()
         unidade.cep = request.form.get('cep', '').strip()
         unidade.telefone = request.form.get('telefone', '').strip()

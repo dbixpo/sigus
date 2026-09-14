@@ -149,7 +149,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png', _external=True) }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+            <img src="{{ identidade.asset_url('brasao', True) }}" alt="{{ identidade.alt_brasao }}" onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
             RESUMO DO CONTRATO

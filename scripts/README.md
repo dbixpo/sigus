@@ -7,7 +7,7 @@ Rode na **raiz** do repositório, com venv e `.env`. Nenhum script deve receber 
 | `scripts/clone_banco.py` | `pg_dump` → `database/sigus_backup_*.sql` (gitignore) |
 | `scripts/restaura_banco.py` | Restaura ZIP ou SQL em `database/` no banco do `.env` |
 | `scripts/reset_usuario_sigus.py` | Troca senha e/ou perfil. Ferramenta correta para admin perdido |
-| `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais na Estante SES (capítulos gerais) |
+| `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais na Estante SES (capítulos gerais). `--somente-noticias` atualiza dashboard, comunicados e mural. |
 | `scripts/pub_estante_patrimonio.py` | Capítulo patrimônio (salas, equipamentos, transferências, lojinha) |
 | `scripts/importar_schema_sueq.py` | Importa schema/dados SUEQ para o schema `sueq` (não mexe no `public`) |
 

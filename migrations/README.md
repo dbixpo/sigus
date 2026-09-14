@@ -42,6 +42,10 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 
 - `add_capacidade_maxima_salas.py`
 
+**Identidade da instalação**
+
+- `add_identidade_sistema.py` — textos (município, secretaria, domínio de e-mail) e galeria de assets; seed Sorocaba se a linha 1 não existir
+
 Lista completa: os arquivos `add_*.py` nesta pasta. O nome descreve o que entra no banco.
 
 ## Convenção para script novo

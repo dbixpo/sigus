@@ -7,7 +7,7 @@ A ponta **não** lê este repositório. O manual operacional está no BookStack 
 
 Tom: didático (“você”), caixas `callout info/warning/success`, passo a passo, print da tela. Espelha o livro de manuais do SISWEB.
 
-Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha): uma página por tela.
+Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha): uma página por tela. Capítulo **Dashboard, comunicados e mural**: tela inicial da unidade, ciência com CPF/assinatura e o feed de ações.
 
 ## Como republicar (máquina de quem edita o livro)
 
@@ -23,6 +23,13 @@ Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha
    ```
 
 Os scripts fazem login na sessão web da Estante e usam `/api/chapters`, `/api/pages`, `/api/image-gallery`. Capítulo existente é atualizado pelo nome; página existente idem.
+
+Para atualizar só o dashboard, comunicados e mural (textos + prints novos):
+
+```powershell
+.\venv\Scripts\python.exe scripts\_shots_geral.py
+.\venv\Scripts\python.exe scripts\pub_estante_sigus.py --somente-noticias
+```
 
 Para atualizar só o fluxo de transferência (textos + prints que já estão no livro, sem republicar o capítulo inteiro):
 

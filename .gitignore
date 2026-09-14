@@ -31,6 +31,9 @@ app/static/uploads/nsp/
 app/static/uploads/chamados/
 app/static/uploads/manuais_tmp/
 app/static/uploads/perfis/
+app/static/uploads/identidade/
+app/static/uploads/comunicados/
+app/static/uploads/acoes/
 
 # IDE / Editor
 .idea/

@@ -91,11 +91,11 @@
                     <label class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
                     {% if not usuario %}
                     <input type="text" name="email" class="form-control"
-                           placeholder="usuario ou usuario@sorocaba.sp.gov.br">
+                           placeholder="usuario ou usuario@{{ identidade.dominio_email }}">
                     {% elif is_admin %}
                     <input type="text" name="email" class="form-control"
                            value="{{ usuario.email }}"
-                           placeholder="usuario ou usuario@sorocaba.sp.gov.br">
+                           placeholder="usuario ou usuario@{{ identidade.dominio_email }}">
                     {% else %}
                     <input type="email" class="form-control" value="{{ usuario.email }}" disabled>
                     {% endif %}

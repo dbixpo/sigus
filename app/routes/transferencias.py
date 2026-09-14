@@ -588,6 +588,8 @@ def lojinha_finalizar():
             item_loj.quantidade -= qtd_tirada
             if item_loj.quantidade <= 0:
                 item_loj.ativo = False
+                item_loj.destino_unidade_id = unidade_destino_id
+                item_loj.destino_em = datetime.utcnow()
 
     db.session.commit()
     flash('Documento(s) de transferência criado(s)! Aceite na aba Pendentes para confirmar o recebimento.', 'success')

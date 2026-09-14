@@ -207,9 +207,9 @@ if (window.self !== window.top) {
 
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+            <img src="{{ identidade.asset_url('brasao') }}"
                  onerror="this.style.display='none'"
-                 alt="Prefeitura de Sorocaba">
+                 alt="{{ identidade.alt_brasao }}">
         </div>
         <div class="cab-titulo">
             SISTEMA INTEGRADO DE GESTÃO DE UNIDADE<br>
@@ -537,7 +537,7 @@ if (window.self !== window.top) {
     </div>
 
     <div class="rodape">
-        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }} &nbsp;·&nbsp; {{ identidade.secretaria }} &nbsp;·&nbsp;
         Documento interno do NSP (cultura não punitiva) &nbsp;·&nbsp;
         Impresso em {{ now | br_datetime }}
     </div>
@@ -547,9 +547,9 @@ if (window.self !== window.top) {
 {% if fotos_img %}
 <div class="pagina-fotos">
     <div class="fotos-cab-mini">
-        <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+        <img src="{{ identidade.asset_url('brasao') }}"
              onerror="this.style.display='none'"
-             alt="Prefeitura de Sorocaba">
+             alt="{{ identidade.alt_brasao }}">
         <div class="ft">
             SISTEMA INTEGRADO DE GESTÃO DE UNIDADE
             <small>Evidências — {{ o.protocolo }}</small>
@@ -574,7 +574,7 @@ if (window.self !== window.top) {
     </div>
 
     <div class="rodape" style="margin-top:24px;">
-        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }} &nbsp;·&nbsp; {{ identidade.secretaria }} &nbsp;·&nbsp;
         Impresso em {{ now | br_datetime }}
     </div>
 </div>

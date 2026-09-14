@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Novo comunicado{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Novo comunicado</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-bullhorn"></i> Novo comunicado</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-body">
+                {% if not unidades %}
+                <div class="alert alert-warning mb-0">
+                    Selecione uma unidade no topo para publicar um comunicado.
+                </div>
+                {% else %}
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="mb-3">
+                        <label class="form-label" for="titulo">Título *</label>
+                        <input type="text" name="titulo" id="titulo" class="form-control" required maxlength="200"
+                               value="{{ request.form.get('titulo', '') }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="texto">Texto</label>
+                        <textarea name="texto" id="texto" class="form-control" rows="5"
+                                  placeholder="Recado curto para a equipe…">{{ request.form.get('texto', '') }}</textarea>
+                    </div>
+
+                    {% if pode_compartilhar %}
+                    <div class="mb-3">
+                        <label class="form-label" for="filtroUnidadesComunicado">Unidades *</label>
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                            <input type="search" id="filtroUnidadesComunicado" class="form-control"
+                                   placeholder="Buscar unidade…" autocomplete="off">
+                        </div>
+                        <div class="border rounded p-2" id="listaUnidadesComunicado" style="max-height:260px; overflow:auto;">
+                            {% set selecionadas = marcadas %}
+                            {% for u in unidades %}
+                            <div class="form-check unidade-check" data-busca="{{ u.nome }}">
+                                <input class="form-check-input" type="checkbox" name="unidades"
+                                       value="{{ u.id }}" id="un{{ u.id }}"
+                                       {% if u.id | string in selecionadas %}checked{% endif %}>
+                                <label class="form-check-label" for="un{{ u.id }}">{{ u.nome }}</label>
+                            </div>
+                            {% endfor %}
+                            <div class="small text-muted d-none py-1" id="unidadesComunicadoVazio">Nenhuma unidade com esse nome.</div>
+                        </div>
+                        <div class="form-text">Gestor Central e Administrador podem compartilhar com outras unidades.</div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted small">
+                        Será publicado na unidade <strong>{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}</strong>.
+                    </p>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="anexos">Documentos (opcional)</label>
+                        <input type="file" name="anexos" id="anexos" class="form-control" multiple
+                               accept=".pdf,.doc,.docx,.odt,.jpg,.jpeg,.png,.webp">
+                        <div class="form-text">Até 5 arquivos, 10 MB cada (PDF, Word ou imagem).</div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" name="exige_ciencia" id="exige_ciencia"
+                               {% if request.method != 'POST' or request.form.get('exige_ciencia') == 'on' %}checked{% endif %}>
+                        <label class="form-check-label" for="exige_ciencia">
+                            Cobrar ciência de todo mundo com vínculo ativo nas unidades
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-1"></i>Publicar
+                        </button>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if pode_compartilhar and unidades %}
+<script>
+(function () {
+    var input = document.getElementById('filtroUnidadesComunicado');
+    var rows = document.querySelectorAll('#listaUnidadesComunicado .unidade-check');
+    var vazio = document.getElementById('unidadesComunicadoVazio');
+    if (!input || !rows.length) return;
+    function normalizar(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+    function aplicar() {
+        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+        var visiveis = 0;
+        rows.forEach(function (row) {
+            var texto = normalizar(row.getAttribute('data-busca') || '');
+            var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+            row.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
+    }
+    input.addEventListener('input', aplicar);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            aplicar();
+        }
+    });
+})();
+</script>
+{% endif %}
+{% endblock %}

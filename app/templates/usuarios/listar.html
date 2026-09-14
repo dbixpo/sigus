@@ -11,44 +11,23 @@
     {% endif %}
 </div>
 
-<form method="get" id="formBuscaUsuarios" class="card mb-3">
-    <div class="card-body py-2">
-        <div class="row g-2 align-items-end">
-            <input type="hidden" name="page" value="1" id="buscaUsuariosPage">
-            <div class="col-md-6 col-lg-5">
-                <label class="form-label small mb-0" for="inputBuscaUsuarios">Buscar (nome ou e-mail)</label>
-                <input type="search" name="q" id="inputBuscaUsuarios" class="form-control form-control-sm"
-                       value="{{ q_busca }}" placeholder="Procure por Nome ou Parte do E-mail" autocomplete="off">
-            </div>
-            <div class="col-auto d-flex gap-1">
-                <button type="submit" class="btn btn-primary btn-sm" title="Buscar">
-                    <i class="fas fa-search"></i>
-                </button>
-                {% if q_busca %}
-                <a href="{{ url_for('usuarios.listar', per_page=paginacao.per_page) }}" class="btn btn-outline-secondary btn-sm" title="Limpar busca">×</a>
-                {% endif %}
-            </div>
-            <div class="col-md-auto ms-md-auto">
-                <label class="form-label small mb-0" for="selPerPageUsuarios">Por página</label>
-                <select name="per_page" id="selPerPageUsuarios" class="form-select form-select-sm" style="width:85px"
-                        onchange="document.getElementById('buscaUsuariosPage').value='1'; this.form.submit();">
-                    <option value="25" {% if paginacao.per_page == 25 %}selected{% endif %}>25</option>
-                    <option value="50" {% if paginacao.per_page == 50 %}selected{% endif %}>50</option>
-                    <option value="100" {% if paginacao.per_page == 100 %}selected{% endif %}>100</option>
-                    <option value="200" {% if paginacao.per_page == 200 %}selected{% endif %}>200</option>
-                </select>
+{% if usuarios %}
+<div class="mb-3">
+    <label class="form-label small text-muted mb-1" for="filtroUsuarios">Buscar usuário</label>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="flex-grow-1" style="max-width:420px;">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="search" id="filtroUsuarios" class="form-control"
+                       placeholder="Nome, e-mail, matrícula, CBO, WhatsApp…" autocomplete="off" autofocus>
             </div>
         </div>
-        <p class="text-muted small mb-0 mt-2">
-            Ordem alfabética por nome. A busca atualiza automaticamente após você parar de digitar (meio segundo).
-        </p>
+        <span class="small text-muted" id="filtroUsuariosCount">{{ usuarios | length }} usuário(s)</span>
     </div>
-</form>
+</div>
+{% endif %}
 
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center py-2">
-        <span class="small text-muted">{{ paginacao.total }} usuário(s) neste filtro</span>
-    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
@@ -65,10 +44,14 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="listaUsuarios">
                     {% for u in usuarios %}
-                    {% set mats = u.matriculas.filter_by(ativo=True).all() %}
-                    <tr>
+                    {% set mats = matriculas_por_usuario.get(u.id, []) %}
+                    {% set mats_ativas = mats | selectattr('ativo') | list %}
+                    {% set busca_mats = mats | map(attribute='numero') | select | join(' ') %}
+                    {% set busca_cbos = mats | map(attribute='cbo') | select | join(' ') %}
+                    <tr class="usuario-row"
+                        data-busca="{{ [u.nome, u.email, u.perfil, u.perfil_label, u.cpf, u.whatsapp, u.telefone, u.cbo, 'ativo' if u.ativo else 'inativo', busca_mats, busca_cbos] | select | join(' ') }}">
                         <td class="fw-semibold small">{{ u.nome }}</td>
 
                         <td class="small text-muted d-none d-md-table-cell">
@@ -98,10 +81,10 @@
                         </td>
 
                         <td class="small d-none d-lg-table-cell">
-                            {% if mats %}
+                            {% if mats_ativas %}
                             <div class="d-flex flex-column gap-1">
-                                {% for m in mats %}
-                                <span class="{{ 'text-muted' if not m.ativo else '' }}">
+                                {% for m in mats_ativas %}
+                                <span>
                                     {% if m.numero == 'Sem Matrícula' or not m.numero %}
                                     <span class="fst-italic">{{ m.numero if m.numero else 'Sem matrícula' }}</span>
                                     {% else %}
@@ -109,12 +92,7 @@
                                     {% endif %}
                                     {% if m.cbo %}
                                     <span class="text-muted mx-1">|</span>
-                                    <span class="{{ 'text-decoration-line-through text-muted' if not m.ativo else '' }}">
-                                        {{ m.cbo_label }}
-                                    </span>
-                                    {% endif %}
-                                    {% if not m.ativo %}
-                                    <span class="badge bg-light text-secondary ms-1" style="font-size:.7rem">inativa</span>
+                                    <span>{{ m.cbo }}{% if cbo_mapa.get(m.cbo) %} – {{ cbo_mapa.get(m.cbo) }}{% endif %}</span>
                                     {% endif %}
                                 </span>
                                 {% endfor %}
@@ -122,7 +100,7 @@
                             {% elif u.cbo %}
                             <span class="text-muted fst-italic">Sem matrícula</span>
                             <span class="text-muted mx-1">|</span>
-                            <span>{{ u.cbo_label }}</span>
+                            <span>{{ u.cbo }}{% if cbo_mapa.get(u.cbo) %} – {{ cbo_mapa.get(u.cbo) }}{% endif %}</span>
                             {% else %}
                             <span class="text-muted fst-italic">—</span>
                             {% endif %}
@@ -144,7 +122,7 @@
                     {% else %}
                     <tr>
                         <td colspan="7" class="text-center text-muted py-4">
-                            Nenhum usuário encontrado{% if q_busca %} para “{{ q_busca }}”{% endif %}.
+                            Nenhum usuário cadastrado.
                         </td>
                     </tr>
                     {% endfor %}
@@ -152,62 +130,47 @@
             </table>
         </div>
     </div>
-    {% if paginacao.pages > 1 %}
-    <div class="card-footer d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 py-2">
-        <small class="text-muted">
-            Página {{ paginacao.page }} de {{ paginacao.pages }}
-        </small>
-        <nav aria-label="Paginação">
-            <ul class="pagination pagination-sm mb-0 flex-wrap justify-content-center justify-content-sm-end">
-                <li class="page-item {% if not paginacao.has_prev %}disabled{% endif %}">
-                    {% if paginacao.has_prev %}
-                    <a class="page-link" href="{{ url_for('usuarios.listar', page=paginacao.prev_num, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}" title="Página anterior">‹</a>
-                    {% else %}
-                    <span class="page-link">‹</span>
-                    {% endif %}
-                </li>
-                {% for p in paginacao.iter_pages(left_edge=1, right_edge=1, left_current=3, right_current=3) %}
-                    {% if p %}
-                        <li class="page-item{% if p == paginacao.page %} active{% endif %}">
-                            {% if p == paginacao.page %}
-                            <span class="page-link">{{ p }}</span>
-                            {% else %}
-                            <a class="page-link" href="{{ url_for('usuarios.listar', page=p, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}">{{ p }}</a>
-                            {% endif %}
-                        </li>
-                    {% else %}
-                        <li class="page-item disabled"><span class="page-link">…</span></li>
-                    {% endif %}
-                {% endfor %}
-                <li class="page-item {% if not paginacao.has_next %}disabled{% endif %}">
-                    {% if paginacao.has_next %}
-                    <a class="page-link" href="{{ url_for('usuarios.listar', page=paginacao.next_num, per_page=paginacao.per_page) }}{% if q_busca %}&q={{ q_busca | urlencode }}{% endif %}" title="Próxima página">›</a>
-                    {% else %}
-                    <span class="page-link">›</span>
-                    {% endif %}
-                </li>
-            </ul>
-        </nav>
-    </div>
-    {% endif %}
 </div>
+<p class="text-muted small mt-3 d-none" id="filtroUsuariosVazio">Nenhum usuário com esse filtro.</p>
 {% endblock %}
 
 {% block scripts %}
 <script>
 (function () {
-  var form = document.getElementById('formBuscaUsuarios');
-  var input = document.getElementById('inputBuscaUsuarios');
-  var pageHidden = document.getElementById('buscaUsuariosPage');
-  if (!form || !input) return;
-  var t;
-  input.addEventListener('input', function () {
-    clearTimeout(t);
-    t = setTimeout(function () {
-      if (pageHidden) pageHidden.value = '1';
-      form.requestSubmit();
-    }, 500);
-  });
+    var input = document.getElementById('filtroUsuarios');
+    var rows = document.querySelectorAll('.usuario-row');
+    var countEl = document.getElementById('filtroUsuariosCount');
+    var vazio = document.getElementById('filtroUsuariosVazio');
+    if (!input || !rows.length) return;
+
+    function normalizar(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function aplicar() {
+        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+        var visiveis = 0;
+        rows.forEach(function (row) {
+            var texto = normalizar(row.getAttribute('data-busca') || '');
+            var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+            row.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        if (countEl) {
+            countEl.textContent = tokens.length
+                ? visiveis + ' de ' + rows.length + ' usuário(s)'
+                : rows.length + ' usuário(s)';
+        }
+        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
+    }
+
+    input.addEventListener('input', aplicar);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            aplicar();
+        }
+    });
 })();
 </script>
 {% endblock %}

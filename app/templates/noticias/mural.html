@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% from 'noticias/_mural_fotos.html' import thumbs %}
+{% block title %}Mural da rede{% endblock %}
+
+{% block head %}
+<style>
+.mural-feed-page { max-width: 680px; }
+.mural-card {
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.07);
+    padding: 0.95rem 1rem 1rem; margin-bottom: 0.75rem;
+}
+.mural-tema { font-size: 0.68rem; font-weight: 700; color: #1A82B8; text-transform: uppercase; letter-spacing: .03em; }
+.mural-tema.lojinha { color: #19A88B; }
+.mural-desc { font-size: 0.88rem; color: #1E3A50; margin-top: 0.25rem; line-height: 1.4; }
+.mural-foot { font-size: 0.75rem; color: #718096; margin-top: 0.45rem; }
+.mural-thumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.55rem; }
+.mural-thumb {
+    border: 1px solid #e2e8f0; background: #fff; padding: 3px;
+    border-radius: 6px; cursor: pointer; line-height: 0;
+}
+.mural-thumb img {
+    display: block; max-height: 88px; max-width: 120px;
+    width: auto; height: auto; object-fit: contain;
+}
+.mural-status {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .03em; border-radius: 20px; padding: .15rem .55rem;
+    margin-top: .4rem;
+}
+.mural-status.disponivel { background: #e6f7f3; color: #0f766e; }
+.mural-status.pego { background: #edf1f5; color: #4a6274; }
+.mural-status.retirado { background: #f4f4f5; color: #718096; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Mural da rede</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-images"></i> Mural da rede</h1>
+    {% if pode_publicar %}
+    <a href="{{ url_for('noticias.nova_acao') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-camera me-1"></i>Registrar ação
+    </a>
+    {% endif %}
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <label class="form-label small text-muted mb-1" for="unidade">Unidade</label>
+        <select name="unidade" id="unidade" class="form-select form-select-sm">
+            <option value="">Todas</option>
+            {% for u in unidades %}
+            <option value="{{ u.id }}" {% if filtro_unidade == u.id %}selected{% endif %}>{{ u.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small text-muted mb-1" for="tipo">Tema</label>
+        <select name="tipo" id="tipo" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="lojinha" {% if filtro_tipo == 'lojinha' %}selected{% endif %}>Lojinha Interna</option>
+            {% for t in tipos %}
+            <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label small text-muted mb-1" for="mes">Mês</label>
+        <input type="month" name="mes" id="mes" class="form-control form-control-sm" value="{{ filtro_mes }}">
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
+        <a href="{{ url_for('noticias.mural') }}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+    </div>
+</form>
+
+{% if feed %}
+<div class="mural-feed-page">
+    {% for entry in feed %}
+    {% if entry.tipo == 'acao' %}
+    {% set a = entry.acao %}
+    <article class="mural-card" id="acao-{{ a.id }}">
+        <div class="mural-tema">{{ a.tipo.nome if a.tipo else 'Ação' }}</div>
+        <div class="mural-desc">{{ a.descricao }}</div>
+        {{ thumbs(a.fotos, 'acao-' ~ a.id) }}
+        <div class="mural-foot">
+            {{ a.unidade.nome if a.unidade else '' }}
+            · {{ a.data_acao.strftime('%d/%m/%Y') if a.data_acao else '' }}
+            {% if a.autor %} · {{ a.autor.nome.split()[0] }}{% endif %}
+        </div>
+    </article>
+    {% else %}
+    {% set item = entry.item %}
+    <article class="mural-card" id="lojinha-{{ item.id }}">
+        <div class="mural-tema lojinha"><i class="fas fa-store me-1"></i>Lojinha Interna</div>
+        <div class="mural-desc">{{ item.descricao_exibicao() }}</div>
+        <div>
+            <span class="mural-status {{ item.status_mural }}">{{ item.status_mural_label }}</span>
+            {% if item.classificacao %}
+            <span class="mural-status" style="background:#eef6fb;color:#1A82B8;">Classe {{ item.classificacao }}</span>
+            {% endif %}
+        </div>
+        <div class="mural-foot">
+            {{ item.unidade.nome if item.unidade else '' }}
+            · {{ item.criado_em.strftime('%d/%m/%Y %H:%M') if item.criado_em else '' }}
+            {% if item.criador %} · {{ item.criador.nome.split()[0] }}{% endif %}
+            {% if item.numero_patrimonio_ou_serie() %} · {{ item.numero_patrimonio_ou_serie() }}{% endif %}
+            · <a href="{{ url_for('transferencias.listar', aba='lojinha') }}">Ver lojinha</a>
+        </div>
+    </article>
+    {% endif %}
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <i class="fas fa-images"></i>
+        <p class="mb-0">Nenhuma publicação com esses filtros.</p>
+    </div>
+</div>
+{% endif %}
+{% include 'noticias/_mural_lightbox.html' %}
+{% endblock %}

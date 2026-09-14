@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Registrar ação{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('noticias.mural') }}">Mural</a></li>
+        <li class="breadcrumb-item active">Registrar ação</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-camera"></i> Registrar ação</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                {% if not tipos %}
+                <div class="alert alert-warning mb-0">
+                    Nenhum tema de ação ativo. Peça ao administrador para cadastrar em Configurações.
+                </div>
+                {% elif not unidades %}
+                <div class="alert alert-warning mb-0">
+                    Selecione uma unidade no topo para registrar a ação.
+                </div>
+                {% else %}
+                <p class="text-muted small">Foto e um recado curto — o mural da rede é compacto de propósito.</p>
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    {% if escolher_unidade %}
+                    <div class="mb-3">
+                        <label class="form-label" for="unidade_id">Unidade *</label>
+                        <select name="unidade_id" id="unidade_id" class="form-select" required>
+                            {% for u in unidades %}
+                            <option value="{{ u.id }}"
+                                {% if request.form.get('unidade_id') == (u.id | string) or (not request.form.get('unidade_id') and current_user.unidade_logada and current_user.unidade_logada.id == u.id) %}selected{% endif %}>
+                                {{ u.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <p class="small text-muted">
+                        Unidade: <strong>{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}</strong>
+                    </p>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="tipo_acao_id">Tema *</label>
+                        <select name="tipo_acao_id" id="tipo_acao_id" class="form-select" required>
+                            <option value="">Selecione…</option>
+                            {% for t in tipos %}
+                            <option value="{{ t.id }}" {% if request.form.get('tipo_acao_id') == (t.id | string) %}selected{% endif %}>
+                                {{ t.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="data_acao">Data da ação</label>
+                        <input type="date" name="data_acao" id="data_acao" class="form-control"
+                               value="{{ request.form.get('data_acao') or hoje_iso }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="descricao">Descrição *</label>
+                        <textarea name="descricao" id="descricao" class="form-control" rows="4" required
+                                  maxlength="{{ max_desc }}"
+                                  placeholder="O que aconteceu, em poucas linhas…">{{ request.form.get('descricao', '') }}</textarea>
+                        <div class="form-text"><span id="descCount">0</span>/{{ max_desc }}</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label" for="fotos">Fotos * (1 a 4)</label>
+                        <input type="file" name="fotos" id="fotos" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required>
+                        <div class="form-text">JPG, PNG ou WebP, até 5 MB cada.</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle me-1"></i>Publicar no mural
+                        </button>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var ta = document.getElementById('descricao');
+    var count = document.getElementById('descCount');
+    if (!ta || !count) return;
+    function upd() { count.textContent = (ta.value || '').length; }
+    ta.addEventListener('input', upd);
+    upd();
+})();
+</script>
+{% endblock %}

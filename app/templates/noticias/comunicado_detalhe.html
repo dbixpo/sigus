@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.titulo }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Comunicado</li>
+    </ol>
+</nav>
+
+<div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
+    <h1 class="mb-0"><i class="fas fa-bullhorn"></i> {{ item.titulo }}</h1>
+    <button type="button" class="btn btn-outline-secondary"
+            data-url="{{ url_for('noticias.imprimir_comunicado', id=item.id) }}"
+            data-titulo="Ciência — {{ item.titulo }}"
+            onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
+        <i class="fas fa-print me-1"></i>Imprimir
+    </button>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="small text-muted mb-3">
+                    {{ item.autor.nome if item.autor else '—' }}
+                    · {{ item.criado_em.strftime('%d/%m/%Y %H:%M') if item.criado_em else '' }}
+                    {% if item.unidades_alvo %}
+                    · {{ item.unidades_alvo | map(attribute='nome') | join(', ') }}
+                    {% endif %}
+                </div>
+                {% if item.texto %}
+                <div style="white-space: pre-wrap;">{{ item.texto }}</div>
+                {% endif %}
+
+                {% if item.anexos %}
+                <h6 class="mt-4 mb-2">Documentos</h6>
+                {% for a in item.anexos %}
+                    {% if a.is_imagem %}
+                    <div class="mb-3">
+                        <img src="{{ a.url }}" alt="{{ a.original or a.filename }}"
+                             class="img-fluid rounded border"
+                             style="max-height:280px; width:auto; object-fit:contain;">
+                        <div class="small text-muted mt-1">
+                            <a href="{{ a.url }}" target="_blank" rel="noopener">{{ a.original or a.filename }}</a>
+                            ({{ a.tamanho_fmt }})
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% set outros = item.anexos | rejectattr('is_imagem') | list %}
+                {% if outros %}
+                <ul class="list-unstyled mb-0">
+                    {% for a in outros %}
+                    <li class="mb-1">
+                        <a href="{{ a.url }}" target="_blank" rel="noopener">
+                            <i class="fas fa-paperclip me-1"></i>{{ a.original or a.filename }}
+                        </a>
+                        <span class="text-muted small">({{ a.tamanho_fmt }})</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+
+                {% if item.exige_ciencia %}
+                <div class="mt-4" id="ciencia">
+                    {% if deve_ciencia and not ja_ciencia %}
+                    <form method="POST" action="{{ url_for('noticias.dar_ciencia', id=item.id) }}" id="formCiencia">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-pen-to-square me-1"></i>
+                            Informe o CPF cadastrado no SIGUS e assine no campo abaixo (mouse ou dedo)
+                            para confirmar que é você. Ficam gravados data, hora, IP e a unidade em que você está logado.
+                        </p>
+                        <div class="mb-3" style="max-width:220px;">
+                            <label class="form-label small mb-1" for="cpfCiencia">CPF *</label>
+                            <input class="form-control" type="text" name="cpf" id="cpfCiencia"
+                                   required maxlength="14" placeholder="000.000.000-00"
+                                   inputmode="numeric" autocomplete="off">
+                        </div>
+                        <div style="border:1px solid #ced4da; border-radius:6px; overflow:hidden; background:#fff; touch-action:none; cursor:crosshair;">
+                            <canvas id="canvasAssinatura" style="width:100%; display:block;"
+                                    width="900" height="160"></canvas>
+                        </div>
+                        <div class="d-flex gap-2 mt-2 flex-wrap">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimparAssinatura">
+                                <i class="fas fa-eraser me-1"></i>Limpar
+                            </button>
+                            <span id="avisoAssinatura" class="small text-danger align-self-center"></span>
+                        </div>
+                        <input type="hidden" name="assinatura_base64" id="inputAssinatura">
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="fas fa-check me-1"></i>Registrar ciência
+                        </button>
+                    </form>
+                    {% elif ja_ciencia %}
+                    <div class="alert alert-success py-2 mb-0">
+                        <div class="fw-semibold"><i class="fas fa-check-circle me-1"></i>Você já deu ciência</div>
+                        {% if minha_ciencia %}
+                        <div class="small mt-1">
+                            {{ minha_ciencia.ciencia_em.strftime('%d/%m/%Y %H:%M') if minha_ciencia.ciencia_em else '' }}
+                            {% if minha_ciencia.cpf_lgpd %} · CPF {{ minha_ciencia.cpf_lgpd }}{% endif %}
+                            {% if minha_ciencia.unidade %} · {{ minha_ciencia.unidade.nome }}{% endif %}
+                            {% if minha_ciencia.ip %} · IP {{ minha_ciencia.ip }}{% endif %}
+                            {% if minha_ciencia.origem %} · {{ minha_ciencia.origem_label }}{% endif %}
+                        </div>
+                        {% if minha_ciencia.assinatura_base64 %}
+                        <img src="{{ minha_ciencia.assinatura_base64 }}" alt="Sua assinatura"
+                             class="mt-2 d-block" style="max-height:64px; background:#fff; border:1px solid #d1e7dd; border-radius:6px;">
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <div class="small text-muted mt-2">{{ n_ok }} de {{ n_dest }} cientificaram.</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if ver_lista and item.exige_ciencia %}
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-header">Falta ciência ({{ faltam | length }})</div>
+            <div class="card-body p-0">
+                {% if faltam %}
+                <ul class="list-group list-group-flush">
+                    {% for u in faltam %}
+                    <li class="list-group-item py-2 small">{{ u.nome }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-3 text-muted small">Todo mundo já deu ciência.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">Já cientificaram ({{ deram | length }})</div>
+            <div class="card-body p-0">
+                {% if deram %}
+                <ul class="list-group list-group-flush">
+                    {% for c in deram %}
+                    <li class="list-group-item py-2 small">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <span>{{ c.usuario.nome if c.usuario else '—' }}</span>
+                                {% if c.cpf_lgpd %}
+                                <div class="text-muted" style="font-size:.7rem; line-height:1.2;">CPF {{ c.cpf_lgpd }}</div>
+                                {% endif %}
+                            </div>
+                            <span class="text-muted text-nowrap">{{ c.ciencia_em.strftime('%d/%m %H:%M') if c.ciencia_em else '' }}</span>
+                        </div>
+                        <div class="text-muted" style="font-size:.75rem;">
+                            {% if c.unidade %}{{ c.unidade.nome }}{% endif %}
+                            {% if c.ip %}{% if c.unidade %} · {% endif %}IP {{ c.ip }}{% endif %}
+                            {% if c.origem %}{% if c.unidade or c.ip %} · {% endif %}{{ c.origem_label }}{% endif %}
+                        </div>
+                        {% if c.assinatura_base64 %}
+                        <img src="{{ c.assinatura_base64 }}" alt="Assinatura"
+                             class="mt-1 d-block" style="max-height:40px; background:#fff;">
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-3 text-muted small">Ninguém deu ciência ainda.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if deve_ciencia and not ja_ciencia %}
+<script>
+(function () {
+    var canvas  = document.getElementById('canvasAssinatura');
+    if (!canvas) return;
+    var ctx     = canvas.getContext('2d');
+    var input   = document.getElementById('inputAssinatura');
+    var aviso   = document.getElementById('avisoAssinatura');
+    var desenhando = false;
+    var vazio   = true;
+
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth   = 2.2;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+
+    function coords(e) {
+        var rect  = canvas.getBoundingClientRect();
+        var scaleX = canvas.width  / rect.width;
+        var scaleY = canvas.height / rect.height;
+        var src = e.touches ? e.touches[0] : e;
+        return {
+            x: (src.clientX - rect.left) * scaleX,
+            y: (src.clientY - rect.top)  * scaleY
+        };
+    }
+
+    function iniciar(e) {
+        e.preventDefault();
+        desenhando = true;
+        var p = coords(e);
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+    }
+    function desenhar(e) {
+        if (!desenhando) return;
+        e.preventDefault();
+        var p = coords(e);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        vazio = false;
+        if (aviso) aviso.textContent = '';
+    }
+    function parar() {
+        if (!desenhando) return;
+        desenhando = false;
+        ctx.closePath();
+        sincronizar();
+    }
+
+    canvas.addEventListener('mousedown',  iniciar);
+    canvas.addEventListener('mousemove',  desenhar);
+    canvas.addEventListener('mouseup',    parar);
+    canvas.addEventListener('mouseleave', parar);
+    canvas.addEventListener('touchstart', iniciar, {passive: false});
+    canvas.addEventListener('touchmove',  desenhar, {passive: false});
+    canvas.addEventListener('touchend',   parar);
+
+    document.getElementById('btnLimparAssinatura').addEventListener('click', function () {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        input.value = '';
+        vazio = true;
+        if (aviso) aviso.textContent = '';
+    });
+
+    function sincronizar() {
+        if (!vazio) {
+            input.value = canvas.toDataURL('image/png');
+        }
+    }
+
+    function mascararCpf(v) {
+        var d = (v || '').replace(/\D/g, '').slice(0, 11);
+        return d.replace(/^(\d{3})(\d)/, '$1.$2')
+                .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1-$2');
+    }
+    var cpfEl = document.getElementById('cpfCiencia');
+    if (cpfEl) {
+        cpfEl.addEventListener('input', function () {
+            this.value = mascararCpf(this.value);
+        });
+    }
+
+    var form = document.getElementById('formCiencia');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            sincronizar();
+            var cpfOk = cpfEl && cpfEl.value.replace(/\D/g, '').length === 11;
+            if (!cpfOk) {
+                e.preventDefault();
+                if (aviso) aviso.textContent = 'Informe o CPF completo para confirmar a identidade.';
+                return;
+            }
+            if (vazio || !input.value) {
+                e.preventDefault();
+                if (aviso) aviso.textContent = 'Assine no campo acima para registrar a ciência.';
+            }
+        });
+    }
+})();
+</script>
+{% endif %}
+{% endblock %}

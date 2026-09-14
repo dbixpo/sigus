@@ -31,6 +31,9 @@ Crie pastas de upload que o `.gitignore` omite, se ainda não existirem:
 ```powershell
 New-Item -ItemType Directory -Force -Path app\static\uploads\nsp
 New-Item -ItemType Directory -Force -Path app\static\uploads\chamados
+New-Item -ItemType Directory -Force -Path app\static\uploads\identidade
+New-Item -ItemType Directory -Force -Path app\static\uploads\comunicados
+New-Item -ItemType Directory -Force -Path app\static\uploads\acoes
 ```
 
 ---
@@ -44,6 +47,21 @@ Na raiz, com o `.env` **de produção**:
 ```
 
 Scripts são em geral idempotentes (`IF NOT EXISTS`). A lista **desta** entrega deve estar no PR ou no card.
+
+Identidade da instalação (textos + galeria de assets):
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_identidade_sistema.py
+```
+
+Dashboard da unidade + comunicados/mural de ações:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_noticias_mural.py
+.\venv\Scripts\python.exe migrations\add_ciencia_auditoria.py
+.\venv\Scripts\python.exe migrations\add_lojinha_destino.py
+.\venv\Scripts\python.exe migrations\add_ciencia_cpf.py
+```
 
 ### Já aplicados na rede (não precisa repetir, a menos que o banco seja novo)
 

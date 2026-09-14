@@ -1,299 +1,304 @@
 {% extends 'base.html' %}
 {% block title %}Configurações{% endblock %}
 
+{% block head %}
+<style>
+.cfg-busca { max-width: 420px; }
+.cfg-lista { overflow: hidden; }
+.cfg-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.85rem 1.1rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid #edf1f5;
+}
+.cfg-row:last-child { border-bottom: none; }
+.cfg-row:hover { background: #F4F6F9; color: inherit; }
+.cfg-row-icone {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    background: #e8f4fb;
+    color: #1A82B8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.cfg-row-icone i { font-size: 0.95rem; }
+.cfg-row-titulo { font-weight: 600; color: #1E3A50; }
+.cfg-row-desc { font-size: 0.8rem; color: #718096; }
+.cfg-row-meta { font-size: 0.75rem; color: #718096; white-space: nowrap; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1><i class="fas fa-cog"></i> Configurações do Sistema</h1>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-calendar-day fs-1 text-primary d-block mb-3"></i>
-                <h5 class="fw-bold">Feriados</h5>
-                <p class="text-muted small mb-3">
-                    Dias sem expediente (decreto municipal) para a agenda e reuniões.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-primary fs-6">{{ total_feriados | default(0) }} ativo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.feriados') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
+<div class="mb-3">
+    <label class="form-label small text-muted mb-1" for="filtroConfig">Buscar configuração</label>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="flex-grow-1 cfg-busca">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="search" id="filtroConfig" class="form-control"
+                       placeholder="Nome ou descrição…" autocomplete="off" autofocus>
             </div>
         </div>
+        <span class="small text-muted" id="filtroConfigCount"></span>
     </div>
+</div>
+
+<div class="card cfg-lista" id="listaConfigRows">
+    {% if current_user.perfil == 'administrador' %}
+    <a class="cfg-row" href="{{ url_for('configuracoes.identidade') }}"
+       data-busca="identidade assets município secretaria domínio e-mail logos favicon brasão marca">
+        <span class="cfg-row-icone"><i class="fas fa-landmark"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Identidade e assets</div>
+            <div class="cfg-row-desc">Município, secretaria, domínio de e-mail, logos, favicon e brasão dos impressos.</div>
+        </div>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+    {% endif %}
+
+    <a class="cfg-row" href="{{ url_for('configuracoes.feriados') }}"
+       data-busca="feriados pontos facultativos decreto agenda reuniões expediente">
+        <span class="cfg-row-icone"><i class="fas fa-calendar-day"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Feriados</div>
+            <div class="cfg-row-desc">Dias sem expediente (decreto municipal) para a agenda e reuniões.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_feriados | default(0) }} ativo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
+    <a class="cfg-row" href="{{ url_for('configuracoes.tipos_acao') }}"
+       data-busca="tipos de ação acoes mural temas e-sus atividade coletiva">
+        <span class="cfg-row-icone"><i class="fas fa-images"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Tipos de ação (mural)</div>
+            <div class="cfg-row-desc">Temas do mural de ações da rede. Seed inicial no padrão e-SUS APS; dá para incluir mais.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_tipos_acao | default(0) }} ativo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
     {% if current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-hospital fs-1 text-primary d-block mb-3"></i>
-                <h5 class="fw-bold">Unidades de Saúde</h5>
-                <p class="text-muted small mb-3">
-                    UBS, USF, UPA e demais unidades da rede.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-primary fs-6">{{ total_unidades }} unidade(s)</span>
-                </div>
-                <a href="{{ url_for('unidades.listar') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('unidades.listar') }}"
+       data-busca="unidades de saúde ubs usf upa rede">
+        <span class="cfg-row-icone"><i class="fas fa-hospital"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Unidades de Saúde</div>
+            <div class="cfg-row-desc">UBS, USF, UPA e demais unidades da rede.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_unidades }} unidade(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
     {% endif %}
 
     {% if current_user.pode('ver_predios') or current_user.pode('cadastrar_predio') %}
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-building fs-1 text-secondary d-block mb-3"></i>
-                <h5 class="fw-bold">Prédios</h5>
-                <p class="text-muted small mb-3">
-                    Cadastro de prédios que abrigam as unidades.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-secondary fs-6">{{ total_predios }} prédio(s)</span>
-                </div>
-                <a href="{{ url_for('predios.listar') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('predios.listar') }}"
+       data-busca="prédios predios imóveis cadastro">
+        <span class="cfg-row-icone"><i class="fas fa-building"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Prédios</div>
+            <div class="cfg-row-desc">Cadastro de prédios que abrigam as unidades.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_predios }} prédio(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
     {% endif %}
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-hospital fs-1 text-primary d-block mb-3"></i>
-                <h5 class="fw-bold">Tipos de Unidade</h5>
-                <p class="text-muted small mb-3">
-                    UBS, USF, UPA, Centro de Especialidades etc.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-primary fs-6">{{ total_tipos_unidade }} tipo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.tipos_unidade') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.tipos_unidade') }}"
+       data-busca="tipos de unidade ubs usf upa centro especialidades">
+        <span class="cfg-row-icone"><i class="fas fa-layer-group"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Tipos de Unidade</div>
+            <div class="cfg-row-desc">UBS, USF, UPA, Centro de Especialidades etc.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_tipos_unidade }} tipo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-door-open fs-1 text-warning d-block mb-3"></i>
-                <h5 class="fw-bold">Tipos de Sala</h5>
-                <p class="text-muted small mb-3">
-                    Consultório, Farmácia, Sala de Enfermagem etc.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-warning text-dark fs-6">{{ total_tipos_sala }} tipo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.tipos_sala') }}"
+       data-busca="tipos de sala consultório farmácia enfermagem">
+        <span class="cfg-row-icone"><i class="fas fa-door-open"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Tipos de Sala</div>
+            <div class="cfg-row-desc">Consultório, Farmácia, Sala de Enfermagem etc.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_tipos_sala }} tipo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-tags fs-1 text-success d-block mb-3"></i>
-                <h5 class="fw-bold">Tipos de Equipamento</h5>
-                <p class="text-muted small mb-3">
-                    Computador, Maca, Ar-condicionado etc.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-success fs-6">{{ total_tipos_equip }} tipo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.tipos_equipamento') }}" class="btn btn-success btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.tipos_equipamento') }}"
+       data-busca="tipos de equipamento computador maca ar-condicionado patrimônio">
+        <span class="cfg-row-icone"><i class="fas fa-desktop"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Tipos de Equipamento</div>
+            <div class="cfg-row-desc">Computador, Maca, Ar-condicionado etc.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_tipos_equip }} tipo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-tag fs-1 text-secondary d-block mb-3"></i>
-                <h5 class="fw-bold">Marcas</h5>
-                <p class="text-muted small mb-3">
-                    Dell, HP, Philips — vinculadas aos tipos de equipamento.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-secondary fs-6">{{ total_marcas }} marca(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.listar_marcas') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.listar_marcas') }}"
+       data-busca="marcas dell hp philips equipamento">
+        <span class="cfg-row-icone"><i class="fas fa-tag"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Marcas</div>
+            <div class="cfg-row-desc">Dell, HP, Philips — vinculadas aos tipos de equipamento.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_marcas }} marca(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-microchip fs-1 text-info d-block mb-3"></i>
-                <h5 class="fw-bold">Modelos</h5>
-                <p class="text-muted small mb-3">
-                    OptiPlex 3000, LaserJet Pro — vinculados a tipo e marca.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-info text-dark fs-6">{{ total_modelos }} modelo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.listar_modelos') }}" class="btn btn-info btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.listar_modelos') }}"
+       data-busca="modelos optiplex laserjet tipo marca">
+        <span class="cfg-row-icone"><i class="fas fa-microchip"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Modelos</div>
+            <div class="cfg-row-desc">OptiPlex 3000, LaserJet Pro — vinculados a tipo e marca.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_modelos }} modelo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-shield-lock fs-1 text-danger d-block mb-3"></i>
-                <h5 class="fw-bold">Gestão de Perfis</h5>
-                <p class="text-muted small mb-3">
-                    Configure permissões (Ver, Editar, Adicionar) por seção para cada perfil.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-danger fs-6">{{ total_perfis }} perfil(is)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.perfis') }}" class="btn btn-danger btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.perfis') }}"
+       data-busca="gestão de perfis permissões ver editar adicionar acesso">
+        <span class="cfg-row-icone"><i class="fas fa-users-gear"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Gestão de Perfis</div>
+            <div class="cfg-row-desc">Configure permissões (Ver, Editar, Adicionar) por seção para cada perfil.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_perfis }} perfil(is)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-tags fs-1 text-secondary d-block mb-3"></i>
-                <h5 class="fw-bold">Tipos de Link</h5>
-                <p class="text-muted small mb-3">
-                    Categorias para organizar os Links Úteis.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-secondary fs-6">{{ total_tipos_link }} tipo(s)</span>
-                </div>
-                <a href="{{ url_for('links.admin_tipos') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('links.admin_tipos') }}"
+       data-busca="tipos de link categorias links úteis">
+        <span class="cfg-row-icone"><i class="fas fa-folder"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Tipos de Link</div>
+            <div class="cfg-row-desc">Categorias para organizar os Links Úteis.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_tipos_link }} tipo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-link fs-1 text-primary d-block mb-3"></i>
-                <h5 class="fw-bold">Links Úteis</h5>
-                <p class="text-muted small mb-3">
-                    Linktree interno — links, portais e recursos por perfil.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-primary fs-6">{{ total_links }} link(s)</span>
-                </div>
-                <a href="{{ url_for('links.admin') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('links.admin') }}"
+       data-busca="links úteis linktree portais recursos perfil">
+        <span class="cfg-row-icone"><i class="fas fa-link"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Links Úteis</div>
+            <div class="cfg-row-desc">Linktree interno — links, portais e recursos por perfil.</div>
         </div>
-    </div>
-    <!-- Divisões e Setores -->
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-diagram-3 fs-1 text-secondary d-block mb-3"></i>
-                <h5 class="fw-bold">Divisões e Setores</h5>
-                <p class="text-muted small mb-3">
-                    Organize quem vê e quem trabalha nos chamados por divisão.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-secondary fs-6">{{ total_divisoes | default(0) }} divisão(ões) · {{ total_setores | default(0) }} setor(es)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.divisoes') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
-        </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_links }} link(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <!-- Segurança do Paciente -->
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-user-shield fs-1 text-danger d-block mb-3"></i>
-                <h5 class="fw-bold">Segurança do Paciente</h5>
-                <p class="text-muted small mb-3">
-                    Listas dos selects: status, classificação, setores, destinos de encaminhamento.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-danger fs-6">{{ total_nsp_catalogos | default(0) }} item(ns) ativo(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.nsp_catalogos') }}" class="btn btn-danger btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.divisoes') }}"
+       data-busca="divisões e setores chamados quem vê trabalha">
+        <span class="cfg-row-icone"><i class="fas fa-sitemap"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Divisões e Setores</div>
+            <div class="cfg-row-desc">Organize quem vê e quem trabalha nos chamados por divisão.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_divisoes | default(0) }} divisão(ões) · {{ total_setores | default(0) }} setor(es)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <!-- Status de Chamados -->
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-tags fs-1 text-warning d-block mb-3"></i>
-                <h5 class="fw-bold">Status de Chamados</h5>
-                <p class="text-muted small mb-3">Ative, desative e configure os status disponíveis para chamados.</p>
-                <div class="mb-3"><span class="badge bg-warning text-dark fs-6">{{ total_status_chamado }} ativo(s)</span></div>
-                <a href="{{ url_for('configuracoes.status_chamados') }}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.nsp_catalogos') }}"
+       data-busca="segurança do paciente nsp status classificação setores encaminhamento">
+        <span class="cfg-row-icone"><i class="fas fa-user-shield"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Segurança do Paciente</div>
+            <div class="cfg-row-desc">Listas dos selects: status, classificação, setores, destinos de encaminhamento.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_nsp_catalogos | default(0) }} item(ns) ativo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
-    <!-- CBOs -->
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-briefcase fs-1 text-info d-block mb-3"></i>
-                <h5 class="fw-bold">CBOs</h5>
-                <p class="text-muted small mb-3">
-                    Códigos Brasileiros de Ocupação — gerencie os CBOs disponíveis no sistema.
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-info text-dark fs-6">{{ total_cbos }} CBO(s)</span>
-                </div>
-                <a href="{{ url_for('configuracoes.cbos') }}" class="btn btn-info btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Gerenciar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.status_chamados') }}"
+       data-busca="status de chamados ativar desativar">
+        <span class="cfg-row-icone"><i class="fas fa-clipboard-list"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Status de Chamados</div>
+            <div class="cfg-row-desc">Ative, desative e configure os status disponíveis para chamados.</div>
         </div>
-    </div>
+        <span class="cfg-row-meta">{{ total_status_chamado }} ativo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
+    <a class="cfg-row" href="{{ url_for('configuracoes.cbos') }}"
+       data-busca="cbos códigos brasileiros ocupação">
+        <span class="cfg-row-icone"><i class="fas fa-briefcase"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">CBOs</div>
+            <div class="cfg-row-desc">Códigos Brasileiros de Ocupação — gerencie os CBOs disponíveis no sistema.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_cbos }} CBO(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
 
     {% if current_user.pode('ver_auditoria') %}
-    <!-- Auditoria (apenas administrador) -->
-    <div class="col-md-4 col-lg-3">
-        <div class="card h-100">
-            <div class="card-body text-center py-4">
-                <i class="fas fa-book fs-1 text-dark d-block mb-3"></i>
-                <h5 class="fw-bold">Auditoria</h5>
-                <p class="text-muted small mb-3">Registro de todas as requisições HTTP do sistema.</p>
-                <a href="{{ url_for('configuracoes.auditoria') }}" class="btn btn-dark btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>Visualizar
-                </a>
-            </div>
+    <a class="cfg-row" href="{{ url_for('configuracoes.auditoria') }}"
+       data-busca="auditoria requisições http registro">
+        <span class="cfg-row-icone"><i class="fas fa-book"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Auditoria</div>
+            <div class="cfg-row-desc">Registro de todas as requisições HTTP do sistema.</div>
         </div>
-    </div>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
     {% endif %}
 </div>
+<p class="text-muted small mt-3 d-none" id="filtroConfigVazio">Nenhuma configuração com esse filtro.</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var input = document.getElementById('filtroConfig');
+    var rows = document.querySelectorAll('#listaConfigRows .cfg-row');
+    var countEl = document.getElementById('filtroConfigCount');
+    var vazio = document.getElementById('filtroConfigVazio');
+    if (!input || !rows.length) return;
+
+    function normalizar(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function aplicar() {
+        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+        var visiveis = 0;
+        rows.forEach(function (row) {
+            var texto = normalizar(row.getAttribute('data-busca') || row.textContent || '');
+            var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+            row.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        if (countEl) {
+            countEl.textContent = tokens.length
+                ? visiveis + ' de ' + rows.length
+                : rows.length + ' item(ns)';
+        }
+        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
+    }
+
+    input.addEventListener('input', aplicar);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            aplicar();
+        }
+    });
+    aplicar();
+})();
+</script>
 {% endblock %}

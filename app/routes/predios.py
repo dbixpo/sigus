@@ -4,6 +4,7 @@ from app import db
 from app.models.predio import Predio
 from app.models.unidade import Unidade
 from app.models.usuario import Usuario
+from app.models.identidade import cidade_padrao
 
 predios_bp = Blueprint('predios', __name__, url_prefix='/configuracoes/predios')
 
@@ -65,7 +66,7 @@ def novo():
             numero=request.form.get('numero', '').strip() or None,
             complemento=request.form.get('complemento', '').strip() or None,
             bairro=request.form.get('bairro', '').strip() or None,
-            cidade=request.form.get('cidade', 'Sorocaba').strip(),
+            cidade=request.form.get('cidade', '').strip() or cidade_padrao(),
             uf=request.form.get('uf', 'SP').strip(),
             cep=request.form.get('cep', '').strip() or None,
             telefone=request.form.get('telefone', '').strip() or None,
@@ -104,7 +105,7 @@ def editar(id):
         predio.numero = request.form.get('numero', '').strip() or None
         predio.complemento = request.form.get('complemento', '').strip() or None
         predio.bairro = request.form.get('bairro', '').strip() or None
-        predio.cidade = request.form.get('cidade', 'Sorocaba').strip()
+        predio.cidade = request.form.get('cidade', '').strip() or cidade_padrao()
         predio.uf = request.form.get('uf', 'SP').strip()
         predio.cep = request.form.get('cep', '').strip() or None
         predio.telefone  = request.form.get('telefone', '').strip() or None

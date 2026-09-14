@@ -1,6 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import extract
+import os
+import re
+import uuid
+import mimetypes
+import unicodedata
 from app import db
 from app.models.tipo_unidade import TipoUnidade
 from app.models.tipo_sala import TipoSala
@@ -19,6 +24,7 @@ from app.models.feriado import (
     Feriado, TIPOS_FOLGA, NATUREZAS, TIPO_FERIADO, NATUREZA_NACIONAL,
 )
 from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
+from app.models.noticias import TipoAcao
 
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
@@ -78,6 +84,12 @@ def _exigir_gerenciar_perfis():
         abort(403)
 
 
+def _exigir_administrador_sistema():
+    """Identidade e assets: só o perfil administrador (não abre na matriz neste corte)."""
+    if current_user.perfil != 'administrador':
+        abort(403)
+
+
 # ══════════════════════════════════════════════════════════
 #  ÍNDICE DE CONFIGURAÇÕES
 # ══════════════════════════════════════════════════════════
@@ -102,6 +114,7 @@ def index():
     total_cbos = CBO.query.count()
     total_feriados = Feriado.query.filter_by(ativo=True).count()
     total_nsp_catalogos = NspCatalogo.query.filter_by(ativo=True).count()
+    total_tipos_acao = TipoAcao.query.filter_by(ativo=True).count()
     return render_template('configuracoes/index.html',
                            total_unidades=total_unidades,
                            total_predios=total_predios,
@@ -118,7 +131,8 @@ def index():
                            total_setores=total_setores,
                            total_cbos=total_cbos,
                            total_feriados=total_feriados,
-                           total_nsp_catalogos=total_nsp_catalogos)
+                           total_nsp_catalogos=total_nsp_catalogos,
+                           total_tipos_acao=total_tipos_acao)
 
 
 # ══════════════════════════════════════════════════════════
@@ -193,6 +207,102 @@ def alternar_status_tipo_unidade(id):
     estado = 'ativado' if tipo.ativo else 'desativado'
     flash(f'Tipo "{tipo.sigla}" {estado}.', 'info')
     return redirect(url_for('configuracoes.tipos_unidade'))
+
+
+# ══════════════════════════════════════════════════════════
+#  TIPOS DE AÇÃO (mural)
+# ══════════════════════════════════════════════════════════
+
+@configuracoes_bp.route('/tipos-acao')
+@login_required
+def tipos_acao():
+    _exigir_admin()
+    tipos = TipoAcao.query.order_by(TipoAcao.ordem, TipoAcao.nome).all()
+    return render_template('configuracoes/tipos_acao/listar.html', tipos=tipos)
+
+
+@configuracoes_bp.route('/tipos-acao/novo', methods=['GET', 'POST'])
+@login_required
+def novo_tipo_acao():
+    _exigir_admin()
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome do tema.', 'danger')
+            return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+        if TipoAcao.query.filter_by(nome=nome).first():
+            flash(f'Já existe o tema "{nome}".', 'danger')
+            return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+        try:
+            ordem = int(request.form.get('ordem') or 0)
+        except (TypeError, ValueError):
+            ordem = 0
+        codigo = None
+        raw_cod = (request.form.get('codigo_esus') or '').strip()
+        if raw_cod:
+            try:
+                codigo = int(raw_cod)
+            except ValueError:
+                codigo = None
+        tipo = TipoAcao(
+            nome=nome,
+            descricao=(request.form.get('descricao') or '').strip() or None,
+            codigo_esus=codigo,
+            ordem=ordem,
+            ativo=request.form.get('ativo') == 'on',
+        )
+        db.session.add(tipo)
+        db.session.commit()
+        flash(f'Tema "{tipo.nome}" cadastrado.', 'success')
+        return redirect(url_for('configuracoes.tipos_acao'))
+    return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+
+
+@configuracoes_bp.route('/tipos-acao/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_tipo_acao(id):
+    _exigir_admin()
+    tipo = TipoAcao.query.get_or_404(id)
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome do tema.', 'danger')
+            return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+        conflito = TipoAcao.query.filter(TipoAcao.nome == nome, TipoAcao.id != id).first()
+        if conflito:
+            flash(f'Já existe outro tema com o nome "{nome}".', 'danger')
+            return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+        try:
+            tipo.ordem = int(request.form.get('ordem') or 0)
+        except (TypeError, ValueError):
+            tipo.ordem = tipo.ordem or 0
+        raw_cod = (request.form.get('codigo_esus') or '').strip()
+        if raw_cod:
+            try:
+                tipo.codigo_esus = int(raw_cod)
+            except ValueError:
+                pass
+        else:
+            tipo.codigo_esus = None
+        tipo.nome = nome
+        tipo.descricao = (request.form.get('descricao') or '').strip() or None
+        tipo.ativo = request.form.get('ativo') == 'on'
+        db.session.commit()
+        flash('Tema atualizado.', 'success')
+        return redirect(url_for('configuracoes.tipos_acao'))
+    return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+
+
+@configuracoes_bp.route('/tipos-acao/<int:id>/alternar-status', methods=['POST'])
+@login_required
+def alternar_status_tipo_acao(id):
+    _exigir_admin()
+    tipo = TipoAcao.query.get_or_404(id)
+    tipo.ativo = not tipo.ativo
+    db.session.commit()
+    estado = 'ativado' if tipo.ativo else 'desativado'
+    flash(f'Tema "{tipo.nome}" {estado}.', 'info')
+    return redirect(url_for('configuracoes.tipos_acao'))
 
 
 # ══════════════════════════════════════════════════════════
@@ -1597,4 +1707,199 @@ def nsp_catalogo_toggle(id):
     db.session.commit()
     flash(f'"{item.nome}" {"ativado" if item.ativo else "desativado"}.', 'info')
     return redirect(url_for('configuracoes.nsp_catalogos', grupo=item.grupo))
+
+
+# ══════════════════════════════════════════════════════════
+#  IDENTIDADE DA INSTALAÇÃO E GALERIA DE ASSETS
+# ══════════════════════════════════════════════════════════
+
+_IDENTIDADE_UPLOAD = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), 'static', 'uploads', 'identidade'
+)
+_ASSET_MIMES = {
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp',
+    'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon',
+}
+_ASSET_EXTS = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico'}
+_ASSET_MAX_BYTES = 2 * 1024 * 1024
+
+
+def _slug_extra(titulo):
+    from app.models.identidade import SistemaAsset
+    s = unicodedata.normalize('NFKD', titulo or '').encode('ascii', 'ignore').decode()
+    s = re.sub(r'[^a-zA-Z0-9]+', '-', s).strip('-').lower()[:50]
+    if not s:
+        s = uuid.uuid4().hex[:8]
+    chave = f'extra:{s}'
+    if SistemaAsset.query.filter_by(chave=chave).first():
+        chave = f'extra:{s}-{uuid.uuid4().hex[:6]}'
+    return chave
+
+
+def _salvar_asset_arquivo(arquivo):
+    """Valida e grava o upload. Devolve (filename, mime, nome_original) ou (None, erro)."""
+    if not arquivo or not arquivo.filename:
+        return None, 'Selecione um arquivo de imagem.'
+    mime = (arquivo.mimetype or mimetypes.guess_type(arquivo.filename)[0] or '').lower()
+    ext = os.path.splitext(arquivo.filename)[1].lower() or '.png'
+    if ext not in _ASSET_EXTS:
+        return None, 'Envie PNG, JPG, SVG, WEBP, GIF ou ICO.'
+    if mime and not (
+        mime.startswith('image/')
+        or mime in _ASSET_MIMES
+        or mime == 'application/octet-stream'
+    ):
+        return None, 'Envie PNG, JPG, SVG, WEBP, GIF ou ICO.'
+    arquivo.stream.seek(0, os.SEEK_END)
+    tamanho = arquivo.stream.tell()
+    arquivo.stream.seek(0)
+    if tamanho > _ASSET_MAX_BYTES:
+        return None, 'O arquivo deve ter no máximo 2 MB.'
+    os.makedirs(_IDENTIDADE_UPLOAD, exist_ok=True)
+    fn = f'{uuid.uuid4().hex}{ext}'
+    arquivo.save(os.path.join(_IDENTIDADE_UPLOAD, fn))
+    return (fn, mime or mimetypes.guess_type(fn)[0], arquivo.filename), None
+
+
+def _apagar_arquivo_asset(filename):
+    if not filename:
+        return
+    caminho = os.path.join(_IDENTIDADE_UPLOAD, filename)
+    try:
+        os.remove(caminho)
+    except OSError:
+        pass
+
+
+@configuracoes_bp.route('/identidade', methods=['GET', 'POST'])
+@login_required
+def identidade():
+    from app.models.identidade import (
+        ASSET_SLOTS, IdentidadeSistema, obter_identidade, invalidar_cache_identidade,
+    )
+    _exigir_administrador_sistema()
+    row = IdentidadeSistema.garantir()
+    if request.method == 'POST':
+        municipio = (request.form.get('municipio') or '').strip()
+        uf = (request.form.get('uf') or '').strip().upper()[:2]
+        secretaria = (request.form.get('secretaria') or '').strip()
+        orgao_curto = (request.form.get('orgao_curto') or '').strip()
+        nome_sistema = (request.form.get('nome_sistema') or '').strip()
+        slogan = (request.form.get('slogan') or '').strip()
+        dominio = (request.form.get('dominio_email') or '').strip().lstrip('@').lower()
+        cidade = (request.form.get('cidade_padrao') or '').strip()
+        if not municipio or not uf or not secretaria or not dominio:
+            flash('Município, UF, secretaria e domínio de e-mail são obrigatórios.', 'danger')
+            return redirect(url_for('configuracoes.identidade'))
+        row.municipio = municipio
+        row.uf = uf
+        row.secretaria = secretaria
+        row.orgao_curto = orgao_curto or municipio
+        row.nome_sistema = nome_sistema or 'SIGUS'
+        row.slogan = slogan or row.slogan
+        row.dominio_email = dominio
+        row.cidade_padrao = cidade or municipio
+        db.session.commit()
+        invalidar_cache_identidade()
+        flash('Identidade da instalação atualizada.', 'success')
+        return redirect(url_for('configuracoes.identidade'))
+    return render_template(
+        'configuracoes/identidade.html',
+        idt=obter_identidade(),
+        slots=ASSET_SLOTS,
+    )
+
+
+@configuracoes_bp.route('/identidade/asset/<chave>', methods=['POST'])
+@login_required
+def identidade_asset_upload(chave):
+    from app.models.identidade import ASSET_SLOTS, SistemaAsset, invalidar_cache_identidade
+    _exigir_administrador_sistema()
+    if chave not in ASSET_SLOTS:
+        abort(404)
+    resultado, erro = _salvar_asset_arquivo(request.files.get('arquivo'))
+    if erro:
+        flash(erro, 'danger')
+        return redirect(url_for('configuracoes.identidade'))
+    fn, mime, original = resultado
+    asset = SistemaAsset.query.filter_by(chave=chave).first()
+    if asset:
+        _apagar_arquivo_asset(asset.filename)
+        asset.filename = fn
+        asset.mime = mime
+        asset.nome_original = original
+        asset.titulo = ASSET_SLOTS[chave]['label']
+    else:
+        db.session.add(SistemaAsset(
+            chave=chave,
+            titulo=ASSET_SLOTS[chave]['label'],
+            filename=fn,
+            mime=mime,
+            nome_original=original,
+        ))
+    db.session.commit()
+    invalidar_cache_identidade()
+    flash(f'{ASSET_SLOTS[chave]["label"]} atualizado.', 'success')
+    return redirect(url_for('configuracoes.identidade'))
+
+
+@configuracoes_bp.route('/identidade/asset/<chave>/restaurar', methods=['POST'])
+@login_required
+def identidade_asset_restaurar(chave):
+    from app.models.identidade import ASSET_SLOTS, SistemaAsset, invalidar_cache_identidade
+    _exigir_administrador_sistema()
+    if chave not in ASSET_SLOTS:
+        abort(404)
+    asset = SistemaAsset.query.filter_by(chave=chave).first()
+    if asset:
+        _apagar_arquivo_asset(asset.filename)
+        db.session.delete(asset)
+        db.session.commit()
+        invalidar_cache_identidade()
+    flash(f'{ASSET_SLOTS[chave]["label"]} voltou ao padrão do sistema.', 'info')
+    return redirect(url_for('configuracoes.identidade'))
+
+
+@configuracoes_bp.route('/identidade/extras', methods=['POST'])
+@login_required
+def identidade_extra_upload():
+    from app.models.identidade import SistemaAsset, invalidar_cache_identidade
+    _exigir_administrador_sistema()
+    titulo = (request.form.get('titulo') or '').strip()
+    if not titulo:
+        flash('Informe um nome para o arquivo extra.', 'danger')
+        return redirect(url_for('configuracoes.identidade'))
+    resultado, erro = _salvar_asset_arquivo(request.files.get('arquivo'))
+    if erro:
+        flash(erro, 'danger')
+        return redirect(url_for('configuracoes.identidade'))
+    fn, mime, original = resultado
+    db.session.add(SistemaAsset(
+        chave=_slug_extra(titulo),
+        titulo=titulo,
+        filename=fn,
+        mime=mime,
+        nome_original=original,
+    ))
+    db.session.commit()
+    invalidar_cache_identidade()
+    flash(f'Arquivo “{titulo}” adicionado à galeria.', 'success')
+    return redirect(url_for('configuracoes.identidade'))
+
+
+@configuracoes_bp.route('/identidade/extras/<int:id>/excluir', methods=['POST'])
+@login_required
+def identidade_extra_excluir(id):
+    from app.models.identidade import SistemaAsset, invalidar_cache_identidade
+    _exigir_administrador_sistema()
+    asset = SistemaAsset.query.get_or_404(id)
+    if not asset.chave.startswith('extra:'):
+        abort(400)
+    titulo = asset.titulo or asset.nome_original or asset.chave
+    _apagar_arquivo_asset(asset.filename)
+    db.session.delete(asset)
+    db.session.commit()
+    invalidar_cache_identidade()
+    flash(f'“{titulo}” excluído da galeria.', 'info')
+    return redirect(url_for('configuracoes.identidade'))
 

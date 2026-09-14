@@ -18,6 +18,7 @@ load_dotenv(ROOT / '.env')
 
 from app import create_app
 from app.models.chamado import Chamado
+from app.models.noticias import Comunicado
 from app.models.nsp import NspOcorrencia
 from app.models.unidade import Unidade
 from app.models.usuario import Usuario
@@ -119,6 +120,88 @@ const cpf = document.getElementById('sisTipoCpf');
 if (cpf) cpf.checked = true;
 """
 
+JS_DASH = JS_NAV + """
+const aniv = document.getElementById('cardAniversario');
+if (aniv) aniv.remove();
+document.querySelectorAll('.dash-pessoa-nome').forEach((el, i) => {
+  el.textContent = 'Profissional exemplo ' + (i + 1);
+  el.removeAttribute('title');
+});
+document.querySelectorAll('.dash-avatar').forEach((el) => {
+  if (el.tagName === 'IMG') {
+    const span = document.createElement('span');
+    span.className = 'dash-avatar';
+    span.textContent = 'P';
+    el.replaceWith(span);
+  } else {
+    el.textContent = 'P';
+  }
+});
+document.querySelectorAll('.com-meta').forEach((el) => {
+  el.textContent = el.textContent.replace(/^[^·]+/, 'Coordenação ');
+});
+document.querySelectorAll('.mural-post-foot, .mural-foot').forEach((el) => {
+  el.childNodes.forEach((n) => {
+    if (n.nodeType === 3) {
+      n.textContent = n.textContent.replace(/· [A-Za-zÀ-ÿ]+/g, '· Profissional');
+    }
+  });
+});
+"""
+
+JS_COMUNICADO = JS_NAV + """
+document.querySelectorAll('.card-body > .small.text-muted').forEach((el) => {
+  el.innerHTML = el.innerHTML.replace(/^[^·]+/, 'Coordenação da unidade ');
+});
+document.querySelectorAll('.card').forEach((card) => {
+  const header = card.querySelector('.card-header');
+  const h = (header && header.textContent) || '';
+  if (h.includes('Falta ciência')) {
+    card.querySelectorAll('.list-group-item').forEach((li, i) => {
+      li.textContent = 'Profissional pendente ' + (i + 1);
+    });
+  }
+  if (h.includes('Já cientificaram')) {
+    card.querySelectorAll('.list-group-item').forEach((li, i) => {
+      const nameWrap = li.querySelector('.d-flex > div, .d-flex span');
+      const nameEl = li.querySelector('.d-flex div > span, .d-flex > span');
+      if (nameEl) nameEl.textContent = 'Profissional exemplo ' + (i + 1);
+    });
+  }
+});
+"""
+
+JS_IMPRIMIR_COM = """
+document.querySelectorAll('.meta strong').forEach((el) => {
+  el.textContent = 'Coordenação da unidade';
+});
+document.querySelectorAll('table tbody tr').forEach((tr, i) => {
+  const td = tr.querySelector('td');
+  if (!td) return;
+  const first = td.childNodes[0];
+  if (first && first.nodeType === 3) {
+    first.textContent = 'Profissional exemplo ' + (i + 1) + ' ';
+  } else if (first) {
+    first.textContent = 'Profissional exemplo ' + (i + 1);
+  }
+});
+document.querySelectorAll('.secao p').forEach((p) => {
+  if ((p.textContent || '').includes(';')) {
+    p.textContent = 'Profissional pendente 1; Profissional pendente 2; Profissional pendente 3.';
+  }
+});
+"""
+
+JS_MURAL = JS_NAV + """
+document.querySelectorAll('.mural-post-foot, .mural-foot').forEach((el) => {
+  el.childNodes.forEach((n) => {
+    if (n.nodeType === 3) {
+      n.textContent = n.textContent.replace(/· [A-Za-zÀ-ÿ]+/g, '· Profissional');
+    }
+  });
+});
+"""
+
 
 def session_cookie(app, user_id: int) -> str:
     with app.test_client() as client:
@@ -155,6 +238,33 @@ def main() -> None:
         ch_id = ch.id if ch else None
         nsp = NspOcorrencia.query.order_by(NspOcorrencia.id.desc()).first()
         nsp_id = nsp.id if nsp else None
+        coms = (
+            Comunicado.query.filter_by(ativo=True, exige_ciencia=True)
+            .order_by(Comunicado.id.desc())
+            .all()
+        )
+        com = None
+        for c in coms:
+            titulo = (c.titulo or '').lower()
+            if 'teste' in titulo:
+                continue
+            if list(c.anexos):
+                com = c
+                break
+        if com is None:
+            com = next(
+                (c for c in coms if 'teste' not in (c.titulo or '').lower()),
+                coms[0] if coms else None,
+            )
+        com_id = com.id if com else None
+        com_pendente_uid = None
+        if com:
+            from app.routes.noticias import ids_destinatarios
+            dest = ids_destinatarios(com)
+            ja = {c.usuario_id for c in com.ciencias}
+            pend = [i for i in dest if i not in ja]
+            if pend:
+                com_pendente_uid = pend[0]
 
     cookie = session_cookie(app, uid)
     opts = Options()
@@ -215,7 +325,7 @@ def main() -> None:
             'sameSite': 'Lax',
         })
 
-        if goto('/dashboard', '.page-header'):
+        if goto('/dashboard', '.page-header', JS_DASH):
             shot('dash')
             drv.execute_script("""
                 const btn = document.querySelector('.sigus-navbar .fa-hospital');
@@ -226,6 +336,66 @@ def main() -> None:
             """)
             time.sleep(0.5)
             shot('dash-unidade')
+            drv.execute_script("""
+                const menu = document.querySelector('.sigus-navbar .dropdown-menu.show');
+                if (menu) menu.classList.remove('show');
+                const tgl = document.querySelector('.sigus-navbar .dropdown-toggle.show');
+                if (tgl) tgl.classList.remove('show');
+            """)
+            thumbs = drv.find_elements(By.CSS_SELECTOR, '.mural-thumb')
+            if thumbs:
+                thumbs[0].click()
+                time.sleep(0.6)
+                shot('dash-mural-foto')
+                drv.execute_script("""
+                    const el = document.getElementById('modalMuralFoto');
+                    if (el && window.bootstrap) {
+                      const m = bootstrap.Modal.getInstance(el);
+                      if (m) m.hide();
+                    }
+                """)
+                time.sleep(0.3)
+
+        def aplicar_cookie(valor: str) -> None:
+            drv.execute_cdp_cmd('Network.clearBrowserCookies', {})
+            drv.execute_cdp_cmd('Network.setCookie', {
+                'name': 'session',
+                'value': valor,
+                'url': 'http://localhost:5001/',
+                'path': '/',
+                'httpOnly': True,
+                'secure': False,
+                'sameSite': 'Lax',
+            })
+
+        if goto('/comunicados/novo', '.page-header'):
+            shot('com-novo')
+        if com_id and goto(f'/comunicados/{com_id}', '.page-header', JS_COMUNICADO):
+            shot('com-detalhe')
+        if com_id and com_pendente_uid:
+            aplicar_cookie(session_cookie(app, com_pendente_uid))
+            if goto(f'/comunicados/{com_id}', '.page-header', JS_COMUNICADO):
+                drv.execute_script("document.getElementById('ciencia')?.scrollIntoView({block:'start'});")
+                time.sleep(0.35)
+                shot('com-ciencia')
+                if not drv.find_elements(By.CSS_SELECTOR, '#formCiencia, #cpfCiencia'):
+                    print('  aviso: formulário de ciência não apareceu')
+            aplicar_cookie(cookie)
+        if com_id:
+            drv.get(f'{BASE}/comunicados/{com_id}/imprimir')
+            try:
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.doc')))
+                drv.execute_script(JS_IMPRIMIR_COM)
+                drv.set_window_size(1100, 1600)
+                time.sleep(0.4)
+                shot('com-imprimir')
+                drv.set_window_size(1440, 1100)
+            except Exception:
+                print('  timeout imprimir comunicado')
+        if goto('/mural', '.page-header', JS_MURAL):
+            shot('mural')
+        if goto('/acoes/nova', '.page-header'):
+            shot('acao-nova')
 
         if unid_id and goto(f'/configuracoes/unidades/{unid_id}', '.page-header'):
             shot('un-ficha')
@@ -294,6 +464,10 @@ def main() -> None:
             shot('cfg-perfis')
         if goto('/configuracoes/seguranca-paciente', '.page-header'):
             shot('cfg-nsp')
+        if goto('/configuracoes/identidade', '.page-header'):
+            shot('cfg-identidade')
+        if goto('/configuracoes/tipos-acao', '.page-header'):
+            shot('cfg-tipos')
 
         print('ok')
         for p in sorted(OUT.glob('*.png')):

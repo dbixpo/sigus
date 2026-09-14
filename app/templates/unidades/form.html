@@ -132,12 +132,12 @@
                     <div class="col-md-5">
                         <label class="form-label">Cidade</label>
                         <input type="text" name="cidade" id="inp-cidade" class="form-control"
-                               value="{{ unidade.cidade if unidade else 'Sorocaba' }}">
+                               value="{{ unidade.cidade if unidade else identidade.cidade_padrao }}">
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">UF</label>
                         <input type="text" name="uf" id="inp-uf" class="form-control" maxlength="2"
-                               value="{{ unidade.uf if unidade else 'SP' }}" style="text-transform:uppercase;">
+                               value="{{ unidade.uf if unidade else identidade.uf }}" style="text-transform:uppercase;">
                     </div>
 
                     <!-- Link Google Maps -->

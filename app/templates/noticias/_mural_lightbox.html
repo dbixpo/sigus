@@ -1,0 +1,109 @@
+<div class="modal fade" id="modalMuralFoto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-transparent border-0 shadow-none">
+            <div class="mural-lb">
+                <button type="button" class="mural-lb-fechar" data-bs-dismiss="modal" aria-label="Fechar">&times;</button>
+                <button type="button" class="mural-lb-nav mural-lb-prev" id="muralFotoPrev" aria-label="Anterior">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <img id="muralFotoImg" src="" alt="">
+                <button type="button" class="mural-lb-nav mural-lb-next" id="muralFotoNext" aria-label="Próxima">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="mural-lb-cap" id="muralFotoCap"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+.mural-lb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40vh;
+}
+.mural-lb img {
+    max-width: min(92vw, 1100px);
+    max-height: 82vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #0D3B5E;
+    box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+.mural-lb-fechar {
+    position: absolute; top: -8px; right: 4px; z-index: 2;
+    width: 36px; height: 36px; border: 0; border-radius: 50%;
+    background: rgba(13,59,94,.85); color: #fff; font-size: 1.4rem; line-height: 1;
+    cursor: pointer;
+}
+.mural-lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 42px; height: 42px; border: 0; border-radius: 50%;
+    background: rgba(13,59,94,.8); color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.mural-lb-prev { left: 8px; }
+.mural-lb-next { right: 8px; }
+.mural-lb-cap {
+    position: absolute; bottom: -28px; left: 0; right: 0;
+    text-align: center; color: #fff; font-size: .85rem;
+}
+#modalMuralFoto .modal-content { background: transparent; }
+</style>
+<script>
+(function () {
+    var modalEl = document.getElementById('modalMuralFoto');
+    if (!modalEl) return;
+    var img = document.getElementById('muralFotoImg');
+    var cap = document.getElementById('muralFotoCap');
+    var btnPrev = document.getElementById('muralFotoPrev');
+    var btnNext = document.getElementById('muralFotoNext');
+    var urls = [];
+    var idx = 0;
+    var startX = 0;
+    document.body.appendChild(modalEl);
+
+    function show(i) {
+        if (!urls.length) return;
+        idx = (i + urls.length) % urls.length;
+        img.src = urls[idx];
+        cap.textContent = (idx + 1) + ' / ' + urls.length;
+        var several = urls.length > 1;
+        btnPrev.style.visibility = several ? 'visible' : 'hidden';
+        btnNext.style.visibility = several ? 'visible' : 'hidden';
+    }
+    function bindThumbs() {
+        document.querySelectorAll('.mural-thumb').forEach(function (btn) {
+            if (btn.dataset.lbBound) return;
+            btn.dataset.lbBound = '1';
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var gal = btn.getAttribute('data-gallery');
+                urls = Array.from(document.querySelectorAll('.mural-thumb[data-gallery="' + gal + '"]'))
+                    .map(function (b) { return b.getAttribute('data-src'); });
+                show(parseInt(btn.getAttribute('data-index'), 10) || 0);
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            });
+        });
+    }
+    bindThumbs();
+    btnPrev.addEventListener('click', function () { show(idx - 1); });
+    btnNext.addEventListener('click', function () { show(idx + 1); });
+    modalEl.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowLeft') show(idx - 1);
+        if (e.key === 'ArrowRight') show(idx + 1);
+    });
+    img.addEventListener('touchstart', function (e) {
+        startX = e.changedTouches[0].clientX;
+    }, {passive: true});
+    img.addEventListener('touchend', function (e) {
+        var dx = e.changedTouches[0].clientX - startX;
+        if (dx > 40) show(idx - 1);
+        if (dx < -40) show(idx + 1);
+    }, {passive: true});
+})();
+</script>

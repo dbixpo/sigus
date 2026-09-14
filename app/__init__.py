@@ -69,9 +69,11 @@ def create_app(config_name='default'):
     from app.routes.sueq import sueq_bp
     from app.routes.agenda import agenda_bp
     from app.routes.nsp import nsp_bp
+    from app.routes.noticias import noticias_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(noticias_bp)
     app.register_blueprint(predios_bp)
     app.register_blueprint(unidades_bp)
     app.register_blueprint(salas_bp)
@@ -150,15 +152,18 @@ def create_app(config_name='default'):
     from app.utils import registrar_filtros
     registrar_filtros(app)
 
-    # PWA: manifest para instalação no celular
+    # PWA: manifest para instalação no celular (paleta SIGUS; ícone segue a identidade)
     @app.route('/manifest.json')
     def manifest():
         import json
+        from app.models.identidade import obter_identidade
         base = app.config.get('APPLICATION_ROOT', '').rstrip('/') or ''
+        idt = obter_identidade()
+        favicon = idt.asset_url('favicon')
         data = {
-            'name': 'SIGUS — Sistema de Gestão de Unidades de Saúde',
-            'short_name': 'SIGUS',
-            'description': 'Sistema Integrado de Gestão de Unidades de Saúde',
+            'name': f'{idt.nome_sistema} — {idt.slogan}',
+            'short_name': idt.nome_sistema,
+            'description': idt.slogan,
             'start_url': base + '/' if base else '/',
             'display': 'standalone',
             'background_color': '#1E3A50',
@@ -166,14 +171,19 @@ def create_app(config_name='default'):
             'orientation': 'portrait-primary',
             'scope': base + '/' if base else '/',
             'icons': [
-                {'src': base + '/static/img/favicon.png', 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
-                {'src': base + '/static/img/favicon.png', 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+                {'src': favicon, 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+                {'src': favicon, 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
             ],
         }
         return app.response_class(
             json.dumps(data, ensure_ascii=False),
             mimetype='application/manifest+json',
         )
+
+    @app.context_processor
+    def inject_identidade():
+        from app.models.identidade import obter_identidade
+        return {'identidade': obter_identidade()}
 
     # Context processor: unidades para seletor de unidade padrão
     # Sempre lista apenas unidades às quais o usuário está vinculado (independente do perfil)

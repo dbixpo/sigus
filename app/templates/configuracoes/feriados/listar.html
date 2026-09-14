@@ -22,16 +22,27 @@
     Cadastro conforme o decreto do ano (ex.: Decreto nº 30.713/2025 para 2026).
 </p>
 
-<form method="get" class="d-flex flex-wrap gap-2 align-items-end mb-3">
-    <div>
+<div class="d-flex flex-wrap gap-2 align-items-end mb-3">
+    <form method="get">
         <label class="form-label mb-1 small text-muted">Ano</label>
         <select name="ano" class="form-select form-select-sm" style="min-width:110px;" onchange="this.form.submit()">
             {% for a in anos %}
             <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
             {% endfor %}
         </select>
+    </form>
+    {% if itens %}
+    <div class="flex-grow-1" style="min-width:220px;max-width:420px;">
+        <label class="form-label mb-1 small text-muted" for="filtroFeriados">Buscar</label>
+        <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+            <input type="search" id="filtroFeriados" class="form-control"
+                   placeholder="Evento, decreto, tipo…" autocomplete="off">
+        </div>
     </div>
-</form>
+    <span class="small text-muted pb-1" id="filtroFeriadosCount">{{ itens | length }} feriado(s)</span>
+    {% endif %}
+</div>
 
 <div class="card">
     {% if itens %}
@@ -52,7 +63,8 @@
             </thead>
             <tbody>
                 {% for item in itens %}
-                <tr class="{% if not item.ativo %}text-muted{% endif %}">
+                <tr class="feriado-row {% if not item.ativo %}text-muted{% endif %}"
+                    data-busca="{{ [item.data_fmt, item.dia_semana, item.nome, item.observacao, item.tipo_label, item.natureza_label, item.numero_decreto, 'ativo' if item.ativo else 'inativo', 'sem expediente' if item.dia_inteiro else 'expediente'] | select | join(' ') }}">
                     <td class="fw-semibold">{{ item.data_fmt }}</td>
                     <td>{{ item.dia_semana }}</td>
                     <td>
@@ -116,4 +128,46 @@
     </div>
     {% endif %}
 </div>
+<p class="text-muted small mt-3 d-none" id="filtroFeriadosVazio">Nenhum feriado com esse filtro.</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var input = document.getElementById('filtroFeriados');
+    var rows = document.querySelectorAll('.feriado-row');
+    var countEl = document.getElementById('filtroFeriadosCount');
+    var vazio = document.getElementById('filtroFeriadosVazio');
+    if (!input || !rows.length) return;
+
+    function normalizar(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function aplicar() {
+        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+        var visiveis = 0;
+        rows.forEach(function (row) {
+            var texto = normalizar(row.getAttribute('data-busca') || '');
+            var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+            row.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        if (countEl) {
+            countEl.textContent = tokens.length
+                ? visiveis + ' de ' + rows.length + ' feriado(s)'
+                : rows.length + ' feriado(s)';
+        }
+        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
+    }
+
+    input.addEventListener('input', aplicar);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            aplicar();
+        }
+    });
+})();
+</script>
 {% endblock %}

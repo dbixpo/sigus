@@ -149,8 +149,11 @@ class ItemLojinha(db.Model):
     criado_por        = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     criado_em         = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     ativo             = db.Column(db.Boolean, nullable=False, default=True)
+    destino_unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL'))
+    destino_em        = db.Column(db.DateTime)
 
     unidade   = db.relationship('Unidade', foreign_keys=[unidade_id])
+    destino_unidade = db.relationship('Unidade', foreign_keys=[destino_unidade_id])
     equipamento = db.relationship('Equipamento', foreign_keys=[equipamento_id])
     criador    = db.relationship('Usuario', foreign_keys=[criado_por])
 
@@ -163,6 +166,30 @@ class ItemLojinha(db.Model):
         if self.equipamento:
             return self.equipamento.numero_patrimonio or self.equipamento.numero_serie
         return self.numero_patrimonio or self.numero_serie
+
+    @property
+    def disponivel(self):
+        return bool(self.ativo and (self.quantidade or 0) > 0)
+
+    @property
+    def status_mural(self):
+        if self.disponivel:
+            return 'disponivel'
+        if self.destino_unidade_id:
+            return 'pego'
+        return 'retirado'
+
+    @property
+    def status_mural_label(self):
+        if self.status_mural == 'disponivel':
+            qtd = self.quantidade or 0
+            if qtd > 1:
+                return f'Disponível ({qtd})'
+            return 'Disponível'
+        if self.status_mural == 'pego':
+            nome = self.destino_unidade.nome if self.destino_unidade else 'outra unidade'
+            return f'Pego por {nome}'
+        return 'Retirado da vitrine'
 
 
 class TransferenciaEquipamento(db.Model):

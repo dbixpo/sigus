@@ -34,3 +34,8 @@ from app.models.sueq import (
 from app.models.nsp import (
     NspCatalogo, NspOcorrencia, NspAnexo, NspAndamento, NspEncaminhamento, NspAcao,
 )
+from app.models.identidade import IdentidadeSistema, SistemaAsset
+from app.models.noticias import (
+    TipoAcao, Comunicado, ComunicadoAnexo, ComunicadoCiencia,
+    AcaoLocal, AcaoLocalFoto,
+)

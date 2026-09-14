@@ -1,0 +1,15 @@
+{% macro thumbs(fotos, gallery_id) %}
+{% if fotos %}
+<div class="mural-thumbs">
+    {% for f in fotos %}
+    <button type="button" class="mural-thumb"
+            data-gallery="{{ gallery_id }}"
+            data-index="{{ loop.index0 }}"
+            data-src="{{ f.url }}"
+            title="Ver foto">
+        <img src="{{ f.url }}" alt="">
+    </button>
+    {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}

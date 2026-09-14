@@ -1,17 +1,217 @@
 {% extends 'base.html' %}
+{% from 'noticias/_mural_fotos.html' import thumbs %}
 {% block title %}Dashboard{% endblock %}
 
+{% block head %}
+<style>
+.dash-unidade { color: #718096; font-size: 0.875rem; }
+.dash-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.com-card { border-left: 3px solid #edf1f5; }
+.com-card.com-pendente { border-left-color: #1A82B8; background: #f7fbfe; }
+.com-meta { font-size: 0.75rem; color: #718096; }
+.dash-bloco {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #edf1f5;
+}
+.dash-bloco:last-child { border-bottom: none; }
+.dash-bloco-titulo {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #1A82B8;
+    margin-bottom: 0.4rem;
+}
+.dash-bloco-titulo i { width: 1rem; }
+.dash-pessoas-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    border-bottom: 1px solid #edf1f5;
+}
+.dash-pessoas-grid .dash-bloco { border-bottom: 1px solid #edf1f5; }
+.dash-pessoas-grid .dash-bloco:last-child { border-bottom: none; }
+@media (min-width: 576px) {
+    .dash-pessoas-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+    }
+    .dash-pessoas-grid .dash-bloco {
+        border-bottom: none;
+        border-right: 1px solid #edf1f5;
+        padding: 0.75rem 0.7rem;
+        min-width: 0;
+    }
+    .dash-pessoas-grid .dash-bloco:last-child { border-right: none; }
+}
+.dash-pessoa-lista { max-height: 9.5rem; overflow-y: auto; }
+.dash-pessoa {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0;
+    font-size: 0.8rem;
+    color: #1E3A50;
+    min-width: 0;
+}
+.dash-pessoa-nome {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.dash-pessoa-data { color: #718096; font-size: 0.7rem; margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+.dash-vazio { font-size: 0.8rem; color: #718096; }
+.dash-avatar {
+    width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
+    background: #e8f4fb; color: #1A82B8; font-size: 0.62rem; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.dash-shell { display: flex; flex-direction: column; min-height: 0; }
+.dash-shell > .page-header { margin-bottom: 0; flex-shrink: 0; }
+.dash-shell > .alert { margin-bottom: 0; flex-shrink: 0; }
+.dash-shell > #cardAniversario { margin-bottom: 0; flex-shrink: 0; }
+.dash-pessoas-grid { flex-shrink: 0; }
+.dash-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    min-height: 0;
+}
+.dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+}
+.dash-painel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    margin-bottom: 0;
+}
+.dash-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+.dash-scroll .empty-state { padding: 1.75rem 1rem; }
+.dash-scroll .empty-state i { font-size: 2rem; }
+@media (min-width: 992px) {
+    .sigus-wrapper:has(.dash-shell) {
+        height: 100vh;
+        overflow: hidden;
+    }
+    .sigus-main:has(.dash-shell) {
+        overflow: hidden;
+        height: auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .sigus-main:has(.dash-shell) > .container-fluid {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .dash-shell { flex: 1; overflow: hidden; gap: 0.75rem; }
+    .dash-grid {
+        flex: 1;
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
+        overflow: hidden;
+    }
+    .dash-col { height: 100%; }
+    .dash-col-esquerda .dash-painel { flex: 1 1 0; }
+    .dash-col-direita .dash-painel { flex: 1; height: 100%; }
+    .dash-painel > .dash-scroll { flex: 1 1 0; }
+}
+.mural-post {
+    display: block;
+    padding: 0.95rem 1rem 1.05rem;
+    border-bottom: 1px solid #edf1f5;
+    text-decoration: none;
+    color: inherit;
+}
+.mural-post:last-child { border-bottom: none; }
+.mural-post:hover { background: #F4F6F9; color: inherit; }
+.mural-post-data {
+    font-size: 0.72rem;
+    color: #718096;
+    margin-bottom: 0.35rem;
+}
+.mural-post-tema {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #1A82B8;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+.mural-post-tema.lojinha { color: #19A88B; }
+.mural-post-desc { font-size: 0.88rem; color: #1E3A50; margin-top: 0.2rem; line-height: 1.4; }
+.mural-thumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.55rem;
+}
+.mural-thumb {
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    padding: 3px;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 0;
+}
+.mural-thumb img {
+    display: block;
+    max-height: 72px;
+    max-width: 96px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+.mural-post-foot { font-size: 0.75rem; color: #718096; margin-top: 0.5rem; }
+.mural-status {
+    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .03em; border-radius: 20px; padding: .15rem .55rem;
+    margin-top: .4rem;
+}
+.mural-status.disponivel { background: #e6f7f3; color: #0f766e; }
+.mural-status.pego { background: #edf1f5; color: #4a6274; }
+.mural-status.retirado { background: #f4f4f5; color: #718096; }
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="dash-shell">
 <div class="page-header">
-    <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
-    <span class="text-muted small">Visão geral da rede</span>
+    <div>
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        {% if unidade %}
+        <div class="dash-unidade">{{ unidade.nome }} · {{ hoje.strftime('%d/%m/%Y') }}</div>
+        {% else %}
+        <div class="dash-unidade">Selecione a unidade no topo para ver o dia a dia.</div>
+        {% endif %}
+    </div>
+    {% if pode_publicar %}
+    <div class="dash-actions">
+        <a href="{{ url_for('noticias.novo_comunicado') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-bullhorn me-1"></i>Novo comunicado
+        </a>
+        <a href="{{ url_for('noticias.nova_acao') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-camera me-1"></i>Registrar ação
+        </a>
+    </div>
+    {% endif %}
 </div>
 
-{# ── Card de aniversário — só aparece para o próprio usuário no seu dia ── #}
 {% if eh_meu_aniversario %}
-<div class="card mb-4 border-0 shadow-sm overflow-hidden position-relative" id="cardAniversario"
+<div class="card border-0 shadow-sm overflow-hidden position-relative" id="cardAniversario"
      style="background: linear-gradient(135deg, #fff8e1 0%, #fde68a 50%, #fbbf24 100%);">
-    {# Confetes decorativos #}
     <div class="position-absolute top-0 end-0 p-2 opacity-25 user-select-none"
          style="font-size:1.4rem; letter-spacing:.3rem; line-height:1.6;">
         🎈🎊🎉🎁🎀
@@ -27,8 +227,8 @@
                 </div>
                 <div class="fst-italic small mb-1" style="color:#92400e;" id="msgAniversario"></div>
                 <div class="small" style="color:#b45309;">
-                    <i class="fas fa-heart-fill me-1"></i>
-                    Com carinho, a equipe da Saúde Digital Sorocaba
+                    <i class="fas fa-heart me-1"></i>
+                    Com carinho, a equipe da Saúde Digital
                 </div>
             </div>
             {% if preview_aniv %}
@@ -37,23 +237,14 @@
         </div>
     </div>
 </div>
-
 <script>
 (function () {
     const nome = {{ current_user.nome.split()[0] | tojson }};
     const msgs = [
-        `Que este novo ciclo seja repleto de saúde, alegria e conquistas, ${nome}! 🌟`,
-        `Parabéns! Que cada dia seja tão especial quanto você é para nossa equipe! 💛`,
-        `Feliz aniversário! Que sua jornada continue cheia de propósito e realizações! 🥳`,
-        `Hoje é um dia para celebrar uma pessoa incrível. Muitas felicidades, ${nome}! 🎊`,
-        `Que a vida te presenteie com tudo o que você merece. Parabéns! 🌺`,
-        `Um novo ciclo começa hoje — que ele seja seu melhor ano até agora! 🚀`,
-        `A Saúde Digital celebra com você esse dia tão especial, ${nome}! 🏥💙`,
-        `Que seus sonhos continuem grandes e sua saúde, sempre perfeita! ✨`,
-        `Você faz a diferença todos os dias. Hoje é a sua vez de brilhar! 🌠`,
-        `Mais um ano de dedicação à saúde pública. Obrigado por tudo, ${nome}! 🎗️`,
-        `Que este aniversário marque o início do seu melhor ano! Parabéns! 🌈`,
-        `Sua dedicação inspira toda a rede. Feliz aniversário! 💪`,
+        `Que este novo ciclo seja repleto de saúde, alegria e conquistas, ${nome}!`,
+        `Parabéns! Que cada dia seja tão especial quanto você é para nossa equipe.`,
+        `Feliz aniversário! Que sua jornada continue cheia de propósito e realizações.`,
+        `Hoje é um dia para celebrar. Muitas felicidades, ${nome}!`,
     ];
     const el = document.getElementById('msgAniversario');
     if (el) el.textContent = msgs[Math.floor(Math.random() * msgs.length)];
@@ -61,159 +252,230 @@
 </script>
 {% endif %}
 
-<!-- CARDS DE RESUMO -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-primary-soft"><i class="fas fa-hospital"></i></div>
-            <div>
-                <div class="stat-value">{{ total_unidades }}</div>
-                <div class="stat-label">Unidades Ativas</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-success-soft"><i class="fas fa-desktop"></i></div>
-            <div>
-                <div class="stat-value">{{ total_equipamentos }}</div>
-                <div class="stat-label">Equipamentos Ativos</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-warning-soft"><i class="fas fa-wrench"></i></div>
-            <div>
-                <div class="stat-value">{{ total_em_manutencao }}</div>
-                <div class="stat-label">Em Manutenção</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="fas fa-times-circle"></i></div>
-            <div>
-                <div class="stat-value">{{ total_inserviveis }}</div>
-                <div class="stat-label">Inservíveis</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="fas fa-exclamation-triangle"></i></div>
-            <div>
-                <div class="stat-value">{{ chamados_abertos }}</div>
-                <div class="stat-label">Chamados Abertos</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-md-4 col-xl-2">
-        <div class="stat-card">
-            <div class="stat-icon bg-warning-soft"><i class="fas fa-file-contract"></i></div>
-            <div>
-                <div class="stat-value">{{ contratos_vencendo }}</div>
-                <div class="stat-label">Contratos a Vencer</div>
-            </div>
-        </div>
-    </div>
+{% if not unidade %}
+<div class="alert alert-info">
+    Escolha a unidade no seletor do topo para ver aniversariantes, quem abona e os comunicados da casa.
+    O mural de ações da rede continua à direita.
 </div>
+{% endif %}
 
-<div class="row g-3">
-    <!-- CHAMADOS RECENTES -->
-    <div class="col-lg-7">
-        <div class="card h-100">
+<div class="dash-grid">
+    <div class="dash-col dash-col-esquerda">
+        <div class="card dash-painel">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="fas fa-wrench me-2"></i>Chamados em Aberto / Andamento</span>
+                <span><i class="fas fa-bullhorn me-2"></i>Comunicados da unidade</span>
+                {% if pode_publicar %}
+                <a href="{{ url_for('noticias.novo_comunicado') }}" class="btn btn-sm btn-outline-primary">Novo</a>
+                {% endif %}
+            </div>
+            <div class="dash-pessoas-grid">
+                    <div class="dash-bloco">
+                        <div class="dash-bloco-titulo"><i class="fas fa-birthday-cake me-1"></i>Aniversariantes hoje</div>
+                        {% if aniv_hoje %}
+                        <div class="dash-pessoa-lista">
+                            {% for u in aniv_hoje %}
+                            <div class="dash-pessoa">
+                                {% if u.foto_url %}
+                                <img class="dash-avatar" src="{{ u.foto_url }}" alt="">
+                                {% else %}
+                                <span class="dash-avatar">{{ u.inicial }}</span>
+                                {% endif %}
+                                <span class="dash-pessoa-nome" title="{{ u.nome }}">{{ u.nome }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="dash-vazio">Ninguém faz aniversário hoje.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="dash-bloco">
+                        <div class="dash-bloco-titulo"><i class="fas fa-users me-1"></i>Aniversariantes do mês</div>
+                        {% if aniv_mes %}
+                        <div class="dash-pessoa-lista">
+                            {% for u in aniv_mes %}
+                            <div class="dash-pessoa">
+                                {% if u.foto_url %}
+                                <img class="dash-avatar" src="{{ u.foto_url }}" alt="">
+                                {% else %}
+                                <span class="dash-avatar">{{ u.inicial }}</span>
+                                {% endif %}
+                                <span class="dash-pessoa-nome" title="{{ u.nome }}">{{ u.nome }}</span>
+                                <span class="dash-pessoa-data">{{ '%02d'|format(u.data_nasc.day) }}/{{ '%02d'|format(u.data_nasc.month) }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="dash-vazio">Nenhum aniversariante neste mês.</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="dash-bloco">
+                        <div class="dash-bloco-titulo"><i class="fas fa-calendar-check me-1"></i>Abonando hoje</div>
+                        {% if abonando %}
+                        <div class="dash-pessoa-lista">
+                            {% for f in abonando %}
+                            <div class="dash-pessoa">
+                                {% if f.usuario and f.usuario.foto_url %}
+                                <img class="dash-avatar" src="{{ f.usuario.foto_url }}" alt="">
+                                {% else %}
+                                <span class="dash-avatar">{{ f.usuario.inicial if f.usuario else '?' }}</span>
+                                {% endif %}
+                                <span class="dash-pessoa-nome" title="{{ f.usuario.nome if f.usuario else '' }}">{{ f.usuario.nome if f.usuario else '—' }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="dash-vazio">Ninguém abonando hoje.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="dash-scroll">
+                {% if comunicados %}
+                <ul class="list-group list-group-flush">
+                    {% for c in comunicados %}
+                    {% set item = c.item %}
+                    <li class="list-group-item com-card {% if c.pendente %}com-pendente{% endif %}">
+                        <div class="d-flex justify-content-between gap-2 align-items-start">
+                            <div class="min-w-0">
+                                <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}"
+                                   class="fw-semibold text-decoration-none">{{ item.titulo }}</a>
+                                {% if item.texto %}
+                                <div class="small text-muted mt-1" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ item.texto }}</div>
+                                {% endif %}
+                                <div class="com-meta mt-1">
+                                    {{ item.autor.nome.split()[0] if item.autor else '—' }}
+                                    · {{ item.criado_em.strftime('%d/%m %H:%M') if item.criado_em else '' }}
+                                    {% if item.exige_ciencia %}
+                                    · {{ c.n_ok }}/{{ c.n_dest }} deram ciência
+                                    {% endif %}
+                                    {% if item.anexos %}
+                                    · {{ item.anexos | length }} anexo(s)
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if c.pendente %}
+                            <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}#ciencia"
+                               class="btn btn-sm btn-primary flex-shrink-0">Dar ciência</a>
+                            {% elif c.ja_ciencia %}
+                            <span class="badge bg-success flex-shrink-0">Ciência ok</span>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="dash-bloco">
+                    <div class="dash-bloco-titulo"><i class="fas fa-bullhorn me-1"></i>Recados</div>
+                    <div class="dash-vazio">
+                        {% if unidade %}Nenhum comunicado nesta unidade.{% else %}Selecione uma unidade para ver os comunicados.{% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                </div>
+        </div>
+
+        <div class="card dash-painel">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="fas fa-wrench me-2"></i>Chamados abertos</span>
                 <a href="{{ url_for('chamados.listar') }}" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
-            <div class="card-body p-0">
+            <div class="dash-scroll">
                 {% if ultimos_chamados %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Número</th>
-                                <th>Unidade</th>
-                                <th>Título</th>
-                                <th>Prioridade</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for c in ultimos_chamados %}
-                            <tr onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'" style="cursor:pointer;">
-                                <td><span class="fw-mono text-primary small">{{ c.numero }}</span></td>
-                                <td class="small">{{ c.unidade.nome | truncate(20, True) }}</td>
-                                <td class="small">{{ c.titulo | truncate(30, True) }}</td>
-                                <td><span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span></td>
-                                <td><span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <ul class="list-group list-group-flush">
+                    {% for c in ultimos_chamados %}
+                    <li class="list-group-item d-flex align-items-center justify-content-between gap-2 py-2"
+                        onclick="window.location='{{ url_for('chamados.detalhe', id=c.id) }}'"
+                        style="cursor:pointer;">
+                        <div class="min-w-0">
+                            <div class="small fw-semibold text-primary">{{ c.numero }}</div>
+                            <div class="small text-truncate">{{ c.titulo }}</div>
+                        </div>
+                        <div class="d-flex flex-column align-items-end gap-1 flex-shrink-0">
+                            <span class="badge bg-{{ c.prioridade_badge }}">{{ c.prioridade_label }}</span>
+                            <span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
                 {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-check-circle-fill text-success"></i>
-                    <p>Nenhum chamado aberto no momento!</p>
+                <div class="empty-state py-4">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <p class="mb-0">Nenhum chamado aberto no momento.</p>
                 </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- CONTRATOS CRÍTICOS + UNIDADES -->
-    <div class="col-lg-5">
-        {% if contratos_criticos %}
-        <div class="card mb-3">
+    <div class="dash-col dash-col-direita">
+        <div class="card dash-painel">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="fas fa-file-contract me-2"></i>Contratos Críticos</span>
-                <a href="{{ url_for('contratos.listar') }}" class="btn btn-sm btn-outline-warning">Ver todos</a>
+                <span><i class="fas fa-images me-2"></i>Mural da rede</span>
+                <div class="d-flex gap-1">
+                    {% if pode_publicar %}
+                    <a href="{{ url_for('noticias.nova_acao') }}" class="btn btn-sm btn-outline-primary">Registrar</a>
+                    {% endif %}
+                    <a href="{{ url_for('noticias.mural') }}" class="btn btn-sm btn-outline-primary">Ver tudo</a>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for c in contratos_criticos %}
-                    <li class="list-group-item d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="small fw-semibold">{{ c.identificador }}</div>
-                            <div class="text-muted" style="font-size:0.75rem;">{{ c.empresa_display | truncate(30) }}</div>
+            <div class="dash-scroll">
+                {% if mural %}
+                    {% for entry in mural %}
+                    {% if entry.tipo == 'acao' %}
+                    {% set a = entry.acao %}
+                    <article class="mural-post" id="acao-{{ a.id }}">
+                        <div class="mural-post-data">
+                            {{ a.data_acao.day }} de {{ meses[a.data_acao.month] }}
+                            {% if a.data_acao.year != hoje.year %} de {{ a.data_acao.year }}{% endif %}
                         </div>
-                        <div class="text-end">
-                            <span class="badge bg-{{ c.status_badge }}">{{ c.status_label }}</span>
-                            <div class="text-muted" style="font-size:0.72rem;">Vence {{ c.data_fim | br_date }}</div>
+                        <div class="mural-post-tema">{{ a.tipo.nome if a.tipo else 'Ação' }}</div>
+                        <div class="mural-post-desc">{{ a.descricao }}</div>
+                        {{ thumbs(a.fotos, 'acao-' ~ a.id) }}
+                        <div class="mural-post-foot">
+                            {{ a.unidade.nome if a.unidade else '' }}
+                            {% if a.autor %} · {{ a.autor.nome.split()[0] }}{% endif %}
                         </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="card">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="fas fa-hospital me-2"></i>Unidades da Rede</span>
-                <a href="{{ url_for('unidades.listar') }}" class="btn btn-sm btn-outline-primary">Ver todas</a>
-            </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    {% for u in unidades_ativas[:8] %}
-                    <li class="list-group-item d-flex align-items-center justify-content-between py-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-secondary" style="font-size:0.65rem;">{{ u.tipo }}</span>
-                            <a href="{{ url_for('unidades.detalhe', id=u.id) }}" class="small text-decoration-none fw-semibold">{{ u.nome }}</a>
-                        </div>
-                        <div class="d-flex gap-1">
-                            {% if u.chamados_abertos > 0 %}
-                            <span class="badge bg-danger rounded-pill" title="Chamados abertos">{{ u.chamados_abertos }}</span>
+                    </article>
+                    {% else %}
+                    {% set item = entry.item %}
+                    <article class="mural-post" id="lojinha-{{ item.id }}">
+                        <div class="mural-post-data">
+                            {% if item.criado_em %}
+                            {{ item.criado_em.day }} de {{ meses[item.criado_em.month] }}
+                            {% if item.criado_em.year != hoje.year %} de {{ item.criado_em.year }}{% endif %}
                             {% endif %}
-                            <span class="badge bg-light text-dark">{{ u.total_equipamentos }} equip.</span>
                         </div>
-                    </li>
+                        <div class="mural-post-tema lojinha"><i class="fas fa-store me-1"></i>Lojinha Interna</div>
+                        <div class="mural-post-desc">{{ item.descricao_exibicao() }}</div>
+                        <div>
+                            <span class="mural-status {{ item.status_mural }}">{{ item.status_mural_label }}</span>
+                            {% if item.classificacao %}
+                            <span class="mural-status" style="background:#eef6fb;color:#1A82B8;">Classe {{ item.classificacao }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mural-post-foot">
+                            {{ item.unidade.nome if item.unidade else '' }}
+                            {% if item.criador %} · {{ item.criador.nome.split()[0] }}{% endif %}
+                            {% if item.numero_patrimonio_ou_serie() %}
+                            · {{ item.numero_patrimonio_ou_serie() }}
+                            {% endif %}
+                            · <a href="{{ url_for('transferencias.listar', aba='lojinha') }}">Ver lojinha</a>
+                        </div>
+                    </article>
+                    {% endif %}
                     {% endfor %}
-                </ul>
+                {% else %}
+                <div class="empty-state py-4">
+                    <i class="fas fa-images"></i>
+                    <p class="mb-0">Ainda não há publicações no mural.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
+</div>
+{% include 'noticias/_mural_lightbox.html' %}
 {% endblock %}

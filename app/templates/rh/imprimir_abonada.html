@@ -86,8 +86,8 @@
     <!-- Cabeçalho: logo esquerda | secretaria direita | linha fina abaixo -->
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
-                 alt="Prefeitura de Sorocaba"
+            <img src="{{ identidade.asset_url('brasao') }}"
+                 alt="{{ identidade.alt_brasao }}"
                  onerror="this.style.display='none'">
         </div>
         <div class="cab-secretaria">

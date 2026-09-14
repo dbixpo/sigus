@@ -121,8 +121,8 @@ a { color: #0d6efd; text-decoration: none; }
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
-                 alt="Prefeitura de Sorocaba"
+            <img src="{{ identidade.asset_url('brasao') }}"
+                 alt="{{ identidade.alt_brasao }}"
                  onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
@@ -311,7 +311,7 @@ a { color: #0d6efd; text-decoration: none; }
             </tbody>
         </table>
         <p class="legenda-class"><strong>A</strong> — Inservíveis ao setor, plenas condições de uso. <strong>B</strong> — Inservíveis ao setor, condições de uso com necessidade de reparos.</p>
-        <p class="data-sorocaba">Sorocaba, {{ (now or doc.criado_em) | br_date_extenso }}</p>
+        <p class="data-sorocaba">{{ identidade.municipio }}, {{ (now or doc.criado_em) | br_date_extenso }}</p>
     </div>
 
     {# ── Assinaturas (simuladas via sistema) ─────────────────────── #}

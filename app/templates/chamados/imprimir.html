@@ -245,9 +245,9 @@ if (window.self !== window.top) {
     {# Cabeçalho institucional #}
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+            <img src="{{ identidade.asset_url('brasao') }}"
                  onerror="this.style.display='none'"
-                 alt="Prefeitura de Sorocaba">
+                 alt="{{ identidade.alt_brasao }}">
         </div>
         <div class="cab-titulo">
             SISTEMA INTEGRADO DE GESTÃO DE UNIDADE<br>
@@ -575,7 +575,7 @@ if (window.self !== window.top) {
 
     {# Rodapé #}
     <div class="rodape">
-        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }} &nbsp;·&nbsp; {{ identidade.secretaria }} &nbsp;·&nbsp;
         Impresso em {{ now | br_datetime }}
     </div>
 
@@ -589,9 +589,9 @@ if (window.self !== window.top) {
 
     {# Mini-cabeçalho repetido #}
     <div class="fotos-cab-mini">
-        <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}"
+        <img src="{{ identidade.asset_url('brasao') }}"
              onerror="this.style.display='none'"
-             alt="Prefeitura de Sorocaba">
+             alt="{{ identidade.alt_brasao }}">
         <div class="ft">
             SISTEMA INTEGRADO DE GESTÃO DE UNIDADE
             <small>Fotos do Chamado {{ chamado.numero }} — {{ chamado.titulo }}</small>
@@ -622,7 +622,7 @@ if (window.self !== window.top) {
     {% endif %}
 
     <div class="rodape" style="margin-top:24px;">
-        SIGUS — Sistema de Gestão de Unidades de Saúde &nbsp;·&nbsp; Secretaria da Saúde de Sorocaba &nbsp;·&nbsp;
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }} &nbsp;·&nbsp; {{ identidade.secretaria }} &nbsp;·&nbsp;
         Impresso em {{ now | br_datetime }}
     </div>
 

@@ -130,7 +130,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
 <div class="doc">
     <div class="cabecalho">
         <div class="cab-logo">
-            <img src="{{ url_for('static', filename='img/prefeitura-sorocaba.png') }}" alt="Prefeitura de Sorocaba" onerror="this.style.display='none'">
+            <img src="{{ identidade.asset_url('brasao') }}" alt="{{ identidade.alt_brasao }}" onerror="this.style.display='none'">
         </div>
         <div class="cab-titulo">
             PLANEJAMENTOS E PROJETOS<br>
@@ -283,7 +283,7 @@ if (window.self !== window.top) { var b = document.getElementById('barraAcoes');
     {% endif %}
 
     <div class="rodape">
-        SIGUS — Sistema de Gestão de Unidades de Saúde · Secretaria da Saúde de Sorocaba · Impresso em {{ now | br_datetime }}
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }} · {{ identidade.secretaria }} · Impresso em {{ now | br_datetime }}
     </div>
 </div>
 </body>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ciência — {{ item.titulo }}</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+}
+
+.no-print {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    align-items: center; flex-wrap: wrap;
+    background: #f8f9fa; border: 1px solid #dee2e6;
+    border-radius: 8px; padding: 12px 16px;
+}
+.no-print .label-chamado {
+    font-size: 15px; font-weight: bold; margin-right: auto; color: #1A82B8;
+}
+.btn-acao {
+    border: none; padding: 8px 18px; border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none;
+}
+.btn-imprimir { background: #1A82B8; color: #fff; }
+.btn-voltar   { background: #6c757d; color: #fff; }
+
+.doc {
+    max-width: 740px; margin: 0 auto;
+    border: 1px solid #000; padding: 14px 16px;
+}
+
+.cabecalho {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 10px;
+    border-bottom: 2.5px solid #000; padding-bottom: 10px; margin-bottom: 12px;
+}
+.cab-logo img  { height: 58px; width: auto; }
+.cab-titulo {
+    flex: 1; text-align: center;
+    font-size: 13px; font-weight: bold;
+    text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
+}
+.cab-titulo .subtitulo { font-size: 10px; font-weight: normal; text-transform: none; color: #444; }
+.cab-secretaria {
+    text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap;
+}
+.cab-secretaria strong { font-size: 13px; display: block; }
+
+.chamado-num {
+    display: flex; align-items: baseline; gap: 14px;
+    margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px;
+}
+.chamado-num .num  { font-size: 15px; font-weight: bold; letter-spacing: .3px; color: #000; }
+.chamado-num .badges { display: flex; gap: 10px; flex-wrap: wrap; margin-left: auto; text-align: right; }
+.badge-imp {
+    font-size: 11px; font-weight: normal; color: #222; text-transform: uppercase;
+}
+
+.secao { border-top: 1px solid #aaa; margin-top: 10px; padding-top: 6px; }
+.secao-titulo {
+    font-size: 9px; font-weight: bold; text-transform: uppercase;
+    color: #555; letter-spacing: .6px; margin-bottom: 6px;
+}
+
+.texto { font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.meta { font-size: 11px; color: #333; margin-bottom: 8px; }
+.anexos { margin: 0; padding-left: 16px; }
+.anexos li { margin-bottom: 2px; }
+.anexo-img { margin: 8px 0 12px; text-align: center; page-break-inside: avoid; }
+.anexo-img img {
+    max-width: 100%;
+    max-height: 380px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+.anexo-img .nome { font-size: 9px; color: #555; margin-top: 4px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 10px; }
+th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; text-align: left; }
+th { background: #f3f4f6; font-size: 9px; text-transform: uppercase; letter-spacing: .4px; }
+.assinatura-imp { max-height: 42px; max-width: 160px; display: block; }
+.cpf-lgpd { font-size: 8px; color: #555; font-weight: normal; margin-top: 1px; letter-spacing: .2px; }
+.rodape {
+    margin-top: 12px; font-size: 9px; color: #555; border-top: 1px solid #ccc; padding-top: 6px;
+}
+
+@media print {
+    .no-print { display: none !important; }
+    body { padding: 0; }
+    .doc { border: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="no-print" id="barraAcoes">
+    <span class="label-chamado">Termo de ciência</span>
+    <button class="btn-acao btn-imprimir" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <a class="btn-acao btn-voltar" href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}">← Voltar</a>
+</div>
+<script>
+if (window.self !== window.top) {
+    var b = document.getElementById('barraAcoes');
+    if (b) b.style.display = 'none';
+}
+</script>
+
+<div class="doc">
+    <div class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ identidade.asset_url('brasao') }}"
+                 onerror="this.style.display='none'"
+                 alt="{{ identidade.alt_brasao }}">
+        </div>
+        <div class="cab-titulo">
+            {{ identidade.nome_sistema }}<br>
+            <span class="subtitulo" style="font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px">Termo de ciência de comunicado</span>
+        </div>
+        <div class="cab-secretaria">
+            <strong>{{ identidade.secretaria }}</strong>
+            {{ identidade.municipio }}/{{ identidade.uf }}
+        </div>
+    </div>
+
+    <div class="chamado-num">
+        <span class="num">{{ item.titulo }}</span>
+        <div class="badges">
+            <span class="badge-imp">
+                <span style="color:#888;font-weight:normal;">Ciência:</span>
+                {{ n_ok }} / {{ n_dest }}
+            </span>
+        </div>
+    </div>
+
+    <div class="meta">
+        Publicado por <strong>{{ item.autor.nome if item.autor else '—' }}</strong>
+        em {{ item.criado_em.strftime('%d/%m/%Y %H:%M') if item.criado_em else '—' }}
+        {% if item.unidades_alvo %}
+        · Unidades: {{ item.unidades_alvo | map(attribute='nome') | join(', ') }}
+        {% endif %}
+    </div>
+
+    {% if item.texto %}
+    <div class="secao">
+        <div class="secao-titulo">Comunicado</div>
+        <div class="texto">{{ item.texto }}</div>
+    </div>
+    {% endif %}
+
+    {% if item.anexos %}
+    <div class="secao">
+        <div class="secao-titulo">Documentos anexos</div>
+        {% for a in item.anexos %}
+            {% if a.is_imagem %}
+            <div class="anexo-img">
+                <img src="{{ a.url }}" alt="{{ a.original or a.filename }}">
+                <div class="nome">{{ a.original or a.filename }}{% if a.tamanho_fmt %} ({{ a.tamanho_fmt }}){% endif %}</div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        {% set outros = item.anexos | rejectattr('is_imagem') | list %}
+        {% if outros %}
+        <ul class="anexos">
+            {% for a in outros %}
+            <li>{{ a.original or a.filename }} ({{ a.tamanho_fmt }})</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if item.exige_ciencia %}
+    <div class="secao">
+        <div class="secao-titulo">Quem deu ciência ({{ deram | length }})</div>
+        {% if deram %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Data / hora</th>
+                    <th>Unidade</th>
+                    <th>IP</th>
+                    <th>Origem</th>
+                    <th>Assinatura</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in deram %}
+                <tr>
+                    <td>
+                        {{ c.usuario.nome if c.usuario else '—' }}
+                        {% if c.cpf_lgpd %}<div class="cpf-lgpd">CPF {{ c.cpf_lgpd }}</div>{% endif %}
+                    </td>
+                    <td>{{ c.ciencia_em.strftime('%d/%m/%Y %H:%M') if c.ciencia_em else '—' }}</td>
+                    <td>{{ c.unidade.nome if c.unidade else '—' }}</td>
+                    <td title="{{ c.user_agent or '' }}">{{ c.ip or '—' }}</td>
+                    <td>{{ c.origem_label or '—' }}</td>
+                    <td>
+                        {% if c.assinatura_base64 %}
+                        <img src="{{ c.assinatura_base64 }}" alt="Assinatura" class="assinatura-imp">
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Ninguém deu ciência ainda.</p>
+        {% endif %}
+    </div>
+
+    <div class="secao">
+        <div class="secao-titulo">Pendente ({{ faltam | length }})</div>
+        {% if faltam %}
+        <p>{{ faltam | map(attribute='nome') | join('; ') }}</p>
+        {% else %}
+        <p>Todos os destinatários deram ciência.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="rodape">
+        {{ identidade.nome_sistema }} — {{ identidade.slogan }}
+        · {{ identidade.secretaria }}
+        · Impresso em {{ agora.strftime('%d/%m/%Y %H:%M') if agora else '' }}
+        · Registro com data/hora, IP, unidade logada, origem, CPF (anonimizado) e assinatura quando houver.
+    </div>
+</div>
+</body>
+</html>

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Unidades de Saúde Pública — Sorocaba/SP</title>
-    <meta name="description" content="Mapa público com a localização das unidades de saúde ativas do município de Sorocaba.">
-    <meta property="og:title" content="Mapa de Unidades de Saúde Pública — Sorocaba/SP">
+    <title>Mapa de Unidades de Saúde Pública — {{ identidade.municipio }}/{{ identidade.uf }}</title>
+    <meta name="description" content="Mapa público com a localização das unidades de saúde ativas do município de {{ identidade.municipio }}.">
+    <meta property="og:title" content="Mapa de Unidades de Saúde Pública — {{ identidade.municipio }}/{{ identidade.uf }}">
     <meta property="og:description" content="Consulte endereços e tipos de unidades de saúde no município.">
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#1A82B8">
-    <link rel="icon" type="image/png" href="{{ favicon_href }}">
-    <link rel="apple-touch-icon" href="{{ favicon_href }}">
+    <link rel="icon" type="image/png" href="{{ identidade.asset_url('favicon') }}">
+    <link rel="apple-touch-icon" href="{{ identidade.asset_url('favicon') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -614,15 +614,15 @@
 <body class="sigus-mapa-publico--mobile-map d-flex flex-column min-vh-100">
 <div class="sigus-mapa-publico__mobile-bar d-lg-none" role="banner">
     <div class="sigus-mapa-publico__mobile-bar-inner">
-        <img src="{{ url_for('static', filename='img/logo-sd-branco.png') }}"
+        <img src="{{ identidade.asset_url('logo_escuro') }}"
              width="120"
              height="28"
              class="sigus-mapa-publico__mobile-bar-logo"
-             alt="Saúde Digital Sorocaba">
+             alt="{{ identidade.orgao_curto }}">
         <div class="sigus-mapa-publico__mobile-bar-copy">
             <div class="sigus-mapa-publico__mobile-bar-title">Mapa de Unidades de Saúde Pública</div>
             <div class="sigus-mapa-publico__mobile-bar-place">
-                <span class="sigus-mapa-publico__mobile-bar-city">Sorocaba</span><span class="opacity-75">/</span><span class="sigus-mapa-publico__mobile-bar-uf">SP</span>
+                <span class="sigus-mapa-publico__mobile-bar-city">{{ identidade.municipio }}</span><span class="opacity-75">/</span><span class="sigus-mapa-publico__mobile-bar-uf">{{ identidade.uf }}</span>
             </div>
         </div>
     </div>
@@ -630,15 +630,15 @@
 <header class="sigus-mapa-publico__header py-2 px-3 px-md-4 d-none d-lg-block">
     <div class="container-fluid px-0">
         <div class="sigus-mapa-publico__header-strip">
-            <img src="{{ url_for('static', filename='img/logo-sd-branco.png') }}"
+            <img src="{{ identidade.asset_url('logo_escuro') }}"
                  width="180"
                  height="48"
                  class="sigus-mapa-publico__logo"
-                 alt="Saúde Digital Sorocaba">
+                 alt="{{ identidade.orgao_curto }}">
             <div class="sigus-mapa-publico__header-copy">
                 <h1 class="sigus-mapa-publico__title-main">Mapa de Unidades de Saúde Pública</h1>
                 <p class="sigus-mapa-publico__title-place mb-0">
-                    <span class="sigus-mapa-publico__title-city">Sorocaba</span><span class="sigus-mapa-publico__title-sep">/</span><span class="sigus-mapa-publico__title-uf">SP</span>
+                    <span class="sigus-mapa-publico__title-city">{{ identidade.municipio }}</span><span class="sigus-mapa-publico__title-sep">/</span><span class="sigus-mapa-publico__title-uf">{{ identidade.uf }}</span>
                 </p>
             </div>
         </div>

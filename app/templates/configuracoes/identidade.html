@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block title %}Identidade e assets{% endblock %}
+
+{% block head %}
+<style>
+.asset-preview {
+    min-height: 110px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background-color: #fff;
+    background-image:
+        linear-gradient(45deg, #d8dde6 25%, transparent 25%),
+        linear-gradient(-45deg, #d8dde6 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #d8dde6 75%),
+        linear-gradient(-45deg, transparent 75%, #d8dde6 75%);
+    background-size: 14px 14px;
+    background-position: 0 0, 0 7px, 7px -7px, -7px 0;
+}
+.asset-preview--escuro {
+    background-color: #1a3348;
+    background-image:
+        linear-gradient(45deg, #0D3B5E 25%, transparent 25%),
+        linear-gradient(-45deg, #0D3B5E 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #0D3B5E 75%),
+        linear-gradient(-45deg, transparent 75%, #0D3B5E 75%);
+}
+.asset-preview img {
+    max-height: 88px;
+    max-width: 100%;
+    object-fit: contain;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Identidade e assets</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-landmark me-2"></i>Identidade da instalação</h1>
+</div>
+
+<p class="text-muted small mb-4">
+    Textos e imagens usados no login, na barra lateral e nos impressos.
+    Sem arquivo enviado, o sistema continua com os padrões de Sorocaba.
+    A paleta de cores do SIGUS não muda aqui.
+</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 fw-bold mb-3">Textos</h2>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Município</label>
+                    <input type="text" name="municipio" class="form-control" required maxlength="120"
+                           value="{{ idt.municipio }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">UF</label>
+                    <input type="text" name="uf" class="form-control" required maxlength="2"
+                           value="{{ idt.uf }}" style="text-transform:uppercase;">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Cidade padrão (cadastros)</label>
+                    <input type="text" name="cidade_padrao" class="form-control" maxlength="120"
+                           value="{{ idt.cidade_padrao }}">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Secretaria</label>
+                    <input type="text" name="secretaria" class="form-control" required maxlength="200"
+                           value="{{ idt.secretaria }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Órgão (curto)</label>
+                    <input type="text" name="orgao_curto" class="form-control" maxlength="80"
+                           value="{{ idt.orgao_curto }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Nome do sistema</label>
+                    <input type="text" name="nome_sistema" class="form-control" maxlength="40"
+                           value="{{ idt.nome_sistema }}">
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Slogan</label>
+                    <input type="text" name="slogan" class="form-control" maxlength="200"
+                           value="{{ idt.slogan }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Domínio de e-mail</label>
+                    <div class="input-group">
+                        <span class="input-group-text">@</span>
+                        <input type="text" name="dominio_email" class="form-control" required maxlength="120"
+                               value="{{ idt.dominio_email }}" placeholder="sorocaba.sp.gov.br">
+                    </div>
+                    <div class="form-text">Usado no login e no cadastro quando o usuário não digita o @.</div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="fas fa-save me-1"></i>Salvar textos
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h5 fw-bold mb-3">Logos, favicon e brasão</h2>
+        <div class="row g-3">
+            {% for chave, meta in slots.items() %}
+            <div class="col-md-6 col-xl-3">
+                <div class="border rounded-3 p-3 h-100 d-flex flex-column">
+                    <div class="fw-semibold">{{ meta.label }}</div>
+                    <div class="text-muted small">{{ meta.uso }}</div>
+                    <div class="small mb-2" style="color:#1A82B8;">
+                        Ideal: <strong>{{ meta.tamanho }}</strong>
+                        <span class="text-muted">· {{ meta.formato }}</span>
+                    </div>
+                    <div class="asset-preview mb-3{% if chave == 'logo_escuro' %} asset-preview--escuro{% endif %}">
+                        <img src="{{ idt.asset_url(chave) }}" alt="{{ meta.label }}">
+                    </div>
+                    <form method="post" action="{{ url_for('configuracoes.identidade_asset_upload', chave=chave) }}"
+                          enctype="multipart/form-data" class="mt-auto">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="file" name="arquivo" class="form-control form-control-sm mb-2"
+                               accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif,image/x-icon,.ico">
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="fas fa-upload me-1"></i>Trocar arquivo
+                        </button>
+                    </form>
+                    {% if idt.tem_upload(chave) %}
+                    <form method="post" action="{{ url_for('configuracoes.identidade_asset_restaurar', chave=chave) }}"
+                          class="mt-2" onsubmit="return confirm('Restaurar o arquivo padrão deste slot?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                            Restaurar padrão
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
