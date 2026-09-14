@@ -22,7 +22,7 @@ from app.models.planejamento import (
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.usuario import Usuario
 from app.models.feriado import Feriado, expediente_no_dia, feriados_no_periodo
-from app.utils import agora_local
+from app.utils import agora_local, agora_brasilia
 
 agenda_bp = Blueprint('agenda', __name__, url_prefix='/agenda')
 
@@ -153,7 +153,7 @@ def _livre_em(usuario_id, slot_ini, slot_fim, ignorar_id=None):
 
 def _sugerir_horarios(usuario_ids, duracao_min=60, ignorar_id=None, quantidade=5):
     duracao = timedelta(minutes=max(30, min(240, int(duracao_min or 60))))
-    agora = agora_local().replace(second=0, microsecond=0)
+    agora = agora_brasilia().replace(second=0, microsecond=0)
     janela_fim = datetime.combine(agora.date() + timedelta(days=60), datetime.min.time())
     ocupado = {
         uid: _intervalos_pessoa(uid, agora, janela_fim, ignorar_id)

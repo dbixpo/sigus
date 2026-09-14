@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, date
 import os, uuid, mimetypes
 from app import db
+from app.utils import agora_local, formatar_brasilia
 from app.chamado_acesso import (
     chamado_abertura_acesso, tpl_ctx_abertura, aplicar_solicitante_chamado,
     historico_usuario_id, historico_acao, notificar_abertura, redirect_pos_abertura,
@@ -735,7 +736,7 @@ def api_equipamento_detalhe(equip_id):
         'numero':    c.numero,
         'status':    c.status_label,
         'badge':     c.status_badge,
-        'criado_em': c.criado_em.strftime('%d/%m/%Y'),
+        'criado_em': formatar_brasilia(c.criado_em, '%d/%m/%Y') if c.criado_em else '',
         'descricao': (c.descricao or '')[:120],
     } for c in chamados_equip]
 
@@ -1107,7 +1108,7 @@ def atualizar_status(id):
     chamado.status = novo_status
     chamado.unidade_responsavel_id = uid
     if encerra:
-        chamado.fechado_em = datetime.utcnow()
+        chamado.fechado_em = agora_local()
         chamado.observacao_conclusao = observacao
 
     db.session.add(ChamadoHistorico(
@@ -1166,7 +1167,7 @@ def adicionar_andamento(id):
         encerra          = novo_status_obj.encerra_chamado if novo_status_obj else novo_status in ['concluido', 'cancelado']
         acao_hist = f'{acao} | Status: {status_anterior} → {novo_status}'
         if encerra:
-            chamado.fechado_em           = datetime.utcnow()
+            chamado.fechado_em           = agora_local()
             chamado.observacao_conclusao = observacao
     else:
         encerra   = False
@@ -1223,7 +1224,7 @@ def responder_andamento(id, and_id):
     historico = ChamadoHistorico.query.get_or_404(and_id)
     if historico.chamado_id != chamado.id:
         abort(404)
-    historico.respondido_em = datetime.utcnow()
+    historico.respondido_em = agora_local()
     db.session.commit()
     flash('Pendência marcada como resolvida.', 'success')
     return redirect(url_for('chamados.detalhe', id=id))
@@ -1235,7 +1236,7 @@ def imprimir(id):
     chamado  = Chamado.query.get_or_404(id)
     _verificar_acesso_chamado(chamado)
     historico = chamado.historico.order_by(ChamadoHistorico.criado_em).all()
-    now = datetime.utcnow()
+    now = agora_local()
     # URL curta para o QR code (evita URLs longas do Google Maps no QR)
     qr_url = None
     if chamado.unidade and chamado.unidade.link_maps:
@@ -1380,7 +1381,7 @@ def gestao_atualizar_rapido(id):
     chamado.unidade_responsavel_id = uid
 
     if novo_status in ['concluido', 'cancelado']:
-        chamado.fechado_em           = datetime.utcnow()
+        chamado.fechado_em           = agora_local()
         chamado.observacao_conclusao = observacao
 
     acao = f'Status alterado via Gestão: {status_anterior} → {novo_status}'

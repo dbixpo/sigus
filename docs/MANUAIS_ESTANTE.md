@@ -7,7 +7,7 @@ A ponta **não** lê este repositório. O manual operacional está no BookStack 
 
 Tom: didático (“você”), caixas `callout info/warning/success`, passo a passo, print da tela. Espelha o livro de manuais do SISWEB.
 
-Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha): uma página por tela. Capítulo **Dashboard, comunicados e mural**: tela inicial da unidade, ciência com CPF/assinatura e o feed de ações (abrir a foto, curtir e comentar).
+Capítulo especial de patrimônio (salas, equipamentos, transferências, Lojinha): uma página por tela. Capítulo **Dashboard, comunicados e mural**: tela inicial da unidade, ciência com recorte por perfil **ou** CBO, e o feed de ações (abrir a foto, curtir e comentar).
 
 ## Como republicar (máquina de quem edita o livro)
 

@@ -1,27 +1,92 @@
-from datetime import datetime, timedelta
-
-_TZ_OFFSET = timedelta(hours=-3)  # UTC-3 (horário de Brasília)
+from datetime import datetime, timedelta, date, timezone
+from io import BytesIO
 from urllib.parse import quote
+import base64
+
+try:
+    from zoneinfo import ZoneInfo
+    TZ_BRASILIA = ZoneInfo('America/Sao_Paulo')
+except Exception:
+    # Windows sem pacote tzdata: Brasília é UTC-3 o ano todo (sem horário de verão desde 2019).
+    TZ_BRASILIA = timezone(timedelta(hours=-3))
+_ASSINATURA_PNG_PREFIXO = 'data:image/png;base64,'
+
+
+def recortar_assinatura_png(data_url, padding=12, alpha_min=12):
+    """Recorta o PNG ao traço (pixels visíveis) e descarta a área transparente."""
+    if not data_url:
+        return None
+    bruto = str(data_url).strip()
+    if not bruto.startswith(_ASSINATURA_PNG_PREFIXO):
+        return bruto
+    try:
+        from PIL import Image
+        raw = base64.b64decode(bruto.split(',', 1)[1], validate=False)
+        img = Image.open(BytesIO(raw)).convert('RGBA')
+    except Exception:
+        return bruto
+    mascara = img.split()[-1].point(lambda p, lim=alpha_min: 255 if p >= lim else 0)
+    bbox = mascara.getbbox()
+    if not bbox:
+        return None
+    left, top, right, bottom = bbox
+    left = max(0, left - padding)
+    top = max(0, top - padding)
+    right = min(img.width, right + padding)
+    bottom = min(img.height, bottom + padding)
+    recorte = img.crop((left, top, right, bottom))
+    buf = BytesIO()
+    recorte.save(buf, format='PNG', optimize=True)
+    return _ASSINATURA_PNG_PREFIXO + base64.b64encode(buf.getvalue()).decode('ascii')
 
 
 def agora_local():
+    """Instante atual em UTC (naive) para gravar no banco.
+
+    Independente do fuso do servidor. Na tela, use ``br_datetime`` /
+    ``formatar_brasilia`` — nunca ``strftime`` cru.
     """
-    Retorna a data/hora atual ajustada para o horário local (Brasília, UTC-3).
-    Esta função garante que todas as telas que registram data/hora usem a mesma hora
-    que está sendo exibida no relógio da navbar.
-    
-    O servidor está em UTC-8 (PST), então adicionamos 5 horas para converter para UTC-3 (Brasília).
-    Quando aplicamos -5h no filtro br_datetime para exibição, obtemos a hora correta.
-    """
-    return datetime.now() + timedelta(hours=5)
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def agora_local_callable():
-    """
-    Retorna um callable que pode ser usado como default em modelos SQLAlchemy.
-    Usa a mesma lógica de agora_local() para garantir consistência.
-    """
+    """Default SQLAlchemy: mesmo instante de ``agora_local``."""
     return agora_local()
+
+
+def hoje_brasilia():
+    """Data de calendário em Brasília (não a do servidor)."""
+    return datetime.now(TZ_BRASILIA).date()
+
+
+def agora_brasilia():
+    """Relógio de parede em Brasília (naive). Use em agenda/expediente, não para gravar timestamp."""
+    return datetime.now(TZ_BRASILIA).replace(tzinfo=None)
+
+
+def para_brasilia(value):
+    """Converte datetime gravado (UTC naive ou aware) para Brasília naive.
+
+    Objetos ``date`` (nascimento, prazo, vigência) não são instante — devolve iguais.
+    """
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        dt = value
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(TZ_BRASILIA).replace(tzinfo=None)
+    return value
+
+
+def formatar_brasilia(value, fmt='%d/%m/%Y %H:%M'):
+    """Texto em horário de Brasília. ``None`` vira '—'."""
+    if value is None:
+        return '—'
+    dt = para_brasilia(value)
+    if dt is None:
+        return '—'
+    return dt.strftime(fmt)
 
 
 def _montar_corpo_email(usuario, unidade):
@@ -121,7 +186,7 @@ def _montar_corpo_email_ficha(ficha):
 
     linhas += [
         f'',
-        f'Ficha gerada em: {ficha.gerado_em.strftime("%d/%m/%Y %H:%M")}',
+        f'Ficha gerada em: {formatar_brasilia(ficha.gerado_em)}',
         f'Solicitado por: {ficha.gerador.nome if ficha.gerador else "Sistema"}',
         f'',
         f'Atenciosamente,',
@@ -179,7 +244,7 @@ def _montar_corpo_email_rede(ficha):
     linhas += [
         f'',
         f'Solicitado por: {ficha.gerador.nome if ficha.gerador else "Sistema"}',
-        f'Data: {ficha.gerado_em.strftime("%d/%m/%Y %H:%M")}',
+        f'Data: {formatar_brasilia(ficha.gerado_em)}',
         f'',
         f'Atenciosamente,',
     ]
@@ -192,24 +257,14 @@ def registrar_filtros(app):
         if value is None:
             return '—'
         if isinstance(value, datetime):
-            return (value + _TZ_OFFSET).strftime('%d/%m/%Y')
+            return formatar_brasilia(value, '%d/%m/%Y')
         return value.strftime('%d/%m/%Y')
 
     @app.template_filter('br_datetime')
-    def br_datetime(value):
+    def br_datetime(value, fmt='%d/%m/%Y %H:%M'):
         if value is None:
             return '—'
-        # Se for timezone-aware, remove timezone info
-        if hasattr(value, 'tzinfo') and value.tzinfo:
-            dt = value.replace(tzinfo=None)
-        else:
-            dt = value
-        
-        # Aplica offset de -5 horas para converter para horário de Brasília (UTC-3)
-        # Servidor está em UTC-8 (PST), então salvamos com +5h e aplicamos -5h na exibição
-        # Isso converte de UTC-8 (servidor) para UTC-3 (Brasília)
-        dt_brasilia = dt - timedelta(hours=5)
-        return dt_brasilia.strftime('%d/%m/%Y %H:%M')
+        return formatar_brasilia(value, fmt)
 
     _MESES = ('janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
               'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro')
@@ -219,7 +274,7 @@ def registrar_filtros(app):
         """Retorna data no formato 'DD de MMMM de AAAA' (ex: 28 de fevereiro de 2025)."""
         if value is None:
             return '—'
-        dt = value + _TZ_OFFSET if isinstance(value, datetime) else value
+        dt = para_brasilia(value) if isinstance(value, datetime) else value
         return f'{dt.day:02d} de {_MESES[dt.month - 1]} de {dt.year}'
 
     @app.template_filter('br_fone')
@@ -264,6 +319,11 @@ def registrar_filtros(app):
         if plural is None:
             plural = singular + 's'
         return singular if count == 1 else plural
+
+    @app.template_filter('assinatura_crop')
+    def assinatura_crop(value):
+        """PNG da assinatura só com o traço, sem a faixa transparente em volta."""
+        return recortar_assinatura_png(value) or ''
 
 
 def prefixed_static_url(path):

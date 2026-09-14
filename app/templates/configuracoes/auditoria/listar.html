@@ -110,7 +110,7 @@
                 <tbody>
                     {% for r in registros %}
                     <tr>
-                        <td class="small text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M:%S') if r.created_at else '—' }}</td>
+                        <td class="small text-muted">{{ r.created_at | br_datetime('%d/%m/%Y %H:%M:%S') if r.created_at else '—' }}</td>
                         <td class="small">
                             {% if r.usuario %}
                             {{ r.usuario.nome | truncate(25) }}

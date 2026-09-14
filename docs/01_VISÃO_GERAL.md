@@ -33,6 +33,7 @@ Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
 
 ### Gestão da unidade
 
+- **Dashboard** — Comunicados com ciência (perfil **ou** CBO), mural de ações, aniversariantes, chamados abertos
 - **Planejamentos** — Kanban com GUT
 - **Agenda** — Compromissos e reuniões (feriados municipais)
 - **Segurança do Paciente** — NSP interno, protocolo `SP-AAAA-NNNNN` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))

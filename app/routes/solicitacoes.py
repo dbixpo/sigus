@@ -10,7 +10,7 @@ Fluxo:
   6. Ao rejeitar: marca como rejeitado com observação opcional
 """
 import secrets
-from datetime import date, datetime
+from datetime import date
 
 from flask import (Blueprint, render_template, redirect, url_for,
                    flash, request, abort)
@@ -23,6 +23,7 @@ from app.models.cbo import CBO
 from app.models.solicitacao_vinculo import SolicitacaoVinculo
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.notificacao import Notificacao
+from app.utils import recortar_assinatura_png, agora_local
 
 solicitacoes_bp = Blueprint('solicitacoes', __name__, url_prefix='/solicitar-vinculo-profissional')
 
@@ -169,7 +170,7 @@ def formulario():
             tipo_vinculo  = _s('tipo_vinculo'),
             carga_horaria = int(ch_str) if ch_str.isdigit() else None,
             dt_entrada    = _d('dt_entrada'),
-            assinatura_base64 = _s('assinatura_base64') or None,
+            assinatura_base64 = recortar_assinatura_png(_s('assinatura_base64')),
         )
         
         # Se empresa_id foi selecionado, busca dados da empresa
@@ -317,7 +318,7 @@ def aprovar(id):
     # 5. Atualizar solicitação
     sol.status       = 'aprovado'
     sol.aprovado_por = current_user.id
-    sol.aprovado_em  = datetime.utcnow()
+    sol.aprovado_em  = agora_local()
     sol.usuario_criado = usuario.id
     if request.form.get('observacao'):
         sol.observacao = request.form.get('observacao').strip()
@@ -364,7 +365,7 @@ def rejeitar(id):
 
     sol.status       = 'rejeitado'
     sol.aprovado_por = current_user.id
-    sol.aprovado_em  = datetime.utcnow()
+    sol.aprovado_em  = agora_local()
     sol.observacao   = request.form.get('observacao', '').strip() or None
     db.session.commit()
 

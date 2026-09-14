@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
-from datetime import timezone, timedelta
 from flask import Blueprint, jsonify
 from flask_login import login_required, current_user
 from app import db
 from app.models.notificacao import Notificacao
+from app.utils import formatar_brasilia
 
 notificacoes_bp = Blueprint('notificacoes', __name__, url_prefix='/notificacoes')
-
-_TZ = timedelta(hours=-3)  # BRT
 
 
 def _fmt(notif):
     """Serializa uma notificação para JSON."""
-    dt = (notif.criado_em + _TZ).strftime('%d/%m/%Y %H:%M') if notif.criado_em else ''
+    dt = formatar_brasilia(notif.criado_em) if notif.criado_em else ''
     return {
         'id':        notif.id,
         'tipo':      notif.tipo,

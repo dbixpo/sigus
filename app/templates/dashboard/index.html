@@ -346,7 +346,7 @@
                                 {% endif %}
                                 <div class="com-meta mt-1">
                                     {{ item.autor.nome.split()[0] if item.autor else '—' }}
-                                    · {{ item.criado_em.strftime('%d/%m %H:%M') if item.criado_em else '' }}
+                                    · {{ item.criado_em | br_datetime('%d/%m %H:%M') if item.criado_em else '' }}
                                     {% if item.exige_ciencia %}
                                     · {{ c.n_ok }}/{{ c.n_dest }} deram ciência
                                     {% endif %}

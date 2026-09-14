@@ -19,7 +19,9 @@ env/
 logs/
 *.log
 
-# Backups de banco (gerados por scripts/clone_banco.py)
+# Dump de desenvolvimento (não commitar)
+database/sigus_backup.zip
+database/*.zip
 database/sigus_backup.sql
 database/sigus_backup_*.sql
 database/sigus_dump.sql
@@ -34,6 +36,7 @@ app/static/uploads/perfis/
 app/static/uploads/identidade/
 app/static/uploads/comunicados/
 app/static/uploads/acoes/
+app/static/uploads/obs_acoes/
 
 # IDE / Editor
 .idea/

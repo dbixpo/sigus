@@ -745,7 +745,7 @@ function validarCPF(cpf) {
 // ── Assinatura digital (canvas) ───────────────────────────────────────────
 (function () {
     var canvas  = document.getElementById('canvasAssinatura');
-    var ctx     = canvas.getContext('2d');
+    var ctx     = canvas.getContext('2d', { willReadFrequently: true });
     var input   = document.getElementById('inputAssinatura');
     var aviso   = document.getElementById('avisoAssinatura');
     var desenhando = false;
@@ -755,6 +755,34 @@ function validarCPF(cpf) {
     ctx.lineWidth   = 2.2;
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
+
+    function recortarPng(src) {
+        var w = src.width, h = src.height;
+        var pix = src.getContext('2d').getImageData(0, 0, w, h).data;
+        var minX = w, minY = h, maxX = -1, maxY = -1;
+        for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+                if (pix[(y * w + x) * 4 + 3] > 12) {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < 0) return '';
+        var pad = 12;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(w - 1, maxX + pad);
+        maxY = Math.min(h - 1, maxY + pad);
+        var cw = maxX - minX + 1, ch = maxY - minY + 1;
+        var out = document.createElement('canvas');
+        out.width = cw;
+        out.height = ch;
+        out.getContext('2d').drawImage(src, minX, minY, cw, ch, 0, 0, cw, ch);
+        return out.toDataURL('image/png');
+    }
 
     /* Coordenada relativa ao canvas, respeitando a escala CSS */
     function coords(e) {
@@ -808,7 +836,7 @@ function validarCPF(cpf) {
 
     function sincronizar() {
         if (!vazio) {
-            input.value = canvas.toDataURL('image/png');
+            input.value = recortarPng(canvas);
         }
     }
 

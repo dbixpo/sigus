@@ -13,7 +13,7 @@ Schema principal: **`public`** (SIGUS). Módulo de emendas/licitações do Patri
 | Exportar o banco da máquina atual | `python scripts/clone_banco.py` | Gera `database/sigus_backup_AAAAMMDD_HHMM.sql` — **gitignore** |
 | Restaurar | `python scripts/restaura_banco.py` | Lê `database/sigus_backup.zip` ou o `.sql` mais recente; usa `DATABASE_URL` |
 
-O arquivo `database/sigus_backup.zip` no Git é um **snapshot de desenvolvimento**, não substitui backup de produção. **Não** commitar dump novo. **Não** restaurar dump de homologação em cima de produção sem backup prévio.
+Dumps **não** entram no Git. Backup de produção é política da TI da casa. **Não** commitar dump. **Não** restaurar dump de homologação em cima de produção sem backup prévio. **Não** usar dump da Prefeitura de Sorocaba para instalar o SIGUS em outro município — use [INSTALACAO.md](INSTALACAO.md) (`migrations/bootstrap_nova_instalacao.py`).
 
 Dump antigo com nomes `planos` / `acoes_plano`: depois do restore rode `python migrations/alinhar_nomenclatura_banco.py`.
 
@@ -41,7 +41,7 @@ Catálogo e avisos: [migrations/README.md](../migrations/README.md).
 
 ## Models
 
-SQLAlchemy em `app/models/`. Nova tabela = model + migration que cria a tabela. O `create_all` **não** é o processo de produção.
+SQLAlchemy em `app/models/`. Nova tabela = model + migration que cria a tabela. Em produção **já povoada**, o `create_all` **não** substitui a migration da entrega. Em **banco vazio** (outro município), o bootstrap chama `create_all` e em seguida os seeds — [INSTALACAO.md](INSTALACAO.md).
 
 ## Backups de produção
 

@@ -8,6 +8,7 @@ Registro: `app/__init__.py` (`create_app`).
 |---|---|---|---|
 | `auth` | `/` | `app/routes/auth.py` | Login, logout, perfil, unidade padrão |
 | `dashboard` | `/` | `app/routes/dashboard.py` | Home após o login |
+| `noticias` | `/` | `app/routes/noticias.py` | Comunicados, ciência, mural de ações |
 | `unidades` | `/configuracoes/unidades` | `app/routes/unidades.py` | Ficha da unidade (abas: salas, equipamentos, NSP, profissionais…) |
 | `predios` | `/configuracoes/predios` | `app/routes/predios.py` | Prédios |
 | `salas` | `/salas` | `app/routes/salas.py` | CRUD de sala + **cadastro externo** |

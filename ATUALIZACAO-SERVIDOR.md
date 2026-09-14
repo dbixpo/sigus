@@ -1,12 +1,29 @@
 # Atualização do SIGUS no servidor
 
-Playbook **recorrente**. Não é o guia de instalação (esse é [docs/SETUP.md](docs/SETUP.md)).
+Playbook **recorrente**. Instalação do zero: [docs/INSTALACAO.md](docs/INSTALACAO.md). IIS de Sorocaba: [docs/SETUP.md](docs/SETUP.md).
 
 Ambiente: Windows, Flask + PostgreSQL, IIS + HttpPlatformHandler, prefixo `/sigus`. Produção: https://saudedigital.sorocaba.sp.gov.br/sigus
 
-**Não** inventar dados de teste em produção (NSP, chamado, transferência). **Não** commitar `.env`, dump nem upload. **Não** fazer `git push --force` no `main`.
+**Não** inventar dados de teste em produção (NSP, chamado, transferência, comunicado). **Não** commitar `.env`, dump nem upload. **Não** fazer `git push --force` no `main`.
 
 Substitua `C:\inetpub\wwwroot\sigus` pelo caminho físico real do aplicativo no IIS.
+
+Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat daquela máquina.
+
+---
+
+## Esta entrega (ciência perfil OU CBO + tzdata)
+
+Depois do `git pull`:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe migrations\add_ciencia_filtros.py
+```
+
+`tzdata` é obrigatório no Windows (`ZoneInfo` de Brasília). A migration só adiciona `ciencia_perfis` / `ciencia_cbos` se ainda não existirem. Recicle o pool.
+
+Conferência: **Novo comunicado** — título, texto, anexo, unidade, cobrar ciência, quem (equipe **ou** perfil **ou** CBO). A lista de CBO usa cadastro **e** matrícula ativa.
 
 ---
 
@@ -62,6 +79,7 @@ Dashboard da unidade + comunicados/mural de ações:
 .\venv\Scripts\python.exe migrations\add_lojinha_destino.py
 .\venv\Scripts\python.exe migrations\add_ciencia_cpf.py
 .\venv\Scripts\python.exe migrations\add_mural_social.py
+.\venv\Scripts\python.exe migrations\add_ciencia_filtros.py
 ```
 
 ### Já aplicados na rede (não precisa repetir, a menos que o banco seja novo)

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Módulos SUEQ convertidos do dashboard-emendas (Patrick) para o SIGUS."""
-from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
+from app.utils import agora_local, hoje_brasilia
 from app.models.sueq import (
     SueqChamado, SueqChamadoControle, SueqEmenda, SueqEmendaItem,
     SueqParlamentar, SueqProcesso, SueqUnidade,
@@ -49,7 +49,7 @@ def _decimal(val):
 
 
 def _proximo_protocolo():
-    ano = datetime.now().year
+    ano = hoje_brasilia().year
     prefixo = f'SUEQ-{ano}-'
     existentes = [
         c.protocolo for c in SueqChamado.query.filter(SueqChamado.protocolo.like(f'{prefixo}%')).all()
@@ -288,7 +288,7 @@ def chamado_novo():
         unid = SueqUnidade.query.get(uid) if uid else None
         c = SueqChamado(
             protocolo=_proximo_protocolo(),
-            data_solicitacao=datetime.now().strftime('%d/%m/%Y'),
+            data_solicitacao=hoje_brasilia().strftime('%d/%m/%Y'),
             unidade=unid.nome if unid else (request.form.get('unidade') or '').strip() or None,
             unidade_id=unid.id if unid else None,
             endereco=unid.endereco if unid else None,
@@ -380,6 +380,6 @@ def chamado_imprimir(id):
             qr_url = url_for('unidades.maps_redirect', id=unidade_sigus.id, _external=True)
     return render_template(
         'sueq/chamado_imprimir.html',
-        chamado=chamado, now=datetime.utcnow(), qr_url=qr_url,
+        chamado=chamado, now=agora_local(), qr_url=qr_url,
         unidade_sigus=unidade_sigus,
     )

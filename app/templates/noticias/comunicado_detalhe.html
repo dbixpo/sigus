@@ -25,9 +25,12 @@
             <div class="card-body">
                 <div class="small text-muted mb-3">
                     {{ item.autor.nome if item.autor else '—' }}
-                    · {{ item.criado_em.strftime('%d/%m/%Y %H:%M') if item.criado_em else '' }}
+                    · {{ item.criado_em | br_datetime if item.criado_em else '' }}
                     {% if item.unidades_alvo %}
                     · {{ item.unidades_alvo | map(attribute='nome') | join(', ') }}
+                    {% endif %}
+                    {% if item.exige_ciencia and item.ciencia_alvo_resumo() %}
+                    <div class="mt-1">Ciência: {{ item.ciencia_alvo_resumo() }}</div>
                     {% endif %}
                 </div>
                 {% if item.texto %}
@@ -100,15 +103,15 @@
                         <div class="fw-semibold"><i class="fas fa-check-circle me-1"></i>Você já deu ciência</div>
                         {% if minha_ciencia %}
                         <div class="small mt-1">
-                            {{ minha_ciencia.ciencia_em.strftime('%d/%m/%Y %H:%M') if minha_ciencia.ciencia_em else '' }}
+                            {{ minha_ciencia.ciencia_em | br_datetime if minha_ciencia.ciencia_em else '' }}
                             {% if minha_ciencia.cpf_lgpd %} · CPF {{ minha_ciencia.cpf_lgpd }}{% endif %}
                             {% if minha_ciencia.unidade %} · {{ minha_ciencia.unidade.nome }}{% endif %}
                             {% if minha_ciencia.ip %} · IP {{ minha_ciencia.ip }}{% endif %}
                             {% if minha_ciencia.origem %} · {{ minha_ciencia.origem_label }}{% endif %}
                         </div>
                         {% if minha_ciencia.assinatura_base64 %}
-                        <img src="{{ minha_ciencia.assinatura_base64 }}" alt="Sua assinatura"
-                             class="mt-2 d-block" style="max-height:64px; background:#fff; border:1px solid #d1e7dd; border-radius:6px;">
+                        <img src="{{ minha_ciencia.assinatura_base64|assinatura_crop }}" alt="Sua assinatura"
+                             class="mt-2 d-block" style="height:48px; width:auto; max-width:280px; background:#fff; border:1px solid #d1e7dd; border-radius:6px; padding:4px 8px;">
                         {% endif %}
                         {% endif %}
                     </div>
@@ -128,7 +131,13 @@
                 {% if faltam %}
                 <ul class="list-group list-group-flush">
                     {% for u in faltam %}
-                    <li class="list-group-item py-2 small">{{ u.nome }}</li>
+                    <li class="list-group-item py-2 small">
+                        {{ u.nome }}
+                        <div class="text-muted" style="font-size:.7rem;">
+                            {{ u.perfil_label if u.perfil_label else u.perfil }}
+                            {% if u.cbo %} · CBO {{ u.cbo }}{% else %} · sem CBO no cadastro{% endif %}
+                        </div>
+                    </li>
                     {% endfor %}
                 </ul>
                 {% else %}
@@ -150,7 +159,7 @@
                                 <div class="text-muted" style="font-size:.7rem; line-height:1.2;">CPF {{ c.cpf_lgpd }}</div>
                                 {% endif %}
                             </div>
-                            <span class="text-muted text-nowrap">{{ c.ciencia_em.strftime('%d/%m %H:%M') if c.ciencia_em else '' }}</span>
+                            <span class="text-muted text-nowrap">{{ c.ciencia_em | br_datetime('%d/%m %H:%M') if c.ciencia_em else '' }}</span>
                         </div>
                         <div class="text-muted" style="font-size:.75rem;">
                             {% if c.unidade %}{{ c.unidade.nome }}{% endif %}
@@ -158,8 +167,8 @@
                             {% if c.origem %}{% if c.unidade or c.ip %} · {% endif %}{{ c.origem_label }}{% endif %}
                         </div>
                         {% if c.assinatura_base64 %}
-                        <img src="{{ c.assinatura_base64 }}" alt="Assinatura"
-                             class="mt-1 d-block" style="max-height:40px; background:#fff;">
+                        <img src="{{ c.assinatura_base64|assinatura_crop }}" alt="Assinatura"
+                             class="mt-1 d-block" style="height:36px; width:auto; max-width:220px; background:#fff;">
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -180,7 +189,7 @@
 (function () {
     var canvas  = document.getElementById('canvasAssinatura');
     if (!canvas) return;
-    var ctx     = canvas.getContext('2d');
+    var ctx     = canvas.getContext('2d', { willReadFrequently: true });
     var input   = document.getElementById('inputAssinatura');
     var aviso   = document.getElementById('avisoAssinatura');
     var desenhando = false;
@@ -190,6 +199,34 @@
     ctx.lineWidth   = 2.2;
     ctx.lineCap     = 'round';
     ctx.lineJoin    = 'round';
+
+    function recortarPng(src) {
+        var w = src.width, h = src.height;
+        var pix = src.getContext('2d').getImageData(0, 0, w, h).data;
+        var minX = w, minY = h, maxX = -1, maxY = -1;
+        for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+                if (pix[(y * w + x) * 4 + 3] > 12) {
+                    if (x < minX) minX = x;
+                    if (y < minY) minY = y;
+                    if (x > maxX) maxX = x;
+                    if (y > maxY) maxY = y;
+                }
+            }
+        }
+        if (maxX < 0) return '';
+        var pad = 12;
+        minX = Math.max(0, minX - pad);
+        minY = Math.max(0, minY - pad);
+        maxX = Math.min(w - 1, maxX + pad);
+        maxY = Math.min(h - 1, maxY + pad);
+        var cw = maxX - minX + 1, ch = maxY - minY + 1;
+        var out = document.createElement('canvas');
+        out.width = cw;
+        out.height = ch;
+        out.getContext('2d').drawImage(src, minX, minY, cw, ch, 0, 0, cw, ch);
+        return out.toDataURL('image/png');
+    }
 
     function coords(e) {
         var rect  = canvas.getBoundingClientRect();
@@ -242,7 +279,7 @@
 
     function sincronizar() {
         if (!vazio) {
-            input.value = canvas.toDataURL('image/png');
+            input.value = recortarPng(canvas);
         }
     }
 

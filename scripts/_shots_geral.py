@@ -418,6 +418,13 @@ def main() -> None:
             })
 
         if goto('/comunicados/novo', '.page-header'):
+            drv.execute_script("""
+                const cbo = document.getElementById('modoCbo');
+                if (cbo) { cbo.click(); }
+                const bloco = document.getElementById('blocoCienciaAlvo');
+                if (bloco) bloco.scrollIntoView({block:'center'});
+            """)
+            time.sleep(0.4)
             shot('com-novo')
         if com_id and goto(f'/comunicados/{com_id}', '.page-header', JS_COMUNICADO):
             shot('com-detalhe')

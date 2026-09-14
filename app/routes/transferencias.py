@@ -1,7 +1,7 @@
-from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
+from app.utils import agora_local
 from app.models.transferencia import TransferenciaEquipamento, DocumentoTransferencia, ItemDocumentoTransferencia, ItemLojinha
 from app.models.equipamento import Equipamento, TipoEquipamento
 from app.models.unidade import Unidade, UsuarioUnidade
@@ -589,7 +589,7 @@ def lojinha_finalizar():
             if item_loj.quantidade <= 0:
                 item_loj.ativo = False
                 item_loj.destino_unidade_id = unidade_destino_id
-                item_loj.destino_em = datetime.utcnow()
+                item_loj.destino_em = agora_local()
 
     db.session.commit()
     flash('Documento(s) de transferência criado(s)! Aceite na aba Pendentes para confirmar o recebimento.', 'success')
@@ -829,7 +829,7 @@ def documento_aceitar(id):
             doc.status = 'aceita'
             doc.aceito_por = current_user.id
             doc.observacao_aceite = obs
-            doc.resolvido_em = datetime.utcnow()
+            doc.resolvido_em = agora_local()
             db.session.commit()
 
             partes = []
@@ -847,7 +847,7 @@ def documento_aceitar(id):
             doc.status = 'recusada'
             doc.aceito_por = current_user.id
             doc.observacao_aceite = obs
-            doc.resolvido_em = datetime.utcnow()
+            doc.resolvido_em = agora_local()
             for item in doc.itens.all():
                 if item.equipamento_id:
                     _registrar_evento(
@@ -883,7 +883,7 @@ def documento_cancelar(id):
 
     doc.status = 'cancelada'
     doc.aceito_por = current_user.id
-    doc.resolvido_em = datetime.utcnow()
+    doc.resolvido_em = agora_local()
     doc.observacao_aceite = 'Cancelado pelo solicitante.'
     for item in doc.itens.all():
         if item.equipamento_id:
@@ -929,7 +929,7 @@ def aceitar(id):
             transf.status = 'aceita'
             transf.aceito_por = current_user.id
             transf.observacao_aceite = obs
-            transf.resolvido_em = datetime.utcnow()
+            transf.resolvido_em = agora_local()
             _registrar_evento(transf.equipamento, f'Transferência aceita — {sala.nome}', obs)
             db.session.commit()
             flash('Transferência aceita!', 'success')
@@ -937,7 +937,7 @@ def aceitar(id):
             transf.status = 'recusada'
             transf.aceito_por = current_user.id
             transf.observacao_aceite = obs
-            transf.resolvido_em = datetime.utcnow()
+            transf.resolvido_em = agora_local()
             _registrar_evento(transf.equipamento, f'Transferência recusada', obs)
             db.session.commit()
             flash('Transferência recusada.', 'info')
@@ -974,7 +974,7 @@ def documento_imprimir(id):
     qr_url_origem = url_for('unidades.maps_redirect', id=doc.unidade_origem_id, _external=True) if doc.unidade_origem.link_maps else None
     qr_url_destino = url_for('unidades.maps_redirect', id=doc.unidade_destino_id, _external=True) if doc.unidade_destino.link_maps else None
     qr_url_verificar = url_for('transferencias.documento_verificar', id=doc.id, _external=True)
-    return render_template('transferencias/imprimir.html', doc=doc, now=datetime.utcnow(),
+    return render_template('transferencias/imprimir.html', doc=doc, now=agora_local(),
                            qr_url_origem=qr_url_origem, qr_url_destino=qr_url_destino,
                            qr_url_verificar=qr_url_verificar)
 

@@ -10,7 +10,7 @@ from app.routes.noticias import (
     pode_publicar, comunicados_da_unidade, montar_cards_comunicados, feed_mural,
     stats_acoes_feed,
 )
-from datetime import date
+from app.utils import hoje_brasilia
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -85,7 +85,7 @@ def _abonando_hoje(unidade_id, hoje):
 @dashboard_bp.route('/dashboard')
 @login_required
 def index():
-    hoje = date.today()
+    hoje = hoje_brasilia()
     unidade = current_user.unidade_logada
     unidade_id = unidade.id if unidade else None
 

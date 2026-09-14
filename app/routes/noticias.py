@@ -8,13 +8,15 @@ from flask import (
     Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify,
 )
 from flask_login import login_required, current_user
-from sqlalchemy import extract, func
+from sqlalchemy import extract, func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import joinedload, selectinload
 from app import db
-from app.utils import agora_local
+from app.utils import agora_local, formatar_brasilia, recortar_assinatura_png
 from app.models.unidade import Unidade, UsuarioUnidade
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, PERFIS
+from app.models.cbo import CBO
+from app.models.matricula import MatriculaProfissional
 from app.models.notificacao import Notificacao
 from app.models.noticias import (
     TipoAcao, Comunicado, ComunicadoAnexo, ComunicadoCiencia,
@@ -39,7 +41,6 @@ _ANEXO_MAX_MB = 10
 _FOTO_MAX_MB = 5
 _ASSINATURA_PREFIXO = 'data:image/png;base64,'
 _ASSINATURA_MAX = 400_000
-_ASSINATURA_MIN = 8_000
 
 
 def _ip_cliente():
@@ -58,9 +59,9 @@ def _assinatura_form():
     raw = (request.form.get('assinatura_base64') or '').strip()
     if not raw.startswith(_ASSINATURA_PREFIXO):
         return None
-    if len(raw) < _ASSINATURA_MIN or len(raw) > _ASSINATURA_MAX:
+    if len(raw) > _ASSINATURA_MAX:
         return None
-    return raw
+    return recortar_assinatura_png(raw)
 
 
 def _cpf_digitos(valor):
@@ -164,6 +165,126 @@ def resolver_unidades_comunicado():
     return unidades, None
 
 
+def _ids_unidades_ciencia_request():
+    """Unidades para montar as listas de perfil/CBO (form ou AJAX)."""
+    permitidas = {u.id for u in unidades_para_publicar()}
+    ids = []
+    for v in request.args.getlist('unidades') or request.form.getlist('unidades'):
+        try:
+            ids.append(int(v))
+        except (TypeError, ValueError):
+            continue
+    ids = [i for i in ids if i in permitidas]
+    if not ids and current_user.unidade_logada and current_user.unidade_logada.id in permitidas:
+        ids = [current_user.unidade_logada.id]
+    return ids
+
+
+def _mapa_cbos_usuarios(usuario_ids):
+    """CBO do cadastro SIGUS unido ao CBO das matrículas ativas (não usa ficha CNES)."""
+    mapa = {i: set() for i in usuario_ids}
+    if not usuario_ids:
+        return mapa
+    for uid, cbo in (
+        db.session.query(Usuario.id, Usuario.cbo)
+        .filter(Usuario.id.in_(usuario_ids))
+        .all()
+    ):
+        if (cbo or '').strip():
+            mapa[uid].add(cbo.strip())
+    for uid, cbo in (
+        db.session.query(MatriculaProfissional.usuario_id, MatriculaProfissional.cbo)
+        .filter(
+            MatriculaProfissional.usuario_id.in_(usuario_ids),
+            MatriculaProfissional.ativo.is_(True),
+        )
+        .all()
+    ):
+        if (cbo or '').strip():
+            mapa[uid].add(cbo.strip())
+    return mapa
+
+
+def _expr_cbo_cadastro_ou_matricula(cbos):
+    """A pessoa casa com o CBO se o cadastro OU alguma matrícula ativa bater."""
+    sub = (
+        db.session.query(MatriculaProfissional.usuario_id)
+        .filter(
+            MatriculaProfissional.ativo.is_(True),
+            MatriculaProfissional.cbo.in_(cbos),
+        )
+    )
+    return or_(Usuario.cbo.in_(cbos), Usuario.id.in_(sub))
+
+
+def opcoes_ciencia_para_unidades(unidade_ids):
+    """Perfis e CBOs (cadastro + matrícula) das pessoas com vínculo ativo nas unidades."""
+    if not unidade_ids:
+        return {'perfis': [], 'cbos': [], 'n_vinculados': 0, 'n_sem_cbo': 0}
+    usuarios = (
+        Usuario.query
+        .join(UsuarioUnidade, UsuarioUnidade.usuario_id == Usuario.id)
+        .filter(
+            UsuarioUnidade.unidade_id.in_(unidade_ids),
+            UsuarioUnidade.ativo.is_(True),
+            Usuario.ativo.is_(True),
+        )
+        .distinct()
+        .all()
+    )
+    ordem = {
+        'administrador': 5, 'gestor_secretaria': 4, 'coordenador': 3,
+        'administrativo': 2, 'profissional': 1,
+    }
+    perfis_ok = sorted(
+        {u.perfil for u in usuarios if u.perfil},
+        key=lambda p: (-ordem.get(p, 0), p),
+    )
+    mapa = _mapa_cbos_usuarios([u.id for u in usuarios])
+    codigos = set()
+    n_sem_cbo = 0
+    for u in usuarios:
+        cs = mapa.get(u.id) or set()
+        if not cs:
+            n_sem_cbo += 1
+        codigos |= cs
+    desc = {}
+    if codigos:
+        desc = {
+            c.codigo: c.descricao
+            for c in CBO.query.filter(CBO.codigo.in_(codigos)).all()
+        }
+    return {
+        'perfis': [{'id': p, 'label': PERFIS.get(p, p)} for p in perfis_ok],
+        'cbos': [
+            {'codigo': c, 'label': f'{c} – {desc[c]}' if desc.get(c) else c}
+            for c in sorted(codigos, key=lambda x: (desc.get(x) or x).lower())
+        ],
+        'n_vinculados': len(usuarios),
+        'n_sem_cbo': n_sem_cbo,
+    }
+
+
+def _filtros_ciencia_form(exige):
+    """Perfil OU CBO (nunca os dois). Listas vazias = toda a equipe com vínculo."""
+    if not exige:
+        return [], [], None
+    modo = (request.form.get('ciencia_modo') or 'equipe').strip()
+    if modo not in ('equipe', 'perfil', 'cbo'):
+        modo = 'equipe'
+    if modo == 'equipe':
+        return [], [], None
+    if modo == 'perfil':
+        perfis = [p for p in request.form.getlist('ciencia_perfis') if p in PERFIS]
+        if not perfis:
+            return None, None, 'Escolha ao menos um perfil, ou volte para toda a equipe.'
+        return perfis, [], None
+    cbos = [(c or '').strip() for c in request.form.getlist('ciencia_cbos') if (c or '').strip()]
+    if not cbos:
+        return None, None, 'Escolha ao menos um CBO, ou volte para toda a equipe.'
+    return [], cbos, None
+
+
 def resolver_unidade_acao():
     permitidas = {u.id for u in unidades_para_publicar()}
     if not permitidas:
@@ -188,21 +309,35 @@ def resolver_unidade_acao():
 
 
 def ids_destinatarios(comunicado):
+    """Quem deve dar ciência: vínculo ativo + recorte de perfil OU CBO.
+
+    CBO considera cadastro no SIGUS ou matrícula ativa. Perfil e CBO não se
+    combinam com AND: se os dois JSON existirem (legado), vale o OU.
+    """
     unidade_ids = comunicado.ids_unidades_alvo()
     if not unidade_ids:
         return set()
-    rows = (
-        db.session.query(UsuarioUnidade.usuario_id)
-        .join(Usuario, Usuario.id == UsuarioUnidade.usuario_id)
+    q = (
+        db.session.query(Usuario.id)
+        .join(UsuarioUnidade, UsuarioUnidade.usuario_id == Usuario.id)
         .filter(
             UsuarioUnidade.unidade_id.in_(unidade_ids),
             UsuarioUnidade.ativo.is_(True),
             Usuario.ativo.is_(True),
         )
-        .distinct()
-        .all()
     )
-    return {r[0] for r in rows} | ({comunicado.autor_id} if comunicado.autor_id else set())
+    perfis = comunicado.ciencia_perfis_lista
+    cbos = comunicado.ciencia_cbos_lista
+    if perfis and cbos:
+        q = q.filter(or_(
+            Usuario.perfil.in_(perfis),
+            _expr_cbo_cadastro_ou_matricula(cbos),
+        ))
+    elif perfis:
+        q = q.filter(Usuario.perfil.in_(perfis))
+    elif cbos:
+        q = q.filter(_expr_cbo_cadastro_ou_matricula(cbos))
+    return {r[0] for r in q.distinct().all()}
 
 
 def usuarios_destinatarios(comunicado):
@@ -431,7 +566,7 @@ def _acao_payload(acao, foto_idx=0):
             {
                 'id': c.id,
                 'texto': c.texto,
-                'quando': c.criado_em.strftime('%d/%m %H:%M') if c.criado_em else '',
+                'quando': formatar_brasilia(c.criado_em, '%d/%m %H:%M') if c.criado_em else '',
                 'autor': _usuario_mural(c.usuario),
                 'meu': c.usuario_id == current_user.id,
                 'pode_apagar': pode_moderar or c.usuario_id == current_user.id,
@@ -455,10 +590,20 @@ def _ctx_comunicado(unidades):
     marcadas = request.form.getlist('unidades')
     if not marcadas and current_user.unidade_logada:
         marcadas = [str(current_user.unidade_logada.id)]
+    ids_marcadas = []
+    for v in marcadas:
+        try:
+            ids_marcadas.append(int(v))
+        except (TypeError, ValueError):
+            continue
     return dict(
         unidades=unidades,
         pode_compartilhar=pode_compartilhar(),
         marcadas=marcadas,
+        opcoes_ciencia=opcoes_ciencia_para_unidades(ids_marcadas),
+        ciencia_modo=request.form.get('ciencia_modo') or 'equipe',
+        ciencia_perfis_marcados=request.form.getlist('ciencia_perfis'),
+        ciencia_cbos_marcados=request.form.getlist('ciencia_cbos'),
     )
 
 
@@ -492,13 +637,19 @@ def novo_comunicado():
             salvos.append(meta)
 
         origem = current_user.unidade_logada or alvos[0]
+        exige = request.form.get('exige_ciencia') == 'on'
+        perfis, cbos, err_filtro = _filtros_ciencia_form(exige)
+        if err_filtro:
+            flash(err_filtro, 'danger')
+            return render_template('noticias/comunicado_form.html', **ctx)
         comunicado = Comunicado(
             titulo=titulo[:200],
             texto=texto or None,
             autor_id=current_user.id,
             unidade_origem_id=origem.id if origem else None,
-            exige_ciencia=request.form.get('exige_ciencia') == 'on',
+            exige_ciencia=exige,
         )
+        comunicado.definir_filtros_ciencia(perfis, cbos)
         comunicado.unidades_alvo = alvos
         db.session.add(comunicado)
         db.session.flush()
@@ -507,12 +658,27 @@ def novo_comunicado():
         _notificar_comunicado(comunicado)
         db.session.commit()
         if comunicado.exige_ciencia:
-            flash('Comunicado publicado. Assine para registrar a sua ciência.', 'success')
-            return redirect(url_for('noticias.detalhe_comunicado', id=comunicado.id) + '#ciencia')
+            dest = ids_destinatarios(comunicado)
+            if current_user.id in dest:
+                flash('Comunicado publicado. Assine para registrar a sua ciência.', 'success')
+                return redirect(url_for('noticias.detalhe_comunicado', id=comunicado.id) + '#ciencia')
+            flash(
+                f'Comunicado publicado. Ciência pedida a {len(dest)} pessoa(s) com o recorte escolhido.',
+                'success',
+            )
+            return redirect(url_for('noticias.detalhe_comunicado', id=comunicado.id))
         flash('Comunicado publicado.', 'success')
         return redirect(url_for('noticias.detalhe_comunicado', id=comunicado.id))
 
     return render_template('noticias/comunicado_form.html', **ctx)
+
+
+@noticias_bp.route('/comunicados/opcoes-ciencia')
+@login_required
+def comunicados_opcoes_ciencia():
+    _exigir_publicar()
+    ids = _ids_unidades_ciencia_request()
+    return jsonify(opcoes_ciencia_para_unidades(ids))
 
 
 @noticias_bp.route('/comunicados/<int:id>')
@@ -780,7 +946,7 @@ def comentar_acao(id):
         'comentario': {
             'id': rec.id,
             'texto': rec.texto,
-            'quando': rec.criado_em.strftime('%d/%m %H:%M') if rec.criado_em else '',
+            'quando': formatar_brasilia(rec.criado_em, '%d/%m %H:%M') if rec.criado_em else '',
             'autor': _usuario_mural(current_user),
             'meu': True,
             'pode_apagar': True,

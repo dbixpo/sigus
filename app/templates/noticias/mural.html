@@ -111,7 +111,7 @@
         </div>
         <div class="mural-foot">
             {{ item.unidade.nome if item.unidade else '' }}
-            · {{ item.criado_em.strftime('%d/%m/%Y %H:%M') if item.criado_em else '' }}
+            · {{ item.criado_em | br_datetime if item.criado_em else '' }}
             {% if item.criador %} · {{ item.criador.nome.split()[0] }}{% endif %}
             {% if item.numero_patrimonio_ou_serie() %} · {{ item.numero_patrimonio_ou_serie() }}{% endif %}
             · <a href="{{ url_for('transferencias.listar', aba='lojinha') }}">Ver lojinha</a>

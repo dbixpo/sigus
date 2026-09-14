@@ -1,9 +1,10 @@
-from datetime import date, datetime
+from datetime import date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 
 from app import db
 from app.models.falta_abonada import FaltaAbonada
+from app.utils import agora_local, hoje_brasilia
 
 rh_bp = Blueprint('rh', __name__, url_prefix='/rh')
 
@@ -21,7 +22,7 @@ def _checar_acesso(falta):
 def faltas_abonadas():
     if not current_user.pode('ver_faltas_abonadas'):
         abort(403)
-    ano       = request.args.get('ano', date.today().year, type=int)
+    ano       = request.args.get('ano', hoje_brasilia().year, type=int)
     ver_hist  = request.args.get('historico', '0') == '1'
 
     usuario_id = request.args.get('usuario_id', current_user.id, type=int)
@@ -55,8 +56,8 @@ def faltas_abonadas():
         .all()
     )
     anos_disponiveis = [int(r.ano) for r in anos_disponiveis]
-    if date.today().year not in anos_disponiveis:
-        anos_disponiveis.insert(0, date.today().year)
+    if hoje_brasilia().year not in anos_disponiveis:
+        anos_disponiveis.insert(0, hoje_brasilia().year)
 
     usadas    = len(faltas_ativas)
     restantes = _LIMITE_ANO - usadas
@@ -162,7 +163,7 @@ def cancelar_falta(id):
 
     falta.status              = 'cancelada'
     falta.motivo_cancelamento = motivo
-    falta.cancelado_em        = datetime.utcnow()
+    falta.cancelado_em        = agora_local()
     falta.cancelado_por       = current_user.id
 
     db.session.commit()

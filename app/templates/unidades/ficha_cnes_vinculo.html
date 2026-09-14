@@ -356,7 +356,7 @@ if (window.self !== window.top) {
             Assinatura do Profissional
         </div>
         <div style="display: inline-block;">
-            <img src="{{ assinatura_base64 }}"
+            <img src="{{ assinatura_base64|assinatura_crop }}"
                  alt="Assinatura"
                  style="max-height:70px; max-width:360px; display:block; border-bottom:1px solid #333;">
             <div style="font-size:8px; color:#555; margin-top:3px;">

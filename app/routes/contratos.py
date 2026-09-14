@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
+from app.utils import agora_local
 from app.models.contrato import Contrato, ContratoTipoEquipamento, ContratoAcao, ACAO_TIPOS, MODALIDADE_OPCOES
 from app.models.equipamento import Equipamento, TipoEquipamento, Marca, Modelo
 from app.models.empresa import EmpresaContratada
@@ -180,7 +181,7 @@ def imprimir(id):
     from datetime import datetime
     return render_template('contratos/imprimir.html',
                            contrato=contrato, itens=itens, acoes=acoes, chamados=chamados,
-                           now=datetime.utcnow())
+                           now=agora_local())
 
 
 @contratos_bp.route('/<int:id>/editar', methods=['GET', 'POST'])

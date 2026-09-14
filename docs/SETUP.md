@@ -1,6 +1,8 @@
-# SIGUS — Primeira instalação no servidor
+# SIGUS — Produção no IIS (referência Sorocaba)
 
-Objetivo: a aplicação responder em **https://saudedigital.sorocaba.sp.gov.br/sigus** num Windows Server com IIS.
+Objetivo na casa: a aplicação responder em **https://saudedigital.sorocaba.sp.gov.br/sigus** num Windows Server com IIS.
+
+**Outro município / servidor do zero:** o passo a passo completo (clone, banco vazio, primeiro admin, identidade) está em [INSTALACAO.md](INSTALACAO.md). Este arquivo detalha o IIS no padrão da SES de Sorocaba.
 
 Caminhos abaixo usam `C:\inetpub\wwwroot\sigus` como **exemplo**. No servidor real, use o caminho físico do aplicativo no IIS.
 
@@ -77,16 +79,25 @@ Senha com `@` na URL: encode como `%40`. Lista completa: `.env.example` e [SEGRE
 
 ## 5. Banco
 
-**Produção:** crie o banco vazio e restaure o **dump de produção** (política de backup da TI), **ou** restaure o último dump homologado e aplique as migrations que faltarem. Não use dump de notebook de desenvolvedor em produção.
+**Produção já existente:** restaure o **dump de produção** da própria rede (política de backup da TI) e aplique as migrations que faltarem. Não use dump de notebook.
 
-**Homologação / máquina nova de dev:**
+**Servidor ou município do zero (banco vazio):**
+
+```powershell
+psql -U postgres -c "CREATE DATABASE sigus;"
+.\venv\Scripts\python.exe migrations\bootstrap_nova_instalacao.py
+```
+
+Detalhes e primeiro admin: [INSTALACAO.md](INSTALACAO.md).
+
+**Homologação com dump da própria casa:**
 
 ```powershell
 psql -U postgres -c "CREATE DATABASE sigus;"
 .\venv\Scripts\python.exe scripts\restaura_banco.py
 ```
 
-O script procura `database\sigus_backup.zip` ou um `.sql` em `database\`. Dumps gerados por `scripts/clone_banco.py` **não** entram no Git.
+O script procura `database\sigus_backup.zip` ou um `.sql` em `database\`. Dumps **não** entram no Git. Não restaure dump de outro município.
 
 Se o dump for antigo (tabelas `planos` / `acoes_plano`):
 

@@ -260,7 +260,7 @@ CHAPTERS = [
             {
                 'name': 'Como publicar e dar ciência em um comunicado',
                 'shots': [
-                    ('com-novo', 'Formulário Novo comunicado: título, texto, busca de unidades, anexos e cobrar ciência'),
+                    ('com-novo', 'Formulário Novo comunicado em passos: título, texto, anexo, unidade e ciência por perfil ou CBO'),
                     ('com-ciencia', 'Tela do comunicado com CPF, campo de assinatura e o botão Registrar ciência'),
                     ('com-imprimir', 'Termo de ciência no padrão SIGUS, com CPF anonimizado embaixo do nome'),
                 ],
@@ -271,13 +271,14 @@ CHAPTERS = [
 <h2>Como publicar</h2>
 <ol>
 <li>No dashboard, clique em <strong>Novo comunicado</strong>.</li>
-<li>Escreva o <strong>título</strong> (obrigatório) e o texto, se quiser.</li>
-<li>Anexe até 5 arquivos (PDF, Word ou imagem, 10 MB cada). Foto entra no impresso; o nome do arquivo sozinho não basta.</li>
-<li>Marque <strong>Cobrar ciência de todo mundo com vínculo ativo nas unidades</strong> se o recado precisar de confirmação (é o padrão).</li>
+<li>Preencha nesta ordem: <strong>título</strong> (obrigatório), texto, documentos para anexar (opcional) e as <strong>unidades</strong>.</li>
+<li>Marque <strong>Cobrar ciência</strong> se o recado precisar de confirmação (é o padrão).</li>
+<li>Em <strong>Quem deve dar ciência</strong>, escolha <em>um</em> recorte: toda a equipe, <strong>por perfil</strong> (administrador, coordenação…) <em>ou</em> <strong>por CBO</strong> (enfermeiro, fisioterapeuta…). Não dá para misturar perfil e CBO no mesmo recado.</li>
 <li>Clique em <strong>Publicar</strong>.</li>
 </ol>
 {SHOT0}
 <p>Gestor central e administrador escolhem as unidades na lista, com <strong>busca em tempo real</strong> pelo nome. Coordenação e apoio administrativo publicam só na unidade do topo.</p>
+<p class="callout info"><strong>CBO:</strong> a lista junta o CBO do cadastro da pessoa no SIGUS com o da <strong>matrícula ativa</strong>. A ocupação da ficha CNES da unidade (por exemplo gestor) não entra. Por isso a enfermeira com CBO na matrícula aparece em enfermagem mesmo sendo gestora na ficha da casa.</p>
 <p class="callout warning"><strong>ATENÇÃO:</strong> Quem publica <strong>não ganha ciência automática</strong>. Se o comunicado cobra ciência e você também é destinatário, o sistema te leva para assinar — o autor assina igual a todo mundo.</p>
 <h2>Como dar ciência</h2>
 <p>Abra o comunicado (pelo dashboard, pelo sino ou pelo botão <strong>Dar ciência</strong>). Role até o bloco de ciência e:</p>

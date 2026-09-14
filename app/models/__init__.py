@@ -6,7 +6,7 @@ from app.models.tipo_sala import TipoSala
 from app.models.sala import Sala
 from app.models.equipamento import (
     TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,
-    Equipamento, EquipamentoCampoValor
+    Equipamento, EquipamentoCampoValor, EquipamentoUsuario
 )
 from app.models.chamado import Divisao, SetorManutencao, UsuarioSetor, Chamado, ChamadoHistorico, ChamadoFoto, ChamadoSolicitacaoItem, AnexoAndamento, ChamadoAtribuido
 from app.models.status_chamado import StatusChamado
@@ -39,3 +39,12 @@ from app.models.noticias import (
     TipoAcao, Comunicado, ComunicadoAnexo, ComunicadoCiencia,
     AcaoLocal, AcaoLocalFoto, AcaoLocalCurtida, AcaoLocalComentario,
 )
+from app.models.perfil_permissao import PerfilPermissao
+from app.models.auditoria import Auditoria
+from app.models.planejamento import (
+    Planejamento, PlanejamentoAnexo, AcaoPlanejamento,
+    AcaoObservacao, AcaoObservacaoAnexo,
+)
+from app.models.falta_abonada import FaltaAbonada
+from app.models.contrato_financeiro import ContratoFinanceiro
+from app.models.solicitacao_vinculo import SolicitacaoVinculo

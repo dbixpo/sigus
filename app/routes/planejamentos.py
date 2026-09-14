@@ -3,13 +3,13 @@
 import os
 import uuid
 import mimetypes
-from datetime import datetime, timedelta, date, timezone
+from datetime import datetime, timedelta, date
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify, send_file
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload, selectinload, noload
 
 from app import db
-from app.utils import agora_local
+from app.utils import agora_local, formatar_brasilia, hoje_brasilia
 from app.models.planejamento import (
     Planejamento, AcaoPlanejamento, AcaoObservacao, AcaoObservacaoAnexo,
     PlanejamentoAnexo, STATUS_ACAO, STATUS_ACAO_LABELS,
@@ -241,7 +241,7 @@ def _gerar_alertas_prazos():
     Antes rodava em todo GET de /planejamentos/ com N queries por usuário — isso
     deixava a listagem lenta. Agora usa poucas queries em lote.
     """
-    hoje = date.today()
+    hoje = hoje_brasilia()
     if _ALERTAS_PRAZO_DIA.get('data') == hoje:
         return
 
@@ -515,7 +515,7 @@ def listar():
         for ac in acoes_aba:
             acoes_por_plano.setdefault(ac.planejamento_id, []).append(ac)
 
-    hoje = date.today()
+    hoje = hoje_brasilia()
     tres_dias = hoje + timedelta(days=3)
 
     # Banner de prazos (leve) + geração de sininho no máx. 1x/dia por worker
@@ -701,7 +701,6 @@ def criar():
         u = max(1, min(5, u))
         t = max(1, min(5, t))
 
-        # Usa função centralizada para garantir hora consistente com o relógio da navbar
         now = agora_local()
         # Usa a primeira unidade selecionada como unidade principal, ou a unidade_id se não houver seleção
         unidade_principal_id = unidades_ids[0] if unidades_ids else unidade_id
@@ -943,7 +942,6 @@ def criar_acao(plano_id):
     db.session.add(acao)
     db.session.flush()
 
-    # Usa função centralizada para garantir hora consistente com o relógio da navbar
     planejamento.atualizado_em = agora_local()
     planejamento.atualizado_por = current_user.id
 
@@ -982,7 +980,6 @@ def atualizar_status_acao(id):
         return jsonify({'ok': False, 'erro': 'Status inválido'}), 400
 
     acao.status = status
-    # Salva hora local + 3h para que quando aplicar -3h na exibição, dê o horário correto
     agora = agora_local()
     acao.atualizado_em = agora
     acao.atualizado_por = current_user.id
@@ -996,20 +993,15 @@ def atualizar_status_acao(id):
     canceladas = sum(1 for a in acoes_flat if a.status == 'cancelado')
     em_andamento = sum(1 for a in acoes_flat if a.status == 'em_andamento')
     pendentes = sum(1 for a in acoes_flat if a.status == 'backlog')
-    hoje = date.today()
+    hoje = hoje_brasilia()
     atrasadas = sum(1 for a in acoes_flat if a.status not in ('concluido', 'cancelado') and a.prazo and a.prazo < hoje)
     total_ativas = total - canceladas
     progresso_pct = round(100 * concluidas / total_ativas) if total_ativas else 0
     em_andamento_pct = round(100 * em_andamento / total_ativas) if total_ativas else 0
     pendentes_pct = round(100 * pendentes / total_ativas) if total_ativas else 0
     
-    # Formata data de atualização para retornar ao frontend (usa o mesmo offset do filtro br_datetime)
-    from app.utils import _TZ_OFFSET
-    atualizado_br = None
-    if acao.atualizado_em:
-        # Remove timezone se for timezone-aware antes de aplicar offset
-        dt = acao.atualizado_em.replace(tzinfo=None) if acao.atualizado_em.tzinfo else acao.atualizado_em
-        atualizado_br = (dt + _TZ_OFFSET).strftime('%d/%m/%Y %H:%M')
+    # Formata data de atualização para retornar ao frontend
+    atualizado_br = formatar_brasilia(acao.atualizado_em) if acao.atualizado_em else None
     
     return jsonify({
         'ok': True,
@@ -1048,7 +1040,6 @@ def atualizar_responsaveis(id):
     # Salva hora local + 3h para que quando aplicar -3h na exibição, dê o horário correto
     acao.atualizado_em = agora_local()
     acao.atualizado_por = current_user.id
-    # Usa função centralizada para garantir hora consistente com o relógio da navbar
     planejamento.atualizado_em = agora_local()
     planejamento.atualizado_por = current_user.id
     db.session.commit()
@@ -1092,7 +1083,6 @@ def atualizar_prazo_acao(id):
     # Salva hora local + 3h para que quando aplicar -3h na exibição, dê o horário correto
     acao.atualizado_em = agora_local()
     acao.atualizado_por = current_user.id
-    # Usa função centralizada para garantir hora consistente com o relógio da navbar
     planejamento.atualizado_em = agora_local()
     planejamento.atualizado_por = current_user.id
     db.session.commit()
@@ -1163,16 +1153,10 @@ def criar_observacao(id):
     # Salva hora local + 3h para que quando aplicar -3h na exibição, dê o horário correto
     acao.atualizado_em = agora_local()
     acao.atualizado_por = current_user.id
-    # Usa função centralizada para garantir hora consistente com o relógio da navbar
     planejamento.atualizado_em = agora_local()
     planejamento.atualizado_por = current_user.id
     db.session.commit()
-    _br = None
-    if obs.criado_em:
-        # Remove timezone se for timezone-aware antes de aplicar offset
-        dt = obs.criado_em.replace(tzinfo=None) if obs.criado_em.tzinfo else obs.criado_em
-        # Mesma regra do filtro br_datetime (UTC-8 -> UTC-3): subtrai 5h para exibição
-        _br = dt - timedelta(hours=5)
+    _br_txt = formatar_brasilia(obs.criado_em) if obs.criado_em else ''
     # Garante ordem cronologica (mais antigo primeiro) para anexos
     anexos_ordenados = sorted(list(obs.anexos), key=lambda x: x.id)
     anexos_list = [
@@ -1192,7 +1176,7 @@ def criar_observacao(id):
         'ok': True,
         'id': obs.id,
         'texto': obs.texto,
-        'criado_em': _br.strftime('%d/%m/%Y %H:%M') if _br else '',
+        'criado_em': _br_txt,
         'autor': current_user.nome,
         'autor_primeiro': primeiro_nome,
         'autor_foto_url': current_user.foto_url if hasattr(current_user, 'foto_url') else None,
@@ -1219,7 +1203,6 @@ def reordenar_acoes(plano_id):
         acao = acao_ids_planos.get(acao_id)
         if acao:
             acao.ordem = ordem
-    # Usa função centralizada para garantir hora consistente com o relógio da navbar
     planejamento.atualizado_em = agora_local()
     planejamento.atualizado_por = current_user.id
     db.session.commit()

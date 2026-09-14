@@ -20,6 +20,7 @@ from flask import Blueprint, render_template, request, abort, Response, url_for
 from flask_login import login_required, current_user
 
 from app import db
+from app.utils import formatar_brasilia
 from app.models.equipamento import Equipamento, TipoEquipamento, STATUS_LABELS, CONDICAO_LABELS
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.tipo_unidade import TipoUnidade
@@ -347,7 +348,7 @@ def _linha_contrato_planilha(c):
         c.supressao_data_pct or '',
         c.contato_nome_telefone or '',
         (c.empenhos or '')[:500],
-        c.atualizado_em.strftime('%d/%m/%Y %H:%M') if c.atualizado_em else '',
+        formatar_brasilia(c.atualizado_em) if c.atualizado_em else '',
     ]
 
 
@@ -2573,15 +2574,14 @@ def _query_faltas_abonadas_exportar():
 
 def _linhas_faltas_abonadas(faltas):
     """Monta lista de linhas (cabecalho + dados) para exportação."""
-    from datetime import timezone, timedelta
-    _UTC3 = timedelta(hours=-3)
+    from app.utils import formatar_brasilia
     dias_semana = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
     cabecalho = ['Data da Falta', 'Dia da Semana', 'Matrícula', 'Nome Completo', 'Unidade', 'Função Declarada', 'Registrado em']
     linhas = [cabecalho]
     for f in faltas:
         mats = f.usuario.matriculas.filter_by(ativo=True).all()
         mat_num = '; '.join(m.numero for m in mats) if mats else '—'
-        criado = (f.criado_em + _UTC3).strftime('%d/%m/%Y %H:%M') if f.criado_em else '—'
+        criado = formatar_brasilia(f.criado_em) if f.criado_em else '—'
         linhas.append([
             f.data_falta.strftime('%d/%m/%Y'),
             dias_semana[f.data_falta.weekday()],

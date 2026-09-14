@@ -1,6 +1,6 @@
 # Como alterar o SIGUS
 
-Repositório privado da Secretaria da Saúde. Quem mantém: equipe de TI da SES / Saúde Digital.
+Código aberto (MIT) da Secretaria da Saúde de Sorocaba. Quem mantém a instância da casa: equipe de TI da SES / Saúde Digital (ou a TI do município que implantou).
 
 ## Fluxo
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Comunicados com ciência e mural de ações locais da rede."""
 from datetime import datetime
+import json
 from app import db
 from app.utils import prefixed_static_url
 
@@ -82,6 +83,8 @@ class Comunicado(db.Model):
         db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL')
     )
     exige_ciencia = db.Column(db.Boolean, nullable=False, default=True)
+    ciencia_perfis = db.Column(db.Text)
+    ciencia_cbos = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -112,6 +115,57 @@ class Comunicado(db.Model):
 
     def ids_unidades_alvo(self):
         return [u.id for u in (self.unidades_alvo or [])]
+
+    def _lista_json(self, bruto):
+        if not bruto:
+            return []
+        try:
+            dados = json.loads(bruto)
+        except (TypeError, ValueError):
+            return []
+        if not isinstance(dados, list):
+            return []
+        return [str(x) for x in dados if x is not None and str(x).strip()]
+
+    @property
+    def ciencia_perfis_lista(self):
+        return self._lista_json(self.ciencia_perfis)
+
+    @property
+    def ciencia_cbos_lista(self):
+        return self._lista_json(self.ciencia_cbos)
+
+    def definir_filtros_ciencia(self, perfis, cbos):
+        self.ciencia_perfis = json.dumps(sorted(set(perfis))) if perfis else None
+        self.ciencia_cbos = json.dumps(sorted(set(cbos))) if cbos else None
+
+    def ciencia_alvo_resumo(self):
+        """Texto curto de quem deve assinar (perfil OU CBO; CBO = cadastro ou matrícula)."""
+        if not self.exige_ciencia:
+            return ''
+        from app.models.usuario import PERFIS
+        from app.models.cbo import CBO
+        perfis = self.ciencia_perfis_lista
+        cbos = self.ciencia_cbos_lista
+        if not perfis and not cbos:
+            return 'Toda a equipe com vínculo ativo nas unidades deste recado'
+        texto_perfil = ''
+        if perfis:
+            texto_perfil = 'Perfil: ' + ', '.join(PERFIS.get(p, p) for p in perfis)
+        texto_cbo = ''
+        if cbos:
+            encontrados = {
+                c.codigo: c.descricao
+                for c in CBO.query.filter(CBO.codigo.in_(cbos)).all()
+            }
+            labels = []
+            for cod in cbos:
+                desc = encontrados.get(cod)
+                labels.append(f'{cod} – {desc}' if desc else cod)
+            texto_cbo = 'CBO (cadastro ou matrícula): ' + ', '.join(labels)
+        if texto_perfil and texto_cbo:
+            return f'{texto_perfil} ou {texto_cbo}'
+        return texto_perfil or texto_cbo
 
     def __repr__(self):
         return f'<Comunicado {self.id} {self.titulo!r}>'

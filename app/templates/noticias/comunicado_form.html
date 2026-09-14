@@ -1,6 +1,42 @@
 {% extends 'base.html' %}
 {% block title %}Novo comunicado{% endblock %}
 
+{% block head %}
+<style>
+.com-form { counter-reset: com-passos; }
+.com-passo { counter-increment: com-passos; }
+.com-passo > .form-label, .com-passo > .com-passo-titulo {
+    font-weight: 600;
+}
+.com-passo > .form-label::before, .com-passo > .com-passo-titulo::before {
+    content: counter(com-passos);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.45rem;
+    height: 1.45rem;
+    margin-right: .5rem;
+    border-radius: 50%;
+    background: #1A82B8;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 700;
+    vertical-align: middle;
+}
+.com-modo .form-check {
+    padding: .65rem .85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    margin-bottom: .5rem;
+}
+.com-modo .form-check:has(input:checked) {
+    border-color: #1A82B8;
+    background: #f0f7fb;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -14,7 +50,7 @@
 </div>
 
 <div class="row justify-content-center">
-    <div class="col-lg-7">
+    <div class="col-lg-8">
         <div class="card">
             <div class="card-body">
                 {% if not unidades %}
@@ -22,24 +58,31 @@
                     Selecione uma unidade no topo para publicar um comunicado.
                 </div>
                 {% else %}
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST" enctype="multipart/form-data" class="com-form">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                    <div class="mb-3">
+                    <div class="mb-4 com-passo">
                         <label class="form-label" for="titulo">Título *</label>
                         <input type="text" name="titulo" id="titulo" class="form-control" required maxlength="200"
                                value="{{ request.form.get('titulo', '') }}">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4 com-passo">
                         <label class="form-label" for="texto">Texto</label>
                         <textarea name="texto" id="texto" class="form-control" rows="5"
                                   placeholder="Recado curto para a equipe…">{{ request.form.get('texto', '') }}</textarea>
                     </div>
 
+                    <div class="mb-4 com-passo">
+                        <label class="form-label" for="anexos">Documento para anexar</label>
+                        <input type="file" name="anexos" id="anexos" class="form-control" multiple
+                               accept=".pdf,.doc,.docx,.odt,.jpg,.jpeg,.png,.webp">
+                        <div class="form-text">Opcional. Até 5 arquivos, 10 MB cada (PDF, Word ou imagem).</div>
+                    </div>
+
                     {% if pode_compartilhar %}
-                    <div class="mb-3">
-                        <label class="form-label" for="filtroUnidadesComunicado">Unidades *</label>
+                    <div class="mb-4 com-passo">
+                        <label class="form-label" for="filtroUnidadesComunicado">Unidade *</label>
                         <div class="input-group input-group-sm mb-2">
                             <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                             <input type="search" id="filtroUnidadesComunicado" class="form-control"
@@ -60,31 +103,115 @@
                         <div class="form-text">Gestor Central e Administrador podem compartilhar com outras unidades.</div>
                     </div>
                     {% else %}
-                    <p class="text-muted small">
-                        Será publicado na unidade <strong>{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}</strong>.
-                    </p>
+                    <div class="mb-4 com-passo">
+                        <div class="com-passo-titulo mb-1">Unidade</div>
+                        <p class="text-muted small mb-0">
+                            Será publicado na unidade <strong>{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}</strong>.
+                        </p>
+                    </div>
                     {% endif %}
 
-                    <div class="mb-3">
-                        <label class="form-label" for="anexos">Documentos (opcional)</label>
-                        <input type="file" name="anexos" id="anexos" class="form-control" multiple
-                               accept=".pdf,.doc,.docx,.odt,.jpg,.jpeg,.png,.webp">
-                        <div class="form-text">Até 5 arquivos, 10 MB cada (PDF, Word ou imagem).</div>
+                    <div class="mb-4 com-passo">
+                        <div class="com-passo-titulo mb-2">Cobrar ciência</div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="exige_ciencia" id="exige_ciencia"
+                                   {% if request.method != 'POST' or request.form.get('exige_ciencia') == 'on' %}checked{% endif %}>
+                            <label class="form-check-label" for="exige_ciencia">
+                                Pedir confirmação de leitura (assinatura)
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" name="exige_ciencia" id="exige_ciencia"
-                               {% if request.method != 'POST' or request.form.get('exige_ciencia') == 'on' %}checked{% endif %}>
-                        <label class="form-check-label" for="exige_ciencia">
-                            Cobrar ciência de todo mundo com vínculo ativo nas unidades
-                        </label>
+                    <div id="blocoCienciaAlvo" class="mb-4 com-passo">
+                        <div class="com-passo-titulo mb-2">Quem deve dar ciência</div>
+                        <p class="small text-muted mb-3">
+                            Só entra quem tem <strong>vínculo ativo</strong> nas unidades deste recado.
+                            Escolha <strong>um recorte</strong>: toda a equipe, por perfil do SIGUS, ou por CBO
+                            (cadastro da pessoa <em>ou</em> matrícula ativa — a ocupação da ficha CNES da unidade não entra).
+                        </p>
+                        <p class="small text-muted" id="cienciaContagem">
+                            {{ opcoes_ciencia.n_vinculados }} pessoa(s) com vínculo ativo
+                            {% if opcoes_ciencia.n_sem_cbo %}
+                            · {{ opcoes_ciencia.n_sem_cbo }} sem CBO no cadastro nem na matrícula
+                            {% endif %}
+                        </p>
+
+                        {% set modo = ciencia_modo if ciencia_modo in ['equipe', 'perfil', 'cbo'] else 'equipe' %}
+                        <div class="com-modo mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="ciencia_modo" id="modoEquipe"
+                                       value="equipe" {% if modo == 'equipe' %}checked{% endif %}>
+                                <label class="form-check-label" for="modoEquipe">
+                                    <strong>Toda a equipe</strong>
+                                    <span class="d-block small text-muted">Todos com vínculo ativo nas unidades escolhidas.</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="ciencia_modo" id="modoPerfil"
+                                       value="perfil" {% if modo == 'perfil' %}checked{% endif %}>
+                                <label class="form-check-label" for="modoPerfil">
+                                    <strong>Por perfil</strong>
+                                    <span class="d-block small text-muted">Administrador, coordenação, apoio administrativo…</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="ciencia_modo" id="modoCbo"
+                                       value="cbo" {% if modo == 'cbo' %}checked{% endif %}>
+                                <label class="form-check-label" for="modoCbo">
+                                    <strong>Por CBO</strong>
+                                    <span class="d-block small text-muted">Enfermeiro, fisioterapeuta, auxiliar de escritório…</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="painelPerfisCiencia" class="border rounded p-3 bg-white mb-2">
+                            <div class="fw-semibold mb-2">Marque os perfis</div>
+                            <div id="listaPerfisCiencia">
+                                {% for p in opcoes_ciencia.perfis %}
+                                <div class="form-check ciencia-perfil">
+                                    <input class="form-check-input" type="checkbox" name="ciencia_perfis"
+                                           value="{{ p.id }}" id="perfil{{ p.id }}"
+                                           {% if p.id in ciencia_perfis_marcados %}checked{% endif %}>
+                                    <label class="form-check-label" for="perfil{{ p.id }}">{{ p.label }}</label>
+                                </div>
+                                {% endfor %}
+                                {% if not opcoes_ciencia.perfis %}
+                                <div class="small text-muted">Nenhum perfil nesta unidade ainda.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div id="painelCbosCiencia" class="border rounded p-3 bg-white">
+                            <div class="fw-semibold mb-2">Marque os CBOs</div>
+                            <input type="search" id="filtroCboCiencia" class="form-control form-control-sm mb-2"
+                                   placeholder="Buscar CBO…" autocomplete="off">
+                            <div id="listaCbosCiencia" style="max-height:220px; overflow:auto;">
+                                {% for c in opcoes_ciencia.cbos %}
+                                <div class="form-check ciencia-cbo" data-busca="{{ c.label }}">
+                                    <input class="form-check-input" type="checkbox" name="ciencia_cbos"
+                                           value="{{ c.codigo }}" id="cbo{{ c.codigo }}"
+                                           {% if c.codigo in ciencia_cbos_marcados %}checked{% endif %}>
+                                    <label class="form-check-label" for="cbo{{ c.codigo }}">{{ c.label }}</label>
+                                </div>
+                                {% endfor %}
+                                {% if not opcoes_ciencia.cbos %}
+                                <div class="small text-muted" id="cbosCienciaVazioIni">
+                                    Ninguém com CBO no cadastro nem na matrícula nestas unidades.
+                                </div>
+                                {% endif %}
+                                <div class="small text-muted d-none py-1" id="cbosCienciaVazio">Nenhum CBO com esse nome.</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check-circle me-1"></i>Publicar
-                        </button>
-                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                    <div class="com-passo">
+                        <div class="com-passo-titulo mb-2">Publicar</div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check-circle me-1"></i>Publicar
+                            </button>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
                     </div>
                 </form>
                 {% endif %}
@@ -95,34 +222,213 @@
 {% endblock %}
 
 {% block scripts %}
-{% if pode_compartilhar and unidades %}
+{% if unidades %}
 <script>
 (function () {
-    var input = document.getElementById('filtroUnidadesComunicado');
-    var rows = document.querySelectorAll('#listaUnidadesComunicado .unidade-check');
-    var vazio = document.getElementById('unidadesComunicadoVazio');
-    if (!input || !rows.length) return;
     function normalizar(txt) {
         return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
-    function aplicar() {
-        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+    function escapar(txt) {
+        return String(txt || '').replace(/[&<>"']/g, function (c) {
+            return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+        });
+    }
+
+    var filtroUn = document.getElementById('filtroUnidadesComunicado');
+    var rowsUn = document.querySelectorAll('#listaUnidadesComunicado .unidade-check');
+    var vazioUn = document.getElementById('unidadesComunicadoVazio');
+    if (filtroUn && rowsUn.length) {
+        function aplicarUnidades() {
+            var tokens = normalizar(filtroUn.value).trim().split(/\s+/).filter(Boolean);
+            var visiveis = 0;
+            rowsUn.forEach(function (row) {
+                var texto = normalizar(row.getAttribute('data-busca') || '');
+                var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+                row.classList.toggle('d-none', !ok);
+                if (ok) visiveis++;
+            });
+            if (vazioUn) vazioUn.classList.toggle('d-none', visiveis !== 0);
+        }
+        filtroUn.addEventListener('input', aplicarUnidades);
+        filtroUn.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                filtroUn.value = '';
+                aplicarUnidades();
+            }
+        });
+    }
+
+    var exige = document.getElementById('exige_ciencia');
+    var bloco = document.getElementById('blocoCienciaAlvo');
+    var painelPerfis = document.getElementById('painelPerfisCiencia');
+    var painelCbos = document.getElementById('painelCbosCiencia');
+    var listaPerfis = document.getElementById('listaPerfisCiencia');
+    var listaCbos = document.getElementById('listaCbosCiencia');
+    var filtroCbo = document.getElementById('filtroCboCiencia');
+    var form = document.querySelector('form');
+    var urlOpcoes = {{ url_for('noticias.comunicados_opcoes_ciencia')|tojson }};
+
+    function modoAtual() {
+        var el = document.querySelector('input[name="ciencia_modo"]:checked');
+        return el ? el.value : 'equipe';
+    }
+
+    function aplicarExige() {
+        if (!bloco || !exige) return;
+        bloco.classList.toggle('d-none', !exige.checked);
+    }
+
+    function aplicarModo() {
+        var modo = modoAtual();
+        if (painelPerfis) painelPerfis.classList.toggle('d-none', modo !== 'perfil');
+        if (painelCbos) painelCbos.classList.toggle('d-none', modo !== 'cbo');
+        if (listaPerfis) {
+            listaPerfis.querySelectorAll('input[type=checkbox]').forEach(function (el) {
+                el.disabled = modo !== 'perfil';
+            });
+        }
+        if (listaCbos) {
+            listaCbos.querySelectorAll('input[type=checkbox]').forEach(function (el) {
+                el.disabled = modo !== 'cbo';
+            });
+        }
+        if (filtroCbo) filtroCbo.disabled = modo !== 'cbo';
+    }
+
+    function aplicarFiltroCbo() {
+        if (!listaCbos) return;
+        var tokens = normalizar(filtroCbo ? filtroCbo.value : '').trim().split(/\s+/).filter(Boolean);
         var visiveis = 0;
-        rows.forEach(function (row) {
+        listaCbos.querySelectorAll('.ciencia-cbo').forEach(function (row) {
             var texto = normalizar(row.getAttribute('data-busca') || '');
             var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
             row.classList.toggle('d-none', !ok);
             if (ok) visiveis++;
         });
-        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
-    }
-    input.addEventListener('input', aplicar);
-    input.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            input.value = '';
-            aplicar();
+        var vazio = document.getElementById('cbosCienciaVazio');
+        if (vazio) {
+            var tem = listaCbos.querySelectorAll('.ciencia-cbo').length;
+            vazio.classList.toggle('d-none', !tem || visiveis !== 0);
         }
+    }
+
+    function idsUnidades() {
+        var ids = [];
+        document.querySelectorAll('input[name="unidades"]:checked').forEach(function (el) {
+            ids.push(el.value);
+        });
+        return ids;
+    }
+
+    function montarPerfis(perfis, marcados) {
+        if (!listaPerfis) return;
+        if (!perfis.length) {
+            listaPerfis.innerHTML = '<div class="small text-muted">Nenhum perfil nesta unidade ainda.</div>';
+            return;
+        }
+        listaPerfis.innerHTML = perfis.map(function (p) {
+            var chk = marcados.indexOf(p.id) !== -1 ? ' checked' : '';
+            return '<div class="form-check ciencia-perfil">' +
+                '<input class="form-check-input" type="checkbox" name="ciencia_perfis" value="' +
+                escapar(p.id) + '" id="perfil' + escapar(p.id) + '"' + chk + '>' +
+                '<label class="form-check-label" for="perfil' + escapar(p.id) + '">' +
+                escapar(p.label) + '</label></div>';
+        }).join('');
+    }
+
+    function montarCbos(cbos, marcados) {
+        if (!listaCbos) return;
+        var buscaVazio = '<div class="small text-muted d-none py-1" id="cbosCienciaVazio">Nenhum CBO com esse nome.</div>';
+        if (!cbos.length) {
+            listaCbos.innerHTML = '<div class="small text-muted">Ninguém com CBO no cadastro nem na matrícula nestas unidades.</div>' + buscaVazio;
+            return;
+        }
+        listaCbos.innerHTML = cbos.map(function (c) {
+            var chk = marcados.indexOf(c.codigo) !== -1 ? ' checked' : '';
+            return '<div class="form-check ciencia-cbo" data-busca="' + escapar(c.label) + '">' +
+                '<input class="form-check-input" type="checkbox" name="ciencia_cbos" value="' +
+                escapar(c.codigo) + '" id="cbo' + escapar(c.codigo) + '"' + chk + '>' +
+                '<label class="form-check-label" for="cbo' + escapar(c.codigo) + '">' +
+                escapar(c.label) + '</label></div>';
+        }).join('') + buscaVazio;
+    }
+
+    var timerOpcoes = null;
+    function recarregarOpcoes() {
+        if (!urlOpcoes) return;
+        var ids = idsUnidades();
+        var params = new URLSearchParams();
+        ids.forEach(function (id) { params.append('unidades', id); });
+        var marcadosP = Array.prototype.map.call(
+            document.querySelectorAll('input[name="ciencia_perfis"]:checked'),
+            function (el) { return el.value; }
+        );
+        var marcadosC = Array.prototype.map.call(
+            document.querySelectorAll('input[name="ciencia_cbos"]:checked'),
+            function (el) { return el.value; }
+        );
+        fetch(urlOpcoes + (params.toString() ? '?' + params.toString() : ''), {
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' }
+        }).then(function (r) { return r.json(); }).then(function (dados) {
+            montarPerfis(dados.perfis || [], marcadosP);
+            montarCbos(dados.cbos || [], marcadosC);
+            var cont = document.getElementById('cienciaContagem');
+            if (cont) {
+                var txt = (dados.n_vinculados || 0) + ' pessoa(s) com vínculo ativo';
+                if (dados.n_sem_cbo) {
+                    txt += ' · ' + dados.n_sem_cbo +
+                        ' sem CBO no cadastro nem na matrícula';
+                }
+                cont.textContent = txt;
+            }
+            aplicarModo();
+            aplicarFiltroCbo();
+        }).catch(function () {});
+    }
+
+    if (exige) exige.addEventListener('change', aplicarExige);
+    document.querySelectorAll('input[name="ciencia_modo"]').forEach(function (el) {
+        el.addEventListener('change', aplicarModo);
     });
+    if (filtroCbo) {
+        filtroCbo.addEventListener('input', aplicarFiltroCbo);
+        filtroCbo.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                filtroCbo.value = '';
+                aplicarFiltroCbo();
+            }
+        });
+    }
+    document.querySelectorAll('input[name="unidades"]').forEach(function (el) {
+        el.addEventListener('change', function () {
+            clearTimeout(timerOpcoes);
+            timerOpcoes = setTimeout(recarregarOpcoes, 250);
+        });
+    });
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!exige || !exige.checked) return;
+            var modo = modoAtual();
+            if (modo === 'perfil') {
+                var nP = document.querySelectorAll('input[name="ciencia_perfis"]:checked:not(:disabled)').length;
+                if (!nP) {
+                    e.preventDefault();
+                    alert('Escolha ao menos um perfil, ou volte para toda a equipe.');
+                    return;
+                }
+            }
+            if (modo === 'cbo') {
+                var nC = document.querySelectorAll('input[name="ciencia_cbos"]:checked:not(:disabled)').length;
+                if (!nC) {
+                    e.preventDefault();
+                    alert('Escolha ao menos um CBO, ou volte para toda a equipe.');
+                }
+            }
+        });
+    }
+    aplicarExige();
+    aplicarModo();
 })();
 </script>
 {% endif %}

@@ -424,7 +424,7 @@ def vincular_usuario(id):
         nome_empresa=nome_empresa,
         observacoes=request.form.get('observacoes', '').strip() or None,
         gerado_por=current_user.id,
-        gerado_em=agora_local(),  # Usa função centralizada para garantir hora consistente com o relógio da navbar
+        gerado_em=agora_local(),
     )
     db.session.add(ficha)
     db.session.flush()
@@ -682,7 +682,7 @@ def gerar_ficha(id, usuario_id):
         nome_empresa=nome_empresa,
         observacoes=request.form.get('observacoes', '').strip() or None,
         gerado_por=current_user.id,
-        gerado_em=agora_local(),  # Usa função centralizada para garantir hora consistente com o relógio da navbar
+        gerado_em=agora_local(),
     )
     db.session.add(ficha)
     db.session.commit()

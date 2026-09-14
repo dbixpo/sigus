@@ -27,7 +27,7 @@ from app.models.nsp import (
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.usuario import Usuario
 from app.models.notificacao import Notificacao
-from app.utils import agora_local
+from app.utils import agora_local, formatar_brasilia, hoje_brasilia, agora_brasilia
 
 nsp_bp = Blueprint('nsp', __name__, url_prefix='/seguranca-paciente')
 
@@ -73,7 +73,7 @@ def _catalogos_form():
 
 
 def _gerar_protocolo():
-    ano = datetime.utcnow().year
+    ano = hoje_brasilia().year
     prefixo = f'SP-{ano}-'
     ultimo = (
         db.session.query(func.max(NspOcorrencia.protocolo))
@@ -133,7 +133,7 @@ def _registrar_andamento(ocorrencia, tipo, texto, commit=False):
         criado_por=current_user.id,
     )
     db.session.add(andamento)
-    ocorrencia.atualizado_em = datetime.utcnow()
+    ocorrencia.atualizado_em = agora_local()
     if commit:
         db.session.commit()
     return andamento
@@ -480,7 +480,7 @@ def mudar_status(id):
         return redirect(url_for('nsp.detalhe', id=o.id))
     anterior = o.status_nome
     o.status_id = status.id
-    o.encerrado_em = datetime.utcnow() if status.encerra else None
+    o.encerrado_em = agora_local() if status.encerra else None
     _registrar_andamento(o, 'status', f'Status alterado de {anterior} para {status.nome}.')
     db.session.commit()
     flash(f'Status atualizado para {status.nome}.', 'success')
@@ -503,7 +503,7 @@ def salvar_analise(id):
     o.acoes_reducao_risco = (request.form.get('acoes_reducao_risco') or '').strip() or None
     o.analise_resumo = (request.form.get('analise_resumo') or '').strip() or None
     o.analise_por = current_user.id
-    o.analise_em = datetime.utcnow()
+    o.analise_em = agora_local()
     o.never_event = request.form.get('never_event') == '1'
     o.notivisa_notificado = request.form.get('notivisa_notificado') == '1'
     o.notivisa_numero = (request.form.get('notivisa_numero') or '').strip() or None
@@ -602,7 +602,7 @@ def concluir_acao(id, acao_id):
     o = _ocorrencia_ou_404(id)
     acao = NspAcao.query.filter_by(id=acao_id, ocorrencia_id=o.id).first_or_404()
     acao.concluida = not acao.concluida
-    acao.concluida_em = datetime.utcnow() if acao.concluida else None
+    acao.concluida_em = agora_local() if acao.concluida else None
     _registrar_andamento(
         o, 'acao',
         f'Ação {"concluída" if acao.concluida else "reaberta"}: {acao.descricao[:160]}',
@@ -692,7 +692,7 @@ def _linhas_exportacao(ocorrencias):
             (o.acao_imediata or '').replace('\n', ' '),
             'Sim' if o.notivisa_notificado else 'Não',
             o.notivisa_numero or '',
-            o.criado_em.strftime('%d/%m/%Y %H:%M') if o.criado_em else '',
+            formatar_brasilia(o.criado_em) if o.criado_em else '',
         ])
     return linhas
 
@@ -737,7 +737,7 @@ def exportar(formato):
     q = _aplicar_filtros(_query_base())
     ocorrencias = q.order_by(NspOcorrencia.data_ocorrencia.desc()).all()
     linhas = _linhas_exportacao(ocorrencias)
-    ts = datetime.now().strftime('%Y%m%d_%H%M')
+    ts = agora_brasilia().strftime('%Y%m%d_%H%M')
     nome = f'seguranca_paciente_{ts}'
 
     if formato == 'csv':

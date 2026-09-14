@@ -19,6 +19,8 @@ A maioria imprime o que fez e pode ser reexecutada.
 
 ## Módulos recentes (referência)
 
+Banco vazio (outro município): `migrations/bootstrap_nova_instalacao.py` — ver [docs/INSTALACAO.md](../docs/INSTALACAO.md).
+
 Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já idempotentes):
 
 **Segurança do Paciente**

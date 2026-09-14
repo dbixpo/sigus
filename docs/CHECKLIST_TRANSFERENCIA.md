@@ -4,7 +4,7 @@ Use no primeiro dia em que a TI receber o repositório. Marque o que já estiver
 
 ## Acesso
 
-- [ ] Convite no GitHub do repositório privado `dbixpo/sigus` (ou o remoto que a SES definir)
+- [ ] Clone de https://github.com/dbixpo/sigus (público) ou o remoto que a SES definir
 - [ ] Acesso RDP / console no Windows Server onde o IIS responde `saudedigital.sorocaba.sp.gov.br`
 - [ ] Caminho físico da aplicação no servidor (hoje, em geral sob `inetpub` ou pasta equivalente — **confira no IIS**, não neste arquivo)
 - [ ] Conta PostgreSQL de produção (host, porta, banco `sigus`, usuário). A URL fica só no `.env` do servidor

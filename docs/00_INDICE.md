@@ -2,18 +2,19 @@
 
 Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 
-1. [Checklist de transferência](CHECKLIST_TRANSFERENCIA.md) — o que conferir no primeiro dia
-2. [Visão geral](01_VISÃO_GERAL.md) — o que o SIGUS é e o que não é
-3. [Arquitetura](ARQUITETURA.md) — Flask, prefixo `/sigus`, IIS, pastas
-4. [Mapa do código](MAPA_DO_CODIGO.md) — blueprints, rotas, telas públicas
-5. [Permissões e perfis](PERMISSOES.md)
-6. [Banco e migrations](BANCO.md)
-7. [Primeira instalação](SETUP.md)
-8. [Operação no servidor](../ATUALIZACAO-SERVIDOR.md)
-9. [Segredos e integrações](SEGREDOS_E_INTEGRACOES.md)
-10. [Identidade visual](IDENTIDADE_VISUAL.md)
-11. [Manuais na Estante SES](MANUAIS_ESTANTE.md)
-12. [Como mudar o código](../CONTRIBUTING.md)
+1. [Instalação do zero](INSTALACAO.md) — outro município ou servidor vazio
+2. [Checklist de transferência](CHECKLIST_TRANSFERENCIA.md) — o que conferir no primeiro dia na casa
+3. [Visão geral](01_VISÃO_GERAL.md) — o que o SIGUS é e o que não é
+4. [Arquitetura](ARQUITETURA.md) — Flask, prefixo `/sigus`, IIS, pastas
+5. [Mapa do código](MAPA_DO_CODIGO.md) — blueprints, rotas, telas públicas
+6. [Permissões e perfis](PERMISSOES.md)
+7. [Banco e migrations](BANCO.md)
+8. [IIS (referência Sorocaba)](SETUP.md)
+9. [Operação no servidor](../ATUALIZACAO-SERVIDOR.md)
+10. [Segredos e integrações](SEGREDOS_E_INTEGRACOES.md)
+11. [Identidade visual](IDENTIDADE_VISUAL.md)
+12. [Manuais na Estante SES](MANUAIS_ESTANTE.md)
+13. [Como mudar o código](../CONTRIBUTING.md)
 
 ## Módulos (detalhe)
 
@@ -25,6 +26,8 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [05_AUDITORIA.md](05_AUDITORIA.md) | Log de requisições |
 | [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) | NSP interno, protocolo `SP-AAAA-NNNNN`, SIS |
 | [TRANSFERENCIAS_E_LOJINHA.md](TRANSFERENCIAS_E_LOJINHA.md) | Termos, aceite, Lojinha Interna |
+| [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO |
+| [INSTALACAO.md](INSTALACAO.md) | Clone, banco vazio, primeiro admin, identidade |
 | [migrations/README.md](../migrations/README.md) | Scripts idempotentes de schema |
 | [scripts/README.md](../scripts/README.md) | Dump, restore, Estante, SUEQ, reset de senha |
 
@@ -43,6 +46,8 @@ sigus/
 ├── migrations/          # Scripts Python one-shot (não é Alembic)
 ├── scripts/             # Operação: dump, restore, publicações
 ├── ATUALIZACAO-SERVIDOR.md
+├── PRODUCAO-CURSOR.md   # texto para colar no Cursor do servidor
+├── LICENSE              # MIT
 ├── CONTRIBUTING.md
 └── README.md
 ```
