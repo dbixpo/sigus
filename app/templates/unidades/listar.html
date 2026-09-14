@@ -28,9 +28,24 @@
 {% endif %}
 
 {% if unidades %}
-<div class="row g-3">
+<div class="mb-3">
+    <label class="form-label small text-muted mb-1" for="filtroUnidades">Buscar unidade</label>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="flex-grow-1" style="max-width:420px;">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                <input type="search" id="filtroUnidades" class="form-control" placeholder="Nome, tipo, bairro, CNES…" autocomplete="off" autofocus>
+            </div>
+        </div>
+        <span class="small text-muted" id="filtroUnidadesCount">{{ unidades | length }} unidade(s)</span>
+    </div>
+</div>
+<div class="row g-3" id="listaUnidadesCards">
     {% for u in unidades %}
-    <div class="col-md-6 col-xl-4">
+    {% set tipo_nome = u.tipo_unidade.nome if u.tipo_unidade else '' %}
+    {% set tipo_sigla = u.tipo_unidade.sigla if u.tipo_unidade else u.tipo %}
+    <div class="col-md-6 col-xl-4 unidade-card"
+         data-busca="{{ [u.nome, tipo_sigla, tipo_nome, u.endereco, u.numero, u.bairro, u.numero_cnes, u.status] | select | join(' ') }}">
         <div class="card h-100">
             <div class="card-body">
                 <div class="d-flex align-items-start justify-content-between mb-2">
@@ -83,6 +98,7 @@
     </div>
     {% endfor %}
 </div>
+<p class="text-muted small mt-3 d-none" id="filtroUnidadesVazio">Nenhuma unidade com esse filtro.</p>
 {% else %}
 <div class="empty-state">
     <i class="fas fa-hospital"></i>
@@ -92,4 +108,45 @@
     {% endif %}
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var input = document.getElementById('filtroUnidades');
+    var cards = document.querySelectorAll('.unidade-card');
+    var countEl = document.getElementById('filtroUnidadesCount');
+    var vazio = document.getElementById('filtroUnidadesVazio');
+    if (!input || !cards.length) return;
+
+    function normalizar(txt) {
+        return (txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function aplicar() {
+        var tokens = normalizar(input.value).trim().split(/\s+/).filter(Boolean);
+        var visiveis = 0;
+        cards.forEach(function (card) {
+            var texto = normalizar(card.getAttribute('data-busca') || '');
+            var ok = tokens.every(function (t) { return texto.indexOf(t) !== -1; });
+            card.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        if (countEl) {
+            countEl.textContent = tokens.length
+                ? visiveis + ' de ' + cards.length + ' unidade(s)'
+                : cards.length + ' unidade(s)';
+        }
+        if (vazio) vazio.classList.toggle('d-none', visiveis !== 0);
+    }
+
+    input.addEventListener('input', aplicar);
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            input.value = '';
+            aplicar();
+        }
+    });
+})();
+</script>
 {% endblock %}
