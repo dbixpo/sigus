@@ -960,10 +960,15 @@ def documento_verificar(id):
 @login_required
 def documento_imprimir(id):
     doc = DocumentoTransferencia.query.get_or_404(id)
-    ids_unidades = _unidades_do_usuario()
-    if ids_unidades is not None:
-        if doc.unidade_origem_id not in ids_unidades and doc.unidade_destino_id not in ids_unidades:
-            abort(403)
+    if not current_user.pode('ver_transferencias'):
+        abort(403)
+    # Mesma regra da listagem: admin/gestor (e quem vê todas) imprimem a rede;
+    # demais usuários só termos em que a unidade deles é origem ou destino.
+    if not _pode_escolher_qualquer_unidade() and not current_user.pode('ver_todas_unidades'):
+        ids_unidades = _unidades_do_usuario()
+        if ids_unidades is not None:
+            if doc.unidade_origem_id not in ids_unidades and doc.unidade_destino_id not in ids_unidades:
+                abort(403)
     qr_url_origem = url_for('unidades.maps_redirect', id=doc.unidade_origem_id, _external=True) if doc.unidade_origem.link_maps else None
     qr_url_destino = url_for('unidades.maps_redirect', id=doc.unidade_destino_id, _external=True) if doc.unidade_destino.link_maps else None
     qr_url_verificar = url_for('transferencias.documento_verificar', id=doc.id, _external=True)
