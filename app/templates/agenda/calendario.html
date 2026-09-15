@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Agenda{% endblock %}
+{% block body_attrs %} class="pagina-agenda"{% endblock %}
 
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
@@ -7,6 +8,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="agenda-page">
 <div class="page-header">
     <h1><i class="fas fa-calendar-alt me-2"></i>Agenda da unidade</h1>
     {% if pode_adicionar %}
@@ -21,7 +23,7 @@
     {% endif %}
 </div>
 
-<div class="agenda-toolbar mb-3">
+<div class="agenda-toolbar">
     <div class="d-flex flex-wrap gap-2 align-items-end">
         {% if unidades | length > 1 %}
         <div>
@@ -54,11 +56,9 @@
             </label>
         </div>
     </div>
-    <p class="text-muted small mb-0 mt-2">
-        Clique num dia para criar um evento. Com o mouse sobre o calendário, a
-        <strong>bolinha</strong> troca o mês (ou a semana). Em <strong>Nova reunião</strong>
-        o sistema sugere horários em que todos estão livres — só
-        <strong>dias úteis, das 8h às 17h</strong>, sem almoço e sem feriados.
+    <p class="text-muted small mb-0 mt-1">
+        Clique no dia para criar. Bolinha do mouse sobre o calendário troca o mês.
+        Reunião: sugere horários em dias úteis 8h–17h (sem almoço/feriado).
     </p>
 </div>
 
@@ -67,6 +67,7 @@
         <div id="agendaCalendario"></div>
     </div>
 </div>
+</div>{# /.agenda-page #}
 
 <div class="modal fade" id="modalEvento" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -571,10 +572,21 @@
 
     function alturaAgenda() {
         const el = document.getElementById('agendaCalendario');
-        if (!el) return 520;
+        if (!el) return 480;
+        const parent = el.parentElement;
+        // Preferência: preencher o card flex (altura explícita do pai)
+        if (parent) {
+            const h = parent.clientHeight;
+            if (h >= 280) return h;
+        }
         const top = el.getBoundingClientRect().top;
-        // cabe na viewport sem gerar rolagem da página
-        return Math.max(420, Math.floor(window.innerHeight - top - 20));
+        return Math.max(360, Math.floor(window.innerHeight - top - 8));
+    }
+
+    function ajustarAlturaCalendario() {
+        if (!calendar) return;
+        calendar.setOption('height', alturaAgenda());
+        calendar.updateSize();
     }
 
     calendar = new FullCalendar.Calendar(document.getElementById('agendaCalendario'), {
@@ -677,6 +689,11 @@
         }
     });
     calendar.render();
+    // Recalcula depois do layout flex assentar (evita 1–2px de scroll residual)
+    requestAnimationFrame(function () {
+        ajustarAlturaCalendario();
+        requestAnimationFrame(ajustarAlturaCalendario);
+    });
 
     // Bolinha do mouse sobre a agenda: troca mês/semana (estilo Google Agenda), sem rolar a página
     (function () {
@@ -698,9 +715,7 @@
         let resizeTimer = null;
         window.addEventListener('resize', function () {
             clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(function () {
-                calendar.setOption('height', alturaAgenda());
-            }, 150);
+            resizeTimer = setTimeout(ajustarAlturaCalendario, 120);
         });
     })();
 
