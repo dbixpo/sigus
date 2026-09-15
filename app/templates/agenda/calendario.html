@@ -62,7 +62,7 @@
                 <input type="hidden" name="evento_id" id="eventoId" value="">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalEventoTitulo">Novo evento</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-agenda-close aria-label="Fechar"></button>
                 </div>
                 <div class="modal-body">
                     <div id="blocoLeitura" class="d-none">
@@ -171,7 +171,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-danger me-auto d-none" id="btnExcluir">Excluir</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fechar</button>
+                    <button type="button" class="btn btn-outline-secondary" data-agenda-close>Fechar</button>
                     <button type="button" class="btn btn-outline-secondary d-none" id="btnEditar">Editar</button>
                     <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar</button>
                 </div>
@@ -198,16 +198,26 @@
         document.body.appendChild(modalEl);
     }
 
+    // Controle próprio (sem bootstrap.Modal): o dispose/show do Bootstrap
+    // corrompia o estado após alguns ESC e a agenda ficava “morta” até F5.
+    const AGENDA_BACKDROP_ID = 'agendaModalBackdrop';
+    let modalAgendaAberto = false;
+    let aposFecharFila = [];
+    let fecharAgendaTimer = null;
+
     function limparUiModal() {
+        const nosso = document.getElementById(AGENDA_BACKDROP_ID);
+        if (nosso) nosso.remove();
         document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
         document.body.classList.remove('modal-open');
         document.body.style.removeProperty('overflow');
         document.body.style.removeProperty('padding-right');
         if (!modalEl) return;
-        modalEl.classList.remove('show', 'showing');
+        modalEl.classList.remove('show');
         modalEl.style.display = 'none';
         modalEl.setAttribute('aria-hidden', 'true');
         modalEl.removeAttribute('aria-modal');
+        modalAgendaAberto = false;
     }
 
     function fecharDropdownCriar() {
@@ -220,43 +230,83 @@
         if (menu) menu.classList.remove('show');
     }
 
-    /**
-     * Abre o modal de forma idempotente.
-     * Sempre descarta a instância anterior + overlays: evita o caso em que o
-     * Bootstrap fica com _isShown=true (show no-op) ou com .modal em display:block
-     * sem .show (tela “morta” até F5).
-     */
+    function drainAposFechar() {
+        const fila = aposFecharFila.splice(0, aposFecharFila.length);
+        fila.forEach(function (fn) {
+            try { fn(); } catch (err) { console.error(err); }
+        });
+    }
+
     function mostrarModalAgenda() {
         fecharDropdownCriar();
+        if (fecharAgendaTimer) {
+            clearTimeout(fecharAgendaTimer);
+            fecharAgendaTimer = null;
+        }
+        // Garante que nenhuma instância Bootstrap fique interferindo
         const old = bootstrap.Modal.getInstance(modalEl);
         if (old) {
             try { old.dispose(); } catch (e) { /* ignore */ }
         }
         limparUiModal();
-        // Deixa o clique do FullCalendar terminar antes do focus trap do Bootstrap
+
+        modalEl.style.display = 'block';
+        modalEl.removeAttribute('aria-hidden');
+        modalEl.setAttribute('aria-modal', 'true');
+        modalEl.setAttribute('role', 'dialog');
+        void modalEl.offsetWidth;
+        modalEl.classList.add('show');
+
+        const backdrop = document.createElement('div');
+        backdrop.id = AGENDA_BACKDROP_ID;
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.addEventListener('click', function () { esconderModalAgenda(); });
+        document.body.appendChild(backdrop);
+        document.body.classList.add('modal-open');
+        modalAgendaAberto = true;
+
         setTimeout(function () {
-            limparUiModal();
-            bootstrap.Modal.getOrCreateInstance(modalEl, {
-                backdrop: true,
-                keyboard: true,
-                focus: true
-            }).show();
-        }, 0);
+            const alvo = modalEl.querySelector('[data-agenda-close], #btnEditar, #btnSalvar, input, select, textarea');
+            if (alvo && typeof alvo.focus === 'function') alvo.focus();
+        }, 30);
     }
 
     function esconderModalAgenda() {
-        const inst = bootstrap.Modal.getInstance(modalEl);
-        if (inst) inst.hide();
-        else limparUiModal();
+        // Já está fechando / fechado
+        if (fecharAgendaTimer) return;
+        if (!modalAgendaAberto && !modalEl.classList.contains('show')) {
+            limparUiModal();
+            drainAposFechar();
+            return;
+        }
+        modalAgendaAberto = false;
+        modalEl.classList.remove('show');
+        const bd = document.getElementById(AGENDA_BACKDROP_ID);
+        if (bd) bd.classList.remove('show');
+        fecharAgendaTimer = setTimeout(function () {
+            fecharAgendaTimer = null;
+            limparUiModal();
+            drainAposFechar();
+        }, 160);
     }
 
-    modalEl.addEventListener('hidden.bs.modal', function () {
-        limparUiModal();
-        const inst = bootstrap.Modal.getInstance(modalEl);
-        if (inst) {
-            try { inst.dispose(); } catch (e) { /* ignore */ }
-        }
+    /** Roda depois que o modal realmente fechou (ex.: confirm do Google). */
+    function aposFecharModal(fn) {
+        if (typeof fn === 'function') aposFecharFila.push(fn);
+    }
+
+    modalEl.querySelectorAll('[data-agenda-close]').forEach(function (btn) {
+        btn.addEventListener('click', function () { esconderModalAgenda(); });
     });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape' || !modalAgendaAberto) return;
+        e.preventDefault();
+        esconderModalAgenda();
+    });
+
+    // Estado inicial limpo
+    limparUiModal();
 
     const form = document.getElementById('formEvento');
     let calendar;
@@ -508,15 +558,6 @@
         }
         mostrarModalAgenda();
         if (ehReuniao()) agendarDisponibilidade();
-    }
-
-    /** confirm() no meio do hide() do Bootstrap deixa backdrop preso — pergunta só depois de fechar. */
-    function aposFecharModal(fn) {
-        modalEl.addEventListener('hidden.bs.modal', function handler() {
-            modalEl.removeEventListener('hidden.bs.modal', handler);
-            limparUiModal();
-            fn();
-        }, { once: true });
     }
 
     function formReuniao() {
