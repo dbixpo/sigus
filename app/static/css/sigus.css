@@ -28,10 +28,11 @@ body {
 }
 
 /* ── NAVBAR ─────────────────────────────────────────────── */
+/* Bootstrap modal default backdrop=1050 / modal=1055 — navbar também usava 1050 e cobria o modal */
 .sigus-navbar {
     background-color: var(--sigus-dark) !important;
     height: var(--sigus-navbar-height);
-    z-index: 1050;
+    z-index: 1030;
     border-bottom: 3px solid var(--sigus-primary);
 }
 

@@ -204,7 +204,12 @@
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
     const modalEl = document.getElementById('modalEvento');
-    const modal = new bootstrap.Modal(modalEl);
+    // Modal dentro de .sigus-main (overflow + stacking) fica atrás da navbar (z-index 1050)
+    // e o backdrop não cobre a tela direito — move para o body como o modalImpresso.
+    if (modalEl && modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     const form = document.getElementById('formEvento');
     let calendar;
     let modoEdicao = false;
@@ -703,6 +708,11 @@
               if (d.google_url && !id && confirm(msg)) {
                   window.open(d.google_url, '_blank', 'noopener');
               }
+          })
+          .catch(function () {
+              const el = document.getElementById('alertaErro');
+              el.textContent = 'Falha de rede ao salvar. Tente de novo.';
+              el.classList.remove('d-none');
           });
     });
 
