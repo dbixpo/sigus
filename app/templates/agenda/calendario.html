@@ -55,13 +55,15 @@
         </div>
     </div>
     <p class="text-muted small mb-0 mt-2">
-        Clique num dia para criar um evento. Em <strong>Nova reunião</strong> o sistema sugere horários
-        em que todos estão livres — só <strong>dias úteis, das 8h às 17h</strong>, sem almoço e sem feriados.
+        Clique num dia para criar um evento. Com o mouse sobre o calendário, a
+        <strong>bolinha</strong> troca o mês (ou a semana). Em <strong>Nova reunião</strong>
+        o sistema sugere horários em que todos estão livres — só
+        <strong>dias úteis, das 8h às 17h</strong>, sem almoço e sem feriados.
     </p>
 </div>
 
-<div class="card">
-    <div class="card-body">
+<div class="card agenda-card">
+    <div class="card-body agenda-card-body">
         <div id="agendaCalendario"></div>
     </div>
 </div>
@@ -567,6 +569,14 @@
         }
     }
 
+    function alturaAgenda() {
+        const el = document.getElementById('agendaCalendario');
+        if (!el) return 520;
+        const top = el.getBoundingClientRect().top;
+        // cabe na viewport sem gerar rolagem da página
+        return Math.max(420, Math.floor(window.innerHeight - top - 20));
+    }
+
     calendar = new FullCalendar.Calendar(document.getElementById('agendaCalendario'), {
         locale: 'pt-br',
         initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
@@ -576,13 +586,14 @@
             right: 'dayGridMonth,timeGridWeek,listWeek'
         },
         buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana', list: 'Lista' },
-        height: 'auto',
+        height: alturaAgenda(),
         navLinks: true,
         selectable: podeAdicionar,
         selectMirror: true,
         // Clique simples no dia não dispara select (só arraste) — dateClick cobre o clique
         selectMinDistance: 8,
-        dayMaxEvents: 4,
+        dayMaxEvents: 3,
+        moreLinkText: function (n) { return '+' + n + ' mais'; },
         nowIndicator: true,
         slotMinTime: '07:00:00',
         slotMaxTime: '20:00:00',
@@ -666,6 +677,32 @@
         }
     });
     calendar.render();
+
+    // Bolinha do mouse sobre a agenda: troca mês/semana (estilo Google Agenda), sem rolar a página
+    (function () {
+        const el = document.getElementById('agendaCalendario');
+        let wheelLock = false;
+        el.addEventListener('wheel', function (e) {
+            const tipo = calendar.view.type;
+            if (tipo !== 'dayGridMonth' && tipo !== 'timeGridWeek') return;
+            e.preventDefault();
+            if (wheelLock) return;
+            if (Math.abs(e.deltaY) < 2 && Math.abs(e.deltaX) < 2) return;
+            wheelLock = true;
+            const frente = (Math.abs(e.deltaY) >= Math.abs(e.deltaX)) ? (e.deltaY > 0) : (e.deltaX > 0);
+            if (frente) calendar.next();
+            else calendar.prev();
+            setTimeout(function () { wheelLock = false; }, 320);
+        }, { passive: false });
+
+        let resizeTimer = null;
+        window.addEventListener('resize', function () {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function () {
+                calendar.setOption('height', alturaAgenda());
+            }, 150);
+        });
+    })();
 
     document.getElementById('campoDiaInteiro').addEventListener('change', toggleDiaInteiro);
     document.getElementById('campoInicio').addEventListener('change', function () {
