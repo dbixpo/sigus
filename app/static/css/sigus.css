@@ -781,6 +781,7 @@ body {
 #agendaCalendario .fc-bg-event.agenda-feriado-bg,
 #agendaCalendario .fc-bg-event {
     opacity: 1;
+    pointer-events: none; /* não bloqueia clique no dia para criar evento */
 }
 #agendaCalendario .fc-daygrid-day:has(.agenda-feriado-bg) .fc-daygrid-day-number,
 #agendaCalendario .fc-daygrid-day:has(.fc-bg-event) .fc-daygrid-day-number {

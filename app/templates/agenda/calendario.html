@@ -442,6 +442,7 @@
             document.getElementById('campoInicio').value = toLocalInput(ini);
             aplicarDuracao();
         } else {
+            // Clique no dia do mês: FullCalendar manda allDay=true — abre formulário de dia inteiro
             document.getElementById('campoDiaInteiro').checked = !!allDay;
             toggleDiaInteiro();
             if (start) {
@@ -457,8 +458,25 @@
                 }
             }
         }
+        limparBackdropOrfao();
         modal.show();
         if (ehReuniao()) agendarDisponibilidade();
+    }
+
+    function limparBackdropOrfao() {
+        document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    }
+
+    /** confirm() no meio do hide() do Bootstrap deixa backdrop preso — pergunta só depois de fechar. */
+    function aposFecharModal(fn) {
+        modalEl.addEventListener('hidden.bs.modal', function handler() {
+            modalEl.removeEventListener('hidden.bs.modal', handler);
+            limparBackdropOrfao();
+            fn();
+        }, { once: true });
     }
 
     function formReuniao() {
@@ -562,6 +580,8 @@
         navLinks: true,
         selectable: podeAdicionar,
         selectMirror: true,
+        // Clique simples no dia não dispara select (só arraste) — dateClick cobre o clique
+        selectMinDistance: 8,
         dayMaxEvents: 4,
         nowIndicator: true,
         slotMinTime: '07:00:00',
@@ -623,6 +643,11 @@
         select: function (info) {
             abrirNovo(info.start, info.end, info.allDay, 'evento');
             calendar.unselect();
+        },
+        dateClick: function (info) {
+            if (!podeAdicionar) return;
+            // No mês, clique no dia abre evento de dia inteiro; na semana/lista, com hora se houver
+            abrirNovo(info.date, null, info.allDay, 'evento');
         },
         eventClick: function (info) {
             info.jsEvent.preventDefault();
@@ -701,13 +726,17 @@
                   return;
               }
               calendar.refetchEvents();
-              modal.hide();
+              const googleUrl = d.google_url;
+              const perguntarGoogle = !!(googleUrl && !id);
               const msg = ehReuniao()
                   ? 'Reunião salva. Adicionar agora no Google Agenda?'
                   : 'Evento salvo. Adicionar agora no Google Agenda?';
-              if (d.google_url && !id && confirm(msg)) {
-                  window.open(d.google_url, '_blank', 'noopener');
-              }
+              aposFecharModal(function () {
+                  if (perguntarGoogle && confirm(msg)) {
+                      window.open(googleUrl, '_blank', 'noopener');
+                  }
+              });
+              modal.hide();
           })
           .catch(function () {
               const el = document.getElementById('alertaErro');
