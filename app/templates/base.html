@@ -191,23 +191,7 @@
             {% set _sidebar_sem_vinculo = current_user.requer_vinculo and not current_user.tem_vinculo %}
             <ul class="nav flex-column">
                 {% if not _sidebar_sem_vinculo %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and (request.endpoint.startswith('dashboard') or request.endpoint.startswith('noticias')) %}active{% endif %}"
-                       href="{{ url_for('dashboard.index') }}">
-                        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
-                    </a>
-                </li>
-
-                {% set _mostrar_gestao_unidade = current_user.pode('ver_predios') or current_user.pode('cadastrar_predio') or current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') or current_user.pode('ver_salas') or current_user.pode('cadastrar_sala') or current_user.pode('ver_equipamentos') or current_user.pode('cadastrar_equipamento') or current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') or current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') or current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') or current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
-                {% if _mostrar_gestao_unidade %}
-                <li class="sidebar-group" data-group="gestao-unidade">
-                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
-                        <span class="sidebar-group-title">Gestão da Unidade</span>
-                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
-                    </button>
-                    <ul class="sidebar-group-items nav flex-column">
-
-                {# Unidades: se unidade padrão selecionada → abre direto; senão → lista (Prédios acessados via Configurações) #}
+                {# Sempre visíveis (fora dos grupos): Unidade → Dashboard → Links Úteis #}
                 {% if current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
                 {% set _sidebar_un = current_user.unidade_padrao if (current_user.unidades_ativas | length) > 1 else (current_user.unidades_ativas[0] if (current_user.unidades_ativas | length) == 1 else none) %}
                 <li class="nav-item">
@@ -224,6 +208,29 @@
                     {% endif %}
                 </li>
                 {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and (request.endpoint.startswith('dashboard') or request.endpoint.startswith('noticias')) %}active{% endif %}"
+                       href="{{ url_for('dashboard.index') }}">
+                        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                    </a>
+                </li>
+                {% if current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('links') %}active{% endif %}"
+                       href="{{ url_for('links.index') }}">
+                        <i class="fas fa-link"></i><span>Links Úteis</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% set _mostrar_gestao_unidade = current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') or current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') or current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') or current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
+                {% if _mostrar_gestao_unidade %}
+                <li class="sidebar-group" data-group="gestao-unidade">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Gestão da Unidade</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
                 {% if current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"
@@ -245,14 +252,6 @@
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nsp') %}active{% endif %}"
                        href="{{ url_for('nsp.index') }}">
                         <i class="fas fa-user-shield"></i><span>Segurança do Paciente</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('links') %}active{% endif %}"
-                       href="{{ url_for('links.index') }}">
-                        <i class="fas fa-link"></i><span>Links Úteis</span>
                     </a>
                 </li>
                 {% endif %}
@@ -415,20 +414,12 @@
                 </li>
                 {% endif %}
                 {% else %}
-                {# Usuário sem vínculo: apenas Links Úteis #}
-                <li class="sidebar-group" data-group="gestao-unidade">
-                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
-                        <span class="sidebar-group-title">Gestão da Unidade</span>
-                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
-                    </button>
-                    <ul class="sidebar-group-items nav flex-column">
+                {# Usuário sem vínculo: Links Úteis sempre visível #}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('links') %}active{% endif %}"
                        href="{{ url_for('links.index') }}">
                         <i class="fas fa-link"></i><span>Links Úteis</span>
                     </a>
-                </li>
-                    </ul>
                 </li>
                 {% endif %}
             </ul>
