@@ -9,64 +9,49 @@
 
 {% block content %}
 <div class="agenda-page">
-<div class="page-header">
-    <h1><i class="fas fa-calendar-alt me-2"></i>Agenda da unidade</h1>
-    {% if pode_adicionar %}
-    <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-primary" id="btnNovoEvento">
-            <i class="fas fa-plus-circle me-1"></i>Novo evento
-        </button>
-        <button type="button" class="btn btn-outline-primary" id="btnNovaReuniao">
-            <i class="fas fa-users me-1"></i>Nova reunião
-        </button>
-    </div>
-    {% endif %}
-</div>
-
-<div class="agenda-toolbar">
-    <div class="d-flex flex-wrap gap-2 align-items-end">
-        {% if unidades | length > 1 %}
-        <div>
-            <label class="form-label mb-1">Unidade</label>
-            <select id="filtroUnidade" class="form-select form-select-sm" style="min-width:220px;">
-                <option value="">Todas as minhas unidades</option>
+    <div class="agenda-topbar">
+        <div class="agenda-topbar-left">
+            <h1 class="agenda-topbar-title">Agenda</h1>
+            {% if unidades | length > 1 %}
+            <select id="filtroUnidade" class="form-select form-select-sm agenda-unidade-select" title="Unidade">
+                <option value="">Todas as unidades</option>
                 {% for u in unidades %}
                 <option value="{{ u.id }}" {% if unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
                 {% endfor %}
             </select>
+            {% endif %}
+        </div>
+        <div class="agenda-topbar-filters">
+            <label class="agenda-filter" for="chkEventos">
+                <input type="checkbox" id="chkEventos" checked>
+                <span class="agenda-filter-swatch" style="background:#1A82B8;"></span>
+                <span class="agenda-filter-swatch" style="background:#0D3B5E;"></span>
+                <span>Eventos / Reuniões</span>
+            </label>
+            <label class="agenda-filter" for="chkPrazos">
+                <input type="checkbox" id="chkPrazos" checked>
+                <span class="agenda-filter-swatch" style="background:#F5C500;"></span>
+                <span>Prazos</span>
+            </label>
+            <label class="agenda-filter" for="chkFeriados">
+                <input type="checkbox" id="chkFeriados" checked>
+                <span class="agenda-filter-swatch" style="background:#E63030;"></span>
+                <span>Feriados</span>
+            </label>
+        </div>
+        {% if pode_adicionar %}
+        <div class="agenda-topbar-actions dropdown">
+            <button type="button" class="btn btn-primary btn-sm agenda-btn-criar" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-plus me-1"></i>Criar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><button type="button" class="dropdown-item" id="btnNovoEvento"><i class="fas fa-calendar-plus me-2 text-primary"></i>Evento</button></li>
+                <li><button type="button" class="dropdown-item" id="btnNovaReuniao"><i class="fas fa-users me-2" style="color:#0D3B5E;"></i>Reunião</button></li>
+            </ul>
         </div>
         {% endif %}
-        <div class="form-check mt-4 me-2">
-            <input class="form-check-input" type="checkbox" id="chkEventos" checked>
-            <label class="form-check-label" for="chkEventos">
-                <span class="agenda-dot" style="background:#1A82B8;"></span> Eventos
-                <span class="agenda-dot ms-1" style="background:#0D3B5E;"></span> Reuniões
-            </label>
-        </div>
-        <div class="form-check mt-4 me-2">
-            <input class="form-check-input" type="checkbox" id="chkPrazos" checked>
-            <label class="form-check-label" for="chkPrazos">
-                <span class="agenda-dot" style="background:#F5C500;"></span> Prazos de planejamento
-            </label>
-        </div>
-        <div class="form-check mt-4 me-2">
-            <input class="form-check-input" type="checkbox" id="chkFeriados" checked>
-            <label class="form-check-label" for="chkFeriados">
-                <span class="agenda-dot" style="background:#E63030;"></span> Feriados
-            </label>
-        </div>
     </div>
-    <p class="text-muted small mb-0 mt-1">
-        Clique no dia para criar. Bolinha do mouse sobre o calendário troca o mês.
-        Reunião: sugere horários em dias úteis 8h–17h (sem almoço/feriado).
-    </p>
-</div>
-
-<div class="card agenda-card">
-    <div class="card-body agenda-card-body">
-        <div id="agendaCalendario"></div>
-    </div>
-</div>
+    <div id="agendaCalendario"></div>
 </div>{# /.agenda-page #}
 
 <div class="modal fade" id="modalEvento" tabindex="-1">
@@ -207,12 +192,72 @@
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
     const modalEl = document.getElementById('modalEvento');
-    // Modal dentro de .sigus-main (overflow + stacking) fica atrás da navbar (z-index 1050)
-    // e o backdrop não cobre a tela direito — move para o body como o modalImpresso.
+    // Modal dentro de .sigus-main (overflow + stacking) fica atrás da navbar —
+    // move para o body como o modalImpresso.
     if (modalEl && modalEl.parentElement !== document.body) {
         document.body.appendChild(modalEl);
     }
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    function limparUiModal() {
+        document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+        if (!modalEl) return;
+        modalEl.classList.remove('show', 'showing');
+        modalEl.style.display = 'none';
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.removeAttribute('aria-modal');
+    }
+
+    function fecharDropdownCriar() {
+        const btn = document.querySelector('.agenda-btn-criar');
+        if (!btn) return;
+        const dd = bootstrap.Dropdown.getInstance(btn);
+        if (dd) dd.hide();
+        btn.setAttribute('aria-expanded', 'false');
+        const menu = btn.parentElement && btn.parentElement.querySelector('.dropdown-menu');
+        if (menu) menu.classList.remove('show');
+    }
+
+    /**
+     * Abre o modal de forma idempotente.
+     * Sempre descarta a instância anterior + overlays: evita o caso em que o
+     * Bootstrap fica com _isShown=true (show no-op) ou com .modal em display:block
+     * sem .show (tela “morta” até F5).
+     */
+    function mostrarModalAgenda() {
+        fecharDropdownCriar();
+        const old = bootstrap.Modal.getInstance(modalEl);
+        if (old) {
+            try { old.dispose(); } catch (e) { /* ignore */ }
+        }
+        limparUiModal();
+        // Deixa o clique do FullCalendar terminar antes do focus trap do Bootstrap
+        setTimeout(function () {
+            limparUiModal();
+            bootstrap.Modal.getOrCreateInstance(modalEl, {
+                backdrop: true,
+                keyboard: true,
+                focus: true
+            }).show();
+        }, 0);
+    }
+
+    function esconderModalAgenda() {
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) inst.hide();
+        else limparUiModal();
+    }
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        limparUiModal();
+        const inst = bootstrap.Modal.getInstance(modalEl);
+        if (inst) {
+            try { inst.dispose(); } catch (e) { /* ignore */ }
+        }
+    });
+
     const form = document.getElementById('formEvento');
     let calendar;
     let modoEdicao = false;
@@ -461,23 +506,15 @@
                 }
             }
         }
-        limparBackdropOrfao();
-        modal.show();
+        mostrarModalAgenda();
         if (ehReuniao()) agendarDisponibilidade();
-    }
-
-    function limparBackdropOrfao() {
-        document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
     }
 
     /** confirm() no meio do hide() do Bootstrap deixa backdrop preso — pergunta só depois de fechar. */
     function aposFecharModal(fn) {
         modalEl.addEventListener('hidden.bs.modal', function handler() {
             modalEl.removeEventListener('hidden.bs.modal', handler);
-            limparBackdropOrfao();
+            limparUiModal();
             fn();
         }, { once: true });
     }
@@ -573,20 +610,24 @@
     function alturaAgenda() {
         const el = document.getElementById('agendaCalendario');
         if (!el) return 480;
-        const parent = el.parentElement;
-        // Preferência: preencher o card flex (altura explícita do pai)
-        if (parent) {
-            const h = parent.clientHeight;
-            if (h >= 280) return h;
-        }
+        const h = el.clientHeight;
+        if (h >= 280) return h;
         const top = el.getBoundingClientRect().top;
-        return Math.max(360, Math.floor(window.innerHeight - top - 8));
+        return Math.max(360, Math.floor(window.innerHeight - top - 4));
     }
 
     function ajustarAlturaCalendario() {
         if (!calendar) return;
         calendar.setOption('height', alturaAgenda());
         calendar.updateSize();
+    }
+
+    function ehBarraDiaInteiro(arg) {
+        const props = arg.event.extendedProps || {};
+        return !!arg.event.allDay
+            || props.tipo === 'prazo'
+            || props.tipo === 'feriado'
+            || arg.event.display === 'background';
     }
 
     calendar = new FullCalendar.Calendar(document.getElementById('agendaCalendario'), {
@@ -604,48 +645,64 @@
         selectMirror: true,
         // Clique simples no dia não dispara select (só arraste) — dateClick cobre o clique
         selectMinDistance: 8,
-        dayMaxEvents: 3,
+        dayMaxEvents: true,
         moreLinkText: function (n) { return '+' + n + ' mais'; },
         nowIndicator: true,
         slotMinTime: '07:00:00',
         slotMaxTime: '20:00:00',
+        eventClassNames: function (arg) {
+            if (arg.event.display === 'background') return [];
+            if (ehBarraDiaInteiro(arg)) return ['agenda-ev-bar'];
+            if (arg.view.type === 'dayGridMonth') return ['agenda-ev-timed'];
+            return [];
+        },
         eventContent: function (arg) {
             const props = arg.event.extendedProps || {};
             if (arg.event.display === 'background' || props.tipo === 'feriado-bg') return;
-            const pessoas = props.pessoas || [];
+            const view = arg.view.type;
+            const barra = ehBarraDiaInteiro(arg);
             const wrap = document.createElement('div');
-            wrap.className = 'agenda-ev';
-            if (props.tipo === 'feriado') wrap.classList.add('agenda-ev-feriado-inner');
 
-            const topo = document.createElement('div');
-            topo.className = 'agenda-ev-topo';
-            if (props.tipo === 'feriado') {
-                const ico = document.createElement('i');
-                ico.className = 'fas fa-flag agenda-ev-flag';
-                topo.appendChild(ico);
-            } else if (arg.timeText) {
+            // Mês: linha fina (bolinha + hora + título) ou barra de dia inteiro
+            if (view === 'dayGridMonth' || view === 'dayGridWeek') {
+                if (barra) {
+                    wrap.className = 'agenda-ev agenda-ev-barra';
+                    const title = document.createElement('span');
+                    title.className = 'agenda-ev-title';
+                    title.textContent = arg.event.title;
+                    wrap.appendChild(title);
+                } else {
+                    wrap.className = 'agenda-ev agenda-ev-linha';
+                    const dot = document.createElement('span');
+                    dot.className = 'agenda-ev-dot';
+                    dot.style.backgroundColor = arg.event.backgroundColor || '#1A82B8';
+                    wrap.appendChild(dot);
+                    if (arg.timeText) {
+                        const t = document.createElement('span');
+                        t.className = 'agenda-ev-hora';
+                        t.textContent = arg.timeText;
+                        wrap.appendChild(t);
+                    }
+                    const title = document.createElement('span');
+                    title.className = 'agenda-ev-title';
+                    title.textContent = arg.event.title;
+                    wrap.appendChild(title);
+                }
+                return { domNodes: [wrap] };
+            }
+
+            // Semana / lista: compacto, sem avatares (detalhes no modal)
+            wrap.className = 'agenda-ev agenda-ev-compacto';
+            if (arg.timeText && !barra) {
                 const t = document.createElement('span');
                 t.className = 'agenda-ev-hora';
                 t.textContent = arg.timeText;
-                topo.appendChild(t);
+                wrap.appendChild(t);
             }
             const title = document.createElement('span');
             title.className = 'agenda-ev-title';
             title.textContent = arg.event.title;
-            topo.appendChild(title);
-            wrap.appendChild(topo);
-
-            if (pessoas.length) {
-                const row = document.createElement('div');
-                row.className = 'agenda-ev-pessoas';
-                pessoas.slice(0, 3).forEach(function (p) {
-                    const item = document.createElement('span');
-                    item.className = 'agenda-ev-pessoa';
-                    item.innerHTML = faceHtml(p) + '<span>' + escapeHtml(p.primeiro || p.nome || '') + '</span>';
-                    row.appendChild(item);
-                });
-                wrap.appendChild(row);
-            }
+            wrap.appendChild(title);
             return { domNodes: [wrap] };
         },
         events: function (info, success, failure) {
@@ -674,6 +731,7 @@
         },
         eventClick: function (info) {
             info.jsEvent.preventDefault();
+            info.jsEvent.stopPropagation();
             const props = info.event.extendedProps || {};
             if (props.tipo === 'feriado-bg' || info.event.display === 'background') return;
             eventoAtual = info.event;
@@ -685,7 +743,7 @@
             } else {
                 mostrarLeitura(props, info.event.title, formatoQuando(info));
             }
-            modal.show();
+            mostrarModalAgenda();
         }
     });
     calendar.render();
@@ -788,7 +846,7 @@
                       window.open(googleUrl, '_blank', 'noopener');
                   }
               });
-              modal.hide();
+              esconderModalAgenda();
           })
           .catch(function () {
               const el = document.getElementById('alertaErro');
@@ -799,15 +857,21 @@
 
     document.getElementById('btnExcluir').addEventListener('click', function () {
         const id = document.getElementById('eventoId').value;
-        if (!id || !confirm(ehReuniao() ? 'Excluir esta reunião?' : 'Excluir este evento?')) return;
-        const url = '{{ url_for("agenda.excluir", id=0) }}'.replace(/\/0$/, '/' + id);
-        const fd = new FormData();
-        fd.append('csrf_token', csrf);
-        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
-            .then(function (r) { return r.json(); })
-            .then(function (d) {
-                if (d.ok) { calendar.refetchEvents(); modal.hide(); }
-            });
+        if (!id) return;
+        const msg = ehReuniao() ? 'Excluir esta reunião?' : 'Excluir este evento?';
+        // confirm() com modal aberto também prende o backdrop — fecha antes de perguntar
+        aposFecharModal(function () {
+            if (!confirm(msg)) return;
+            const url = '{{ url_for("agenda.excluir", id=0) }}'.replace(/\/0$/, '/' + id);
+            const fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.ok) calendar.refetchEvents();
+                });
+        });
+        esconderModalAgenda();
     });
 })();
 </script>
