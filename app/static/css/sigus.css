@@ -761,7 +761,14 @@ body {
 /* ── Agenda: página sem scroll da janela ── */
 html:has(body.pagina-agenda),
 body.pagina-agenda {
-    height: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+body.pagina-agenda .sigus-wrapper {
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
     overflow: hidden;
 }
 body.pagina-agenda .sigus-main {
