@@ -2314,7 +2314,7 @@ _MESES = {
 def _query_aniversariantes(mes, unidade_ids=None):
     """
     Profissionais que fazem aniversário no mês (ou em todos os meses se mes=None/0).
-    Vinculados a ao menos uma unidade ativa. Exclui administradores.
+    Vinculados a ao menos uma unidade ativa.
     Cada pessoa aparece uma única vez.
     """
     q = (
@@ -2323,7 +2323,6 @@ def _query_aniversariantes(mes, unidade_ids=None):
         .join(Unidade, Unidade.id == UsuarioUnidade.unidade_id)
         .filter(
             Usuario.ativo == True,
-            Usuario.perfil != 'administrador',
             Usuario.data_nasc != None,
             UsuarioUnidade.ativo == True,
         )

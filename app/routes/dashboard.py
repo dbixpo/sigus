@@ -47,7 +47,6 @@ def _aniversariantes_unidade(unidade_id, hoje, so_hoje=False):
         .join(UsuarioUnidade, UsuarioUnidade.usuario_id == Usuario.id)
         .filter(
             Usuario.ativo.is_(True),
-            Usuario.perfil != 'administrador',
             Usuario.data_nasc.isnot(None),
             UsuarioUnidade.ativo.is_(True),
             UsuarioUnidade.unidade_id == unidade_id,
