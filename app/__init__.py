@@ -219,6 +219,7 @@ def create_app(config_name='default'):
         'unidades.sem_vinculo',
         'solicitacoes.formulario', 'solicitacoes.confirmacao',
         'links.publico',
+        'nsp.notificar', 'nsp.notificado', 'nsp.acompanhar',
         'notificacoes.recentes', 'notificacoes.contagem',
         'notificacoes.marcar_lida', 'notificacoes.marcar_todas_lidas',
         # Mapa público (acesso sem vínculo, inclusive usuário logado)
@@ -254,6 +255,19 @@ def create_app(config_name='default'):
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+
+    # Notificação de segurança do paciente: cultura justa (RI-SGQSP-001, Art. 82).
+    # A auditoria não pode permitir ligar a notificação a quem a fez.
+    _ENDPOINTS_ANONIMOS = {'nsp.notificar', 'nsp.notificado', 'nsp.acompanhar'}
+
+    def _dados_auditoria(request, current_user):
+        if request.endpoint in _ENDPOINTS_ANONIMOS:
+            rota = str(request.url_rule) if request.url_rule else request.path
+            return None, None, None, rota[:500]
+        usuario_id = current_user.id if current_user.is_authenticated else None
+        ip = request.remote_addr or request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+        user_agent = (request.headers.get('User-Agent') or '')[:500]
+        return usuario_id, ip, user_agent, (request.url or '')[:500]
 
     # ── Auditoria: registra todas as requisições (exceto static) ─────────────
     @app.after_request
@@ -302,12 +316,10 @@ def create_app(config_name='default'):
                         form_safe[k] = v
                 if form_safe:
                     parametros['form'] = form_safe
-            if not parametros:
+            if not parametros or request.endpoint in _ENDPOINTS_ANONIMOS:
                 parametros = None
 
-            usuario_id = current_user.id if current_user.is_authenticated else None
-            ip = request.remote_addr or request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
-            user_agent = (request.headers.get('User-Agent') or '')[:500]
+            usuario_id, ip, user_agent, url = _dados_auditoria(request, current_user)
 
             from app.models.auditoria import Auditoria
             rec = Auditoria(
@@ -315,7 +327,7 @@ def create_app(config_name='default'):
                 acao=acao,
                 modulo=modulo,
                 endpoint=request.endpoint or '',
-                url=(request.url or '')[:500],
+                url=url,
                 method=request.method or '',
                 parametros=parametros,
                 ip_address=ip[:45] if ip else None,
@@ -340,16 +352,14 @@ def create_app(config_name='default'):
             if request.endpoint == 'static' or request.endpoint is None:
                 return
             modulo = (request.endpoint or 'unknown').split('.')[0] if request.endpoint else 'unknown'
-            usuario_id = current_user.id if current_user.is_authenticated else None
-            ip = request.remote_addr or request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
-            user_agent = (request.headers.get('User-Agent') or '')[:500]
+            usuario_id, ip, user_agent, url = _dados_auditoria(request, current_user)
             from app.models.auditoria import Auditoria
             rec = Auditoria(
                 usuario_id=usuario_id,
                 acao='view',
                 modulo=modulo,
                 endpoint=request.endpoint or '',
-                url=(request.url or '')[:500],
+                url=url,
                 method=request.method or '',
                 ip_address=ip[:45] if ip else None,
                 user_agent=user_agent or None,

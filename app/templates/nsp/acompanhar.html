@@ -1,0 +1,55 @@
+{% extends 'base.html' if current_user.is_authenticated else 'nsp/_publico_base.html' %}
+{% block title %}Acompanhar notificação{% endblock %}
+
+{% block head %}
+{% if current_user.is_authenticated %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set publicas = [('em_qualificacao', 'Recebida pelo Núcleo'), ('qualificada', 'Qualificada'), ('encaminhada', 'Encaminhada à comissão'), ('em_investigacao', 'Em investigação'), ('concluida', 'Concluída')] %}
+<div class="sp sp-wrap" style="max-width:640px">
+    <div class="sp-card">
+        <span class="sp-eyebrow">Acompanhar</span>
+        <h2 class="sp-titulo">Etapa da notificação</h2>
+        <p class="sp-texto">Informe o protocolo recebido ao notificar. Só a etapa é exibida, sem nenhum dado do caso.</p>
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" name="protocolo" class="form-control sp-input text-uppercase" placeholder="SP-2026-XXXXXX" value="{{ protocolo }}" required>
+            <button class="sp-btn sp-btn-primary" type="submit"><i class="fas fa-magnifying-glass"></i>Consultar</button>
+        </form>
+
+        {% if buscou %}
+            {% if o %}
+            <div class="mt-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="sp-protocolo">{{ o.protocolo }}</span>
+                    <span class="sp-badge sp-badge-{{ o.etapa_cor }}">{{ o.etapa_label }}</span>
+                </div>
+                {% if o.etapa == 'arquivada' %}
+                <p class="sp-nota mt-3 mb-0">O Núcleo analisou e arquivou esta notificação.</p>
+                {% else %}
+                {% set idx = namespace(v=0) %}
+                {% for s, _ in publicas %}{% if s == o.etapa %}{% set idx.v = loop.index0 %}{% endif %}{% endfor %}
+                <div class="sp-etapas">
+                    {% for s, l in publicas %}
+                    <div class="sp-etapa {% if loop.index0 < idx.v or (o.etapa == 'concluida') %}feita{% endif %} {% if loop.index0 == idx.v %}atual{% endif %}">
+                        <span class="ponto"></span>{{ l }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="small text-muted mt-3 mb-0">Recebida em {{ o.criado_em|br_date }}.</p>
+            </div>
+            {% else %}
+            <div class="sp-alerta">Protocolo não encontrado. Confira as letras e os números.</div>
+            {% endif %}
+        {% endif %}
+
+        <div class="sp-btn-row">
+            <span></span>
+            <a href="{{ url_for('nsp.notificar') }}" class="sp-btn sp-btn-ghost sp-btn-sm"><i class="fas fa-plus"></i>Nova notificação</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' if current_user.is_authenticated else 'nsp/_publico_base.html' %}
+{% block title %}Notificação registrada{% endblock %}
+
+{% block head %}
+{% if current_user.is_authenticated %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="sp sp-wrap">
+    <div class="sp-card text-center" style="padding:44px 22px">
+        <div style="font-size:2.6rem;color:#19A88B"><i class="fas fa-circle-check"></i></div>
+        <h2 class="sp-titulo">Notificação registrada</h2>
+        <p class="sp-texto mb-1">Protocolo</p>
+        <div class="sp-protocolo-grande mb-2" id="spProtocolo">{{ protocolo }}</div>
+        <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm mb-3" id="spCopiar"><i class="fas fa-copy"></i>Copiar protocolo</button>
+        <p class="sp-texto mx-auto" style="max-width:560px">Obrigado por notificar. A análise técnica fica restrita ao Núcleo de Segurança do Paciente.
+            Guarde o protocolo: com ele você acompanha a etapa da notificação, sem se identificar.</p>
+        <div class="d-flex justify-content-center gap-2 flex-wrap mt-3">
+            <a href="{{ url_for('nsp.acompanhar', protocolo=protocolo) }}" class="sp-btn sp-btn-ghost"><i class="fas fa-magnifying-glass"></i>Acompanhar</a>
+            <a href="{{ url_for('nsp.notificar') }}" class="sp-btn sp-btn-primary"><i class="fas fa-plus"></i>Registrar outra notificação</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('spCopiar').addEventListener('click', function () {
+    var txt = document.getElementById('spProtocolo').textContent.trim();
+    var btn = this;
+    function ok() { btn.innerHTML = '<i class="fas fa-check"></i>Copiado'; }
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(txt).then(ok);
+    } else {
+        var t = document.createElement('textarea');
+        t.value = txt; document.body.appendChild(t); t.select();
+        try { document.execCommand('copy'); ok(); } catch (e) {}
+        document.body.removeChild(t);
+    }
+});
+</script>
+{% endblock %}

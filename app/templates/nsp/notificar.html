@@ -1,0 +1,201 @@
+{% extends 'base.html' if current_user.is_authenticated else 'nsp/_publico_base.html' %}
+{% block title %}Notificar incidente{% endblock %}
+
+{% block head %}
+{% if current_user.is_authenticated %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% else %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% set f = form %}
+{% set unidade_sel = (f.get('unidade_id')|int if f.get('unidade_id') else (current_user.unidade_logada.id if current_user.is_authenticated and current_user.unidade_logada else 0)) %}
+<div class="sp sp-wrap">
+
+    {% if current_user.is_authenticated %}
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-1">
+        <a href="{{ url_for('nsp.index') }}" class="sp-btn sp-btn-ghost sp-btn-sm"><i class="fas fa-arrow-left"></i>Segurança do Paciente</a>
+        <button type="button" class="sp-btn sp-btn-ghost sp-btn-sm js-acesso-publico"
+                data-url="{{ url_publica('nsp.notificar') }}"
+                data-titulo="Notificar incidente · Segurança do Paciente"
+                data-arquivo="qrcode-notificacao-seguranca-paciente">
+            <i class="fas fa-qrcode"></i>Link público / QR Code
+        </button>
+    </div>
+    {% endif %}
+
+    <div id="spIntro" class="sp-card"{% if erros %} style="display:none"{% endif %}>
+        <span class="sp-eyebrow">Antes de começar</span>
+        <h2 class="sp-titulo">Como funciona esta notificação</h2>
+        <p class="sp-texto mb-0">Descreva os fatos de forma objetiva, sem juízo de valor ou responsabilização individual.
+            A classificação técnica não é feita por você: ela é realizada depois pelo Núcleo de Segurança do Paciente.</p>
+        <div class="sp-pledge">
+            <div class="mark"><i class="fas fa-check"></i></div>
+            <div>
+                <p>Seu nome é <b>opcional</b> e esta notificação <b>não fica vinculada a você</b>{% if current_user.is_authenticated %} nem ao seu usuário do sistema{% endif %}. Ela segue os princípios de
+                    cultura justa e não punitiva: o registro serve para identificar falhas de processo e melhorar a segurança do paciente,
+                    nunca para responsabilizar individualmente quem notifica. A notificação vai primeiro ao Núcleo de Segurança do Paciente,
+                    e não à coordenação da unidade. O tratamento dos dados respeita a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, LGPD).</p>
+                <p class="sp-norm">Base normativa: Regimento Interno do SGQSP (RI-SGQSP-001), Art. 8º, VI (cultura justa) e Art. 82 (vedação de medida disciplinar por falha sistêmica).</p>
+            </div>
+        </div>
+        <div class="sp-btn-row">
+            <span class="small text-muted">Tempo estimado: 5 minutos ·
+                <a href="{{ url_for('nsp.acompanhar') }}" class="text-decoration-none">Já tenho um protocolo</a></span>
+            <button type="button" class="sp-btn sp-btn-primary" id="spIniciar">Iniciar notificação <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <form id="spForm" method="POST" autocomplete="off" novalidate{% if not erros %} style="display:none"{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="sp-hp" aria-hidden="true">
+            <label>Não preencha <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
+
+        {% if erros %}
+        <div class="sp-alerta">
+            <b><i class="fas fa-exclamation-circle me-1"></i>Confira os campos:</b>
+            <ul>{% for e in erros %}<li>{{ e }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        <div class="sp-section-head"><div class="sp-eyebrow">Identificação da unidade e do registro</div></div>
+        <div class="sp-card">
+            <div class="sp-grid">
+                <div class="sp-campo">
+                    <label class="sp-label" for="spUnidade">Unidade notificante</label>
+                    <select name="unidade_id" id="spUnidade" class="form-select sp-input" data-singleselect data-placeholder="Selecione…" required>
+                        <option value="">Selecione…</option>
+                        {% for u in unidades %}
+                        <option value="{{ u.id }}" {% if u.id == unidade_sel %}selected{% endif %}>{{ u.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spTipologia">Tipologia assistencial</label>
+                    <select name="tipologia" id="spTipologia" class="form-select sp-input" required>
+                        <option value="">Selecione…</option>
+                        {% for t in tipologias %}<option {% if f.get('tipologia') == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spLocal">Setor/local do incidente <em>Ex.: sala de vacina, PNAR, observação</em></label>
+                    <input type="text" name="local_incidente" id="spLocal" class="form-control sp-input" maxlength="150" value="{{ f.get('local_incidente', '') }}" required>
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spTurno">Turno</label>
+                    <select name="turno" id="spTurno" class="form-select sp-input" required>
+                        <option value="">Selecione…</option>
+                        {% for t in turnos %}<option {% if f.get('turno') == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="sp-section-head"><div class="sp-eyebrow">Dados temporais</div></div>
+        <div class="sp-card">
+            <div class="sp-grid">
+                <div class="sp-campo">
+                    <label class="sp-label" for="spOcorrencia">Data e hora da ocorrência</label>
+                    <input type="datetime-local" name="ocorrencia_em" id="spOcorrencia" class="form-control sp-input" max="{{ agora }}" value="{{ f.get('ocorrencia_em', '') }}" required>
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spIdentificacao">Data e hora da identificação</label>
+                    <input type="datetime-local" name="identificacao_em" id="spIdentificacao" class="form-control sp-input" max="{{ agora }}" value="{{ f.get('identificacao_em', '') }}" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="sp-section-head"><div class="sp-eyebrow">Paciente envolvido</div></div>
+        <div class="sp-card">
+            <div class="sp-grid">
+                <div class="sp-campo">
+                    <label class="sp-label" for="spCodigo">Identificador interno codificado <em>nunca use nome, CPF ou nº de prontuário</em></label>
+                    <input type="text" name="paciente_codigo" id="spCodigo" class="form-control sp-input" maxlength="60" value="{{ f.get('paciente_codigo', '') }}" required>
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spFaixa">Faixa etária</label>
+                    <select name="faixa_etaria" id="spFaixa" class="form-select sp-input" required>
+                        <option value="">Selecione…</option>
+                        {% for fx in faixas %}<option {% if f.get('faixa_etaria') == fx %}selected{% endif %}>{{ fx }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <p class="small text-muted mb-0">Se for preciso identificar o paciente, o Núcleo faz isso depois, com acesso restrito.</p>
+        </div>
+
+        <div class="sp-section-head"><div class="sp-eyebrow">Descrição do incidente</div></div>
+        <div class="sp-card">
+            <div class="sp-campo">
+                <label class="sp-label" for="spDescricao">O que aconteceu</label>
+                <textarea name="descricao" id="spDescricao" class="form-control sp-input" rows="5" required
+                          placeholder="Descreva a sequência dos eventos, sem juízo de valor ou responsabilização individual.">{{ f.get('descricao', '') }}</textarea>
+            </div>
+            <div class="sp-campo mb-0">
+                <label class="sp-label" for="spAcoes">Ações imediatas adotadas <em>(opcional)</em></label>
+                <textarea name="acao_imediata" id="spAcoes" class="form-control sp-input" rows="3">{{ f.get('acao_imediata', '') }}</textarea>
+            </div>
+        </div>
+
+        <div class="sp-section-head"><div class="sp-eyebrow">Notificante</div></div>
+        <div class="sp-card">
+            <div class="sp-grid">
+                <div class="sp-campo">
+                    <label class="sp-label" for="spNome">Nome <em>(opcional)</em></label>
+                    <input type="text" name="notificante_nome" id="spNome" class="form-control sp-input" maxlength="150" value="{{ f.get('notificante_nome', '') }}">
+                </div>
+                <div class="sp-campo">
+                    <label class="sp-label" for="spCargo">Função/cargo <em>(opcional)</em></label>
+                    <input type="text" name="notificante_cargo" id="spCargo" class="form-control sp-input" maxlength="120" value="{{ f.get('notificante_cargo', '') }}">
+                </div>
+            </div>
+            <p class="small text-muted mb-0"><i class="fas fa-user-secret me-1"></i>Deixe em branco para notificar de forma anônima.
+                Mesmo identificada, a notificação só é vista pelo Núcleo.</p>
+        </div>
+
+        <div class="sp-btn-row">
+            <button type="button" class="sp-btn sp-btn-ghost" id="spVoltar"><i class="fas fa-arrow-left"></i>Voltar</button>
+            <button type="submit" class="sp-btn sp-btn-primary" id="spEnviar"><i class="fas fa-paper-plane"></i>Enviar notificação</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if not current_user.is_authenticated %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+document.querySelectorAll('select[data-singleselect]').forEach(function (el) {
+    new TomSelect(el, { allowEmptyOption: true, placeholder: el.getAttribute('data-placeholder') || 'Selecione…', maxOptions: null });
+});
+</script>
+{% endif %}
+<script>
+(function () {
+    var intro = document.getElementById('spIntro');
+    var form = document.getElementById('spForm');
+    document.getElementById('spIniciar').addEventListener('click', function () {
+        intro.style.display = 'none';
+        form.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('spVoltar').addEventListener('click', function () {
+        form.style.display = 'none';
+        intro.style.display = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    var ocorr = document.getElementById('spOcorrencia');
+    var ident = document.getElementById('spIdentificacao');
+    ocorr.addEventListener('change', function () {
+        ident.min = ocorr.value;
+        if (!ident.value) ident.value = ocorr.value;
+    });
+    form.addEventListener('submit', function () {
+        var btn = document.getElementById('spEnviar');
+        setTimeout(function () { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando…'; }, 0);
+    });
+})();
+</script>
+{% endblock %}

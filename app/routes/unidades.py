@@ -11,7 +11,6 @@ from app.models.predio import Predio
 from app.models.usuario import Usuario, CBOS, VINCULOS, TIPOS_VINCULO
 from app.models.cbo import CBO
 from app.models.ficha_cnes import FichaCnesVinculo
-from app.models.nsp import NspOcorrencia, NspCatalogo
 from app.models.identidade import cidade_padrao
 from app.utils import _montar_corpo_email_ficha, _montar_corpo_email_rede, agora_local
 
@@ -183,18 +182,6 @@ def detalhe(id):
     chamados_recentes = q_chamados.order_by(Chamado.atualizado_em.desc()).limit(10).all()
     chamados_abertos_count = q_chamados.count()
 
-    nsp_recentes = []
-    nsp_abertos_count = 0
-    if current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp'):
-        q_nsp = NspOcorrencia.query.filter_by(unidade_id=id)
-        nsp_recentes = q_nsp.order_by(NspOcorrencia.atualizado_em.desc()).limit(8).all()
-        nsp_abertos_count = (
-            NspOcorrencia.query.filter_by(unidade_id=id)
-            .join(NspCatalogo, NspOcorrencia.status_id == NspCatalogo.id)
-            .filter(NspCatalogo.encerra.is_(False))
-            .count()
-        )
-
     usuarios_disponiveis = Usuario.query.filter(
         Usuario.ativo == True,
         Usuario.perfil != 'administrador',
@@ -227,8 +214,6 @@ def detalhe(id):
                            vinculos=vinculos_ativos,
                            chamados_recentes=chamados_recentes,
                            chamados_abertos_count=chamados_abertos_count,
-                           nsp_recentes=nsp_recentes,
-                           nsp_abertos_count=nsp_abertos_count,
                            usuarios_disponiveis=usuarios_disponiveis,
                            fichas=fichas_ultimas,
                            ultima_ficha_por_usuario=ultima_ficha_por_usuario,

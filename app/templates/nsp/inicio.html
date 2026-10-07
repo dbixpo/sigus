@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Segurança do Paciente{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% endblock %}
+
+{% block content %}
+<div class="sp sp-wrap">
+    <div class="sp-card">
+        <span class="sp-eyebrow">Segurança do Paciente</span>
+        <h2 class="sp-titulo">Notificar um incidente ou quase falha</h2>
+        <p class="sp-texto mb-0">Viu algo que colocou ou poderia colocar um paciente em risco? Notifique. A notificação vai direto ao
+            Núcleo de Segurança do Paciente, sem passar pela coordenação da unidade, e não fica vinculada ao seu usuário.</p>
+        <div class="sp-pledge">
+            <div class="mark"><i class="fas fa-shield-heart"></i></div>
+            <div>
+                <p>Cultura justa e não punitiva: o objetivo é corrigir processos, nunca responsabilizar quem notifica. Você pode notificar
+                    sem se identificar.</p>
+                <p class="sp-norm">Regimento Interno do SGQSP (RI-SGQSP-001), Art. 8º, VI e Art. 82.</p>
+            </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('nsp.notificar') }}" class="sp-btn sp-btn-primary"><i class="fas fa-pen-to-square"></i>Notificar incidente</a>
+            <a href="{{ url_for('nsp.acompanhar') }}" class="sp-btn sp-btn-ghost"><i class="fas fa-magnifying-glass"></i>Acompanhar protocolo</a>
+            <button type="button" class="sp-btn sp-btn-ghost js-acesso-publico"
+                    data-url="{{ url_publica('nsp.notificar') }}"
+                    data-titulo="Notificar incidente · Segurança do Paciente"
+                    data-arquivo="qrcode-notificacao-seguranca-paciente">
+                <i class="fas fa-qrcode"></i>Link público / QR Code
+            </button>
+            {% if pode_membros %}
+            <a href="{{ url_for('nsp.membros') }}" class="sp-btn sp-btn-ghost"><i class="fas fa-users-gear"></i>Núcleo e comissões</a>
+            {% endif %}
+        </div>
+    </div>
+    <p class="sp-rodape">O acompanhamento dos casos é feito pelo Núcleo de Segurança do Paciente e pelas comissões das unidades.</p>
+</div>
+{% endblock %}

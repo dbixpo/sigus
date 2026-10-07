@@ -223,8 +223,6 @@
                 </li>
                 {% endif %}
 
-                {% set _mostrar_gestao_unidade = current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') or current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') or current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') or current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
-                {% if _mostrar_gestao_unidade %}
                 <li class="sidebar-group" data-group="gestao-unidade">
                     <button type="button" class="sidebar-group-toggle" aria-expanded="false">
                         <span class="sidebar-group-title">Gestão da Unidade</span>
@@ -247,14 +245,12 @@
                     </a>
                 </li>
                 {% endif %}
-                {% if current_user.pode('ver_nsp') or current_user.pode('adicionar_nsp') or current_user.pode('editar_nsp') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nsp') %}active{% endif %}"
                        href="{{ url_for('nsp.index') }}">
                         <i class="fas fa-user-shield"></i><span>Segurança do Paciente</span>
                     </a>
                 </li>
-                {% endif %}
                 {% if current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('relatorios') %}active{% endif %}"
@@ -265,7 +261,6 @@
                 {% endif %}
                     </ul>
                 </li>
-                {% endif %}
 
                 {% set pode_freq = current_user.pode_importar_frequencia %}
                 <li class="sidebar-group" data-group="recursos-humanos">

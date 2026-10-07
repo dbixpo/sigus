@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Núcleo e comissões · Segurança do Paciente{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% endblock %}
+
+{% block content %}
+<div class="sp">
+    <div class="page-header">
+        <div>
+            <a href="{{ url_for('nsp.index') }}" class="small text-decoration-none"><i class="fas fa-arrow-left me-1"></i>Segurança do Paciente</a>
+            <h1 class="mt-1"><i class="fas fa-users-gear me-2"></i>Núcleo e comissões</h1>
+            <p class="text-muted small mb-0">Só quem está nestas listas acompanha as notificações. Perfil de acesso, administrador e gestor central não dão acesso aos casos.</p>
+        </div>
+    </div>
+
+    <nav class="sp-nav mt-0">
+        <a href="{{ url_for('nsp.membros', aba='nucleo') }}" class="{{ 'on' if aba == 'nucleo' }}">Núcleo de Segurança do Paciente<span class="cont">{{ nucleo|length }}</span></a>
+        <a href="{{ url_for('nsp.membros', aba='comissao') }}" class="{{ 'on' if aba == 'comissao' }}">Comissões das unidades<span class="cont">{{ comissoes|length }}</span></a>
+    </nav>
+
+    {% if aba == 'nucleo' %}
+    <div class="sp-card">
+        <span class="sp-eyebrow">Núcleo</span>
+        <p class="sp-texto mt-1">Recebe todas as notificações, qualifica, encaminha às comissões, libera a coordenação e conclui os casos.</p>
+        {% for m in nucleo %}
+        <div class="sp-linha">
+            <div class="meta"><b>{{ m.usuario.nome }}</b> <span class="small text-muted">· {{ m.usuario.email or m.usuario.perfil_label }}</span></div>
+            <form method="POST" onsubmit='return confirm({{ ("Remover " ~ m.usuario.nome ~ " do Núcleo?")|tojson }})'>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="acao" value="remover">
+                <input type="hidden" name="papel" value="nucleo">
+                <input type="hidden" name="membro_id" value="{{ m.id }}">
+                <button class="btn btn-sm btn-link text-danger p-0"><i class="fas fa-user-minus me-1"></i>Remover</button>
+            </form>
+        </div>
+        {% else %}
+        <p class="sp-nota">Ninguém no Núcleo ainda. Enquanto a lista estiver vazia, as notificações ficam guardadas sem ninguém para analisar.</p>
+        {% endfor %}
+        <hr>
+        <form method="POST" class="row g-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="acao" value="adicionar">
+            <input type="hidden" name="papel" value="nucleo">
+            <div class="col-md-9">
+                <label class="sp-label">Incluir no Núcleo</label>
+                <select name="usuario_id" class="form-select" data-singleselect data-placeholder="Buscar usuário…" required>
+                    <option value=""></option>
+                    {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nome }}{% if u.email %} · {{ u.email }}{% endif %}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3"><button class="sp-btn sp-btn-primary w-100 justify-content-center"><i class="fas fa-user-plus"></i>Incluir</button></div>
+        </form>
+    </div>
+    {% else %}
+    <div class="sp-card">
+        <span class="sp-eyebrow">Comissões de segurança do paciente</span>
+        <p class="sp-texto mt-1">Cada comissão vê apenas os casos que o Núcleo encaminhou à sua unidade: registra a investigação, o plano de ação e comentários.</p>
+        <form method="POST" class="row g-2 align-items-end">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="acao" value="adicionar">
+            <input type="hidden" name="papel" value="comissao">
+            <div class="col-md-5">
+                <label class="sp-label">Unidade</label>
+                <select name="unidade_id" class="form-select" data-singleselect data-placeholder="Buscar unidade…" required>
+                    <option value=""></option>
+                    {% for u in unidades %}<option value="{{ u.id }}">{{ u.nome }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="sp-label">Membro</label>
+                <select name="usuario_id" class="form-select" data-singleselect data-placeholder="Buscar usuário…" required>
+                    <option value=""></option>
+                    {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nome }}{% if u.email %} · {{ u.email }}{% endif %}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2"><button class="sp-btn sp-btn-primary w-100 justify-content-center"><i class="fas fa-user-plus"></i>Incluir</button></div>
+        </form>
+    </div>
+    {% for unidade, ms in comissoes %}
+    <div class="sp-card">
+        <span class="sp-eyebrow">{{ unidade.nome }}</span>
+        {% for m in ms %}
+        <div class="sp-linha">
+            <div class="meta"><b>{{ m.usuario.nome }}</b> <span class="small text-muted">· {{ m.usuario.email or m.usuario.perfil_label }}</span></div>
+            <form method="POST" onsubmit='return confirm({{ ("Remover " ~ m.usuario.nome ~ " da comissão de " ~ unidade.nome ~ "?")|tojson }})'>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="acao" value="remover">
+                <input type="hidden" name="papel" value="comissao">
+                <input type="hidden" name="membro_id" value="{{ m.id }}">
+                <button class="btn btn-sm btn-link text-danger p-0"><i class="fas fa-user-minus me-1"></i>Remover</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="sp-vazio"><i class="fas fa-people-group"></i>Nenhuma comissão cadastrada.</div>
+    {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}

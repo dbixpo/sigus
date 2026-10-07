@@ -1,0 +1,36 @@
+{% macro campo_txt(rotulo, nome, valor, rows=3, editavel=True, ajuda='') %}
+<div class="sp-campo">
+    <label class="sp-label">{{ rotulo }}{% if ajuda %} <em>{{ ajuda }}</em>{% endif %}</label>
+    {% if editavel %}
+    <textarea name="{{ nome }}" class="form-control sp-input" rows="{{ rows }}">{{ valor or '' }}</textarea>
+    {% else %}
+    <div class="small" style="white-space:pre-wrap">{{ valor or '—' }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro campo_sel(rotulo, nome, opcoes, valor, editavel=True, vazio='Selecione…') %}
+<div class="sp-campo">
+    <label class="sp-label">{{ rotulo }}</label>
+    {% if editavel %}
+    <select name="{{ nome }}" class="form-select sp-input">
+        {% if vazio %}<option value="">{{ vazio }}</option>{% endif %}
+        {% for op in opcoes %}<option {% if op == valor %}selected{% endif %}>{{ op }}</option>{% endfor %}
+    </select>
+    {% else %}
+    <div class="small fw-semibold">{{ valor or '—' }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro barras(itens) %}
+{% for i in itens %}
+<div class="sp-bar">
+    <span class="rot" title="{{ i.label }}">{{ i.label }}</span>
+    <span class="trilho"><span class="preench d-block" style="width:{{ i.w }}%"></span></span>
+    <span class="val">{{ i.n }} <small>({{ i.pct }}%)</small></span>
+</div>
+{% else %}
+<p class="small text-muted mb-0">Sem dados no período.</p>
+{% endfor %}
+{% endmacro %}

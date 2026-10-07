@@ -32,7 +32,7 @@ from app.models.sueq import (
     SueqChamado, SueqChamadoControle,
 )
 from app.models.nsp import (
-    NspCatalogo, NspOcorrencia, NspAnexo, NspAndamento, NspEncaminhamento, NspAcao,
+    NspCatalogo, NspOcorrencia, NspAnexo, NspAndamento, NspEncaminhamento, NspAcao, NspMembro,
 )
 from app.models.identidade import IdentidadeSistema, SistemaAsset
 from app.models.noticias import (

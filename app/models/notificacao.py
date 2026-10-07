@@ -13,7 +13,7 @@ TIPOS_NOTIFICACAO = {
     'alerta_planejamento': ('Ação de planejamento próxima do prazo',  'bi-clipboard2-check',       'warning'),
     'prazo_alterado':      ('Prazo de ação alterado',                 'bi-calendar-event',         'warning'),
     'nsp_novo':            ('Nova notificação de segurança do paciente', 'bi-heart-pulse',          'danger'),
-    'nsp_encaminhado':     ('Ocorrência encaminhada ao seu setor',     'bi-arrow-up-right-circle',  'warning'),
+    'nsp_encaminhado':     ('Caso de segurança do paciente encaminhado',  'bi-arrow-up-right-circle',  'warning'),
     'nsp_andamento':       ('Atualização em segurança do paciente',    'bi-chat-left-text',         'info'),
     'comunicado_novo':     ('Novo comunicado na unidade',              'bi-megaphone',             'primary'),
     'comunicado_editado':  ('Comunicado alterado',                     'bi-megaphone',             'warning'),

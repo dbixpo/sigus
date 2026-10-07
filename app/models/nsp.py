@@ -1,12 +1,55 @@
 # -*- coding: utf-8 -*-
-"""Segurança do Paciente — notificações internas do NSP da unidade.
+"""Segurança do Paciente — notificação e gestão de incidentes (SNI-SGQSP).
 
-Inspirado no MedicSys (Eventos Adversos) e na RDC 36/2013 / ICPS-OMS / NT Anvisa 09/2025.
-Os selects vêm de nsp_catalogos e são gerenciados em Configurações.
+Fluxo do Regimento Interno do SGQSP (RI-SGQSP-001): a notificação vai primeiro ao
+Núcleo de Segurança do Paciente, que qualifica e encaminha às comissões das unidades.
+A coordenação da unidade só vê o caso se o Núcleo liberar. Cultura justa e não punitiva
+(Art. 8º, VI e Art. 82): a notificação pode ser anônima e nunca guarda quem a registrou.
 """
 from datetime import datetime
 from app import db
 from app.utils import prefixed_static_url
+
+
+TIPOLOGIAS = ['Atenção Primária', 'Urgência e Emergência', 'Atenção Especializada',
+              'Atenção Psicossocial', 'Atenção Domiciliar']
+TURNOS = ['Manhã', 'Tarde', 'Noite', 'Plantão noturno']
+FAIXAS_ETARIAS = ['0-1', '2-11', '12-17', '18-59', '60+']
+CLASSIFICACOES = ['Circunstância notificável', 'Quase falha (near miss)', 'Incidente sem dano',
+                  'Incidente com dano / evento adverso', 'Evento sentinela']
+GRAUS_DANO = ['Sem dano', 'Leve', 'Moderado', 'Grave', 'Óbito']
+CRITICIDADES = ['Baixa', 'Moderada', 'Alta', 'Crítica']
+METODOLOGIAS = ['Análise de barreiras', '5 Porquês', 'Ishikawa', 'Análise de causa raiz', 'Revisão de processo']
+INV_STATUS = ['Não iniciada', 'Em investigação', 'Concluída']
+ACAO_STATUS = ['Aberta', 'Em andamento', 'Concluída']
+
+ETAPAS = [
+    ('em_qualificacao', 'Em qualificação', 'warning'),
+    ('qualificada', 'Qualificada', 'info'),
+    ('encaminhada', 'Encaminhada', 'primary'),
+    ('em_investigacao', 'Em investigação', 'danger'),
+    ('concluida', 'Concluída', 'success'),
+    ('arquivada', 'Arquivada', 'secondary'),
+]
+ETAPAS_LABEL = {s: l for s, l, _ in ETAPAS}
+ETAPAS_COR = {s: c for s, _, c in ETAPAS}
+ETAPAS_ENCERRADAS = ('concluida', 'arquivada')
+
+CRITICIDADE_COR = {'Baixa': 'success', 'Moderada': 'warning', 'Alta': 'danger', 'Crítica': 'danger'}
+
+
+def sugestao_preliminar(descricao, acoes):
+    """Apoio técnico à qualificação (não substitui a análise humana do Núcleo)."""
+    t = f'{descricao or ""} {acoes or ""}'.lower()
+    if any(p in t for p in ('quase', 'interceptad', 'não chegou', 'nao chegou')):
+        return {'classificacao': 'Quase falha (near miss)', 'dano': 'Sem dano', 'criticidade': 'Moderada',
+                'investigar': 'Avaliar'}
+    if any(p in t for p in ('óbito', 'obito', 'morte', 'grave', 'dano', 'lesão', 'lesao')):
+        alta = any(p in t for p in ('óbito', 'obito', 'morte', 'grave'))
+        return {'classificacao': 'Incidente com dano / evento adverso', 'dano': 'Validar',
+                'criticidade': 'Alta' if alta else 'Moderada', 'investigar': 'Sim'}
+    return {'classificacao': 'Incidente sem dano ou circunstância notificável', 'dano': 'Pendente',
+            'criticidade': 'Baixa', 'investigar': 'Avaliar'}
 
 
 GRUPOS_CATALOGO = [
@@ -162,14 +205,42 @@ class NspCatalogo(db.Model):
 
 
 class NspOcorrencia(db.Model):
-    """Notificação de incidente / evento adverso da unidade."""
+    """Notificação de incidente; unidade_id é a unidade notificante."""
     __tablename__ = 'nsp_ocorrencias'
 
     id = db.Column(db.Integer, primary_key=True)
     protocolo = db.Column(db.String(20), nullable=False, unique=True, index=True)
     unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='CASCADE'), nullable=False, index=True)
 
-    notificante_nome = db.Column(db.String(150), nullable=False)
+    etapa = db.Column(db.String(20), nullable=False, default='em_qualificacao', index=True)
+    origem = db.Column(db.String(10), nullable=False, default='sigus')
+    anonimo = db.Column(db.Boolean, nullable=False, default=True)
+    tipologia = db.Column(db.String(60))
+    local_incidente = db.Column(db.String(150))
+    turno = db.Column(db.String(30))
+    ocorrencia_em = db.Column(db.DateTime)
+    identificacao_em = db.Column(db.DateTime)
+    paciente_codigo = db.Column(db.String(60))
+    faixa_etaria = db.Column(db.String(10))
+    notificante_cargo = db.Column(db.String(120))
+
+    qual_classificacao = db.Column(db.String(60))
+    qual_dano = db.Column(db.String(20))
+    qual_criticidade = db.Column(db.String(20))
+    qual_diagnostico = db.Column(db.Text)
+    qual_fundamentacao = db.Column(db.Text)
+    qualificado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    qualificado_em = db.Column(db.DateTime)
+
+    inv_metodologia = db.Column(db.String(40))
+    inv_status = db.Column(db.String(20))
+    inv_barreiras = db.Column(db.Text)
+    inv_causas = db.Column(db.Text)
+    inv_conclusao = db.Column(db.Text)
+    inv_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    inv_em = db.Column(db.DateTime)
+
+    notificante_nome = db.Column(db.String(150))
     tipo_setor_notificante_id = db.Column(db.Integer, db.ForeignKey('nsp_catalogos.id', ondelete='SET NULL'))
     setor_notificante_id = db.Column(db.Integer, db.ForeignKey('nsp_catalogos.id', ondelete='SET NULL'))
     setor_notificante_outro = db.Column(db.String(150))
@@ -194,7 +265,7 @@ class NspOcorrencia(db.Model):
     never_event = db.Column(db.Boolean, nullable=False, default=False)
 
     descricao = db.Column(db.Text, nullable=False)
-    acao_imediata = db.Column(db.Text, nullable=False)
+    acao_imediata = db.Column(db.Text)
 
     tipo_setor_notificado_id = db.Column(db.Integer, db.ForeignKey('nsp_catalogos.id', ondelete='SET NULL'))
     setor_notificado_id = db.Column(db.Integer, db.ForeignKey('nsp_catalogos.id', ondelete='SET NULL'))
@@ -237,6 +308,8 @@ class NspOcorrencia(db.Model):
     responsavel = db.relationship('Usuario', foreign_keys=[responsavel_id])
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
     analista = db.relationship('Usuario', foreign_keys=[analise_por])
+    qualificador = db.relationship('Usuario', foreign_keys=[qualificado_por])
+    investigador = db.relationship('Usuario', foreign_keys=[inv_por])
     anexos = db.relationship('NspAnexo', back_populates='ocorrencia', cascade='all, delete-orphan',
                              order_by='NspAnexo.criado_em')
     andamentos = db.relationship('NspAndamento', back_populates='ocorrencia', cascade='all, delete-orphan',
@@ -251,7 +324,46 @@ class NspOcorrencia(db.Model):
 
     @property
     def encerrada(self):
-        return bool(self.status and self.status.encerra)
+        return self.etapa in ETAPAS_ENCERRADAS
+
+    @property
+    def etapa_label(self):
+        return ETAPAS_LABEL.get(self.etapa, self.etapa or '—')
+
+    @property
+    def etapa_cor(self):
+        return ETAPAS_COR.get(self.etapa, 'secondary')
+
+    @property
+    def criticidade_label(self):
+        return self.qual_criticidade or 'Pendente'
+
+    @property
+    def criticidade_cor(self):
+        return CRITICIDADE_COR.get(self.qual_criticidade, 'secondary')
+
+    @property
+    def data_referencia(self):
+        return self.ocorrencia_em or self.criado_em
+
+    @property
+    def unidades_encaminhadas(self):
+        vistos, lista = set(), []
+        for e in sorted(self.encaminhamentos, key=lambda x: x.criado_em or datetime.min):
+            if e.unidade_destino_id and e.unidade_destino_id not in vistos:
+                vistos.add(e.unidade_destino_id)
+                lista.append(e)
+        return lista
+
+    @property
+    def acoes_vencidas(self):
+        from app.utils import hoje_brasilia
+        hoje = hoje_brasilia()
+        return [a for a in self.acoes if a.prazo and a.prazo < hoje and a.status_label != 'Concluída']
+
+    @property
+    def tem_dados_paciente(self):
+        return any((self.nome_afetado, self.data_nascimento, self.prontuario, self.cpf, self.cns))
 
     @property
     def classificacao_nome(self):
@@ -283,16 +395,13 @@ class NspOcorrencia(db.Model):
 
     @property
     def exige_investigacao(self):
-        slug = self.classificacao.slug if self.classificacao else ''
-        return self.never_event or slug in ('obito', 'dano_grave')
+        return (self.never_event or self.qual_dano in ('Grave', 'Óbito')
+                or self.qual_classificacao == 'Evento sentinela'
+                or self.qual_criticidade == 'Crítica')
 
     @property
     def investigacao_preenchida(self):
-        campos = (
-            self.fatores_contribuintes, self.consequencias_organizacionais, self.deteccao,
-            self.fatores_atenuantes, self.acoes_melhoria, self.acoes_reducao_risco,
-        )
-        return all(bool(c and c.strip()) for c in campos)
+        return self.inv_status == 'Concluída' and bool((self.inv_conclusao or '').strip())
 
 
 class NspAnexo(db.Model):
@@ -355,6 +464,9 @@ class NspEncaminhamento(db.Model):
     destino_outro = db.Column(db.String(150))
     unidade_destino_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL'))
     texto = db.Column(db.Text)
+    liberado_coordenacao = db.Column(db.Boolean, nullable=False, default=False)
+    liberado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    liberado_em = db.Column(db.DateTime)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -362,6 +474,7 @@ class NspEncaminhamento(db.Model):
     destino = db.relationship('NspCatalogo', foreign_keys=[destino_id])
     unidade_destino = db.relationship('Unidade', foreign_keys=[unidade_destino_id])
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
+    liberador = db.relationship('Usuario', foreign_keys=[liberado_por])
 
     @property
     def destino_nome(self):
@@ -380,6 +493,8 @@ class NspAcao(db.Model):
     descricao = db.Column(db.Text, nullable=False)
     responsavel_nome = db.Column(db.String(150))
     prazo = db.Column(db.Date)
+    indicador = db.Column(db.String(255))
+    status = db.Column(db.String(20))
     concluida = db.Column(db.Boolean, nullable=False, default=False)
     concluida_em = db.Column(db.DateTime)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
@@ -387,3 +502,67 @@ class NspAcao(db.Model):
 
     ocorrencia = db.relationship('NspOcorrencia', back_populates='acoes')
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
+
+    @property
+    def status_label(self):
+        if self.status:
+            return self.status
+        return 'Concluída' if self.concluida else 'Aberta'
+
+    @property
+    def vencida(self):
+        from app.utils import hoje_brasilia
+        return bool(self.prazo and self.prazo < hoje_brasilia() and self.status_label != 'Concluída')
+
+
+class NspMembro(db.Model):
+    """Quem atua na Segurança do Paciente: Núcleo (rede toda) ou comissão de uma unidade."""
+    __tablename__ = 'nsp_membros'
+    __table_args__ = (
+        db.UniqueConstraint('usuario_id', 'papel', 'unidade_id', name='uq_nsp_membro'),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False, index=True)
+    papel = db.Column(db.String(20), nullable=False)
+    unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='CASCADE'), index=True)
+    ativo = db.Column(db.Boolean, nullable=False, default=True)
+    criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
+    unidade = db.relationship('Unidade', foreign_keys=[unidade_id])
+
+    PAPEIS = {'nucleo': 'Núcleo de Segurança do Paciente', 'comissao': 'Comissão da unidade'}
+
+    @property
+    def papel_label(self):
+        return self.PAPEIS.get(self.papel, self.papel)
+
+
+def eh_nucleo(usuario):
+    if not getattr(usuario, 'is_authenticated', False):
+        return False
+    return db.session.query(NspMembro.id).filter_by(
+        usuario_id=usuario.id, papel='nucleo', ativo=True).first() is not None
+
+
+def unidades_comissao(usuario):
+    if not getattr(usuario, 'is_authenticated', False):
+        return set()
+    rows = db.session.query(NspMembro.unidade_id).filter(
+        NspMembro.usuario_id == usuario.id, NspMembro.papel == 'comissao',
+        NspMembro.ativo.is_(True), NspMembro.unidade_id.isnot(None)).all()
+    return {r[0] for r in rows}
+
+
+def unidades_coordenacao(usuario):
+    """Unidades em que o usuário é coordenação: gestor principal/secundário ou perfil Gestor de Área vinculado."""
+    if not getattr(usuario, 'is_authenticated', False):
+        return set()
+    from app.models.unidade import UsuarioUnidade
+    q = db.session.query(UsuarioUnidade.unidade_id).filter(
+        UsuarioUnidade.usuario_id == usuario.id, UsuarioUnidade.ativo.is_(True))
+    if usuario.perfil != 'coordenador':
+        q = q.filter(UsuarioUnidade.papel.in_(['gestor_principal', 'gestor_secundario']))
+    return {r[0] for r in q.all()}

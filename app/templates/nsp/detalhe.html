@@ -1,307 +1,507 @@
 {% extends 'base.html' %}
-{% block title %}{{ o.protocolo }} — Segurança do Paciente{% endblock %}
+{% from 'nsp/_macros.html' import campo_txt, campo_sel %}
+{% block title %}{{ o.protocolo }} · Segurança do Paciente{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nsp.css') }}?v=20261006b">
+{% endblock %}
 
 {% block content %}
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('nsp.index') }}">Segurança do Paciente</a></li>
-        <li class="breadcrumb-item active">{{ o.protocolo }}</li>
-    </ol>
-</nav>
-
-<div class="page-header">
-    <div>
-        <h1 class="flex-wrap">
-            <i class="fas fa-user-shield me-2"></i>{{ o.protocolo }}
-            <span class="badge bg-{{ o.status_cor }} fs-6">{{ o.status_nome }}</span>
-            <span class="badge bg-{{ o.classificacao_cor }} fs-6">{{ o.classificacao_nome }}</span>
-            {% if o.never_event %}<span class="badge bg-danger fs-6">Jamais deveria ocorrer</span>{% endif %}
-        </h1>
-        <p class="text-muted small mb-0">
-            {{ o.unidade.nome if o.unidade else '—' }}
-            · {{ o.data_ocorrencia.strftime('%d/%m/%Y') if o.data_ocorrencia else '—' }}
-            {% if o.hora_ocorrencia %} {{ o.hora_ocorrencia.strftime('%H:%M') }}{% endif %}
-        </p>
-    </div>
-    <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-secondary btn-sm"
-                onclick="abrirImpresso('{{ url_for('nsp.imprimir', id=o.id) }}', '{{ o.protocolo }} — Segurança do Paciente')">
-            <i class="fas fa-print me-1"></i>Imprimir
-        </button>
-    </div>
-</div>
-
-{% if o.exige_investigacao and not o.investigacao_preenchida %}
-<div class="alert alert-danger">
-    <i class="fas fa-exclamation-triangle me-1"></i>
-    Óbito, dano grave ou evento que nunca deveria ocorrer: complete as 6 etapas da investigação da Anvisa antes de encerrar.
-</div>
-{% endif %}
-
-<div class="row g-3">
-    <div class="col-lg-8">
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Registro</div>
-            <div class="card-body">
-                <div class="row g-3 small">
-                    <div class="col-md-6"><span class="text-muted d-block">Notificante</span><strong>{{ o.notificante_nome }}</strong></div>
-                    <div class="col-md-6"><span class="text-muted d-block">Setor notificante</span>{{ o.setor_notificante.nome if o.setor_notificante else '—' }}{% if o.setor_notificante_outro %} ({{ o.setor_notificante_outro }}){% endif %}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Pessoa afetada</span>{{ o.nome_afetado or '—' }} · {{ o.tipo_pessoa.nome if o.tipo_pessoa else '—' }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Prontuário</span>{{ o.prontuario or '—' }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">CNS</span>{{ o.cns or '—' }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">CPF</span>{{ o.cpf or '—' }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Setor da ocorrência</span>{{ o.setor_ocorrencia_nome }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Departamento</span>{{ o.departamento.nome if o.departamento else '—' }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Tipo de incidente</span>{{ o.tipo_incidente_nome }}</div>
-                    <div class="col-md-6"><span class="text-muted d-block">Setor notificado</span>{{ o.setor_notificado.nome if o.setor_notificado else '—' }}</div>
-                    <div class="col-12">
-                        <span class="text-muted d-block">Descrição</span>
-                        <div class="mt-1" style="white-space:pre-wrap">{{ o.descricao }}</div>
-                    </div>
-                    <div class="col-12">
-                        <span class="text-muted d-block">Ação imediata</span>
-                        <div class="mt-1" style="white-space:pre-wrap">{{ o.acao_imediata }}</div>
-                    </div>
-                </div>
+{% set nucleo = papel == 'nucleo' %}
+{% set equipe = papel in ('nucleo', 'comissao') %}
+{% set aberto = not o.encerrada %}
+{% set fluxo = ['em_qualificacao', 'qualificada', 'encaminhada', 'em_investigacao', 'concluida'] %}
+{% set rotulos_fluxo = {'em_qualificacao': 'Em qualificação', 'qualificada': 'Qualificada', 'encaminhada': 'Encaminhada', 'em_investigacao': 'Em investigação', 'concluida': 'Concluída'} %}
+<div class="sp">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <a href="{{ url_for('nsp.index') }}" class="small text-decoration-none"><i class="fas fa-arrow-left me-1"></i>Painel</a>
+            <h1 class="h4 mt-1 mb-1"><span class="sp-protocolo">{{ o.protocolo }}</span></h1>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <span class="sp-badge sp-badge-{{ o.etapa_cor }}">{{ o.etapa_label }}</span>
+                <span class="sp-badge sp-badge-{{ o.criticidade_cor }}">Criticidade: {{ o.criticidade_label }}</span>
+                {% if o.never_event %}<span class="sp-badge sp-badge-danger">Nunca deveria ocorrer</span>{% endif %}
+                {% if o.exige_investigacao %}<span class="sp-badge sp-badge-warning">Exige investigação</span>{% endif %}
+                <span class="small text-muted">Recebida em {{ o.criado_em|br_datetime }} · {{ 'link público' if o.origem == 'publico' else 'SIGUS' }}</span>
             </div>
         </div>
-
-        {% if pode_editar %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Investigação (etapas 5 a 10 da Anvisa)</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('nsp.salvar_analise', id=o.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">Resumo da análise</label>
-                        <textarea name="analise_resumo" class="form-control" rows="2">{{ o.analise_resumo or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">5. Fatores contribuintes</label>
-                        <textarea name="fatores_contribuintes" class="form-control" rows="2">{{ o.fatores_contribuintes or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">6. Consequências organizacionais</label>
-                        <textarea name="consequencias_organizacionais" class="form-control" rows="2">{{ o.consequencias_organizacionais or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">7. Detecção</label>
-                        <textarea name="deteccao" class="form-control" rows="2">{{ o.deteccao or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">8. Fatores atenuantes do dano</label>
-                        <textarea name="fatores_atenuantes" class="form-control" rows="2">{{ o.fatores_atenuantes or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">9. Ações de melhoria</label>
-                        <textarea name="acoes_melhoria" class="form-control" rows="2">{{ o.acoes_melhoria or '' }}</textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-semibold">10. Ações para reduzir o risco</label>
-                        <textarea name="acoes_reducao_risco" class="form-control" rows="2">{{ o.acoes_reducao_risco or '' }}</textarea>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="never_event" value="1" id="nv" {% if o.never_event %}checked{% endif %}>
-                        <label class="form-check-label" for="nv">Evento que nunca deveria ocorrer</label>
-                    </div>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" name="notivisa_notificado" value="1" id="ntv" {% if o.notivisa_notificado %}checked{% endif %}>
-                        <label class="form-check-label" for="ntv">Já notificado no Notivisa (Anvisa)</label>
-                    </div>
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small">Nº Notivisa</label>
-                            <input type="text" name="notivisa_numero" class="form-control" value="{{ o.notivisa_numero or '' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small">Data Notivisa</label>
-                            <input type="date" name="notivisa_em" class="form-control" value="{{ o.notivisa_em.isoformat() if o.notivisa_em else '' }}">
-                        </div>
-                    </div>
-                    <button class="btn btn-primary btn-sm" type="submit"><i class="fas fa-save me-1"></i>Salvar análise</button>
-                    {% if o.analista %}
-                    <span class="small text-muted ms-2">Última por {{ o.analista.nome }} em {{ o.analise_em | br_datetime }}</span>
-                    {% endif %}
-                </form>
-            </div>
-        </div>
-        {% elif o.analise_resumo or o.fatores_contribuintes %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Investigação</div>
-            <div class="card-body small">
-                {% if o.analise_resumo %}<p><strong>Resumo:</strong> {{ o.analise_resumo }}</p>{% endif %}
-                {% if o.fatores_contribuintes %}<p><strong>Fatores contribuintes:</strong> {{ o.fatores_contribuintes }}</p>{% endif %}
-                {% if o.acoes_melhoria %}<p><strong>Ações de melhoria:</strong> {{ o.acoes_melhoria }}</p>{% endif %}
-                {% if o.acoes_reducao_risco %}<p><strong>Redução de risco:</strong> {{ o.acoes_reducao_risco }}</p>{% endif %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Plano de ação</div>
-            <div class="card-body p-0">
-                {% if o.acoes %}
-                <table class="table table-sm mb-0">
-                    <thead><tr><th></th><th>Ação</th><th>Responsável</th><th>Prazo</th></tr></thead>
-                    <tbody>
-                    {% for a in o.acoes %}
-                    <tr class="{{ 'text-muted' if a.concluida }}">
-                        <td style="width:42px">
-                            {% if pode_editar %}
-                            <form method="POST" action="{{ url_for('nsp.concluir_acao', id=o.id, acao_id=a.id) }}">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button class="btn btn-sm {{ 'btn-success' if a.concluida else 'btn-outline-secondary' }}" title="Concluir">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </form>
-                            {% else %}
-                            <i class="fas {{ 'fa-check-circle text-success' if a.concluida else 'fa-circle text-muted' }}"></i>
-                            {% endif %}
-                        </td>
-                        <td>{{ a.descricao }}</td>
-                        <td class="small">{{ a.responsavel_nome or '—' }}</td>
-                        <td class="small">{{ a.prazo.strftime('%d/%m/%Y') if a.prazo else '—' }}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{{ url_for('nsp.imprimir', id=o.id) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="fas fa-print me-1"></i>Imprimir</a>
+            {% if nucleo %}
+                {% if aberto %}
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalEtapa" data-acao="concluir"><i class="fas fa-flag-checkered me-1"></i>Concluir</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEtapa" data-acao="arquivar"><i class="fas fa-box-archive me-1"></i>Arquivar</button>
                 {% else %}
-                <p class="text-muted small p-3 mb-0">Nenhuma ação cadastrada.</p>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalEtapa" data-acao="reabrir"><i class="fas fa-rotate-left me-1"></i>Reabrir</button>
                 {% endif %}
-                {% if pode_editar %}
-                <form method="POST" action="{{ url_for('nsp.nova_acao', id=o.id) }}" class="p-3 border-top">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div class="row g-2">
-                        <div class="col-md-6"><input type="text" name="descricao" class="form-control form-control-sm" required placeholder="Nova ação"></div>
-                        <div class="col-md-3"><input type="text" name="responsavel_nome" class="form-control form-control-sm" placeholder="Responsável"></div>
-                        <div class="col-md-2"><input type="date" name="prazo" class="form-control form-control-sm"></div>
-                        <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit"><i class="fas fa-plus"></i></button></div>
-                    </div>
-                </form>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Linha do tempo</div>
-            <div class="card-body">
-                {% if pode_comentar and not o.encerrada %}
-                <form method="POST" action="{{ url_for('nsp.comentario', id=o.id) }}" class="mb-3">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <textarea name="texto" class="form-control mb-2" rows="2" required placeholder="Registrar andamento…"></textarea>
-                    <button class="btn btn-outline-primary btn-sm" type="submit">Comentar</button>
-                </form>
-                {% endif %}
-                {% for a in o.andamentos %}
-                <div class="border-start border-3 ps-3 mb-3" style="border-color:#1A82B8 !important">
-                    <div class="small text-muted">{{ a.tipo_label }} · {{ a.criado_em | br_datetime }} · {{ a.autor.nome if a.autor else '—' }}</div>
-                    <div>{{ a.texto }}</div>
-                </div>
-                {% else %}
-                <p class="text-muted small mb-0">Sem andamentos.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        {% if pode_editar %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Status</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('nsp.mudar_status', id=o.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <select name="status_id" class="form-select mb-2">
-                        {% for s in catalogos.get('status', []) %}
-                        <option value="{{ s.id }}" {% if o.status_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
-                        {% endfor %}
-                    </select>
-                    <button class="btn btn-primary btn-sm w-100" type="submit">Atualizar status</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Encaminhar a outro setor</div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('nsp.encaminhar', id=o.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <label class="form-label small">Destino</label>
-                    <select name="destino_id" class="form-select mb-2 js-exige" data-outro="destino_outro" required>
-                        <option value="">Selecione…</option>
-                        {% for c in catalogos.get('setor_destino', []) %}
-                        <option value="{{ c.id }}" data-exige="{{ 1 if c.exige_texto else 0 }}">{{ c.nome }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="text" name="destino_outro" id="destino_outro" class="form-control mb-2 d-none" placeholder="Qual destino?">
-                    <label class="form-label small">Unidade de destino</label>
-                    <select name="unidade_destino_id" class="form-select mb-2">
-                        {% for u in unidades %}
-                        <option value="{{ u.id }}" {% if u.id == o.unidade_id %}selected{% endif %}>{{ u.nome }}</option>
-                        {% endfor %}
-                    </select>
-                    <textarea name="texto" class="form-control mb-2" rows="2" placeholder="Motivo / o que se espera do setor"></textarea>
-                    <button class="btn btn-outline-primary btn-sm w-100" type="submit">
-                        <i class="fas fa-share me-1"></i>Encaminhar
-                    </button>
-                </form>
-            </div>
-        </div>
-        {% endif %}
-
-        {% if o.encaminhamentos %}
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Encaminhamentos</div>
-            <ul class="list-group list-group-flush small">
-                {% for e in o.encaminhamentos %}
-                <li class="list-group-item">
-                    <strong>{{ e.destino_nome }}</strong>
-                    {% if e.unidade_destino %} · {{ e.unidade_destino.nome }}{% endif %}
-                    <div class="text-muted">{{ e.criado_em | br_datetime }}{% if e.autor %} · {{ e.autor.nome }}{% endif %}</div>
-                    {% if e.texto %}<div>{{ e.texto }}</div>{% endif %}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Anexos</div>
-            <ul class="list-group list-group-flush small">
-                {% for a in o.anexos %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <a href="{{ url_for('nsp.baixar_anexo', id=a.id) }}">{{ a.original or a.filename }}</a>
-                    <span class="text-muted">{{ a.tamanho_label }}</span>
-                </li>
-                {% else %}
-                <li class="list-group-item text-muted">Nenhum anexo.</li>
-                {% endfor %}
-            </ul>
-            {% if not o.encerrada and (current_user.pode('editar_nsp') or current_user.pode('adicionar_nsp')) %}
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('nsp.anexar', id=o.id) }}" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="anexos" class="form-control form-control-sm mb-2" multiple>
-                    <button class="btn btn-outline-secondary btn-sm w-100" type="submit">Enviar</button>
-                </form>
-            </div>
             {% endif %}
         </div>
     </div>
+
+    {% if o.etapa != 'arquivada' %}
+    {% set idx = namespace(v=0) %}
+    {% for s in fluxo %}{% if s == o.etapa %}{% set idx.v = loop.index0 %}{% endif %}{% endfor %}
+    <div class="sp-etapas">
+        {% for s in fluxo %}
+        <div class="sp-etapa {% if loop.index0 < idx.v or o.etapa == 'concluida' %}feita{% endif %} {% if loop.index0 == idx.v %}atual{% endif %}">
+            <span class="ponto"></span>{{ rotulos_fluxo[s] }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if papel == 'coordenacao' %}
+    <div class="sp-nota mt-3"><i class="fas fa-eye me-1"></i>O Núcleo de Segurança do Paciente compartilhou este caso com a coordenação da unidade, para leitura.
+        A finalidade é a melhoria do processo, sem caráter punitivo (RI-SGQSP-001, Art. 82).</div>
+    {% elif papel == 'comissao' %}
+    <div class="sp-nota mt-3"><i class="fas fa-people-group me-1"></i>Caso encaminhado pelo Núcleo à comissão de segurança do paciente da sua unidade.
+        Registre a investigação e o plano de ação. A identidade de quem notificou fica restrita ao Núcleo.</div>
+    {% endif %}
+
+    <nav class="sp-nav" id="spAbas">
+        <button type="button" data-aba="resumo">Notificação</button>
+        <button type="button" data-aba="qualificacao">Qualificação</button>
+        {% if nucleo %}<button type="button" data-aba="encaminhamento">Encaminhamento<span class="cont">{{ o.unidades_encaminhadas|length }}</span></button>{% endif %}
+        <button type="button" data-aba="investigacao">Investigação</button>
+        <button type="button" data-aba="plano">Plano de ação<span class="cont">{{ o.acoes|length }}</span></button>
+        {% if equipe %}
+        <button type="button" data-aba="paciente">Paciente</button>
+        <button type="button" data-aba="anexos">Anexos<span class="cont">{{ o.anexos|length }}</span></button>
+        <button type="button" data-aba="historico">Histórico</button>
+        {% endif %}
+    </nav>
+
+    {# ── NOTIFICAÇÃO ───────────────────────────── #}
+    <section class="sp-view" id="aba-resumo">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Identificação da unidade e do registro</span>
+            <dl class="sp-dl mt-2">
+                <dt>Unidade notificante</dt><dd>{{ o.unidade.nome if o.unidade else '—' }}</dd>
+                <dt>Tipologia</dt><dd>{{ o.tipologia or '—' }}</dd>
+                <dt>Setor/local</dt><dd>{{ o.local_incidente or o.setor_ocorrencia_nome }}</dd>
+                <dt>Turno</dt><dd>{{ o.turno or '—' }}</dd>
+                <dt>Ocorrência</dt><dd>{% if o.ocorrencia_em %}{{ o.ocorrencia_em.strftime('%d/%m/%Y %H:%M') }}{% else %}{{ o.data_ocorrencia|br_date }}{% endif %}</dd>
+                <dt>Identificação</dt><dd>{{ o.identificacao_em.strftime('%d/%m/%Y %H:%M') if o.identificacao_em else '—' }}</dd>
+                <dt>Paciente (código)</dt><dd>{{ o.paciente_codigo or '—' }}</dd>
+                <dt>Faixa etária</dt><dd>{{ o.faixa_etaria or '—' }}</dd>
+            </dl>
+        </div>
+        <div class="sp-card">
+            <span class="sp-eyebrow">Descrição do incidente</span>
+            <p class="mt-2 mb-3" style="white-space:pre-wrap">{{ o.descricao }}</p>
+            <span class="sp-eyebrow">Ações imediatas adotadas</span>
+            <p class="mt-2 mb-0" style="white-space:pre-wrap">{{ o.acao_imediata or '—' }}</p>
+        </div>
+        <div class="sp-card">
+            <span class="sp-eyebrow">Notificante</span>
+            {% if nucleo %}
+                {% if o.anonimo %}
+                <p class="mt-2 mb-0"><i class="fas fa-user-secret me-1"></i>Notificação anônima.</p>
+                {% else %}
+                <dl class="sp-dl mt-2">
+                    <dt>Nome</dt><dd>{{ o.notificante_nome or '—' }}</dd>
+                    <dt>Função/cargo</dt><dd>{{ o.notificante_cargo or '—' }}</dd>
+                </dl>
+                {% endif %}
+            {% else %}
+            <p class="mt-2 mb-0 text-muted small"><i class="fas fa-lock me-1"></i>A identificação de quem notificou é restrita ao Núcleo de Segurança do Paciente.</p>
+            {% endif %}
+        </div>
+        {% if not nucleo and o.unidades_encaminhadas %}
+        <div class="sp-card">
+            <span class="sp-eyebrow">Encaminhada às comissões de</span>
+            <p class="mt-2 mb-0">{% for e in o.unidades_encaminhadas %}{{ e.unidade_destino.nome if e.unidade_destino else '—' }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+        </div>
+        {% endif %}
+    </section>
+
+    {# ── QUALIFICAÇÃO ──────────────────────────── #}
+    <section class="sp-view" id="aba-qualificacao">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Qualificação técnica</span>
+            <h2 class="sp-titulo h5">Classificação, dano e criticidade</h2>
+            {% if nucleo and aberto %}
+            <div class="sp-sugestao mb-3">
+                <b><i class="fas fa-wand-magic-sparkles me-1"></i>Sugestão preliminar</b> (apoio técnico, não substitui a análise do Núcleo):
+                {{ sugestao.classificacao }} · dano: {{ sugestao.dano }} · criticidade: {{ sugestao.criticidade }} · investigar: {{ sugestao.investigar }}.
+            </div>
+            {% endif %}
+            {% set edita = nucleo and aberto %}
+            <form method="POST" action="{{ url_for('nsp.qualificar', id=o.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="sp-grid">
+                    {{ campo_sel('Classificação', 'qual_classificacao', classificacoes, o.qual_classificacao, edita) }}
+                    {{ campo_sel('Grau de dano', 'qual_dano', danos, o.qual_dano, edita) }}
+                    {{ campo_sel('Criticidade', 'qual_criticidade', criticidades, o.qual_criticidade, edita) }}
+                    <div class="sp-campo">
+                        <label class="sp-label">Evento que nunca deveria ocorrer</label>
+                        {% if edita %}
+                        <div class="form-check form-switch mt-2">
+                            <input class="form-check-input" type="checkbox" name="never_event" value="1" id="spNever" {% if o.never_event %}checked{% endif %}>
+                            <label class="form-check-label small" for="spNever">Sim (exige investigação concluída para encerrar)</label>
+                        </div>
+                        {% else %}<div class="small fw-semibold">{{ 'Sim' if o.never_event else 'Não' }}</div>{% endif %}
+                    </div>
+                </div>
+                {{ campo_txt('Diagnóstico', 'qual_diagnostico', o.qual_diagnostico, 3, edita) }}
+                {{ campo_txt('Fundamentação', 'qual_fundamentacao', o.qual_fundamentacao, 3, edita) }}
+                {% if o.qualificado_em %}
+                <p class="small text-muted mb-0">Qualificada por {{ o.qualificador.nome if o.qualificador else '—' }} em {{ o.qualificado_em|br_datetime }}.</p>
+                {% endif %}
+                {% if edita %}
+                <div class="sp-btn-row mt-3"><span></span><button class="sp-btn sp-btn-primary"><i class="fas fa-floppy-disk"></i>Salvar qualificação</button></div>
+                {% endif %}
+            </form>
+        </div>
+    </section>
+
+    {# ── ENCAMINHAMENTO (Núcleo) ──────────────── #}
+    {% if nucleo %}
+    <section class="sp-view" id="aba-encaminhamento">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Comissões de segurança do paciente</span>
+            <h2 class="sp-titulo h5">Para quais unidades o caso foi encaminhado</h2>
+            {% if o.unidades_encaminhadas %}
+            <div>
+                {% for e in o.unidades_encaminhadas %}
+                <div class="sp-linha">
+                    <div class="meta">
+                        <b>{{ e.unidade_destino.nome if e.unidade_destino else '—' }}</b>
+                        <div class="small text-muted">Encaminhada por {{ e.autor.nome if e.autor else '—' }} em {{ e.criado_em|br_datetime }}{% if e.texto %} · {{ e.texto }}{% endif %}</div>
+                        {% if e.liberado_coordenacao %}
+                        <div class="small text-success"><i class="fas fa-eye me-1"></i>Coordenação liberada por {{ e.liberador.nome if e.liberador else '—' }} em {{ e.liberado_em|br_datetime }}</div>
+                        {% else %}
+                        <div class="small text-muted"><i class="fas fa-eye-slash me-1"></i>Coordenação da unidade não vê este caso.</div>
+                        {% endif %}
+                    </div>
+                    <form method="POST" action="{{ url_for('nsp.liberar_coordenacao', id=o.id, enc_id=e.id) }}"
+                          onsubmit="return confirm('{{ 'Revogar o acesso da coordenação desta unidade?' if e.liberado_coordenacao else 'Liberar a leitura do caso para a coordenação desta unidade? A identidade de quem notificou e os dados do paciente continuam restritos.' }}')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="liberar" value="{{ '0' if e.liberado_coordenacao else '1' }}">
+                        {% if e.liberado_coordenacao %}
+                        <button class="sp-btn sp-btn-ghost sp-btn-sm"><i class="fas fa-eye-slash"></i>Revogar coordenação</button>
+                        {% else %}
+                        <button class="sp-btn sp-btn-ghost sp-btn-sm"><i class="fas fa-eye"></i>Liberar para a coordenação</button>
+                        {% endif %}
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="sp-texto">Ainda não foi encaminhado a nenhuma comissão.</p>
+            {% endif %}
+
+            {% if aberto %}
+            <hr>
+            {% if not o.qual_classificacao %}
+            <p class="sp-nota mb-0">Qualifique a notificação antes de encaminhar às comissões.</p>
+            {% else %}
+            <form method="POST" action="{{ url_for('nsp.encaminhar', id=o.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="sp-campo">
+                    <label class="sp-label">Encaminhar à comissão de <em>pode escolher mais de uma unidade</em></label>
+                    <select name="unidade_ids" multiple data-multiselect data-placeholder="Escolha as unidades…" class="form-select">
+                        {% for u in unidades if u.id not in ja_encaminhadas %}
+                        <option value="{{ u.id }}" {% if u.id == o.unidade_id %}data-notificante="1"{% endif %}>{{ u.nome }}{% if u.id == o.unidade_id %} (notificante){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {{ campo_txt('Orientação à comissão', 'texto', '', 2, True, '(opcional)') }}
+                <div class="sp-btn-row mt-0"><span class="small text-muted">A coordenação da unidade só verá o caso se você liberar depois.</span>
+                    <button class="sp-btn sp-btn-primary"><i class="fas fa-share"></i>Encaminhar</button></div>
+            </form>
+            {% endif %}
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    {# ── INVESTIGAÇÃO ──────────────────────────── #}
+    <section class="sp-view" id="aba-investigacao">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Investigação</span>
+            <h2 class="sp-titulo h5">Análise das causas</h2>
+            {% set edita = equipe and aberto %}
+            {% if papel == 'coordenacao' %}
+                <dl class="sp-dl mt-2">
+                    <dt>Status</dt><dd>{{ o.inv_status or 'Não iniciada' }}</dd>
+                    <dt>Metodologia</dt><dd>{{ o.inv_metodologia or '—' }}</dd>
+                    <dt>Conclusão</dt><dd>{{ o.inv_conclusao or '—' }}</dd>
+                </dl>
+            {% else %}
+            <form method="POST" action="{{ url_for('nsp.investigacao', id=o.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="sp-grid">
+                    {{ campo_sel('Metodologia', 'inv_metodologia', metodologias, o.inv_metodologia, edita) }}
+                    {{ campo_sel('Status da investigação', 'inv_status', inv_status_opts, o.inv_status or 'Não iniciada', edita, None) }}
+                </div>
+                {{ campo_txt('Fatores contribuintes', 'fatores_contribuintes', o.fatores_contribuintes, 3, edita) }}
+                {{ campo_txt('Barreiras (que falharam ou funcionaram)', 'inv_barreiras', o.inv_barreiras, 3, edita) }}
+                {{ campo_txt('Causas identificadas', 'inv_causas', o.inv_causas, 3, edita) }}
+                {{ campo_txt('Conclusão', 'inv_conclusao', o.inv_conclusao, 3, edita, '(obrigatória para concluir casos que exigem investigação)') }}
+                {% if o.inv_em %}
+                <p class="small text-muted mb-0">Última atualização por {{ o.investigador.nome if o.investigador else '—' }} em {{ o.inv_em|br_datetime }}.</p>
+                {% endif %}
+                {% if edita %}
+                <div class="sp-btn-row mt-3"><span></span><button class="sp-btn sp-btn-primary"><i class="fas fa-floppy-disk"></i>Salvar investigação</button></div>
+                {% endif %}
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ── PLANO DE AÇÃO ─────────────────────────── #}
+    <section class="sp-view" id="aba-plano">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Plano de ação</span>
+            <h2 class="sp-titulo h5">O que será feito para evitar que se repita</h2>
+            {% if o.acoes %}
+            <div>
+                {% for a in o.acoes %}
+                <div class="sp-linha">
+                    <div class="meta">
+                        <b>{{ a.descricao }}</b>
+                        <div class="small text-muted">
+                            Responsável: {{ a.responsavel_nome or '—' }} · Prazo: {{ a.prazo|br_date if a.prazo else '—' }}
+                            {% if a.indicador %} · Indicador/meta: {{ a.indicador }}{% endif %}
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if a.vencida %}<span class="sp-badge sp-badge-danger">Vencida</span>{% endif %}
+                        {% if equipe and aberto %}
+                        <form method="POST" action="{{ url_for('nsp.status_acao', id=o.id, acao_id=a.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                {% for s in acao_status_opts %}<option {% if s == a.status_label %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                            </select>
+                        </form>
+                        <form method="POST" action="{{ url_for('nsp.excluir_acao', id=o.id, acao_id=a.id) }}" onsubmit="return confirm('Remover esta ação do plano?')">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-link text-danger p-0" title="Remover"><i class="fas fa-trash"></i></button>
+                        </form>
+                        {% else %}
+                        <span class="sp-badge sp-badge-{{ 'success' if a.status_label == 'Concluída' else ('info' if a.status_label == 'Em andamento' else 'secondary') }}">{{ a.status_label }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="sp-texto">Nenhuma ação cadastrada.</p>
+            {% endif %}
+
+            {% if equipe and aberto %}
+            <hr>
+            <form method="POST" action="{{ url_for('nsp.nova_acao', id=o.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="sp-campo">
+                    <label class="sp-label">Ação</label>
+                    <input type="text" name="descricao" class="form-control sp-input" required>
+                </div>
+                <div class="sp-grid">
+                    <div class="sp-campo"><label class="sp-label">Responsável</label><input type="text" name="responsavel_nome" class="form-control sp-input" maxlength="150"></div>
+                    <div class="sp-campo"><label class="sp-label">Prazo</label><input type="date" name="prazo" class="form-control sp-input" min="{{ hoje.isoformat() }}"></div>
+                    <div class="sp-campo full"><label class="sp-label">Indicador/meta <em>(opcional)</em></label><input type="text" name="indicador" class="form-control sp-input" maxlength="255"></div>
+                </div>
+                <div class="sp-btn-row mt-0"><span></span><button class="sp-btn sp-btn-primary"><i class="fas fa-plus"></i>Incluir ação</button></div>
+            </form>
+            {% endif %}
+        </div>
+    </section>
+
+    {% if equipe %}
+    {# ── PACIENTE ──────────────────────────────── #}
+    <section class="sp-view" id="aba-paciente">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Identificação do paciente</span>
+            <h2 class="sp-titulo h5">Dados restritos ao Núcleo e à comissão</h2>
+            <p class="sp-texto">O notificante informou só o código <b>{{ o.paciente_codigo or '—' }}</b> e a faixa etária <b>{{ o.faixa_etaria or '—' }}</b>.
+                {% if nucleo %}Se for necessário à investigação, identifique o paciente aqui.{% endif %}</p>
+            {% if nucleo %}
+                {% if sis_ok %}
+                <div class="row g-2 align-items-end mb-2">
+                    <div class="col-md-3">
+                        <label class="sp-label">Buscar no SIS por</label>
+                        <select id="sisTipo" class="form-select sp-input">
+                            <option value="cpf">CPF</option><option value="cns">CNS</option><option value="prontuario">Prontuário</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6"><label class="sp-label">&nbsp;</label><input type="text" id="sisBusca" class="form-control sp-input" autocomplete="off"></div>
+                    <div class="col-md-3"><button type="button" class="sp-btn sp-btn-ghost w-100 justify-content-center" id="btnSisBusca"><i class="fas fa-magnifying-glass"></i>Buscar no SIS</button></div>
+                </div>
+                <p class="small mb-2" id="sisStatus"></p>
+                {% endif %}
+                <form method="POST" action="{{ url_for('nsp.paciente', id=o.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="sp-grid">
+                        <div class="sp-campo full"><label class="sp-label">Nome</label><input type="text" name="nome_afetado" id="nome_afetado" class="form-control sp-input" maxlength="150" value="{{ o.nome_afetado or '' }}"></div>
+                        <div class="sp-campo"><label class="sp-label">Nascimento</label><input type="date" name="data_nascimento" id="data_nascimento" class="form-control sp-input" value="{{ o.data_nascimento.isoformat() if o.data_nascimento else '' }}"></div>
+                        <div class="sp-campo"><label class="sp-label">Prontuário</label><input type="text" name="prontuario" id="prontuario" class="form-control sp-input" maxlength="40" value="{{ o.prontuario or '' }}"></div>
+                        <div class="sp-campo"><label class="sp-label">CNS</label><input type="text" name="cns" id="cns" class="form-control sp-input" maxlength="20" value="{{ o.cns or '' }}"></div>
+                        <div class="sp-campo"><label class="sp-label">CPF</label><input type="text" name="cpf" id="cpf" class="form-control sp-input" maxlength="14" value="{{ o.cpf or '' }}"></div>
+                    </div>
+                    <div class="sp-btn-row mt-0"><span></span><button class="sp-btn sp-btn-primary"><i class="fas fa-floppy-disk"></i>Salvar dados do paciente</button></div>
+                </form>
+            {% elif o.tem_dados_paciente %}
+                <dl class="sp-dl">
+                    <dt>Nome</dt><dd>{{ o.nome_afetado or '—' }}</dd>
+                    <dt>Nascimento</dt><dd>{{ o.data_nascimento|br_date if o.data_nascimento else '—' }}</dd>
+                    <dt>Prontuário</dt><dd>{{ o.prontuario or '—' }}</dd>
+                    <dt>CNS</dt><dd>{{ o.cns or '—' }}</dd>
+                    <dt>CPF</dt><dd>{{ o.cpf or '—' }}</dd>
+                </dl>
+            {% else %}
+                <p class="small text-muted mb-0">O Núcleo ainda não identificou o paciente.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    {# ── ANEXOS ────────────────────────────────── #}
+    <section class="sp-view" id="aba-anexos">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Anexos</span>
+            {% if o.anexos %}
+            <div class="mt-2">
+                {% for a in o.anexos %}
+                <div class="sp-linha">
+                    <div class="meta"><i class="fas {{ 'fa-image' if a.is_image else 'fa-file' }} me-1 text-muted"></i>
+                        <a href="{{ url_for('nsp.baixar_anexo', id=a.id) }}">{{ a.original or a.filename }}</a>
+                        <span class="small text-muted">· {{ a.tamanho_label }} · {{ a.autor.nome if a.autor else '—' }} · {{ a.criado_em|br_datetime }}</span></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="sp-texto mt-2">Nenhum arquivo.</p>
+            {% endif %}
+            <form method="POST" action="{{ url_for('nsp.anexar', id=o.id) }}" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap mt-2">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="file" name="anexos" multiple class="form-control sp-input" style="max-width:420px" required>
+                <button class="sp-btn sp-btn-ghost"><i class="fas fa-paperclip"></i>Anexar</button>
+            </form>
+            <p class="small text-muted mt-2 mb-0">Até 10 MB por arquivo. Evite arquivos que identifiquem quem notificou.</p>
+        </div>
+    </section>
+
+    {# ── HISTÓRICO ─────────────────────────────── #}
+    <section class="sp-view" id="aba-historico">
+        <div class="sp-card">
+            <span class="sp-eyebrow">Comentários e histórico</span>
+            <form method="POST" action="{{ url_for('nsp.comentario', id=o.id) }}" class="mt-2 mb-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <textarea name="texto" class="form-control sp-input mb-2" rows="2" placeholder="Escreva um comentário para o Núcleo e as comissões…" required></textarea>
+                <div class="text-end"><button class="sp-btn sp-btn-primary sp-btn-sm"><i class="fas fa-comment"></i>Comentar</button></div>
+            </form>
+            {% for a in o.andamentos %}
+            <div class="sp-linha">
+                <div class="meta">
+                    <span class="sp-badge sp-badge-{{ 'primary' if a.tipo == 'comentario' else 'secondary' }} me-1">{{ a.tipo_label }}</span>
+                    <span style="white-space:pre-wrap">{{ a.texto }}</span>
+                    <div class="small text-muted mt-1">{{ a.autor.nome if a.autor else 'Sistema' }} · {{ a.criado_em|br_datetime }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </div>
+
+{% if nucleo %}
+<div class="modal fade" id="modalEtapa" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('nsp.mudar_etapa', id=o.id) }}" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="acao" id="etapaAcao">
+            <div class="modal-header"><h5 class="modal-title" id="etapaTitulo">Etapa</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <p class="small text-muted" id="etapaAjuda"></p>
+                <label class="form-label small fw-semibold" id="etapaRotulo">Observação</label>
+                <textarea name="motivo" id="etapaMotivo" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn btn-primary" id="etapaBotao">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.querySelectorAll('.js-exige').forEach(function (sel) {
-    function toggle() {
-        const opt = sel.options[sel.selectedIndex];
-        const alvo = document.getElementById(sel.dataset.outro);
-        if (!alvo) return;
-        alvo.classList.toggle('d-none', !(opt && opt.dataset.exige === '1'));
+(function () {
+    var botoes = document.querySelectorAll('#spAbas [data-aba]');
+    function abrir(aba) {
+        var alvo = document.getElementById('aba-' + aba) ? aba : 'resumo';
+        botoes.forEach(function (b) { b.classList.toggle('on', b.dataset.aba === alvo); });
+        document.querySelectorAll('.sp-view').forEach(function (s) { s.classList.toggle('on', s.id === 'aba-' + alvo); });
     }
-    sel.addEventListener('change', toggle);
-    toggle();
-});
+    botoes.forEach(function (b) {
+        b.addEventListener('click', function () {
+            history.replaceState(null, '', '#' + b.dataset.aba);
+            abrir(b.dataset.aba);
+        });
+    });
+    abrir((location.hash || '#resumo').slice(1));
+
+    var modal = document.getElementById('modalEtapa');
+    if (modal) {
+        var textos = {
+            concluir: ['Concluir notificação', 'O caso sai do painel de pendências. Casos que exigem investigação só podem ser concluídos com a investigação concluída.', 'Observação (opcional)', false, 'btn-success'],
+            arquivar: ['Arquivar notificação', 'Use quando a notificação não se aplica ou é duplicada.', 'Motivo do arquivamento', true, 'btn-secondary'],
+            reabrir: ['Reabrir notificação', 'O caso volta para a etapa em que estava.', 'Motivo (opcional)', false, 'btn-primary']
+        };
+        modal.addEventListener('show.bs.modal', function (ev) {
+            var acao = ev.relatedTarget.dataset.acao, t = textos[acao];
+            document.getElementById('etapaAcao').value = acao;
+            document.getElementById('etapaTitulo').textContent = t[0];
+            document.getElementById('etapaAjuda').textContent = t[1];
+            document.getElementById('etapaRotulo').textContent = t[2];
+            document.getElementById('etapaMotivo').required = t[3];
+            document.getElementById('etapaBotao').className = 'btn ' + t[4];
+        });
+    }
+
+    var btnSis = document.getElementById('btnSisBusca');
+    if (btnSis) {
+        var status = document.getElementById('sisStatus');
+        var campo = document.getElementById('sisBusca');
+        function setStatus(txt, ok) {
+            status.textContent = txt || '';
+            status.className = 'small mb-2 ' + (ok === true ? 'text-success' : ok === false ? 'text-danger' : 'text-muted');
+        }
+        async function buscar() {
+            var q = (campo.value || '').trim(), tipo = document.getElementById('sisTipo').value;
+            if (!q) { setStatus('Informe o dado para a busca.', false); return; }
+            btnSis.disabled = true;
+            setStatus('Consultando o SIS… isso pode levar alguns segundos.', null);
+            try {
+                var fd = new FormData();
+                fd.append('csrf_token', document.querySelector('input[name=csrf_token]').value);
+                fd.append('q', q);
+                fd.append('tipo', tipo);
+                var resp = await fetch({{ url_for('nsp.buscar_sis')|tojson }}, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                var d = await resp.json();
+                if (!resp.ok || !d.ok) {
+                    setStatus((d.erro || 'Não encontrado no SIS.') + ' Pode preencher na mão.', false);
+                    if (document.getElementById(tipo)) document.getElementById(tipo).value = q;
+                    return;
+                }
+                document.getElementById('nome_afetado').value = d.nome || '';
+                document.getElementById('data_nascimento').value = d.data_nascimento || '';
+                document.getElementById('prontuario').value = d.prontuario || '';
+                document.getElementById('cns').value = d.cns || '';
+                document.getElementById('cpf').value = d.cpf || '';
+                setStatus('Dados importados do SIS. Confira e salve.', true);
+            } catch (e) {
+                setStatus('Não deu para consultar o SIS. Preencha na mão.', false);
+            } finally {
+                btnSis.disabled = false;
+            }
+        }
+        btnSis.addEventListener('click', buscar);
+        campo.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); buscar(); } });
+    }
+})();
 </script>
 {% endblock %}

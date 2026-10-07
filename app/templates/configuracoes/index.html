@@ -213,14 +213,14 @@
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 
-    <a class="cfg-row" href="{{ url_for('configuracoes.nsp_catalogos') }}"
-       data-busca="segurança do paciente nsp status classificação setores encaminhamento">
+    <a class="cfg-row" href="{{ url_for('nsp.membros') }}"
+       data-busca="segurança do paciente nsp núcleo comissão comissões membros">
         <span class="cfg-row-icone"><i class="fas fa-user-shield"></i></span>
         <div class="flex-grow-1 min-w-0">
             <div class="cfg-row-titulo">Segurança do Paciente</div>
-            <div class="cfg-row-desc">Listas dos selects: status, classificação, setores, destinos de encaminhamento.</div>
+            <div class="cfg-row-desc">Quem faz parte do Núcleo de Segurança do Paciente e das comissões das unidades.</div>
         </div>
-        <span class="cfg-row-meta">{{ total_nsp_catalogos | default(0) }} item(ns) ativo(s)</span>
+        <span class="cfg-row-meta">Núcleo e comissões</span>
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 
