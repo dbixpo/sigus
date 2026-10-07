@@ -5,7 +5,7 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
-<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006b" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006c" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -70,6 +70,7 @@
         </div>
 
         <div class="ag-side-dica">
+            <div class="mb-1"><i class="fas fa-arrows-alt me-1"></i>Arraste reuniões, eventos e prazos para mudar a data.</div>
             <i class="far fa-keyboard me-1"></i>Atalhos: <kbd>T</kbd> hoje · <kbd>D</kbd> <kbd>S</kbd> <kbd>M</kbd> <kbd>L</kbd> visões · <kbd>J</kbd> <kbd>K</kbd> avançar/voltar{% if pode_adicionar %} · <kbd>C</kbd> criar{% endif %}
         </div>
     </aside>
@@ -270,7 +271,40 @@
     </div>
 </div>
 
-<div class="ag-snack" id="agSnack" role="status" aria-live="polite"></div>
+<div class="ag-modal ag-modal-prazo" id="agModalPrazo" aria-hidden="true">
+    <div class="ag-dialog ag-dialog-prazo" role="dialog" aria-modal="true" aria-labelledby="prazoTitulo">
+        <div class="ag-form-cab">
+            <h2 class="ag-form-titulo" id="prazoTitulo">Alterar prazo</h2>
+            <button type="button" class="ag-icon-btn" data-prazo-cancelar title="Fechar (Esc)"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="ag-form-corpo">
+            <div>
+                <div class="ag-prazo-acao" id="prazoAcao"></div>
+                <div class="ag-prazo-de" id="prazoDe"></div>
+            </div>
+            <div>
+                <label class="form-label small fw-semibold mb-1" for="prazoData">Novo prazo</label>
+                <input type="date" id="prazoData" class="form-control form-control-sm ag-prazo-data">
+            </div>
+            <div>
+                <label class="form-label small fw-semibold mb-1" for="prazoMotivo">Motivo <span class="text-muted fw-normal">(opcional)</span></label>
+                <textarea id="prazoMotivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="Ex.: o fornecedor atrasou a entrega"></textarea>
+            </div>
+            <div class="ag-prazo-nota"><i class="fas fa-history me-1"></i>A mudança fica registrada no histórico da ação e os responsáveis são avisados.</div>
+            <div id="prazoErro" class="alert alert-danger alert-permanent py-2 px-3 small mb-0 d-none" role="alert"></div>
+        </div>
+        <div class="ag-form-rodape">
+            <button type="button" class="btn btn-sm btn-outline-danger me-auto" id="prazoRemover"><i class="fas fa-calendar-times me-1"></i>Remover prazo</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-prazo-cancelar>Cancelar</button>
+            <button type="button" class="btn btn-sm btn-primary" id="prazoSalvar">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<div class="ag-snack" id="agSnack" role="status" aria-live="polite">
+    <span id="agSnackMsg"></span>
+    <button type="button" class="ag-snack-acao d-none" id="agSnackAcao"></button>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -285,6 +319,7 @@
     const criarUrl = {{ url_for('agenda.criar') | tojson }};
     const editarUrlBase = {{ url_for('agenda.editar', id=0) | tojson }};
     const excluirUrlBase = {{ url_for('agenda.excluir', id=0) | tojson }};
+    const moverUrlBase = {{ url_for('agenda.mover', id=0) | tojson }};
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
     const DIA_MS = 24 * 3600 * 1000;
@@ -292,10 +327,11 @@
     const app = byId('agApp');
     const modalEvento = byId('agModalEvento');
     const modalConfirm = byId('agModalConfirm');
+    const modalPrazo = byId('agModalPrazo');
     const dialogEvento = byId('agDialogEvento');
     const form = byId('formEvento');
     // Dentro de .sigus-main os modais ficam atrás da navbar (overflow + stacking).
-    [modalEvento, modalConfirm, byId('agSnack')].forEach(function (el) {
+    [modalEvento, modalConfirm, modalPrazo, byId('agSnack')].forEach(function (el) {
         if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
 
@@ -349,13 +385,25 @@
     function ehTelaEstreita() { return window.matchMedia('(max-width: 1199.98px)').matches; }
 
     let snackTimer = null;
-    function snack(msg) {
+    let snackAcaoFn = null;
+    function snack(msg, acaoTexto, acaoFn) {
         const el = byId('agSnack');
-        el.textContent = msg;
+        const btn = byId('agSnackAcao');
+        byId('agSnackMsg').textContent = msg;
+        snackAcaoFn = typeof acaoFn === 'function' ? acaoFn : null;
+        btn.textContent = acaoTexto || '';
+        btn.classList.toggle('d-none', !snackAcaoFn);
         el.classList.add('is-visivel');
         clearTimeout(snackTimer);
-        snackTimer = setTimeout(function () { el.classList.remove('is-visivel'); }, 3500);
+        snackTimer = setTimeout(function () { el.classList.remove('is-visivel'); snackAcaoFn = null; }, snackAcaoFn ? 7000 : 3500);
     }
+    byId('agSnackAcao').addEventListener('click', function () {
+        const fn = snackAcaoFn;
+        snackAcaoFn = null;
+        byId('agSnack').classList.remove('is-visivel');
+        if (fn) fn();
+    });
+    function toLocalIso(d) { return toDateInput(d) + 'T' + toTimeInput(d); }
 
     /* ── Modais (controle próprio, sem bootstrap.Modal) ─────── */
     const pilhaModais = [];
@@ -383,9 +431,10 @@
     function fecharTopo() {
         const topo = pilhaModais[pilhaModais.length - 1];
         if (topo === modalConfirm) resolverConfirm(false);
+        else if (topo === modalPrazo) cancelarPrazo();
         else if (topo === modalEvento) fecharEvento();
     }
-    [modalEvento, modalConfirm].forEach(function (m) {
+    [modalEvento, modalConfirm, modalPrazo].forEach(function (m) {
         let downFora = false;
         m.addEventListener('mousedown', function (e) { downFora = e.target === m; });
         m.addEventListener('click', function (e) {
@@ -721,7 +770,9 @@
         linha('rowVisib', props.visibilidade === 'pessoal');
 
         const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao') && !!props.pode_editar;
-        byId('btnEditar').classList.toggle('d-none', !editavel);
+        const prazoMovel = props.tipo === 'prazo' && !!props.pode_mover;
+        byId('btnEditar').classList.toggle('d-none', !(editavel || prazoMovel));
+        byId('btnEditar').title = prazoMovel ? 'Alterar prazo' : 'Editar';
         byId('btnExcluirLeitura').classList.toggle('d-none', !editavel);
         const ehFeriado = props.tipo === 'feriado';
         const btnIcs = byId('btnIcs');
@@ -747,6 +798,10 @@
     byId('btnEditar').addEventListener('click', function () {
         if (!eventoAtual) return;
         const ev = eventoAtual;
+        if ((ev.extendedProps || {}).tipo === 'prazo') {
+            abrirPrazo(ev, null, null);
+            return;
+        }
         preencherForm(ev);
         eventoAtual = ev;
         mostrarFormulario(true);
@@ -842,6 +897,114 @@
     byId('btnExcluir').addEventListener('click', excluirAtual);
     byId('btnExcluirLeitura').addEventListener('click', excluirAtual);
 
+    /* ── Arrastar eventos e prazos ──────────────────────────── */
+    function moverEvento(ev) {
+        const props = ev.extendedProps || {};
+        const fd = new FormData();
+        fd.append('csrf_token', csrf);
+        if (ev.allDay) {
+            fd.append('dia_inteiro', '1');
+            fd.append('inicio', toDateInput(ev.start));
+            if (ev.end) fd.append('fim', toDateInput(addDias(ev.end, -1)));
+        } else {
+            fd.append('inicio', toLocalIso(ev.start));
+            if (ev.end) fd.append('fim', toLocalIso(ev.end));
+        }
+        return fetch(urlEvento(moverUrlBase, props.evento_id), { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) throw new Error(d.erro || 'Não foi possível mover.');
+                return d;
+            });
+    }
+    function aoArrastar(info) {
+        const props = info.event.extendedProps || {};
+        if (props.tipo === 'prazo') {
+            abrirPrazo(info.event, toDateInput(info.event.start), info);
+            return;
+        }
+        const antigo = {
+            start: info.oldEvent.start,
+            end: info.oldEvent.end,
+            allDay: info.oldEvent.allDay,
+            extendedProps: props
+        };
+        const reuniao = props.tipo === 'reuniao';
+        const prefixo = info.endDelta ? 'Horário ajustado: ' : (reuniao ? 'Reunião movida: ' : 'Evento movido: ');
+        moverEvento(info.event)
+            .then(function () {
+                calendar.refetchEvents();
+                snack(prefixo + textoQuando(info.event), 'Desfazer', function () {
+                    moverEvento(antigo)
+                        .then(function () { calendar.refetchEvents(); snack('Alteração desfeita'); })
+                        .catch(function () { snack('Não foi possível desfazer.'); });
+                });
+            })
+            .catch(function (e) {
+                info.revert();
+                snack(e && e.message && e.message.indexOf('JSON') < 0 ? e.message : 'Não foi possível mover.');
+            });
+    }
+
+    let prazoAtual = null;
+    function erroPrazo(msg) {
+        const el = byId('prazoErro');
+        el.textContent = msg || '';
+        el.classList.toggle('d-none', !msg);
+    }
+    function abrirPrazo(ev, novaData, dropInfo) {
+        const props = ev.extendedProps || {};
+        prazoAtual = { props: props, dropInfo: dropInfo || null };
+        byId('prazoAcao').textContent = props.acao_titulo || ev.title || '';
+        const atual = parseLocal(props.prazo_iso);
+        byId('prazoDe').textContent = atual ? 'Prazo atual: ' + textoDia(atual) : '';
+        byId('prazoData').value = novaData || props.prazo_iso || '';
+        byId('prazoMotivo').value = '';
+        erroPrazo('');
+        abrirModal(modalPrazo);
+        setTimeout(function () { byId(dropInfo ? 'prazoMotivo' : 'prazoData').focus(); }, 40);
+    }
+    function cancelarPrazo() {
+        const p = prazoAtual;
+        prazoAtual = null;
+        fecharModal(modalPrazo);
+        if (p && p.dropInfo) p.dropInfo.revert();
+    }
+    function salvarPrazo(remover) {
+        const p = prazoAtual;
+        if (!p) return;
+        const data = remover ? '' : byId('prazoData').value;
+        if (!remover && !data) { erroPrazo('Informe a nova data do prazo.'); return; }
+        if (!remover && data === p.props.prazo_iso) { cancelarPrazo(); return; }
+        const fd = new FormData();
+        fd.append('csrf_token', csrf);
+        fd.append('prazo', data);
+        fd.append('motivo', byId('prazoMotivo').value.trim());
+        fd.append('origem', 'agenda');
+        const botoes = [byId('prazoSalvar'), byId('prazoRemover')];
+        botoes.forEach(function (b) { b.disabled = true; });
+        fetch(p.props.prazo_url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) { erroPrazo(d.erro || 'Não foi possível alterar o prazo.'); return; }
+                prazoAtual = null;
+                fecharModal(modalPrazo);
+                fecharEvento();
+                calendar.refetchEvents();
+                snack(remover ? 'Prazo removido e registrado no histórico da ação' : 'Prazo alterado para ' + d.prazo + ' e registrado no histórico da ação');
+            })
+            .catch(function () { erroPrazo('Não foi possível alterar o prazo. Verifique se você tem acesso a este planejamento.'); })
+            .finally(function () { botoes.forEach(function (b) { b.disabled = false; }); });
+    }
+    modalPrazo.querySelectorAll('[data-prazo-cancelar]').forEach(function (b) {
+        b.addEventListener('click', cancelarPrazo);
+    });
+    byId('prazoSalvar').addEventListener('click', function () { salvarPrazo(false); });
+    byId('prazoRemover').addEventListener('click', function () { salvarPrazo(true); });
+    byId('prazoData').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); salvarPrazo(false); }
+    });
+
     /* ── Disponibilidade e sugestões (reunião) ──────────────── */
     function formReuniao() {
         const fd = new FormData();
@@ -931,6 +1094,14 @@
         selectable: podeAdicionar,
         selectMirror: true,
         selectMinDistance: 8,
+        editable: false,
+        snapDuration: '00:15:00',
+        eventAllow: function (dropInfo, arrastado) {
+            if ((arrastado.extendedProps || {}).tipo === 'prazo') return dropInfo.allDay;
+            return true;
+        },
+        eventDrop: aoArrastar,
+        eventResize: aoArrastar,
         dayMaxEvents: true,
         moreLinkText: function (n) { return '+' + n + ' mais'; },
         nowIndicator: true,

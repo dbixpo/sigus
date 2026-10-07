@@ -484,27 +484,28 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if acao.prazo %}
-                                <span class="{% if acao.prazo_dias_texto and 'Vence hoje' in acao.prazo_dias_texto %}prazo-hoje{% elif acao.prazo_dias_texto and 'Venceu há' in acao.prazo_dias_texto %}prazo-vencido{% endif %}">
-                                    {{ acao.prazo.strftime('%d/%m/%Y') }}{% if acao.prazo_dias_texto %} <small class="text-muted">({{ acao.prazo_dias_texto }})</small>{% endif %}
-                                </span>
-                                {% else %}
-                                    {% if pode_criar_acao %}
-                                    <div class="d-flex align-items-center gap-1">
-                                        <span class="text-muted">—</span>
-                                        <button type="button"
-                                                class="btn btn-link btn-sm p-0 text-muted"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#modal-prazo-{{ acao.id }}"
-                                                onclick="event.stopPropagation();"
-                                                title="Definir prazo da ação">
-                                            <i class="fas fa-pen-to-square"></i>
-                                        </button>
-                                    </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span id="prazo-display-{{ acao.id }}">
+                                    {% if acao.prazo %}
+                                    <span class="{% if acao.prazo_dias_texto and 'Vence hoje' in acao.prazo_dias_texto %}prazo-hoje{% elif acao.prazo_dias_texto and 'Venceu há' in acao.prazo_dias_texto %}prazo-vencido{% endif %}">
+                                        {{ acao.prazo.strftime('%d/%m/%Y') }}{% if acao.prazo_dias_texto %} <small class="text-muted">({{ acao.prazo_dias_texto }})</small>{% endif %}
+                                    </span>
                                     {% else %}
                                     <span class="text-muted">—</span>
                                     {% endif %}
-                                {% endif %}
+                                    </span>
+                                    {% if pode_criar_acao %}
+                                    <button type="button"
+                                            class="btn btn-link btn-sm p-0 text-muted"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-prazo-{{ acao.id }}"
+                                            onclick="event.stopPropagation();"
+                                            id="prazo-btn-{{ acao.id }}"
+                                            title="{{ 'Alterar prazo da ação' if acao.prazo else 'Definir prazo da ação' }}">
+                                        <i class="fas fa-pen-to-square"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
                             </td>
                             <td><span class="text-muted small" title="Data da criação">{{ acao.criado_em | br_datetime if acao.criado_em else '—' }}</span></td>
                             <td><span class="text-muted small" title="{% if acao.atualizado_em %}Última atualização{% else %}Nunca atualizado{% endif %}" id="atualizado-{{ acao.id }}">{% if acao.atualizado_em %}{{ acao.atualizado_em | br_datetime }}{% else %}<span class="text-muted">—</span>{% endif %}</span></td>
@@ -618,26 +619,34 @@
             </div>
         </div>
     </div>
-    {% if pode_criar_acao and not acao.prazo %}
+    {% if pode_criar_acao %}
     <div class="modal fade" id="modal-prazo-{{ acao.id }}" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-sm modal-fullscreen-sm-down">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" style="max-width: 440px;">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h6 class="modal-title">Definir prazo — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <h6 class="modal-title">Prazo — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
                     <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
                 </div>
-                <form class="form-definir-prazo" data-acao-id="{{ acao.id }}">
+                <form class="form-definir-prazo" data-acao-id="{{ acao.id }}" data-prazo-atual="{{ acao.prazo.isoformat() if acao.prazo else '' }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-body">
-                        <div class="alert alert-warning py-2 small">
-                            <strong>Atenção:</strong> uma vez que o prazo for definido, <strong>ele não poderá ser alterado</strong>.
-                        </div>
-                        <div class="mb-2">
+                        <div class="mb-3">
                             <label class="form-label small fw-semibold">Prazo da ação</label>
-                            <input type="date" name="prazo" class="form-control form-control-sm" required>
+                            <input type="date" name="prazo" class="form-control form-control-sm" style="max-width: 190px;" value="{{ acao.prazo.isoformat() if acao.prazo else '' }}" required>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Motivo <span class="text-muted fw-normal">(opcional)</span></label>
+                            <textarea name="motivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="Ex.: o fornecedor atrasou a entrega"></textarea>
+                        </div>
+                        <div class="small text-muted rounded px-2 py-2" style="background:#F4F6F9;">
+                            <i class="fas fa-history me-1"></i>Toda alteração fica registrada no histórico da ação e os responsáveis são avisados.
+                        </div>
+                        <div class="alert alert-danger alert-permanent py-2 px-3 small mt-3 mb-0 d-none prazo-erro" role="alert"></div>
                     </div>
                     <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm me-auto btn-remover-prazo{{ '' if acao.prazo else ' d-none' }}">
+                            <i class="fas fa-calendar-times me-1"></i>Remover prazo
+                        </button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-primary btn-sm">
                             <i class="fas fa-check me-1"></i>Salvar prazo
@@ -1033,53 +1042,106 @@
 </script>
 {% endif %}
 <script>
-// Definir prazo para ações que ainda não possuem data (permitido apenas uma vez)
+// Definir, alterar ou remover o prazo de uma ação (cada mudança vira uma observação no histórico)
 (function () {
     var baseUrl = '{{ request.script_root.rstrip("/") or "/sigus" }}';
     var csrfEl = document.getElementById('csrfPlanos');
     var csrf = csrfEl ? csrfEl.value : (document.querySelector('meta[name=csrf-token]')?.content || '');
 
+    function mostrarErro(form, msg) {
+        var el = form.querySelector('.prazo-erro');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('d-none', !msg);
+    }
+
+    function recarregarHistorico(acaoId) {
+        var list = document.getElementById('obs-list-' + acaoId);
+        if (!list) return;
+        if (list.dataset.loaded !== '1') return;
+        fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/observacoes', { credentials: 'same-origin' })
+            .then(function (r) { if (!r.ok) throw new Error(); return r.text(); })
+            .then(function (html) {
+                list.innerHTML = html;
+                list.scrollTop = list.scrollHeight;
+            })
+            .catch(function () { list.dataset.loaded = '0'; });
+    }
+
+    function enviarPrazo(form, valor) {
+        var acaoId = form.dataset.acaoId;
+        var fd = new FormData();
+        fd.append('csrf_token', csrf);
+        fd.append('prazo', valor);
+        fd.append('motivo', (form.querySelector('[name=motivo]').value || '').trim());
+        var botoes = form.querySelectorAll('button');
+        botoes.forEach(function (b) { b.disabled = true; });
+        mostrarErro(form, '');
+
+        fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/prazo', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': csrf },
+            body: fd
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.ok) {
+                mostrarErro(form, data.erro || 'Não foi possível salvar o prazo.');
+                return;
+            }
+            var display = document.getElementById('prazo-display-' + acaoId);
+            if (display) {
+                if (data.prazo) {
+                    var cls = '';
+                    if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Vence hoje') !== -1) cls = 'prazo-hoje';
+                    else if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Venceu há') !== -1) cls = 'prazo-vencido';
+                    var extra = data.prazo_dias_texto ? ' <small class="text-muted">(' + data.prazo_dias_texto + ')</small>' : '';
+                    display.innerHTML = '<span class="' + cls + '">' + data.prazo + extra + '</span>';
+                } else {
+                    display.innerHTML = '<span class="text-muted">—</span>';
+                }
+            }
+            var btn = document.getElementById('prazo-btn-' + acaoId);
+            if (btn) btn.title = data.prazo ? 'Alterar prazo da ação' : 'Definir prazo da ação';
+            if (data.atualizado_em) {
+                var atu = document.getElementById('atualizado-' + acaoId);
+                if (atu) atu.textContent = data.atualizado_em;
+            }
+            form.dataset.prazoAtual = data.prazo_iso || '';
+            form.querySelector('input[name=prazo]').value = data.prazo_iso || '';
+            form.querySelector('[name=motivo]').value = '';
+            form.querySelector('.btn-remover-prazo').classList.toggle('d-none', !data.prazo_iso);
+            if (data.mudou) recarregarHistorico(acaoId);
+            var modalPrazo = form.closest('.modal');
+            if (modalPrazo && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modalPrazo)?.hide();
+        })
+        .catch(function () {
+            mostrarErro(form, 'Erro ao salvar o prazo. Tente novamente.');
+        })
+        .finally(function () { botoes.forEach(function (b) { b.disabled = false; }); });
+    }
+
     document.querySelectorAll('.form-definir-prazo').forEach(function (form) {
         form.addEventListener('submit', function (e) {
             e.preventDefault();
-            var acaoId = this.dataset.acaoId;
             var input = this.querySelector('input[name=prazo]');
             if (!input || !input.value) {
-                alert('Informe uma data de prazo.');
+                mostrarErro(form, 'Informe uma data de prazo.');
                 return;
             }
-            var fd = new FormData();
-            fd.append('csrf_token', csrf);
-            fd.append('prazo', input.value);
-
-            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/prazo', {
-                method: 'POST',
-                body: fd
-            })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.ok) {
-                    var row = document.querySelector('.sortable-row[data-id="' + acaoId + '"]');
-                    if (row) {
-                        var prazoTd = row.querySelector('td:nth-child(5)');
-                        if (prazoTd) {
-                            var cls = '';
-                            if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Vence hoje') !== -1) cls = 'prazo-hoje';
-                            else if (data.prazo_dias_texto && data.prazo_dias_texto.indexOf('Venceu há') !== -1) cls = 'prazo-vencido';
-                            var extra = data.prazo_dias_texto ? ' <small class="text-muted">(' + (data.prazo_dias_texto || '') + ')</small>' : '';
-                            prazoTd.innerHTML = '<span class="' + cls + '">' + (data.prazo || '') + extra + '</span>';
-                        }
-                    }
-                    var modalPrazo = form.closest('.modal');
-                    if (modalPrazo && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modalPrazo)?.hide();
-                } else {
-                    alert(data.erro || 'Não foi possível definir o prazo.');
-                }
-            })
-            .catch(function () {
-                alert('Erro ao definir prazo. Tente novamente.');
-            });
+            enviarPrazo(form, input.value);
         });
+        form.querySelector('.btn-remover-prazo').addEventListener('click', function () {
+            enviarPrazo(form, '');
+        });
+        var modal = form.closest('.modal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                form.querySelector('input[name=prazo]').value = form.dataset.prazoAtual || '';
+                form.querySelector('[name=motivo]').value = '';
+                mostrarErro(form, '');
+            });
+        }
     });
 })();
 </script>

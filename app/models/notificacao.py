@@ -11,6 +11,7 @@ TIPOS_NOTIFICACAO = {
     'chamado_cancelado':   ('Chamado cancelado',                      'bi-x-circle',               'secondary'),
     # Alertas de Planejamento (ações vencendo hoje ou em 3 dias)
     'alerta_planejamento': ('Ação de planejamento próxima do prazo',  'bi-clipboard2-check',       'warning'),
+    'prazo_alterado':      ('Prazo de ação alterado',                 'bi-calendar-event',         'warning'),
     'nsp_novo':            ('Nova notificação de segurança do paciente', 'bi-heart-pulse',          'danger'),
     'nsp_encaminhado':     ('Ocorrência encaminhada ao seu setor',     'bi-arrow-up-right-circle',  'warning'),
     'nsp_andamento':       ('Atualização em segurança do paciente',    'bi-chat-left-text',         'info'),

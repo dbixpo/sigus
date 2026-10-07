@@ -743,12 +743,59 @@
     gap: 0.5rem;
 }
 
+/* Alterar prazo */
+.ag-modal-prazo {
+    z-index: 1085;
+}
+.ag-dialog-prazo {
+    max-width: 440px;
+}
+.ag-prazo-acao {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--sigus-text);
+    line-height: 1.3;
+    word-break: break-word;
+}
+.ag-prazo-de {
+    font-size: 0.82rem;
+    color: var(--sigus-text-muted);
+    margin-top: 0.15rem;
+}
+.ag-prazo-data {
+    max-width: 190px;
+}
+.ag-prazo-nota {
+    font-size: 0.76rem;
+    color: var(--sigus-text-muted);
+    background: #F4F6F9;
+    border-radius: 6px;
+    padding: 0.45rem 0.6rem;
+}
+
+/* Arrastar */
+#agendaCalendario .fc-event.fc-event-draggable {
+    cursor: grab;
+}
+#agendaCalendario .fc-event-dragging {
+    box-shadow: 0 6px 16px rgba(13, 32, 51, 0.25) !important;
+    opacity: 0.92;
+}
+#agendaCalendario .fc-event-dragging,
+#agendaCalendario .fc-event-dragging * {
+    cursor: grabbing !important;
+}
+
 /* Aviso rápido (snackbar) */
 .ag-snack {
     position: fixed;
     left: 50%;
     bottom: 1.5rem;
     z-index: 1100;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: calc(100vw - 2rem);
     transform: translate(-50%, 1rem);
     background: #1E3A50;
     color: #fff;
@@ -762,7 +809,21 @@
 }
 .ag-snack.is-visivel {
     opacity: 1;
+    pointer-events: auto;
     transform: translate(-50%, 0);
+}
+.ag-snack-acao {
+    flex-shrink: 0;
+    border: 0;
+    background: transparent;
+    color: #8CCBEB;
+    font-weight: 700;
+    font-size: 0.84rem;
+    padding: 0.15rem 0.35rem;
+    border-radius: 4px;
+}
+.ag-snack-acao:hover {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Responsivo */

@@ -328,6 +328,7 @@ def _fc_evento(ev):
         pessoas = [_pessoa_json(ev.criador)] if ev.criador else []
         pessoas_label = 'Criado por'
         tipo_ui = 'evento'
+    pode_editar = _pode_editar_evento(ev)
     payload = {
         'id': f'evt-{ev.id}',
         'title': ev.titulo,
@@ -336,6 +337,7 @@ def _fc_evento(ev):
         'backgroundColor': cor,
         'borderColor': cor,
         'textColor': TEXTO_CLARO,
+        'editable': pode_editar,
         'extendedProps': {
             'tipo': tipo_ui,
             'evento_id': ev.id,
@@ -348,7 +350,7 @@ def _fc_evento(ev):
             'pessoas': pessoas,
             'participante_ids': [u.id for u in (ev.participantes or [])],
             'visibilidade': ev.visibilidade,
-            'pode_editar': _pode_editar_evento(ev),
+            'pode_editar': pode_editar,
             'google_url': google_calendar_url(
                 ev.titulo, ev.inicio, ev.fim, ev.descricao or '', ev.local or '', ev.dia_inteiro,
             ),
@@ -360,8 +362,9 @@ def _fc_evento(ev):
     return payload
 
 
-def _fc_prazo(acao, hoje):
+def _fc_prazo(acao, hoje, pode_mover=False):
     prazo = acao.prazo
+    pode_mover = bool(pode_mover and acao.status != 'concluido')
     if acao.status == 'concluido':
         cor, texto = COR_PRAZO_FEITO, TEXTO_ESCURO
     elif prazo < hoje:
@@ -387,9 +390,15 @@ def _fc_prazo(acao, hoje):
         'backgroundColor': cor,
         'borderColor': cor,
         'textColor': texto,
+        'startEditable': pode_mover,
+        'durationEditable': False,
         'extendedProps': {
             'tipo': 'prazo',
             'acao_id': acao.id,
+            'acao_titulo': acao.titulo,
+            'prazo_iso': prazo.isoformat(),
+            'pode_mover': pode_mover,
+            'prazo_url': url_for('planejamentos.atualizar_prazo_acao', id=acao.id),
             'descricao': descricao,
             'local': '',
             'unidade': acao.planejamento.unidade.nome if acao.planejamento and acao.planejamento.unidade else '',
@@ -564,6 +573,9 @@ def eventos_json():
         p_ids = _ids_planejamentos(ids, unidade_id if unidade_id in ids else None)
         if p_ids:
             hoje = date.today()
+            editaveis = set()
+            if current_user.pode('criar_acao'):
+                editaveis = _ids_planejamentos([u.id for u in current_user.unidades_ativas])
             acoes = (
                 AcaoPlanejamento.query
                 .options(
@@ -581,7 +593,7 @@ def eventos_json():
                 .all()
             )
             for acao in acoes:
-                itens.append(_fc_prazo(acao, hoje))
+                itens.append(_fc_prazo(acao, hoje, acao.planejamento_id in editaveis))
 
     if mostrar_feriados:
         ini_d = start.date() if isinstance(start, datetime) else start
@@ -669,6 +681,36 @@ def editar(id):
             ev.titulo, ev.inicio, ev.fim, ev.descricao or '', ev.local or '', ev.dia_inteiro,
         ),
     })
+
+
+@agenda_bp.route('/eventos/<int:id>/mover', methods=['POST'])
+@login_required
+def mover(id):
+    ev = AgendaEvento.query.get_or_404(id)
+    if not _pode_editar_evento(ev):
+        abort(403)
+    inicio = _parse_iso(request.form.get('inicio'))
+    fim = _parse_iso(request.form.get('fim'))
+    if not inicio:
+        return jsonify({'ok': False, 'erro': 'Data inválida.'}), 400
+    dia_inteiro = request.form.get('dia_inteiro') in ('1', 'true', 'on')
+    if dia_inteiro:
+        inicio = datetime.combine(inicio.date(), datetime.min.time())
+        if fim and fim.date() > inicio.date():
+            fim = datetime.combine(fim.date(), datetime.min.time())
+        else:
+            fim = None
+    elif not fim or fim <= inicio:
+        duracao = timedelta(hours=1)
+        if not ev.dia_inteiro and ev.fim and ev.fim > ev.inicio:
+            duracao = ev.fim - ev.inicio
+        fim = inicio + duracao
+    ev.inicio = inicio
+    ev.fim = fim
+    ev.dia_inteiro = dia_inteiro
+    ev.atualizado_em = agora_local()
+    db.session.commit()
+    return jsonify({'ok': True, 'evento': _fc_evento(ev)})
 
 
 @agenda_bp.route('/eventos/<int:id>/excluir', methods=['POST'])

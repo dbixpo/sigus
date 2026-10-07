@@ -321,6 +321,69 @@ def _gerar_alertas_prazos():
     _ALERTAS_PRAZO_DIA['data'] = hoje
 
 
+def alterar_prazo_acao(acao, prazo_novo, motivo='', origem='planejamento'):
+    """Troca o prazo da ação e registra a mudança no histórico (observações).
+
+    Também avisa os responsáveis da ação. Não faz commit. Retorna False se o prazo não mudou.
+    """
+    from markupsafe import escape
+    from app.models.notificacao import Notificacao
+
+    anterior = acao.prazo
+    if anterior == prazo_novo:
+        return False
+
+    def fmt(d):
+        return d.strftime('%d/%m/%Y')
+
+    if anterior and prazo_novo:
+        frase = f'Prazo alterado de {fmt(anterior)} para {fmt(prazo_novo)}'
+        frase_html = f'Prazo alterado de <strong>{fmt(anterior)}</strong> para <strong>{fmt(prazo_novo)}</strong>'
+    elif prazo_novo:
+        frase = f'Prazo definido para {fmt(prazo_novo)}'
+        frase_html = f'Prazo definido para <strong>{fmt(prazo_novo)}</strong>'
+    else:
+        frase = f'Prazo removido (era {fmt(anterior)})'
+        frase_html = f'Prazo removido (era <strong>{fmt(anterior)}</strong>)'
+    if origem == 'agenda':
+        frase += ' pela agenda'
+        frase_html += ' pela agenda'
+
+    texto = f'<p><i class="fas fa-calendar-alt me-1"></i>{frase_html}.</p>'
+    motivo = (motivo or '').strip()[:1000]
+    if motivo:
+        texto += f'<p><strong>Motivo:</strong> {escape(motivo)}</p>'
+
+    agora = agora_local()
+    acao.prazo = prazo_novo
+    acao.atualizado_em = agora
+    acao.atualizado_por = current_user.id
+    planejamento = acao.planejamento
+    if planejamento:
+        planejamento.atualizado_em = agora
+        planejamento.atualizado_por = current_user.id
+    db.session.add(AcaoObservacao(
+        acao_id=acao.id,
+        usuario_id=current_user.id,
+        texto=texto,
+        criado_em=agora,
+    ))
+
+    plano_txt = f'Plano: "{planejamento.titulo}" — ' if planejamento else ''
+    aviso = f'{plano_txt}Ação: "{acao.titulo}" — {frase} por {current_user.nome}.'
+    if motivo:
+        aviso += f' Motivo: {motivo}'
+    for r in acao.responsaveis or []:
+        if r and r.id != current_user.id:
+            db.session.add(Notificacao(
+                usuario_id=r.id,
+                tipo='prazo_alterado',
+                titulo='Prazo de ação alterado',
+                texto=aviso,
+            ))
+    return True
+
+
 def _resp_display_html(acao):
     """Retorna HTML do bloco de responsáveis/empresas para atualização via AJAX."""
     parts = []
@@ -1062,36 +1125,20 @@ def atualizar_prazo_acao(id):
     prazo_novo = None
     if prazo_str:
         try:
-            from datetime import datetime as dt
-            prazo_novo = dt.strptime(prazo_str, '%Y-%m-%d').date()
+            prazo_novo = datetime.strptime(prazo_str[:10], '%Y-%m-%d').date()
         except ValueError:
             return jsonify({'ok': False, 'erro': 'Data de prazo inválida.'}), 400
 
-    # Regra: ação pode nascer sem prazo e receber um prazo depois,
-    # mas, uma vez definido, o prazo não pode mais ser alterado.
-    if acao.prazo:
-        # Se já existe prazo definido e o novo é diferente, bloqueia alteração
-        if not prazo_novo or prazo_novo != acao.prazo:
-            return jsonify({
-                'ok': False,
-                'erro': 'O prazo desta ação já foi definido e não pode ser alterado.'
-            }), 400
-        # Se for igual, não altera nada, só confirma
-    else:
-        # Ainda não tinha prazo: permite definir agora (ou continuar sem prazo)
-        acao.prazo = prazo_novo
-    # Salva hora local + 3h para que quando aplicar -3h na exibição, dê o horário correto
-    acao.atualizado_em = agora_local()
-    acao.atualizado_por = current_user.id
-    planejamento.atualizado_em = agora_local()
-    planejamento.atualizado_por = current_user.id
+    origem = 'agenda' if request.form.get('origem') == 'agenda' else 'planejamento'
+    mudou = alterar_prazo_acao(acao, prazo_novo, request.form.get('motivo', ''), origem)
     db.session.commit()
-    prazo_display = acao.prazo.strftime('%d/%m/%Y') if acao.prazo else ''
-    dias_txt = getattr(acao, 'prazo_dias_texto', None) or ''
     return jsonify({
         'ok': True,
-        'prazo': prazo_display,
-        'prazo_dias_texto': dias_txt,
+        'mudou': mudou,
+        'prazo': acao.prazo.strftime('%d/%m/%Y') if acao.prazo else '',
+        'prazo_iso': acao.prazo.isoformat() if acao.prazo else '',
+        'prazo_dias_texto': getattr(acao, 'prazo_dias_texto', None) or '',
+        'atualizado_em': formatar_brasilia(acao.atualizado_em) if acao.atualizado_em else None,
     })
 
 
