@@ -383,12 +383,21 @@
 {% block content %}
 <div class="page-header d-flex align-items-center justify-content-between gap-2 flex-wrap">
     <h1 class="m-0"><i class="fas fa-map-location-dot"></i> Mapa da Saúde</h1>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <button type="button" class="btn btn-outline-primary btn-sm" id="mapaBtnCopiarLink" title="Copiar link do mapa público">
-            <i class="fas fa-link me-1"></i>Copiar link público
+    {% set _url_publica = url_publica('mapa_da_saude') %}
+    <div class="btn-group btn-group-sm" role="group" aria-label="Acesso público">
+        <a href="{{ _url_publica }}" target="_blank" rel="noopener" class="btn btn-outline-primary"
+           title="Abrir o mapa público (sem login)">
+            <i class="fas fa-globe me-1"></i>Acesso público
+        </a>
+        <button type="button" class="btn btn-outline-primary js-qr-baixar"
+                data-url="{{ _url_publica }}" data-titulo="Mapa da Saúde" data-arquivo="qrcode-mapa-da-saude"
+                title="Baixar QR code do acesso público">
+            <i class="fas fa-qrcode"></i>
         </button>
-        <span class="small text-muted d-none" id="mapaLinkFeedback">Link copiado.</span>
-        <input type="text" class="visually-hidden" id="mapaLinkCompartilhar" readonly autocomplete="off" tabindex="-1" aria-hidden="true" />
+        <button type="button" class="btn btn-outline-primary js-copiar-url"
+                data-url="{{ _url_publica }}" title="Copiar endereço do acesso público">
+            <i class="fas fa-copy"></i>
+        </button>
     </div>
 </div>
 
@@ -475,21 +484,6 @@
         }
         const urlDados = absUrl("{{ url_for('relatorios.mapa_saude_dados') }}".replace(/^\/sigus/, ''));
         const urlAbrang = absUrl("{{ url_for('relatorios.mapa_saude_abrang') }}".replace(/^\/sigus/, ''));
-
-        const linkCompartilhar = document.getElementById('mapaLinkCompartilhar');
-        const btnCopiarLink = document.getElementById('mapaBtnCopiarLink');
-        const linkFeedback = document.getElementById('mapaLinkFeedback');
-        const mapaPublicoPath = {{ (mapa_publico_url or '')|tojson }};
-        const urlCompartilhar = `${window.location.origin}${mapaPublicoPath || ''}`;
-        if (linkCompartilhar) linkCompartilhar.value = urlCompartilhar;
-        if (btnCopiarLink && linkCompartilhar) {
-            btnCopiarLink.addEventListener('click', function () {
-                navigator.clipboard.writeText(urlCompartilhar).then(() => {
-                    if (linkFeedback) linkFeedback.classList.remove('d-none');
-                    setTimeout(() => linkFeedback && linkFeedback.classList.add('d-none'), 1500);
-                }).catch(() => {});
-            });
-        }
 
         function markerTipoKey(m) {
             if (!m) return '—';

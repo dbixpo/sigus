@@ -1498,7 +1498,6 @@ def mapa_saude():
         tipos_unidade=tipos_unidade,
         filtro_unidades=filtro_unidades,
         filtro_tipo_unidades=filtro_tipo_unidades,
-        mapa_publico_url=url_for('mapa_da_saude'),
         url_mapa_abrang=url_for('relatorios.mapa_saude_abrang'),
     )
 
