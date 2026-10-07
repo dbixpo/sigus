@@ -11,7 +11,9 @@
         return qr;
     }
 
-    function quebrarTexto(ctx, texto, larguraMax) {
+    var FONTE = 'Inter, "Segoe UI", Arial, sans-serif';
+
+    function quebrarCaracteres(ctx, texto, larguraMax) {
         var partes = [];
         var atual = '';
         for (var i = 0; i < texto.length; i++) {
@@ -27,16 +29,72 @@
         return partes;
     }
 
+    /* Junta pedaços (palavras ou trechos de URL) em linhas; pedaço maior que a linha cai por caractere. */
+    function quebrarPedacos(ctx, pedacos, larguraMax, separador) {
+        var linhas = [];
+        var atual = '';
+        pedacos.forEach(function (p) {
+            var teste = atual ? atual + separador + p : p;
+            if (ctx.measureText(teste).width <= larguraMax) {
+                atual = teste;
+                return;
+            }
+            if (atual) linhas.push(atual);
+            if (ctx.measureText(p).width > larguraMax) {
+                var cortes = quebrarCaracteres(ctx, p, larguraMax);
+                atual = cortes.pop();
+                linhas = linhas.concat(cortes);
+            } else {
+                atual = p;
+            }
+        });
+        if (atual) linhas.push(atual);
+        return linhas;
+    }
+
+    function linhasTitulo(ctx, titulo, larguraMax) {
+        var palavras = titulo.split(/\s+/).filter(Boolean);
+        var trechos = titulo.split(/\s+·\s+/);
+        for (var tam = 52; tam >= 34; tam -= 2) {
+            ctx.font = '700 ' + tam + 'px ' + FONTE;
+            if (trechos.length > 1 && ctx.measureText(titulo).width > larguraMax
+                    && trechos.every(function (t) { return ctx.measureText(t).width <= larguraMax; })) {
+                return { linhas: trechos, tam: tam };
+            }
+            var linhas = quebrarPedacos(ctx, palavras, larguraMax, ' ');
+            if (linhas.length <= 2 || tam === 34) return { linhas: linhas, tam: tam };
+        }
+    }
+
+    function linhasUrl(ctx, url, larguraMax) {
+        ctx.font = '500 24px ' + FONTE;
+        var pedacos = url.replace(/\//g, '/\u0000').split('\u0000').filter(Boolean);
+        return quebrarPedacos(ctx, pedacos, larguraMax, '');
+    }
+
     function desenharCartao(url, titulo) {
         var qr = gerarQr(url);
         var n = qr.getModuleCount();
         var W = 900;
+        var margem = 70;
         var qrLado = 640;
         var celula = Math.floor(qrLado / (n + 8));
         var qrPx = celula * (n + 8);
+
+        var medida = document.createElement('canvas').getContext('2d');
+        var tit = linhasTitulo(medida, titulo || 'Acesso público', W - margem * 2);
+        var alturaTitulo = Math.round(tit.tam * 1.2);
+        var urls = linhasUrl(medida, url, W - margem * 2);
+
+        var yTitulo = 60 + tit.tam;
+        var ySub = yTitulo + (tit.linhas.length - 1) * alturaTitulo + 50;
+        var yQr = ySub + 34;
+        var yUrl = yQr + qrPx + 56;
+        var yRodape = yUrl + (urls.length - 1) * 34 + 80;
+
         var canvas = document.createElement('canvas');
         canvas.width = W;
-        canvas.height = 1040;
+        canvas.height = yRodape + 50;
         var ctx = canvas.getContext('2d');
 
         ctx.fillStyle = '#FFFFFF';
@@ -49,34 +107,29 @@
 
         ctx.textAlign = 'center';
         ctx.fillStyle = '#0D3B5E';
-        ctx.font = '700 52px Inter, "Segoe UI", Arial, sans-serif';
-        ctx.fillText(titulo || 'Acesso público', W / 2, 110);
+        ctx.font = '700 ' + tit.tam + 'px ' + FONTE;
+        tit.linhas.forEach(function (l, i) { ctx.fillText(l, W / 2, yTitulo + i * alturaTitulo); });
         ctx.fillStyle = '#718096';
-        ctx.font = '500 26px Inter, "Segoe UI", Arial, sans-serif';
-        ctx.fillText('Aponte a câmera do celular para acessar', W / 2, 160);
+        ctx.font = '500 26px ' + FONTE;
+        ctx.fillText('Aponte a câmera do celular para acessar', W / 2, ySub);
 
         var x0 = Math.round((W - qrPx) / 2);
-        var y0 = 200;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(x0, y0, qrPx, qrPx);
         ctx.fillStyle = '#0D3B5E';
         for (var r = 0; r < n; r++) {
             for (var c = 0; c < n; c++) {
                 if (qr.isDark(r, c)) {
-                    ctx.fillRect(x0 + (c + 4) * celula, y0 + (r + 4) * celula, celula, celula);
+                    ctx.fillRect(x0 + (c + 4) * celula, yQr + (r + 4) * celula, celula, celula);
                 }
             }
         }
 
         ctx.fillStyle = '#1E3A50';
-        ctx.font = '500 24px Inter, "Segoe UI", Arial, sans-serif';
-        var linhas = quebrarTexto(ctx, url, W - 120);
-        var y = y0 + qrPx + 60;
-        linhas.forEach(function (l) { ctx.fillText(l, W / 2, y); y += 34; });
+        ctx.font = '500 24px ' + FONTE;
+        urls.forEach(function (l, i) { ctx.fillText(l, W / 2, yUrl + i * 34); });
 
         ctx.fillStyle = '#1A82B8';
-        ctx.font = '700 28px Inter, "Segoe UI", Arial, sans-serif';
-        ctx.fillText('SIGUS · Saúde Digital', W / 2, canvas.height - 50);
+        ctx.font = '700 28px ' + FONTE;
+        ctx.fillText('SIGUS · Saúde Digital', W / 2, yRodape);
         return canvas;
     }
 
