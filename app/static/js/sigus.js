@@ -276,14 +276,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Confirmar ações destrutivas ─────────────────────────
-    document.querySelectorAll('[data-confirm]').forEach(function (el) {
-        el.addEventListener('click', function (e) {
-            if (!confirm(this.dataset.confirm)) {
-                e.preventDefault();
-            }
+    // ── Confirmar ações destrutivas (modal do SIGUS) ────────
+    // Uso: data-confirm="Texto" em <form>, botão ou link.
+    // Opcionais: data-confirm-titulo, data-confirm-ok, data-confirm-icone, data-confirm-perigo="0".
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (!form.matches || !form.matches('form[data-confirm]')) return;
+        if (form._sigusConfirmado) { form._sigusConfirmado = false; return; }
+        e.preventDefault();
+        const submitter = e.submitter || null;
+        sigusConfirmar(opcoesConfirm(form)).then(function (ok) {
+            if (!ok) return;
+            form._sigusConfirmado = true;
+            if (form.requestSubmit) form.requestSubmit(submitter && submitter.form === form ? submitter : undefined);
+            else form.submit();
         });
-    });
+    }, true);
+
+    document.addEventListener('click', function (e) {
+        const el = e.target.closest && e.target.closest('[data-confirm]:not(form)');
+        if (!el) return;
+        if (el._sigusConfirmado) { el._sigusConfirmado = false; return; }
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        sigusConfirmar(opcoesConfirm(el)).then(function (ok) {
+            if (!ok) return;
+            el._sigusConfirmado = true;
+            el.click();
+        });
+    }, true);
 
     // ── Máscaras simples ────────────────────────────────────
     const cepInput = document.querySelector('input[name="cep"]');
@@ -306,3 +327,69 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+function opcoesConfirm(el) {
+    const d = el.dataset;
+    return {
+        titulo: d.confirmTitulo || 'Confirmar',
+        texto: d.confirm || 'Tem certeza?',
+        ok: d.confirmOk || 'Confirmar',
+        perigo: d.confirmPerigo !== '0',
+        icone: d.confirmIcone || '',
+    };
+}
+
+/* Modal de confirmação do SIGUS. Retorna Promise<boolean>. */
+function sigusConfirmar(opts) {
+    opts = opts || {};
+    let modalEl = document.getElementById('sigusConfirmModal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.className = 'modal fade sigus-confirm';
+        modalEl.id = 'sigusConfirmModal';
+        modalEl.tabIndex = -1;
+        modalEl.setAttribute('aria-hidden', 'true');
+        modalEl.innerHTML =
+            '<div class="modal-dialog modal-dialog-centered">' +
+              '<div class="modal-content">' +
+                '<div class="modal-body">' +
+                  '<div class="sigus-confirm-icone"><i class="fas fa-trash-alt"></i></div>' +
+                  '<h5 class="sigus-confirm-titulo"></h5>' +
+                  '<p class="sigus-confirm-texto"></p>' +
+                '</div>' +
+                '<div class="modal-footer">' +
+                  '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+                  '<button type="button" class="btn sigus-confirm-ok"></button>' +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        document.body.appendChild(modalEl);
+    }
+    const perigo = opts.perigo !== false;
+    modalEl.classList.toggle('is-perigo', perigo);
+    modalEl.querySelector('.sigus-confirm-icone i').className = 'fas ' + (opts.icone || (perigo ? 'fa-exclamation-triangle' : 'fa-question'));
+    modalEl.querySelector('.sigus-confirm-titulo').textContent = opts.titulo || 'Confirmar';
+    modalEl.querySelector('.sigus-confirm-texto').textContent = opts.texto || 'Tem certeza?';
+    const btnOk = modalEl.querySelector('.sigus-confirm-ok');
+    btnOk.textContent = opts.ok || 'Confirmar';
+    btnOk.className = 'btn sigus-confirm-ok ' + (perigo ? 'btn-danger' : 'btn-primary');
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    return new Promise(function (resolve) {
+        let confirmado = false;
+        function aoOk() { confirmado = true; modal.hide(); }
+        function aoMostrar() {
+            (perigo ? modalEl.querySelector('[data-bs-dismiss="modal"]') : btnOk).focus();
+        }
+        function aoFechar() {
+            btnOk.removeEventListener('click', aoOk);
+            modalEl.removeEventListener('shown.bs.modal', aoMostrar);
+            resolve(confirmado);
+        }
+        btnOk.addEventListener('click', aoOk);
+        modalEl.addEventListener('shown.bs.modal', aoMostrar);
+        modalEl.addEventListener('hidden.bs.modal', aoFechar, { once: true });
+        modal.show();
+    });
+}
+window.sigusConfirmar = sigusConfirmar;

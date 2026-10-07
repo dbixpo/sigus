@@ -1077,3 +1077,63 @@ body.pagina-agenda .sigus-main > .container-fluid {
     background: rgba(230, 48, 48, .12);
     color: #b42318;
 }
+
+/* Modal de confirmação (sigusConfirmar / data-confirm) */
+.sigus-confirm .modal-dialog {
+    max-width: 400px;
+}
+.sigus-confirm .modal-content {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(13, 59, 94, .22);
+}
+.sigus-confirm .modal-body {
+    padding: 1.75rem 1.75rem 0.5rem;
+    text-align: center;
+}
+.sigus-confirm-icone {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto 0.9rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: rgba(26, 130, 184, .12);
+    color: #1A82B8;
+}
+.sigus-confirm.is-perigo .sigus-confirm-icone {
+    background: rgba(230, 48, 48, .12);
+    color: #E63030;
+}
+.sigus-confirm-titulo {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1E3A50;
+    margin-bottom: 0.4rem;
+}
+.sigus-confirm-texto {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 0;
+    white-space: pre-line;
+}
+.sigus-confirm .modal-footer {
+    border-top: 0;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.1rem 1.75rem 1.5rem;
+}
+.sigus-confirm .modal-footer .btn {
+    min-width: 120px;
+    border-radius: 6px;
+}
+.sigus-confirm .btn-danger {
+    background: #E63030;
+    border-color: #E63030;
+}
+.sigus-confirm .btn-danger:hover {
+    background: #c42626;
+    border-color: #c42626;
+}

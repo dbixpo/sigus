@@ -26,7 +26,9 @@
     {% endif %}
     {% if excluir %}
     <form method="POST" action="{{ url_for('noticias.excluir_acao', id=a.id) }}"
-          onsubmit="return confirm('Excluir esta publicação do mural? Fotos, curtidas e comentários também serão apagados.');">
+          data-confirm-titulo="Excluir publicação?"
+          data-confirm="A publicação sai do mural junto com as fotos, curtidas e comentários. Não dá para desfazer."
+          data-confirm-ok="Excluir" data-confirm-icone="fa-trash-alt">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="voltar" value="{{ voltar }}">
         <button type="submit" class="mural-ger-btn is-danger" title="Excluir publicação" aria-label="Excluir publicação">
