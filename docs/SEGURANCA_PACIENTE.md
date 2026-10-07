@@ -50,7 +50,7 @@ O pertencimento ao Núcleo é por lista, independente do perfil do usuário. Que
 | `/seguranca-paciente/relatorios` | Sim | Indicadores e painel na mesma página; exporta Excel e CSV |
 | `/seguranca-paciente/membros` | Sim | Núcleo e comissões |
 
-O menu **Gestão da Unidade → Segurança do Paciente** aparece para todos (todos podem notificar). O painel só mostra casos conforme o papel acima.
+O menu **Operações → Segurança do Paciente** aparece para todos (todos podem notificar). O painel só mostra casos conforme o papel acima.
 
 ## Protocolo
 

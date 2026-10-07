@@ -13,7 +13,7 @@
     --sigus-bg:        #F4F6F9;
     --sigus-text:      #1E3A50;
     --sigus-text-muted:#718096;
-    --sigus-sidebar-width: 240px;
+    --sigus-sidebar-width: 256px;
     --sigus-navbar-height: 58px;
     --sigus-sidebar-collapsed-width: 64px;
 }
@@ -726,6 +726,7 @@ body {
 
 /* Scrollbar customizada do menu lateral — identidade Saúde Digital */
 .sidebar-scroll {
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
     scrollbar-color: var(--sigus-primary) rgba(255,255,255,0.06);
 }
