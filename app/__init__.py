@@ -187,6 +187,17 @@ def create_app(config_name='default'):
         from app.models.identidade import obter_identidade
         return {'identidade': obter_identidade()}
 
+    @app.context_processor
+    def inject_url_publica():
+        from flask import url_for as _url_for
+
+        def url_publica(endpoint, **values):
+            host = (app.config.get('SIGUS_HOST_PUBLICO') or '').rstrip('/')
+            if not host:
+                return _url_for(endpoint, _external=True, **values)
+            return host + _url_for(endpoint, **values)
+        return {'url_publica': url_publica}
+
     # Context processor: unidades para seletor de unidade padrão
     # Sempre lista apenas unidades às quais o usuário está vinculado (independente do perfil)
     @app.context_processor
@@ -207,6 +218,7 @@ def create_app(config_name='default'):
         'static',
         'unidades.sem_vinculo',
         'solicitacoes.formulario', 'solicitacoes.confirmacao',
+        'links.publico',
         'notificacoes.recentes', 'notificacoes.contagem',
         'notificacoes.marcar_lida', 'notificacoes.marcar_todas_lidas',
         # Mapa público (acesso sem vínculo, inclusive usuário logado)

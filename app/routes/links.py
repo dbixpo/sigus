@@ -127,34 +127,42 @@ def _processar_form_link(item: LinkUtil | None) -> dict:
 # ─────────────────────────────────────────────────────────────────────
 #  Página pública
 # ─────────────────────────────────────────────────────────────────────
+def _links_visiveis(visivel):
+    tipos = (TipoLink.query
+             .filter_by(ativo=True)
+             .order_by(TipoLink.ordem)
+             .all())
+    dados = []
+    for t in tipos:
+        links = [l for l in
+                 t.links.filter_by(ativo=True).order_by(LinkUtil.ordem).all()
+                 if visivel(l)]
+        dados.append({'tipo': t, 'links': links})
+    sem_cat = [l for l in
+               LinkUtil.query
+               .filter_by(ativo=True, tipo_link_id=None)
+               .order_by(LinkUtil.ordem).all()
+               if visivel(l)]
+    return tipos, dados, sem_cat
+
+
 @links_bp.route('/')
 @login_required
 def index():
     if not current_user.pode('ver_links_uteis'):
         abort(403)
-    tipos = (TipoLink.query
-             .filter_by(ativo=True)
-             .order_by(TipoLink.ordem)
-             .all())
-    # Para cada tipo, pega os links visíveis para o perfil
-    dados = []
-    for t in tipos:
-        links = [l for l in
-                 t.links.filter_by(ativo=True).order_by(LinkUtil.ordem).all()
-                 if l.visivel_para(current_user.perfil)]
-        dados.append({'tipo': t, 'links': links})
-
-    # Links sem categoria
-    sem_cat = [l for l in
-               LinkUtil.query
-               .filter_by(ativo=True, tipo_link_id=None)
-               .order_by(LinkUtil.ordem).all()
-               if l.visivel_para(current_user.perfil)]
-
+    tipos, dados, sem_cat = _links_visiveis(lambda l: l.visivel_para(current_user.perfil))
     return render_template('links/index.html',
                            dados=dados,
                            sem_cat=sem_cat,
                            tipos=tipos)
+
+
+@links_bp.route('/publico')
+def publico():
+    """Acesso externo sem login: só links ativos liberados para todos os perfis."""
+    _, dados, sem_cat = _links_visiveis(lambda l: 'todos' in (l.perfis_acesso or ['todos']))
+    return render_template('links/publico.html', dados=dados, sem_cat=sem_cat)
 
 
 # ─────────────────────────────────────────────────────────────────────

@@ -1138,3 +1138,12 @@ body.pagina-agenda .sigus-main > .container-fluid {
     background: #c42626;
     border-color: #c42626;
 }
+
+/* Acesso público (modal com endereço e QR code) */
+.acesso-publico-modal { border-radius: 14px; }
+.acesso-publico-qr {
+    width: 220px; height: 220px; padding: 10px;
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(13, 59, 94, .08);
+}
+.js-copiar-url.copiado { background: #19A88B; border-color: #19A88B; color: #fff; }
