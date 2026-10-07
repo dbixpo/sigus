@@ -8,8 +8,12 @@ import mimetypes
 import unicodedata
 from app import db
 from app.models.tipo_unidade import TipoUnidade
-from app.models.tipo_sala import TipoSala
-from app.models.equipamento import TipoEquipamento, CampoTipoEquipamento, Marca, Modelo
+from app.models.tipo_sala import TipoSala, KitPadraoSala
+from app.models.equipamento import (
+    TipoEquipamento, CampoTipoEquipamento, Marca, Modelo, Equipamento, NATUREZA_KIT_LABELS,
+)
+from app.models.sala import Sala
+from app.services.padrao_salas import agrupar_tipos_sala, agrupar_tipos_equipamento
 from app.models.usuario import Usuario, PERFIS, HIERARQUIA
 from app.models.link_util import LinkUtil
 from app.models.tipo_link import TipoLink
@@ -437,7 +441,44 @@ def tipos_sala():
     tipos = TipoSala.query.order_by(TipoSala.nome).all()
     for t in tipos:
         t.icone = _normalizar_icone_fontawesome(t.icone) or 'fas fa-door-open'
-    return render_template('configuracoes/tipos_sala/listar.html', tipos=tipos)
+    salas_por_tipo = dict(db.session.query(Sala.tipo_sala_id, db.func.count(Sala.id))
+                          .filter(Sala.ativo.is_(True)).group_by(Sala.tipo_sala_id).all())
+    kit_por_tipo = dict(db.session.query(KitPadraoSala.tipo_sala_id, db.func.count(KitPadraoSala.id))
+                        .group_by(KitPadraoSala.tipo_sala_id).all())
+    return render_template('configuracoes/tipos_sala/listar.html', tipos=tipos,
+                           grupos=agrupar_tipos_sala(tipos),
+                           salas_por_tipo=salas_por_tipo, kit_por_tipo=kit_por_tipo)
+
+
+def _form_tipo_sala(tipo):
+    """Renderiza o formulário com os dados do kit (vazio para tipo novo)."""
+    grupos_existentes = [g for (g,) in db.session.query(TipoSala.grupo).filter(TipoSala.grupo.isnot(None))
+                         .distinct().order_by(TipoSala.grupo).all()]
+    kit, tipos_equip, total_kit = [], [], 0
+    if tipo and tipo.id:
+        kit = (tipo.kit.join(TipoEquipamento)
+               .order_by(TipoEquipamento.codigo.nullslast(), TipoEquipamento.nome).all())
+        total_kit = sum((k.tipo_equipamento.valor_referencia or 0) * k.quantidade for k in kit)
+        no_kit = {k.tipo_equipamento_id for k in kit}
+        tipos_equip = agrupar_tipos_equipamento(
+            [t for t in TipoEquipamento.query.filter_by(ativo=True).all() if t.id not in no_kit])
+    return render_template('configuracoes/tipos_sala/form.html', tipo=tipo,
+                           grupos_existentes=grupos_existentes, kit=kit,
+                           tipos_equip_agrupados=tipos_equip, total_kit=total_kit,
+                           natureza_labels=NATUREZA_KIT_LABELS)
+
+
+def _dados_padrao_tipo_sala(tipo, form):
+    """Preenche código/grupo/ordem; devolve mensagem de erro ou None."""
+    codigo = (form.get('codigo') or '').strip().upper() or None
+    if codigo:
+        conflito = TipoSala.query.filter(TipoSala.codigo == codigo, TipoSala.id != (tipo.id or 0)).first()
+        if conflito:
+            return f'O código {codigo} já é usado pelo tipo "{conflito.nome}".'
+    tipo.codigo = codigo
+    tipo.grupo = (form.get('grupo') or '').strip() or None
+    tipo.ordem = form.get('ordem', type=int)
+    return None
 
 
 @configuracoes_bp.route('/tipos-sala/novo', methods=['GET', 'POST'])
@@ -448,18 +489,24 @@ def novo_tipo_sala():
         nome = request.form['nome'].strip()
         if TipoSala.query.filter_by(nome=nome).first():
             flash(f'Já existe um tipo de sala chamado "{nome}".', 'danger')
-            return render_template('configuracoes/tipos_sala/form.html', tipo=None)
+            return _form_tipo_sala(None)
         tipo = TipoSala(
             nome=nome,
             descricao=request.form.get('descricao', '').strip() or None,
             icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-door-open')),
             ativo=request.form.get('ativo') == 'on',
         )
+        erro = _dados_padrao_tipo_sala(tipo, request.form)
+        if erro:
+            flash(erro, 'danger')
+            return _form_tipo_sala(None)
         db.session.add(tipo)
         db.session.commit()
         flash(f'Tipo de sala "{tipo.nome}" cadastrado com sucesso!', 'success')
+        if tipo.codigo:
+            return redirect(url_for('configuracoes.editar_tipo_sala', id=tipo.id))
         return redirect(url_for('configuracoes.tipos_sala'))
-    return render_template('configuracoes/tipos_sala/form.html', tipo=None)
+    return _form_tipo_sala(None)
 
 
 @configuracoes_bp.route('/tipos-sala/<int:id>/editar', methods=['GET', 'POST'])
@@ -472,7 +519,12 @@ def editar_tipo_sala(id):
         conflito = TipoSala.query.filter(TipoSala.nome == novo_nome, TipoSala.id != id).first()
         if conflito:
             flash(f'Já existe outro tipo de sala chamado "{novo_nome}".', 'danger')
-            return render_template('configuracoes/tipos_sala/form.html', tipo=tipo)
+            return _form_tipo_sala(tipo)
+        erro = _dados_padrao_tipo_sala(tipo, request.form)
+        if erro:
+            db.session.rollback()
+            flash(erro, 'danger')
+            return _form_tipo_sala(tipo)
         tipo.nome = novo_nome
         tipo.descricao = request.form.get('descricao', '').strip() or None
         tipo.icone = _normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-door-open'))
@@ -481,7 +533,58 @@ def editar_tipo_sala(id):
         flash('Tipo de sala atualizado!', 'success')
         return redirect(url_for('configuracoes.tipos_sala'))
     tipo.icone = _normalizar_icone_fontawesome(tipo.icone) or 'fas fa-door-open'
-    return render_template('configuracoes/tipos_sala/form.html', tipo=tipo)
+    return _form_tipo_sala(tipo)
+
+
+@configuracoes_bp.route('/tipos-sala/<int:id>/kit', methods=['POST'])
+@login_required
+def adicionar_item_kit(id):
+    _exigir_admin()
+    tipo = TipoSala.query.get_or_404(id)
+    tipo_equip = TipoEquipamento.query.get_or_404(request.form.get('tipo_equipamento_id', type=int))
+    quantidade = request.form.get('quantidade', type=int) or 0
+    if quantidade < 1:
+        flash('Informe uma quantidade maior que zero.', 'danger')
+        return redirect(url_for('configuracoes.editar_tipo_sala', id=id) + '#kit')
+    linha = KitPadraoSala.query.filter_by(tipo_sala_id=id, tipo_equipamento_id=tipo_equip.id).first()
+    if linha:
+        linha.quantidade = quantidade
+    else:
+        linha = KitPadraoSala(tipo_sala_id=id, tipo_equipamento_id=tipo_equip.id, quantidade=quantidade)
+        db.session.add(linha)
+    linha.observacao = (request.form.get('observacao') or '').strip()[:300] or None
+    db.session.commit()
+    flash(f'"{tipo_equip.nome}" no kit de {tipo.nome}: {quantidade}.', 'success')
+    return redirect(url_for('configuracoes.editar_tipo_sala', id=id) + '#kit')
+
+
+@configuracoes_bp.route('/tipos-sala/kit/<int:kit_id>/atualizar', methods=['POST'])
+@login_required
+def atualizar_item_kit(kit_id):
+    _exigir_admin()
+    linha = KitPadraoSala.query.get_or_404(kit_id)
+    quantidade = request.form.get('quantidade', type=int) or 0
+    if quantidade < 1:
+        flash('Para tirar o item do kit, use o botão de remover.', 'warning')
+    else:
+        linha.quantidade = quantidade
+        linha.observacao = (request.form.get('observacao') or '').strip()[:300] or None
+        db.session.commit()
+        flash('Quantidade do kit atualizada.', 'success')
+    return redirect(url_for('configuracoes.editar_tipo_sala', id=linha.tipo_sala_id) + '#kit')
+
+
+@configuracoes_bp.route('/tipos-sala/kit/<int:kit_id>/remover', methods=['POST'])
+@login_required
+def remover_item_kit(kit_id):
+    _exigir_admin()
+    linha = KitPadraoSala.query.get_or_404(kit_id)
+    tipo_sala_id = linha.tipo_sala_id
+    nome = linha.tipo_equipamento.nome
+    db.session.delete(linha)
+    db.session.commit()
+    flash(f'"{nome}" removido do kit.', 'info')
+    return redirect(url_for('configuracoes.editar_tipo_sala', id=tipo_sala_id) + '#kit')
 
 
 @configuracoes_bp.route('/tipos-sala/<int:id>/alternar-status', methods=['POST'])
@@ -508,7 +611,55 @@ def alternar_status_tipo_sala(id):
 def tipos_equipamento():
     _exigir_admin()
     tipos = TipoEquipamento.query.order_by(TipoEquipamento.nome).all()
-    return render_template('configuracoes/tipos_equipamento/listar.html', tipos=tipos)
+    equip_por_tipo = dict(db.session.query(Equipamento.tipo_equipamento_id, db.func.count(Equipamento.id))
+                          .filter(Equipamento.ativo.is_(True)).group_by(Equipamento.tipo_equipamento_id).all())
+    kits_por_tipo = dict(db.session.query(KitPadraoSala.tipo_equipamento_id, db.func.count(KitPadraoSala.id))
+                         .group_by(KitPadraoSala.tipo_equipamento_id).all())
+    return render_template('configuracoes/tipos_equipamento/listar.html', tipos=tipos,
+                           grupos=agrupar_tipos_equipamento(tipos), equip_por_tipo=equip_por_tipo,
+                           kits_por_tipo=kits_por_tipo, natureza_labels=NATUREZA_KIT_LABELS)
+
+
+def _form_tipo_equipamento(tipo, campos):
+    classificacoes = [c for (c,) in db.session.query(TipoEquipamento.classificacao)
+                      .filter(TipoEquipamento.classificacao.isnot(None)).distinct()
+                      .order_by(TipoEquipamento.classificacao).all()]
+    candidatos = TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None))
+    if tipo and tipo.id:
+        candidatos = candidatos.filter(TipoEquipamento.id != tipo.id)
+    return render_template('configuracoes/tipos_equipamento/form.html', tipo=tipo, campos=campos,
+                           classificacoes=classificacoes, natureza_labels=NATUREZA_KIT_LABELS,
+                           tipos_conta_como=agrupar_tipos_equipamento(candidatos.all()))
+
+
+def _dados_padrao_tipo_equipamento(tipo, form):
+    """Preenche os campos do catálogo de itens; devolve mensagem de erro ou None."""
+    from decimal import Decimal, InvalidOperation
+    codigo = (form.get('codigo') or '').strip().upper() or None
+    if codigo:
+        conflito = TipoEquipamento.query.filter(
+            TipoEquipamento.codigo == codigo, TipoEquipamento.id != (tipo.id or 0)).first()
+        if conflito:
+            return f'O código {codigo} já é usado pelo tipo "{conflito.nome}".'
+    valor_txt = (form.get('valor_referencia') or '').strip().replace('R$', '').replace(' ', '')
+    valor = None
+    if valor_txt:
+        if ',' in valor_txt:
+            valor_txt = valor_txt.replace('.', '').replace(',', '.')
+        try:
+            valor = Decimal(valor_txt).quantize(Decimal('0.01'))
+        except InvalidOperation:
+            return 'Valor de referência inválido. Use, por exemplo, 1.250,00.'
+    conta_como_id = form.get('conta_como_id', type=int)
+    if conta_como_id and conta_como_id == tipo.id:
+        conta_como_id = None
+    natureza = form.get('natureza_kit') or None
+    tipo.codigo = codigo
+    tipo.classificacao = (form.get('classificacao') or '').strip() or None
+    tipo.valor_referencia = valor
+    tipo.natureza_kit = natureza if natureza in NATUREZA_KIT_LABELS else None
+    tipo.conta_como_id = conta_como_id
+    return None
 
 
 @configuracoes_bp.route('/tipos-equipamento/novo', methods=['GET', 'POST'])
@@ -519,7 +670,7 @@ def novo_tipo_equipamento():
         nome = request.form['nome'].strip()
         if TipoEquipamento.query.filter_by(nome=nome).first():
             flash(f'Já existe um tipo chamado "{nome}".', 'danger')
-            return render_template('configuracoes/tipos_equipamento/form.html', tipo=None, campos=[])
+            return _form_tipo_equipamento(None, [])
 
         tipo = TipoEquipamento(
             nome=nome,
@@ -527,11 +678,15 @@ def novo_tipo_equipamento():
             tem_patrimonio=request.form.get('tem_patrimonio') == 'on',
             icone=_normalizar_icone_fontawesome(request.form.get('icone', 'fas fa-box')),
         )
+        erro = _dados_padrao_tipo_equipamento(tipo, request.form)
+        if erro:
+            flash(erro, 'danger')
+            return _form_tipo_equipamento(None, [])
         db.session.add(tipo)
         db.session.commit()
         flash(f'Tipo "{tipo.nome}" cadastrado! Agora adicione os campos específicos.', 'success')
         return redirect(url_for('configuracoes.editar_tipo_equipamento', id=tipo.id))
-    return render_template('configuracoes/tipos_equipamento/form.html', tipo=None, campos=[])
+    return _form_tipo_equipamento(None, [])
 
 
 @configuracoes_bp.route('/tipos-equipamento/<int:id>/editar', methods=['GET', 'POST'])
@@ -548,7 +703,13 @@ def editar_tipo_equipamento(id):
         if conflito:
             flash(f'Já existe outro tipo chamado "{novo_nome}".', 'danger')
             campos = tipo.campos.order_by(CampoTipoEquipamento.ordem).all()
-            return render_template('configuracoes/tipos_equipamento/form.html', tipo=tipo, campos=campos)
+            return _form_tipo_equipamento(tipo, campos)
+        erro = _dados_padrao_tipo_equipamento(tipo, request.form)
+        if erro:
+            db.session.rollback()
+            flash(erro, 'danger')
+            campos = tipo.campos.order_by(CampoTipoEquipamento.ordem).all()
+            return _form_tipo_equipamento(tipo, campos)
 
         tipo.nome = novo_nome
         tipo.descricao = request.form.get('descricao', '').strip()
@@ -558,7 +719,7 @@ def editar_tipo_equipamento(id):
         flash('Tipo de equipamento atualizado!', 'success')
         return redirect(url_for('configuracoes.tipos_equipamento'))
     campos = tipo.campos.order_by(CampoTipoEquipamento.ordem).all()
-    return render_template('configuracoes/tipos_equipamento/form.html', tipo=tipo, campos=campos)
+    return _form_tipo_equipamento(tipo, campos)
 
 
 @configuracoes_bp.route('/tipos-equipamento/<int:tipo_id>/campo/novo', methods=['POST'])

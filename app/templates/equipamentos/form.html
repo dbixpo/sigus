@@ -72,11 +72,15 @@
                         <select name="tipo_equipamento_id" id="tipo_equipamento_id" class="form-select" required
                                 {% if tipo_bloqueado %}disabled{% endif %}>
                             <option value="">Selecione o tipo...</option>
-                            {% for t in tipos %}
+                            {% for classificacao, lista in tipos|agrupar_tipos_equipamento %}
+                            <optgroup label="{{ classificacao }}">
+                            {% for t in lista %}
                             <option value="{{ t.id }}"
                                 {% if equipamento and equipamento.tipo_equipamento_id == t.id %}selected{% endif %}>
                                 {{ t.nome }}
                             </option>
+                            {% endfor %}
+                            </optgroup>
                             {% endfor %}
                         </select>
                         {% if tipo_bloqueado %}

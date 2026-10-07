@@ -16,62 +16,85 @@
     </a>
 </div>
 
-<div class="card">
+<p class="text-muted small mb-3">
+    Os tipos com código <strong>ITEM</strong> formam o catálogo padronizado usado nos kits dos tipos de sala.
+    O valor de referência entra na estimativa de custo do relatório de aderência.
+</p>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="input-group input-group-sm" style="max-width:420px">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="search" id="busca-tipos" class="form-control" placeholder="Buscar por nome ou código...">
+        </div>
+    </div>
+</div>
+
+{% if tipos %}
+{% for classificacao, lista in grupos %}
+<div class="card mb-3 grupo-tipos">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold"><i class="fas fa-layer-group me-1 text-primary"></i>{{ classificacao }}</span>
+        <span class="badge bg-light text-dark border">{{ lista|length }}</span>
+    </div>
     <div class="card-body p-0">
-        {% if tipos %}
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
                         <th style="width:50px;">Ícone</th>
+                        <th style="width:100px">Código</th>
                         <th>Nome</th>
-                        <th>Descrição</th>
-                        <th>Patrimônio?</th>
-                        <th>Campos extras</th>
-                        <th>Equipamentos</th>
-                        <th>Status</th>
-                        <th class="text-end">Ações</th>
+                        <th class="text-end" style="width:120px">Valor ref.</th>
+                        <th class="text-center" style="width:90px">Natureza</th>
+                        <th class="text-center" style="width:90px">Patrimônio</th>
+                        <th class="text-center" style="width:100px">Equipamentos</th>
+                        <th class="text-center" style="width:70px">Kits</th>
+                        <th class="text-center" style="width:80px">Status</th>
+                        <th class="text-end" style="width:120px">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for t in tipos %}
-                    <tr>
+                    {% for t in lista %}
+                    <tr class="linha-tipo" data-busca="{{ ((t.codigo or '') ~ ' ' ~ t.nome ~ ' ' ~ (t.descricao or ''))|lower }}">
+                        <td class="text-center"><i class="{{ t.icone }} fs-5 text-primary"></i></td>
+                        <td>
+                            {% if t.codigo %}<span class="badge bg-primary-subtle text-primary-emphasis border">{{ t.codigo }}</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ t.nome }}</div>
+                            {% if t.conta_como %}
+                            <div class="small text-muted"><i class="fas fa-equals me-1"></i>conta como {{ t.conta_como.nome_com_codigo }}</div>
+                            {% elif t.descricao %}
+                            <div class="small text-muted">{{ t.descricao|truncate(70) }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end small text-nowrap">{{ t.valor_referencia|br_currency if t.valor_referencia is not none else '—' }}</td>
                         <td class="text-center">
-                            <i class="{{ t.icone }} fs-5 text-primary"></i>
+                            {% if t.natureza_kit %}
+                            <span class="badge {{ 'bg-secondary' if t.natureza_kit == 'base' else 'bg-info text-dark' }}">{{ t.natureza_kit_label }}</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
                         </td>
-                        <td class="fw-semibold">{{ t.nome }}</td>
-                        <td class="text-muted small">{{ t.descricao | truncate(50) if t.descricao else '—' }}</td>
-                        <td>
-                            <span class="badge bg-{{ 'success' if t.tem_patrimonio else 'secondary' }}">
-                                {{ 'Sim' if t.tem_patrimonio else 'Não' }}
-                            </span>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if t.tem_patrimonio else 'secondary' }}">{{ 'Sim' if t.tem_patrimonio else 'Não' }}</span>
                         </td>
-                        <td>
-                            <span class="badge bg-{{ 'primary' if t.campos.count() > 0 else 'light text-muted' }}">
-                                {{ t.campos.count() }} campo(s)
-                            </span>
+                        <td class="text-center"><span class="badge bg-light text-dark border">{{ equip_por_tipo.get(t.id, 0) }}</span></td>
+                        <td class="text-center">
+                            {% set n_kits = kits_por_tipo.get(t.id, 0) %}
+                            {% if n_kits %}<span class="badge bg-primary">{{ n_kits }}</span>{% else %}<span class="text-muted small">—</span>{% endif %}
                         </td>
-                        <td>
-                            <span class="badge bg-light text-dark">
-                                {{ t.equipamentos.filter_by(ativo=True).count() }}
-                            </span>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">{{ 'Ativo' if t.ativo else 'Inativo' }}</span>
                         </td>
-                        <td>
-                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">
-                                {{ 'Ativo' if t.ativo else 'Inativo' }}
-                            </span>
-                        </td>
-                        <td class="text-end">
+                        <td class="text-end text-nowrap">
                             <a href="{{ url_for('configuracoes.editar_tipo_equipamento', id=t.id) }}"
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-pencil-alt me-1"></i>Editar
+                               class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
                             </a>
-                            <form method="POST"
-                                  action="{{ url_for('configuracoes.alternar_status_tipo_equipamento', id=t.id) }}"
-                                  class="d-inline">
+                            <form method="POST" action="{{ url_for('configuracoes.alternar_status_tipo_equipamento', id=t.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
+                                <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
                                         data-confirm="{{ 'Desativar' if t.ativo else 'Ativar' }} o tipo {{ t.nome }}?">
                                     <i class="{{ 'fas fa-pause-circle' if t.ativo else 'fas fa-play-circle' }}"></i>
                                 </button>
@@ -82,12 +105,38 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-tags"></i>
-            <h6>Nenhum tipo de equipamento cadastrado.</h6>
-        </div>
-        {% endif %}
     </div>
 </div>
+{% endfor %}
+<div id="busca-vazia" class="text-center text-muted py-4 d-none">Nenhum tipo encontrado.</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="fas fa-tags"></i>
+        <h6>Nenhum tipo de equipamento cadastrado.</h6>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const busca = document.getElementById('busca-tipos');
+    if (!busca) return;
+    const semAcento = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const linhas = [...document.querySelectorAll('.linha-tipo')].map(tr => [tr, semAcento(tr.dataset.busca)]);
+    busca.addEventListener('input', function () {
+        const termo = semAcento(this.value.trim());
+        linhas.forEach(([tr, txt]) => tr.classList.toggle('d-none', termo && !txt.includes(termo)));
+        let algum = false;
+        document.querySelectorAll('.grupo-tipos').forEach(card => {
+            const visivel = card.querySelector('.linha-tipo:not(.d-none)');
+            card.classList.toggle('d-none', !visivel);
+            algum = algum || !!visivel;
+        });
+        document.getElementById('busca-vazia').classList.toggle('d-none', algum);
+    });
+})();
+</script>
 {% endblock %}

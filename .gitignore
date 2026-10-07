@@ -26,6 +26,9 @@ database/sigus_backup.sql
 database/sigus_backup_*.sql
 database/sigus_dump.sql
 
+# Planilhas de origem para importações (dados internos, não vão para o Git)
+migrations/dados/
+
 # Dump de produção SUEQ (Patrick) — dados e anexos não vão para o Git
 database/sueq_data.sql
 app/static/uploads/sueq/

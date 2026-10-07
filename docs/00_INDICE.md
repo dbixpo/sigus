@@ -28,6 +28,7 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [TRANSFERENCIAS_E_LOJINHA.md](TRANSFERENCIAS_E_LOJINHA.md) | Termos, aceite, Lojinha Interna |
 | [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO, editar/excluir comunicado e mural |
 | [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, ausência/férias, arrastar eventos, prazos editáveis com histórico |
+| [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md) | Ambientes padrão (AMB), catálogo de itens (ITEM), kit por tipo de sala, importação da planilha do Planejamento e relatório de aderência |
 | [FREQUENCIA_RH.md](FREQUENCIA_RH.md) | Importar a planilha de frequência, Meus apontamentos, banco de horas, horas extras, base de servidores e de-para função × CBO |
 | [INSTALACAO.md](INSTALACAO.md) | Clone, banco vazio, primeiro admin, identidade |
 | [migrations/README.md](../migrations/README.md) | Scripts idempotentes de schema |

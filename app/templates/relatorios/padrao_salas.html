@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Padrão de Salas e Equipamentos{% endblock %}
+
+{% block head %}
+<style>
+    .ps-stat { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(13,59,94,.08); padding:14px 16px; height:100%; border-left:4px solid #1A82B8; }
+    .ps-stat .ps-valor { font-size:1.5rem; font-weight:700; color:#0D3B5E; line-height:1.2; }
+    .ps-stat .ps-rotulo { font-size:.78rem; color:#718096; text-transform:uppercase; letter-spacing:.03em; }
+    .ps-stat.verde { border-left-color:#19A88B; }
+    .ps-stat.vermelho { border-left-color:#E63030; }
+    .ps-stat.amarelo { border-left-color:#F5C500; }
+    .ps-barra { height:6px; background:#e9eef3; border-radius:3px; overflow:hidden; min-width:80px; }
+    .ps-barra > div { height:100%; }
+    .ps-sala-card .card-header { background:#F4F6F9; }
+    @media print { .filter-bar, .page-header .d-flex, .nav-tabs { display:none !important; } .tab-pane { display:block !important; opacity:1 !important; } }
+</style>
+{% endblock %}
+
+{% macro barra(pct) -%}
+{% if pct is none %}<span class="text-muted small">—</span>{% else %}
+<div class="d-flex align-items-center gap-2">
+    <div class="ps-barra flex-grow-1"><div style="width:{{ pct }}%; background:{{ '#19A88B' if pct >= 80 else ('#F5C500' if pct >= 50 else '#E63030') }}"></div></div>
+    <span class="small fw-semibold" style="width:38px">{{ pct }}%</span>
+</div>
+{% endif %}
+{%- endmacro %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-clipboard-check"></i> Padrão de Salas e Equipamentos</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') %}
+        <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-toolbox me-1"></i>Ambientes e kits
+        </a>
+        {% endif %}
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="fas fa-print me-1"></i>Imprimir</button>
+        {% set qs = request.query_string.decode() %}
+        <a href="{{ url_for('relatorios.exportar_padrao_salas') }}{% if qs %}?{{ qs }}{% endif %}" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-file-excel me-1"></i>Exportar Excel
+        </a>
+    </div>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" action="{{ url_for('relatorios.padrao_salas') }}" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Abrangência</label>
+            <select name="escopo" class="form-select form-select-sm" data-singleselect>
+                <option value="padrao" {{ 'selected' if filtro_escopo == 'padrao' }}>UBS do padrão</option>
+                <option value="todas" {{ 'selected' if filtro_escopo == 'todas' }}>Todas as unidades</option>
+            </select>
+        </div>
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-3">{{ filtro_multiselect('Ambiente padrão', 'ambiente', ambientes, filtro_ambientes, 'Todos os ambientes') }}</div>
+        <div class="col-md-2 d-flex gap-1 align-items-end">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="fas fa-search"></i></button>
+            <a href="{{ url_for('relatorios.padrao_salas') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg">
+        <div class="ps-stat">
+            <div class="ps-rotulo">Salas avaliadas</div>
+            <div class="ps-valor">{{ totais.avaliadas }}</div>
+            <div class="small text-muted">de {{ totais.salas }} sala(s) ativas</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="ps-stat verde">
+            <div class="ps-rotulo">Aderência ao padrão</div>
+            <div class="ps-valor">{{ totais.pct ~ '%' if totais.pct is not none else '—' }}</div>
+            <div class="small text-muted">{{ totais.atendido }} de {{ totais.esperado }} itens</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="ps-stat vermelho">
+            <div class="ps-rotulo">Itens faltando</div>
+            <div class="ps-valor">{{ totais.falta }}</div>
+            <div class="small text-muted">{{ dados['itens']|length }} item(ns) diferentes</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg">
+        <div class="ps-stat">
+            <div class="ps-rotulo">Custo estimado</div>
+            <div class="ps-valor text-nowrap" style="font-size:1.15rem">{{ totais.custo|br_currency }}</div>
+            <div class="small text-muted">pelo valor de referência</div>
+        </div>
+    </div>
+    <div class="col-12 col-lg">
+        <div class="ps-stat amarelo">
+            <div class="ps-rotulo">Salas fora do padrão</div>
+            <div class="ps-valor">{{ totais.sem_padrao }}</div>
+            <div class="small text-muted">{% if totais.sem_kit %}+ {{ totais.sem_kit }} em ambiente sem kit{% else %}a reclassificar{% endif %}</div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-light alert-permanent border small py-2 mb-3">
+    <i class="fas fa-info-circle text-primary me-1"></i>
+    {% if filtro_escopo == 'padrao' and not filtro_unidades %}Mostrando as UBS da planilha do padrão (unidades com código de imóvel).{% endif %}
+    A conta compara os equipamentos ativos de cada sala (exceto baixados) com o kit do ambiente padrão dela.
+    Itens que ainda não são inventariados no SIGUS (mobiliário, por exemplo) aparecem como faltando até serem cadastrados.
+</div>
+
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-unidades">
+        <i class="fas fa-hospital me-1"></i>Por unidade <span class="badge bg-primary ms-1">{{ dados['unidades']|length }}</span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-itens">
+        <i class="fas fa-shopping-cart me-1"></i>Necessidade por item <span class="badge bg-danger ms-1">{{ dados['itens']|length }}</span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas">
+        <i class="fas fa-door-open me-1"></i>Sala a sala</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reclassificar">
+        <i class="fas fa-random me-1"></i>A reclassificar <span class="badge bg-warning text-dark ms-1">{{ totais.sem_padrao + totais.sem_kit }}</span></button></li>
+</ul>
+
+<div class="tab-content card border-top-0 rounded-top-0 mb-4">
+    {# ── Por unidade ── #}
+    <div class="tab-pane fade show active p-0" id="tab-unidades">
+        {% if dados['unidades'] %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Unidade</th>
+                        <th class="text-center">Salas</th>
+                        <th class="text-center">Avaliadas</th>
+                        <th class="text-center">Fora do padrão</th>
+                        <th style="width:190px">Aderência</th>
+                        <th class="text-center">Faltando</th>
+                        <th class="text-center">Sobrando</th>
+                        <th class="text-end">Custo estimado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in dados['unidades'] %}
+                    <tr>
+                        <td>
+                            <div class="fw-semibold small">{{ u.unidade.nome }}</div>
+                            <div class="text-muted" style="font-size:.75rem">
+                                {% if u.unidade.numero_cnes %}CNES {{ u.unidade.numero_cnes }}{% endif %}
+                                {% if u.unidade.codigo_imovel %} · {{ u.unidade.codigo_imovel }}{% endif %}
+                            </div>
+                        </td>
+                        <td class="text-center small">{{ u.salas }}</td>
+                        <td class="text-center small">{{ u.avaliadas }}</td>
+                        <td class="text-center small">{% if u.sem_padrao %}<span class="badge bg-warning text-dark">{{ u.sem_padrao }}</span>{% else %}—{% endif %}</td>
+                        <td>{{ barra(u.pct) }}</td>
+                        <td class="text-center small {{ 'text-danger fw-semibold' if u.falta }}">{{ u.falta }}</td>
+                        <td class="text-center small text-muted">{{ u.sobra }}</td>
+                        <td class="text-end small text-nowrap">{{ u.custo|br_currency }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('relatorios.padrao_salas', unidade=u.unidade.id) }}" class="btn btn-sm btn-outline-primary" title="Ver sala a sala">
+                                <i class="fas fa-search"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-hospital"></i><h6>Nenhuma unidade com salas neste filtro.</h6></div>
+        {% endif %}
+    </div>
+
+    {# ── Necessidade por item ── #}
+    <div class="tab-pane fade p-0" id="tab-itens">
+        {% if dados['itens'] %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Item</th>
+                        <th>Classificação</th>
+                        <th class="text-center">Natureza</th>
+                        <th class="text-center">Faltando</th>
+                        <th class="text-center">Salas</th>
+                        <th class="text-center">Unidades</th>
+                        <th class="text-end">Valor ref.</th>
+                        <th class="text-end">Custo estimado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for it in dados['itens'] %}
+                    {% set te = it.tipo_equipamento %}
+                    <tr>
+                        <td class="small text-muted text-nowrap">{{ te.codigo or '—' }}</td>
+                        <td class="small fw-semibold">{{ te.nome }}</td>
+                        <td class="small text-muted">{{ te.classificacao or '—' }}</td>
+                        <td class="text-center small">{{ te.natureza_kit_label or '—' }}</td>
+                        <td class="text-center small fw-semibold text-danger">{{ it.falta }}</td>
+                        <td class="text-center small">{{ it.salas }}</td>
+                        <td class="text-center small">{{ it.unidades }}</td>
+                        <td class="text-end small text-nowrap">{{ te.valor_referencia|br_currency if te.valor_referencia is not none else '—' }}</td>
+                        <td class="text-end small text-nowrap fw-semibold">{{ it.custo|br_currency }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4" class="small">Total</th>
+                        <th class="text-center small text-danger">{{ totais.falta }}</th>
+                        <th colspan="3"></th>
+                        <th class="text-end small text-nowrap">{{ totais.custo|br_currency }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-check-circle text-success"></i><h6>Nenhum item faltando neste filtro.</h6></div>
+        {% endif %}
+    </div>
+
+    {# ── Sala a sala ── #}
+    <div class="tab-pane fade p-3" id="tab-salas">
+        {% if not mostrar_sala_a_sala %}
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-filter fs-3 d-block mb-2"></i>
+            Selecione até {{ max_sala_a_sala }} unidades no filtro para ver o detalhe sala a sala.
+            <div class="small mt-1">O Excel exportado sempre traz todas as salas do filtro.</div>
+        </div>
+        {% elif not dados['avaliadas'] %}
+        <div class="text-center text-muted py-4">Nenhuma sala em ambiente padrão com kit neste filtro.</div>
+        {% else %}
+        {% set ns = namespace(unidade='') %}
+        {% for av in dados['avaliadas'] %}
+        {% set s = av.sala %}
+        {% if s.unidade.nome != ns.unidade %}
+        {% set ns.unidade = s.unidade.nome %}
+        <h6 class="fw-bold mt-3 mb-2" style="color:#0D3B5E"><i class="fas fa-hospital me-1"></i>{{ s.unidade.nome }}</h6>
+        {% endif %}
+        <div class="card ps-sala-card mb-2">
+            <div class="card-header py-2 d-flex flex-wrap align-items-center gap-3">
+                <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="fw-semibold text-decoration-none">{{ s.nome }}</a>
+                <span class="small text-muted">{{ s.tipo_sala.nome_com_codigo }}</span>
+                <div class="ms-auto d-flex align-items-center gap-3" style="min-width:260px">
+                    <div class="flex-grow-1">{{ barra(av.pct) }}</div>
+                    <span class="small {{ 'text-danger' if av.falta else 'text-success' }}">{{ av.falta }} faltando</span>
+                    <span class="small text-nowrap">{{ av.custo|br_currency }}</span>
+                </div>
+            </div>
+            {% set faltas = av.linhas|selectattr('falta')|list %}
+            {% if faltas %}
+            <div class="card-body py-2 small">
+                {% for ln in faltas %}
+                <span class="badge bg-light text-dark border me-1 mb-1 fw-normal">
+                    {{ ln.tipo_equipamento.nome }} <strong class="text-danger">×{{ ln.falta }}</strong>
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    {# ── A reclassificar ── #}
+    <div class="tab-pane fade p-0" id="tab-reclassificar">
+        {% if dados['sem_padrao'] or dados['sem_kit'] %}
+        {% if tipos_sem_padrao %}
+        <div class="p-3 border-bottom">
+            <div class="small fw-semibold mb-2">Tipos atuais fora do padrão de ambientes</div>
+            {% for nome, n in tipos_sem_padrao %}
+            <span class="badge bg-warning-subtle text-dark border me-1 mb-1 fw-normal">{{ nome }} <strong>{{ n }}</strong></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="table-responsive" style="max-height:520px">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light" style="position:sticky; top:0">
+                    <tr><th>Unidade</th><th>Sala</th><th>Tipo atual</th><th>Situação</th><th></th></tr>
+                </thead>
+                <tbody>
+                    {% for s in dados['sem_padrao'] %}
+                    <tr>
+                        <td class="small text-muted">{{ s.unidade.nome }}</td>
+                        <td class="small fw-semibold">{{ s.nome }}</td>
+                        <td class="small">{{ s.tipo_label }}</td>
+                        <td><span class="badge bg-warning text-dark">Reclassificar</span></td>
+                        <td class="text-end">
+                            {% if current_user.pode('editar_sala') %}
+                            <a href="{{ url_for('salas.editar', id=s.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar sala"><i class="fas fa-pencil-alt"></i></a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% for s in dados['sem_kit'] %}
+                    <tr>
+                        <td class="small text-muted">{{ s.unidade.nome }}</td>
+                        <td class="small fw-semibold">{{ s.nome }}</td>
+                        <td class="small">{{ s.tipo_sala.nome_com_codigo }}</td>
+                        <td><span class="badge bg-secondary">Ambiente sem kit</span></td>
+                        <td></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-check-circle text-success"></i><h6>Todas as salas estão em ambientes padrão.</h6></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

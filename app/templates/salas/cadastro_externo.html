@@ -170,8 +170,12 @@ body { background: #f0f4f8; font-family: "Segoe UI", Arial, sans-serif; font-siz
             <label class="form-label">Tipo de Sala</label>
             <select name="tipo_sala_id" class="form-select" required>
               <option value="">- Selecione o tipo -</option>
-              {% for t in tipos %}
+              {% for grupo, lista in tipos|agrupar_tipos_sala %}
+              <optgroup label="{{ grupo }}">
+              {% for t in lista %}
               <option value="{{ t.id }}" {{ 'selected' if sala_edicao and sala_edicao.tipo_sala_id == t.id else '' }}>{{ t.nome }}</option>
+              {% endfor %}
+              </optgroup>
               {% endfor %}
             </select>
           </div>

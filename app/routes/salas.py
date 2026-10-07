@@ -181,8 +181,9 @@ def detalhe(id):
             Chamado.equipamento_id.in_(ids_equip) if ids_equip else db.false()
         )
     ).order_by(Chamado.criado_em.desc()).limit(20).all()
+    from app.services.padrao_salas import aderencia_sala
     return render_template('salas/detalhe.html', sala=sala, equipamentos=equipamentos,
-                           chamados_sala=chamados_sala)
+                           chamados_sala=chamados_sala, aderencia=aderencia_sala(sala))
 
 
 @salas_bp.route('/<int:id>/editar', methods=['GET', 'POST'])

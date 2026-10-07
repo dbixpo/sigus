@@ -44,7 +44,9 @@
                         {% if tipos %}
                         <select name="tipo_sala_id" class="form-select" id="tipo-sala-select" required>
                             <option value="">— Selecione o tipo —</option>
-                            {% for t in tipos %}
+                            {% for grupo, lista in tipos|agrupar_tipos_sala %}
+                            <optgroup label="{{ grupo }}">
+                            {% for t in lista %}
                             <option value="{{ t.id }}"
                                     data-icone="{{ t.icone }}"
                                     {% if sala and sala.tipo_sala_id == t.id %}selected
@@ -52,6 +54,8 @@
                                     {% endif %}>
                                 {{ t.nome }}
                             </option>
+                            {% endfor %}
+                            </optgroup>
                             {% endfor %}
                         </select>
                         <div class="form-text">

@@ -28,7 +28,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `frequencia` | `/rh` | `app/routes/frequencia.py` | Importar planilha de frequência, Meus apontamentos, apontamentos da unidade, base de servidores, locais do RH. Ver [FREQUENCIA_RH.md](FREQUENCIA_RH.md) |
 | `solicitacoes` | `/solicitar-vinculo-profissional` | `app/routes/solicitacoes.py` | Cadastro público de vínculo |
 | `usuarios` | `/usuarios` | `app/routes/usuarios.py` | Usuários (quem tem permissão) |
-| `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos, marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
+| `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos (sala com kit padrão, equipamento com catálogo ITEM), marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
 | `links` | `/links` | `app/routes/links.py` | Links úteis: `/links` é interno para quem está logado e público para quem não está; `/links/publico` é sempre público; administração; QR code por link |
 | `notificacoes` | `/notificacoes` | `app/routes/notificacoes.py` | Sino (JSON) |
 
@@ -72,6 +72,7 @@ Pasta `app/models/`. Os mais centrais:
 | Usuário, perfil | `usuario.py` |
 | Unidade, vínculo | `unidade.py` |
 | Sala | `sala.py` |
+| Tipo de sala, kit padrão | `tipo_sala.py` (`TipoSala`, `KitPadraoSala`); conta em `app/services/padrao_salas.py` |
 | Equipamento | `equipamento.py` |
 | Chamado | `chamado.py` |
 | Transferência / lojinha | `transferencia.py` |

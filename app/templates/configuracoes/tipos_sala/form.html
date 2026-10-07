@@ -14,8 +14,8 @@
     <h1><i class="fas fa-door-open"></i> {{ 'Editar' if tipo else 'Novo' }} Tipo de Sala</h1>
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-12 col-lg-6">
+<div class="row g-3 {{ '' if tipo else 'justify-content-center' }}">
+    <div class="col-12 {{ 'col-xl-5' if tipo else 'col-lg-6' }}">
         <div class="card">
             <div class="card-body">
                 <form method="POST">
@@ -26,6 +26,32 @@
                         <input type="text" name="nome" class="form-control" required
                                value="{{ tipo.nome if tipo else '' }}"
                                placeholder="Ex.: Consultório, Sala de Enfermagem...">
+                    </div>
+
+                    <div class="row g-2 mb-1">
+                        <div class="col-5">
+                            <label class="form-label fw-semibold">Código do ambiente</label>
+                            <input type="text" name="codigo" class="form-control text-uppercase" maxlength="20"
+                                   value="{{ tipo.codigo or '' if tipo else '' }}" placeholder="AMB-00">
+                        </div>
+                        <div class="col-4">
+                            <label class="form-label fw-semibold">Ordem</label>
+                            <input type="number" name="ordem" class="form-control" min="0"
+                                   value="{{ tipo.ordem if tipo and tipo.ordem is not none else '' }}">
+                        </div>
+                    </div>
+                    <div class="form-text mb-3">
+                        Preencha o código para incluir o tipo no padrão de ambientes (e montar o kit).
+                        Deixe vazio para tipos fora do padrão.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Grupo funcional</label>
+                        <input type="text" name="grupo" class="form-control" list="grupos-existentes" maxlength="120"
+                               value="{{ tipo.grupo or '' if tipo else '' }}" placeholder="Ex.: Assistência">
+                        <datalist id="grupos-existentes">
+                            {% for g in grupos_existentes %}<option value="{{ g }}">{% endfor %}
+                        </datalist>
                     </div>
 
                     <div class="mb-3">
@@ -45,14 +71,13 @@
                         </div>
                         <div class="form-text">
                             Digite o nome da classe Font Awesome. Ex.:
-                            <code>fas fa-door-open</code>, <code>fas fa-user-heart</code>,
-                            <code>fas fa-capsules</code>, <code>fas fa-archive</code>
+                            <code>fas fa-door-open</code>, <code>fas fa-capsules</code>, <code>fas fa-archive</code>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Descrição</label>
-                        <textarea name="descricao" class="form-control" rows="2"
+                        <textarea name="descricao" class="form-control" rows="3"
                                   placeholder="Descreva brevemente este tipo de sala...">{{ tipo.descricao or '' if tipo else '' }}</textarea>
                     </div>
 
@@ -65,8 +90,7 @@
                         <div class="form-text">Tipos inativos não aparecem no formulário de nova sala.</div>
                     </div>
 
-                    <!-- Preview -->
-                    <div class="alert alert-light border mb-4 py-2">
+                    <div class="alert alert-light alert-permanent border mb-4 py-2">
                         <div class="d-flex align-items-center gap-3">
                             <i id="preview-icon" class="{{ tipo.icone if tipo else 'fas fa-door-open' }} fs-3 text-primary"></i>
                             <div>
@@ -79,39 +103,32 @@
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-outline-secondary">
-                            Cancelar
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check-lg me-1"></i>Salvar
-                        </button>
+                        <a href="{{ url_for('configuracoes.tipos_sala') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check me-1"></i>Salvar</button>
                     </div>
                 </form>
             </div>
         </div>
 
         {% if tipo %}
+        {% set total_salas = tipo.salas.filter_by(ativo=True).count() %}
         <div class="card mt-3">
             <div class="card-header text-muted small">
                 <i class="fas fa-door-open me-1"></i>
                 Salas usando este tipo
-                <span class="badge bg-primary ms-1">{{ tipo.salas.count() }}</span>
+                <span class="badge bg-primary ms-1">{{ total_salas }}</span>
             </div>
             {% set salas_uso = tipo.salas.filter_by(ativo=True).limit(8).all() %}
             {% if salas_uso %}
             <ul class="list-group list-group-flush">
                 {% for s in salas_uso %}
                 <li class="list-group-item py-1 small">
-                    <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="text-decoration-none">
-                        {{ s.nome }}
-                    </a>
+                    <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="text-decoration-none">{{ s.nome }}</a>
                     <span class="text-muted">— {{ s.unidade.nome | truncate(30) }}</span>
                 </li>
                 {% endfor %}
-                {% if tipo.salas.filter_by(ativo=True).count() > 8 %}
-                <li class="list-group-item py-1 small text-muted">
-                    ... e mais {{ tipo.salas.filter_by(ativo=True).count() - 8 }} sala(s)
-                </li>
+                {% if total_salas > 8 %}
+                <li class="list-group-item py-1 small text-muted">... e mais {{ total_salas - 8 }} sala(s)</li>
                 {% endif %}
             </ul>
             {% else %}
@@ -120,6 +137,124 @@
         </div>
         {% endif %}
     </div>
+
+    {% if tipo %}
+    <div class="col-12 col-xl-7">
+        <div class="card" id="kit">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span class="fw-semibold"><i class="fas fa-toolbox me-1 text-primary"></i>Kit padrão de equipamentos</span>
+                {% if kit %}
+                <span class="small text-muted">
+                    {{ kit|length }} item(ns) · {{ kit|sum(attribute='quantidade') }} unidade(s)
+                    {% if total_kit %} · <strong>{{ total_kit|br_currency }}</strong>{% endif %}
+                </span>
+                {% endif %}
+            </div>
+            {% if not tipo.codigo %}
+            <div class="card-body">
+                <div class="alert alert-warning alert-permanent mb-0 small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Este tipo está fora do padrão de ambientes. Informe um <strong>código</strong> (ex.: AMB-50) e salve
+                    para montar o kit esperado.
+                </div>
+            </div>
+            {% else %}
+            <div class="card-body border-bottom">
+                <form method="POST" action="{{ url_for('configuracoes.adicionar_item_kit', id=tipo.id) }}" class="row g-2 align-items-end">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold mb-1">Item</label>
+                        <select name="tipo_equipamento_id" id="kit-item" required placeholder="Buscar item do catálogo...">
+                            <option value=""></option>
+                            {% for classificacao, lista in tipos_equip_agrupados %}
+                            <optgroup label="{{ classificacao }}">
+                                {% for te in lista %}
+                                <option value="{{ te.id }}">{{ te.nome_com_codigo }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <label class="form-label small fw-semibold mb-1">Qtd.</label>
+                        <input type="number" name="quantidade" class="form-control form-control-sm" min="1" value="1" required>
+                    </div>
+                    <div class="col-8 col-md-4">
+                        <label class="form-label small fw-semibold mb-1">Observação</label>
+                        <input type="text" name="observacao" class="form-control form-control-sm" maxlength="300">
+                    </div>
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Adicionar ao kit</button>
+                    </div>
+                </form>
+            </div>
+            {% if kit %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle small">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-center">Natureza</th>
+                            <th class="text-end">Valor ref.</th>
+                            <th class="text-center" style="width:150px">Quantidade</th>
+                            <th class="text-end" style="width:50px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for k in kit %}
+                        {% set te = k.tipo_equipamento %}
+                        <tr>
+                            <td>
+                                {% if te.codigo %}<span class="text-muted">{{ te.codigo }}</span> · {% endif %}{{ te.nome }}
+                                {% if k.observacao %}<div class="text-muted" style="font-size:.75rem">{{ k.observacao }}</div>{% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if te.natureza_kit %}
+                                <span class="badge {{ 'bg-secondary' if te.natureza_kit == 'base' else 'bg-info text-dark' }}"
+                                      title="{{ 'Pertence à sala física' if te.natureza_kit == 'base' else 'Pertence à função/serviço' }}">
+                                    {{ te.natureza_kit_label }}
+                                </span>
+                                {% else %}—{% endif %}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                {{ te.valor_referencia|br_currency }}
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('configuracoes.atualizar_item_kit', kit_id=k.id) }}" class="d-flex gap-1">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="observacao" value="{{ k.observacao or '' }}">
+                                    <input type="number" name="quantidade" value="{{ k.quantidade }}" min="1"
+                                           class="form-control form-control-sm text-center kit-qtd" style="width:70px">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary d-none kit-salvar" title="Salvar quantidade">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ url_for('configuracoes.remover_item_kit', kit_id=k.id) }}"
+                                      onsubmit="return confirm('Remover {{ te.nome|e }} do kit?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover do kit">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body text-muted small">Nenhum item no kit ainda. Adicione os equipamentos esperados em uma sala deste tipo.</div>
+            {% endif %}
+            {% endif %}
+        </div>
+        <p class="text-muted small mt-2 mb-0">
+            <span class="badge bg-secondary">Base</span> pertence à sala física e conta uma vez por sala.
+            <span class="badge bg-info text-dark">Função</span> pertence ao serviço prestado.
+        </p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -144,7 +279,6 @@
     const nomeInput    = document.querySelector('input[name="nome"]');
     const previewNome  = document.getElementById('preview-nome');
 
-    // Garante preview correto mesmo com valores antigos (bi-*)
     iconeInput.value = normalizarIcone(iconeInput.value || 'fas fa-door-open') || 'fas fa-door-open';
     previewIcon.className  = iconeInput.value + ' fs-3 text-primary';
     iconePreview.className = iconeInput.value + ' fs-5';
@@ -161,6 +295,17 @@
 
     nomeInput.addEventListener('input', function () {
         previewNome.textContent = this.value.trim() || 'Nome do tipo';
+    });
+
+    const kitItem = document.getElementById('kit-item');
+    if (kitItem && window.TomSelect) {
+        new TomSelect(kitItem, { maxOptions: 500, allowEmptyOption: false });
+    }
+    document.querySelectorAll('.kit-qtd').forEach(function (input) {
+        const original = input.value;
+        input.addEventListener('input', function () {
+            input.closest('form').querySelector('.kit-salvar').classList.toggle('d-none', input.value === original);
+        });
     });
 </script>
 {% endblock %}

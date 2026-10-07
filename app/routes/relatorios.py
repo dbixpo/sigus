@@ -586,6 +586,137 @@ def exportar_salas(formato):
     return _xlsx_response(wb, nome)
 
 
+# ── RELATÓRIO: Padrão de salas (aderência ao kit) ────────────────────────────
+
+_PADRAO_MAX_UNIDADES_SALA_A_SALA = 5
+
+
+def _filtros_padrao_salas():
+    filtro_unidades = _getlist('unidade')
+    permitidas = _ids_unidades_permitidas()
+    if permitidas is None:
+        unidade_ids = filtro_unidades or None
+    else:
+        unidade_ids = [u for u in filtro_unidades if u in permitidas] if filtro_unidades else permitidas
+    return {
+        'unidade_ids': unidade_ids,
+        'filtro_unidades': filtro_unidades,
+        'filtro_tipo_unidades': _getlist('tipo_unidade'),
+        'filtro_ambientes': _getlist('ambiente'),
+        'escopo': 'todas' if request.args.get('escopo') == 'todas' else 'padrao',
+        'permitidas': permitidas,
+    }
+
+
+def _calcular_padrao_salas(f):
+    from app.services.padrao_salas import calcular_aderencia
+    return calcular_aderencia(f['unidade_ids'], f['filtro_tipo_unidades'], f['filtro_ambientes'],
+                              so_unidades_do_padrao=f['escopo'] == 'padrao' and not f['filtro_unidades'])
+
+
+@relatorios_bp.route('/padrao-salas')
+@login_required
+def padrao_salas():
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    f = _filtros_padrao_salas()
+    dados = _calcular_padrao_salas(f)
+
+    unidades_q = Unidade.query.filter_by(status='ativa')
+    if f['permitidas'] is not None:
+        unidades_q = unidades_q.filter(Unidade.id.in_(f['permitidas'] or [0]))
+    unidades = unidades_q.order_by(Unidade.nome).all()
+    tipos_unidade = TipoUnidade.query.filter_by(ativo=True).order_by(TipoUnidade.nome).all()
+    ambientes = TipoSala.query.filter(TipoSala.codigo.isnot(None)).order_by(TipoSala.ordem, TipoSala.codigo).all()
+
+    n_unidades = len(dados['unidades'])
+    mostrar_sala_a_sala = 0 < n_unidades <= _PADRAO_MAX_UNIDADES_SALA_A_SALA
+
+    tipos_sem_padrao = {}
+    for s in dados['sem_padrao']:
+        nome = s.tipo_label
+        tipos_sem_padrao[nome] = tipos_sem_padrao.get(nome, 0) + 1
+    tipos_sem_padrao = sorted(tipos_sem_padrao.items(), key=lambda kv: (-kv[1], kv[0]))
+
+    return render_template('relatorios/padrao_salas.html',
+                           dados=dados, totais=dados['totais'],
+                           unidades=unidades, tipos_unidade=tipos_unidade,
+                           ambientes={a.id: a.nome_com_codigo for a in ambientes},
+                           mostrar_sala_a_sala=mostrar_sala_a_sala,
+                           max_sala_a_sala=_PADRAO_MAX_UNIDADES_SALA_A_SALA,
+                           tipos_sem_padrao=tipos_sem_padrao,
+                           filtro_unidades=f['filtro_unidades'],
+                           filtro_tipo_unidades=f['filtro_tipo_unidades'],
+                           filtro_ambientes=f['filtro_ambientes'],
+                           filtro_escopo=f['escopo'])
+
+
+@relatorios_bp.route('/padrao-salas/exportar')
+@login_required
+def exportar_padrao_salas():
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    f = _filtros_padrao_salas()
+    dados = _calcular_padrao_salas(f)
+    moeda = '#,##0.00'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Resumo por unidade'
+    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Cód. imóvel', 'Salas', 'Salas avaliadas',
+                              'Salas sem ambiente padrão', 'Ambientes sem kit', 'Itens esperados',
+                              'Itens atendidos', 'Aderência (%)', 'Itens faltando', 'Itens sobrando',
+                              'Custo estimado (R$)'])
+    for u in dados['unidades']:
+        un = u['unidade']
+        ws.append([un.nome, un.numero_cnes, un.codigo_imovel, u['salas'], u['avaliadas'], u['sem_padrao'],
+                   u['sem_kit'], u['esperado'], u['atendido'], u['pct'], u['falta'], u['sobra'], float(u['custo'])])
+        ws.cell(ws.max_row, 13).number_format = moeda
+    _autofit(ws)
+    ws.freeze_panes = 'B2'
+
+    ws = wb.create_sheet('Necessidade por item')
+    _estilizar_cabecalho(ws, ['Código', 'Item', 'Classificação', 'Natureza', 'Quantidade faltando',
+                              'Salas', 'Unidades', 'Valor ref. (R$)', 'Custo estimado (R$)'])
+    for it in dados['itens']:
+        te = it['tipo_equipamento']
+        ws.append([te.codigo, te.nome, te.classificacao, te.natureza_kit_label, it['falta'], it['salas'],
+                   it['unidades'], float(te.valor_referencia) if te.valor_referencia is not None else None,
+                   float(it['custo'])])
+        ws.cell(ws.max_row, 8).number_format = moeda
+        ws.cell(ws.max_row, 9).number_format = moeda
+    _autofit(ws)
+    ws.freeze_panes = 'C2'
+
+    ws = wb.create_sheet('Sala a sala')
+    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Cód. imóvel', 'Sala', 'Ambiente', 'Cód. item', 'Item',
+                              'Natureza', 'Esperado', 'Encontrado', 'Falta', 'Sobra', 'Custo da falta (R$)'])
+    for av in dados['avaliadas']:
+        s = av['sala']
+        un = s.unidade
+        for ln in av['linhas']:
+            te = ln['tipo_equipamento']
+            ws.append([un.nome, un.numero_cnes, un.codigo_imovel, s.nome, s.tipo_sala.nome_com_codigo,
+                       te.codigo, te.nome, te.natureza_kit_label, ln['esperado'], ln['encontrado'],
+                       ln['falta'], ln['sobra'], float(ln['custo'])])
+            ws.cell(ws.max_row, 13).number_format = moeda
+    _autofit(ws)
+    ws.freeze_panes = 'E2'
+    ws.auto_filter.ref = ws.dimensions
+
+    ws = wb.create_sheet('Salas sem ambiente padrão')
+    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Sala', 'Tipo atual', 'Situação'])
+    for s in dados['sem_padrao']:
+        ws.append([s.unidade.nome, s.unidade.numero_cnes, s.nome, s.tipo_label, 'Reclassificar em um ambiente AMB'])
+    for s in dados['sem_kit']:
+        ws.append([s.unidade.nome, s.unidade.numero_cnes, s.nome, s.tipo_sala.nome_com_codigo, 'Ambiente sem kit definido'])
+    _autofit(ws)
+    ws.freeze_panes = 'A2'
+    ws.auto_filter.ref = ws.dimensions
+
+    return _xlsx_response(wb, f'padrao_salas_{datetime.now().strftime("%Y%m%d_%H%M")}')
+
+
 # ── RELATÓRIO: Mapa da Saúde ─────────────────────────────────────────────────
 
 _SOROCABA_CENTER = (-23.5012, -47.4521)  # Aproximação (centro da cidade)

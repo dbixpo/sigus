@@ -299,6 +299,16 @@ def registrar_filtros(app):
             return f'{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}'
         return value  # retorna original se não bater o padrão
 
+    @app.template_filter('agrupar_tipos_sala')
+    def agrupar_tipos_sala_filter(tipos):
+        from app.services.padrao_salas import agrupar_tipos_sala
+        return agrupar_tipos_sala(tipos)
+
+    @app.template_filter('agrupar_tipos_equipamento')
+    def agrupar_tipos_equipamento_filter(tipos):
+        from app.services.padrao_salas import agrupar_tipos_equipamento
+        return agrupar_tipos_equipamento(tipos)
+
     @app.template_filter('br_currency')
     def br_currency(value):
         if value is None:

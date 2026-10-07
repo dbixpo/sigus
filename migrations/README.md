@@ -48,6 +48,8 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 **Patrimônio**
 
 - `add_capacidade_maxima_salas.py`
+- `add_padrao_salas.py` — código/grupo nos tipos de sala, catálogo nos tipos de equipamento, `kit_padrao_sala`, código do imóvel da unidade
+- `importar_padrao_salas.py` — carrega a planilha do Planejamento (`dados/padrao_salas_ubs.xlsx`, fora do Git, ou `--planilha`); simula sem `--aplicar`. Ver [docs/PADRAO_SALAS_EQUIPAMENTOS.md](../docs/PADRAO_SALAS_EQUIPAMENTOS.md)
 
 **Identidade da instalação**
 

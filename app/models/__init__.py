@@ -2,7 +2,7 @@ from app.models.usuario import Usuario
 from app.models.tipo_unidade import TipoUnidade
 from app.models.predio import Predio
 from app.models.unidade import Unidade, UsuarioUnidade
-from app.models.tipo_sala import TipoSala
+from app.models.tipo_sala import TipoSala, KitPadraoSala
 from app.models.sala import Sala
 from app.models.equipamento import (
     TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,

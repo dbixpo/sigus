@@ -39,6 +39,8 @@ Regras:
 
 Catálogo e avisos: [migrations/README.md](../migrations/README.md).
 
+Importação de dados por planilha: `migrations/importar_padrao_salas.py` lê `migrations/dados/padrao_salas_ubs.xlsx` (fora do Git) ou o arquivo de `--planilha`, simula por padrão e só grava com `--aplicar`. Ver [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md).
+
 ## Models
 
 SQLAlchemy em `app/models/`. Nova tabela = model + migration que cria a tabela. Em produção **já povoada**, o `create_all` **não** substitui a migration da entrega. Em **banco vazio** (outro município), o bootstrap chama `create_all` e em seguida os seeds — [INSTALACAO.md](INSTALACAO.md).

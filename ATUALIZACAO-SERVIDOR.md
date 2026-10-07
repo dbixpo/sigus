@@ -14,7 +14,32 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
 
-## Entrega mais recente (Segurança do Paciente no fluxo do Núcleo, acesso público e QR code)
+## Entrega mais recente (padrão de salas e equipamentos do Planejamento)
+
+Depois do `git pull`, com backup do banco feito antes:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_padrao_salas.py
+.\venv\Scripts\python.exe migrations\importar_padrao_salas.py
+.\venv\Scripts\python.exe migrations\importar_padrao_salas.py --aplicar
+```
+
+A planilha não está no Git: coloque-a em `migrations\dados\padrao_salas_ubs.xlsx` ou passe `--planilha C:\caminho\arquivo.xlsx`. A primeira chamada da importação só simula e mostra o que vai mudar; a segunda grava. Ambas são idempotentes. Reinicie só o SIGUS (seção 4).
+
+O que mudou:
+
+- Os tipos de sala ganharam o código de ambiente padrão (`AMB-xx`) e o grupo da planilha do Planejamento. Tipos equivalentes foram renomeados para o nome do padrão; os genéricos (ex.: "Consultório") ficam sem código, para reclassificar.
+- Os tipos de equipamento ganharam o catálogo de itens (`ITEM-xxx`, classificação, valor de referência, Base/Função). Foram criados os itens que não existiam (mobiliário, equipamentos médicos).
+- Cada tipo de sala tem um **kit padrão** editável em Configurações → Tipos de Sala.
+- Relatório novo **Padrão de Salas e Equipamentos** (`/sigus/relatorios/padrao-salas`) e aba **Padrão do ambiente** no detalhe da sala.
+
+Detalhe: [docs/PADRAO_SALAS_EQUIPAMENTOS.md](docs/PADRAO_SALAS_EQUIPAMENTOS.md).
+
+Conferência: abrir `/sigus/configuracoes/tipos-sala` (grupos AMB) e `/sigus/relatorios/padrao-salas` (33 UBS do padrão).
+
+---
+
+## Entrega anterior (Segurança do Paciente no fluxo do Núcleo, acesso público e QR code)
 
 Depois do `git pull`:
 

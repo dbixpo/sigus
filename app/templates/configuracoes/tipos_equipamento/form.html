@@ -74,6 +74,61 @@
                     </div>
                 </div>
 
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="fw-semibold small text-uppercase text-muted mb-2">
+                        <i class="fas fa-toolbox me-1"></i>Catálogo do padrão de salas
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-5">
+                            <label class="form-label small mb-1">Código do item</label>
+                            <input type="text" name="codigo" class="form-control form-control-sm text-uppercase" maxlength="20"
+                                   value="{{ tipo.codigo or '' if tipo else '' }}" placeholder="ITEM-000">
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label small mb-1">Valor de referência (R$)</label>
+                            <input type="text" name="valor_referencia" class="form-control form-control-sm" inputmode="decimal"
+                                   value="{{ ('%.2f'|format(tipo.valor_referencia)).replace('.', ',') if tipo and tipo.valor_referencia is not none else '' }}"
+                                   placeholder="0,00">
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label small mb-1">Classificação</label>
+                            <input type="text" name="classificacao" class="form-control form-control-sm" list="classificacoes"
+                                   maxlength="120" value="{{ tipo.classificacao or '' if tipo else '' }}"
+                                   placeholder="Ex.: Equipamento médico-hospitalar">
+                            <datalist id="classificacoes">
+                                {% for c in classificacoes %}<option value="{{ c }}">{% endfor %}
+                            </datalist>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small mb-1">Natureza no kit</label>
+                            <select name="natureza_kit" class="form-select form-select-sm">
+                                <option value="">—</option>
+                                {% for valor, rotulo in natureza_labels.items() %}
+                                <option value="{{ valor }}" {% if tipo and tipo.natureza_kit == valor %}selected{% endif %}>{{ rotulo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small mb-1">Conta como (no padrão de salas)</label>
+                            <select name="conta_como_id" class="form-select form-select-sm">
+                                <option value="">— é o próprio item —</option>
+                                {% for classificacao, lista in tipos_conta_como %}
+                                <optgroup label="{{ classificacao }}">
+                                    {% for te in lista %}
+                                    <option value="{{ te.id }}" {% if tipo and tipo.conta_como_id == te.id %}selected{% endif %}>{{ te.nome_com_codigo }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        <strong>Base</strong>: pertence à sala física. <strong>Função</strong>: pertence ao serviço.
+                        Use "Conta como" quando este tipo atende a outro item do catálogo
+                        (ex.: um All-in-One conta como Computador).
+                    </div>
+                </div>
+
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-check-circle me-1"></i>

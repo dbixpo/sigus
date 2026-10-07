@@ -11,56 +11,88 @@
 
 <div class="page-header">
     <h1><i class="fas fa-door-open"></i> Tipos de Sala</h1>
-    <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary btn-sm">
-        <i class="fas fa-plus-circle me-1"></i>Novo Tipo
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('relatorios.padrao_salas') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-clipboard-check me-1"></i>Aderência ao padrão
+        </a>
+        <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus-circle me-1"></i>Novo Tipo
+        </a>
+    </div>
 </div>
 
-<div class="card">
+<p class="text-muted small mb-3">
+    Os tipos com código <strong>AMB</strong> formam o padrão de ambientes das unidades: cada um tem um kit de
+    equipamentos esperado, usado no relatório de aderência. Os tipos sem código continuam valendo para o cadastro,
+    mas ficam fora da conta do padrão.
+</p>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="input-group input-group-sm" style="max-width:420px">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="search" id="busca-tipos" class="form-control" placeholder="Buscar por nome ou código...">
+        </div>
+    </div>
+</div>
+
+{% if tipos %}
+{% for grupo, lista in grupos %}
+<div class="card mb-3 grupo-tipos">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">
+            {% if lista[0].codigo %}<i class="fas fa-layer-group me-1 text-primary"></i>{% else %}<i class="fas fa-question-circle me-1 text-muted"></i>{% endif %}
+            {{ grupo }}
+        </span>
+        <span class="badge bg-light text-dark border">{{ lista|length }}</span>
+    </div>
     <div class="card-body p-0">
-        {% if tipos %}
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
                         <th style="width:50px">Ícone</th>
+                        <th style="width:100px">Código</th>
                         <th>Nome</th>
-                        <th>Descrição</th>
-                        <th class="text-center">Salas cadastradas</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-end">Ações</th>
+                        <th class="text-center" style="width:130px">Salas cadastradas</th>
+                        <th class="text-center" style="width:110px">Itens no kit</th>
+                        <th class="text-center" style="width:90px">Status</th>
+                        <th class="text-end" style="width:110px">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for t in tipos %}
-                    <tr>
-                        <td class="text-center">
-                            <i class="{{ t.icone }} fs-5 text-primary"></i>
+                    {% for t in lista %}
+                    {% set total = salas_por_tipo.get(t.id, 0) %}
+                    {% set itens_kit = kit_por_tipo.get(t.id, 0) %}
+                    <tr class="linha-tipo" data-busca="{{ ((t.codigo or '') ~ ' ' ~ t.nome ~ ' ' ~ (t.descricao or ''))|lower }}">
+                        <td class="text-center"><i class="{{ t.icone }} fs-5 text-primary"></i></td>
+                        <td>
+                            {% if t.codigo %}<span class="badge bg-primary-subtle text-primary-emphasis border">{{ t.codigo }}</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
                         </td>
-                        <td class="fw-semibold">{{ t.nome }}</td>
-                        <td class="text-muted small">{{ t.descricao or '—' }}</td>
-                        <td class="text-center">
-                            {% set total = t.salas.filter_by(ativo=True).count() %}
-                            <span class="badge bg-{{ 'primary' if total > 0 else 'secondary' }}">
-                                {{ total }}
-                            </span>
+                        <td>
+                            <div class="fw-semibold">{{ t.nome }}</div>
+                            {% if t.descricao %}<div class="text-muted small">{{ t.descricao|truncate(110) }}</div>{% endif %}
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">
-                                {{ 'Ativo' if t.ativo else 'Inativo' }}
-                            </span>
+                            <span class="badge bg-{{ 'primary' if total > 0 else 'secondary' }}">{{ total }}</span>
                         </td>
-                        <td class="text-end">
+                        <td class="text-center">
+                            {% if t.codigo %}
+                            <span class="badge bg-{{ 'success' if itens_kit else 'warning text-dark' }}">{{ itens_kit }}</span>
+                            {% else %}<span class="text-muted small">—</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">{{ 'Ativo' if t.ativo else 'Inativo' }}</span>
+                        </td>
+                        <td class="text-end text-nowrap">
                             <a href="{{ url_for('configuracoes.editar_tipo_sala', id=t.id) }}"
-                               class="btn btn-sm btn-outline-secondary">
+                               class="btn btn-sm btn-outline-secondary" title="Editar{{ ' e montar o kit' if t.codigo else '' }}">
                                 <i class="fas fa-pencil-alt"></i>
                             </a>
-                            <form method="POST"
-                                  action="{{ url_for('configuracoes.alternar_status_tipo_sala', id=t.id) }}"
-                                  class="d-inline">
+                            <form method="POST" action="{{ url_for('configuracoes.alternar_status_tipo_sala', id=t.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
+                                <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
                                         title="{{ 'Desativar' if t.ativo else 'Ativar' }}">
                                     <i class="{{ 'fas fa-toggle-on' if t.ativo else 'fas fa-toggle-off' }}"></i>
                                 </button>
@@ -71,15 +103,39 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-door-open"></i>
-            <h6>Nenhum tipo de sala cadastrado</h6>
-            <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary mt-2">
-                Cadastrar primeiro tipo
-            </a>
-        </div>
-        {% endif %}
     </div>
 </div>
+{% endfor %}
+<div id="busca-vazia" class="text-center text-muted py-4 d-none">Nenhum tipo encontrado.</div>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="fas fa-door-open"></i>
+        <h6>Nenhum tipo de sala cadastrado</h6>
+        <a href="{{ url_for('configuracoes.novo_tipo_sala') }}" class="btn btn-primary mt-2">Cadastrar primeiro tipo</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const busca = document.getElementById('busca-tipos');
+    if (!busca) return;
+    const semAcento = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const linhas = [...document.querySelectorAll('.linha-tipo')].map(tr => [tr, semAcento(tr.dataset.busca)]);
+    busca.addEventListener('input', function () {
+        const termo = semAcento(this.value.trim());
+        linhas.forEach(([tr, txt]) => tr.classList.toggle('d-none', termo && !txt.includes(termo)));
+        let algum = false;
+        document.querySelectorAll('.grupo-tipos').forEach(card => {
+            const visivel = card.querySelector('.linha-tipo:not(.d-none)');
+            card.classList.toggle('d-none', !visivel);
+            algum = algum || !!visivel;
+        });
+        document.getElementById('busca-vazia').classList.toggle('d-none', algum);
+    });
+})();
+</script>
 {% endblock %}

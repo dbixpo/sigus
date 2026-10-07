@@ -29,6 +29,13 @@ CONDICAO_BADGE = {
     'inservivel': 'danger',
 }
 
+# BASE: pertence à sala física (móvel, informática, eletrodoméstico).
+# FUNÇÃO: pertence ao serviço prestado ali (colposcópio, câmara de vacina).
+NATUREZA_KIT_LABELS = {
+    'base': 'Base',
+    'funcao': 'Função',
+}
+
 
 class TipoEquipamento(db.Model):
     __tablename__ = 'tipos_equipamento'
@@ -39,6 +46,14 @@ class TipoEquipamento(db.Model):
     tem_patrimonio = db.Column(db.Boolean, nullable=False, default=True)
     icone          = db.Column(db.String(80), default='bi-box')
     ativo          = db.Column(db.Boolean, nullable=False, default=True)
+    # Item do catálogo padrão (ITEM-xxx). Sem código = tipo fora do catálogo.
+    codigo           = db.Column(db.String(20), unique=True)
+    classificacao    = db.Column(db.String(120))
+    valor_referencia = db.Column(db.Numeric(12, 2))
+    natureza_kit     = db.Column(db.String(10))
+    # No padrão de salas, equipamentos deste tipo contam como o tipo indicado
+    # (ex.: All-in-One atende ao item "Computador").
+    conta_como_id    = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='SET NULL'))
     criado_em      = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em  = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -47,6 +62,15 @@ class TipoEquipamento(db.Model):
                              cascade='all, delete-orphan')
     equipamentos = db.relationship('Equipamento', back_populates='tipo_equipamento', lazy='dynamic')
     contratos = db.relationship('ContratoTipoEquipamento', back_populates='tipo_equipamento', lazy='dynamic')
+    conta_como = db.relationship('TipoEquipamento', remote_side=[id], foreign_keys=[conta_como_id])
+
+    @property
+    def nome_com_codigo(self):
+        return f'{self.codigo} · {self.nome}' if self.codigo else self.nome
+
+    @property
+    def natureza_kit_label(self):
+        return NATUREZA_KIT_LABELS.get(self.natureza_kit, '—')
 
     def __repr__(self):
         return f'<TipoEquipamento {self.nome}>'

@@ -85,6 +85,18 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body text-center py-4">
+                <i class="fas fa-clipboard-check fs-1 text-primary d-block mb-3"></i>
+                <h5 class="fw-bold">Padrão de Salas e Equipamentos</h5>
+                <p class="text-muted small">Compara cada sala com o kit padrão do seu ambiente: o que falta, o que sobra e o custo estimado para completar.</p>
+                <a href="{{ url_for('relatorios.padrao_salas') }}" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Abrir Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
                 <i class="fas fa-users fs-1 text-info d-block mb-3"></i>
                 <h5 class="fw-bold">Relatório de Profissionais</h5>
                 <p class="text-muted small">Profissionais vinculados a unidades — exibe CBO e matrícula por vínculo, agrupados por pessoa.</p>

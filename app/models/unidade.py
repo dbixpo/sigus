@@ -22,6 +22,7 @@ class Unidade(db.Model):
     ramal    = db.Column(db.String(20))
     email = db.Column(db.String(200))
     numero_cnes = db.Column(db.String(20))
+    codigo_imovel = db.Column(db.String(20))
     link_maps = db.Column(db.String(500))
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)

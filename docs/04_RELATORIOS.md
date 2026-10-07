@@ -15,6 +15,7 @@ Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
 | Índice | `/relatorios/` | Hub com cards |
 | Inventário | `/relatorios/inventario` | Equipamentos por unidade/sala |
 | Salas | `/relatorios/salas` | Salas por unidade; filtro de chamado aberto |
+| Padrão de salas e equipamentos | `/relatorios/padrao-salas` | Aderência de cada sala ao kit do seu ambiente padrão: falta, sobra e custo estimado. Abas por unidade, necessidade por item, sala a sala (até 5 unidades) e a reclassificar. Excel com 4 abas. Ver [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md) |
 | Contratos | `/relatorios/contratos` | Contratos vigentes |
 | Profissionais | `/relatorios/profissionais` | Profissionais por unidade |
 | Empenhos | `/relatorios/empenhos` | Controle financeiro (ContratoFinanceiro) |
