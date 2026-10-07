@@ -59,7 +59,7 @@ Não rode a pasta `migrations\` inteira “por garantia”.
 
 ## 5. Reinício
 
-**Em Sorocaba, nunca rode `iisreset`, não recicle o `DefaultAppPool` nem mate `w3wp.exe`:** o mesmo IIS atende o esussamu, que não pode parar. Reinicie só o processo do SIGUS (`python run.py` na porta 5001), conferindo antes que o PID da porta é mesmo o `run.py`. Passo a passo: `ATUALIZACAO-SERVIDOR.md`, seção 4. Peça autorização antes de reiniciar.
+**Em Sorocaba, nunca rode `iisreset`, não recicle o `DefaultAppPool` nem mate `w3wp.exe`:** o mesmo IIS atende o esussamu, que não pode parar. Reinicie só o processo do SIGUS (`python run.py` na porta 5001) com `python scripts\_reiniciar_sigus.py`: ele confere que o PID da porta é mesmo o `run.py`, sobe o servidor em segundo plano sem abrir janela e grava o resultado em `scripts\_reiniciar.log`. Passo a passo: `ATUALIZACAO-SERVIDOR.md`, seção 4. Peça autorização antes de reiniciar.
 
 Em outra instalação com app pool próprio do SIGUS, recicle só esse pool. Abra `/sigus/login`.
 

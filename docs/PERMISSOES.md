@@ -30,7 +30,7 @@ Em **Configurações → Gestão de Perfis** cada perfil ganha Ver / Editar / Ad
 
 ## Vínculo com unidade
 
-Perfis da ponta **exigem** pelo menos uma unidade ativa. Sem vínculo, o sistema manda para a tela de “sem vínculo”. Administrador / gestor central circulam na rede, mas **ações no nome de uma unidade** (finalizar Lojinha, abrir NSP) usam o seletor do topo (`unidade_padrao_id`). Exceção: no termo de transferência (`/transferencias/novo` e o aceite) esses dois perfis operam qualquer origem/destino, para realocar inventário entre unidades.
+Perfis da ponta **exigem** pelo menos uma unidade ativa. Sem vínculo, o sistema manda para a tela de “sem vínculo”. Administrador / gestor central circulam na rede, mas **ações no nome de uma unidade** (finalizar Lojinha) usam o seletor do topo (`unidade_padrao_id`). Exceção: no termo de transferência (`/transferencias/novo` e o aceite) esses dois perfis operam qualquer origem/destino, para realocar inventário entre unidades.
 
 `Usuario.ids_unidades_efetivos()`:
 
@@ -44,8 +44,22 @@ Pedido novo: formulário público `/solicitar-vinculo-profissional`. A coordena�
 
 Além da permissão `OP_GestaoChamados`, a pessoa precisa estar vinculada a um **setor de manutenção** (`UsuarioSetor`). Unidade prestadora do tipo de chamado se configura no cadastro da unidade (`unidade_tipos_chamado_recebe`). Se o chamado “não aparece na fila”, em geral falta essa marcação — não é bug da lista.
 
+## Segurança do Paciente
+
+Aqui o perfil **não** decide quem vê os casos. Vale a lista de membros (`nsp_membros`), em **Configurações → Segurança do Paciente**:
+
+- **Núcleo**: vê e conduz todos os casos.
+- **Comissão** de uma unidade: vê os casos encaminhados a ela.
+- **Coordenação** (gestor principal/secundário ou Gestor de Área vinculado): só os casos que o Núcleo liberar.
+
+Administrador e Gestor Central não veem casos se não estiverem na lista. Notificar é livre para todos, inclusive sem login. Detalhes em [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md).
+
+## Telas públicas com QR code
+
+Links Úteis, Cadastro Público, notificação de Segurança do Paciente e Mapa da Saúde têm versão aberta, sem login. A versão interna mostra os botões **Acesso público**, **QR code** e **copiar endereço**. Ver [MAPA_DO_CODIGO.md](MAPA_DO_CODIGO.md#telas-públicas-sem-login).
+
 ## Regras práticas
 
-- Login é pessoal. Auditoria grava usuário, IP e endpoint ([05_AUDITORIA.md](05_AUDITORIA.md)).
+- Login é pessoal. Auditoria grava usuário, IP e endpoint ([05_AUDITORIA.md](05_AUDITORIA.md)), exceto na notificação de Segurança do Paciente, que é anônima.
 - Não compartilhe senha de administrador para “ver o menu do colega”: use um usuário de teste com o perfil certo.
 - Reset de senha: `scripts/reset_usuario_sigus.py`. **Nunca** rode `migrations/recriar_admin.py` em produção — ele **apaga todos** os administradores e recria um.

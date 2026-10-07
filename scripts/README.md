@@ -10,6 +10,7 @@ Rode na **raiz** do repositório, com venv e `.env`. Nenhum script deve receber 
 | `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais na Estante SES (capítulos gerais). `--somente-noticias` atualiza dashboard, comunicados e mural. |
 | `scripts/pub_estante_patrimonio.py` | Capítulo patrimônio (salas, equipamentos, transferências, lojinha) |
 | `scripts/importar_schema_sueq.py` | Importa schema/dados SUEQ para o schema `sueq` (não mexe no `public`) |
+| `scripts/_reiniciar_sigus.py` | Reinicia só o `run.py` da porta 5001 (Sorocaba), em segundo plano e sem janela. Aborta se o processo da porta não for o `run.py`. Ver [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md), seção 4 |
 
 ## Reset de senha
 

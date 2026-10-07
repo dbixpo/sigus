@@ -36,9 +36,9 @@ Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
 - **Dashboard** — Comunicados com ciência (perfil **ou** CBO), mural de ações, aniversariantes, chamados abertos
 - **Planejamentos** — Kanban com GUT
 - **Agenda** — Estilo Google: compromissos, períodos e reuniões, arrastar para remarcar, prazos dos planejamentos e feriados municipais
-- **Segurança do Paciente** — NSP interno, protocolo `SP-AAAA-NNNNN` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))
-- **Links úteis**
-- **Relatórios** — Inventário, salas, contratos, NSP, mapa da saúde, aniversariantes…
+- **Segurança do Paciente** — Fluxo do Núcleo (SNI-SGQSP): qualquer pessoa notifica, com ou sem login e de forma anônima; o Núcleo qualifica e encaminha às comissões das unidades; protocolo `SP-AAAA-XXXXXX` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))
+- **Links úteis** — Lista com busca, versão pública sem login e QR code para baixar em cada link
+- **Relatórios** — Inventário, salas, contratos, NSP, mapa da saúde (com acesso público e QR code), aniversariantes…
 
 ### Recursos humanos
 
@@ -47,7 +47,7 @@ Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
 
 ### Configurações (administrador / autorizado)
 
-Tipos de unidade/sala/equipamento, marcas e modelos, perfis, status de chamado, catálogos NSP, feriados, usuários, auditoria.
+Tipos de unidade/sala/equipamento, marcas e modelos, perfis, status de chamado, membros do Núcleo e das comissões de Segurança do Paciente, feriados, usuários, auditoria.
 
 ---
 

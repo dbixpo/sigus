@@ -32,6 +32,12 @@ Botão primário: `#1A82B8`, hover `#155d8c`, radius 6px. Cards brancos, radius 
 
 Faixa no topo com gradiente 90deg vermelho / amarelo / azul.
 
+## Páginas públicas e cartão de QR code
+
+Páginas sem login (Links Úteis, notificação de Segurança do Paciente, Mapa da Saúde) seguem o mesmo padrão: faixa vermelho / amarelo / azul, topo `#0D3B5E` com borda `#1A82B8` e logo branca, fundo `#F4F6F9`.
+
+O cartão de QR code baixado (PNG, 900 px de largura) tem a faixa no topo, título em `#0D3B5E` (Inter 700), "Aponte a câmera do celular para acessar" em `#718096`, QR em `#0D3B5E`, endereço em `#1E3A50` e rodapé "SIGUS · Saúde Digital" em `#1A82B8`. Gerado em `app/static/js/acesso-publico.js`; não monte outro estilo de QR.
+
 ## Onde está no código
 
 - Casca autenticada: `app/templates/base.html`

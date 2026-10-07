@@ -28,6 +28,8 @@ Linha de data: `[data inicial] [hora inicial] até [hora final] [data final]` e 
 
 Sem limite de duração. Ao mudar o início, o fim acompanha mantendo a duração. O rótulo mostra "Duração: 3 h 30 min" ou "15 dias".
 
+Barras de vários dias ficam no topo do dia e empurram os demais eventos para baixo, sem sobrepor.
+
 Validação (front e `_dados_formulario`): fim depois do início; em dia inteiro, data final igual ou depois da inicial. Em dia inteiro, o FullCalendar trata o `end` como exclusivo (o JS soma/subtrai 1 dia).
 
 Reunião: participantes, disponibilidade de cada um e **Sugerir horários livres** (`/agenda/sugerir`, duração de 15 min a 8 h, passos de 30 min no expediente).

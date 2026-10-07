@@ -12,6 +12,7 @@ O módulo de auditoria registra automaticamente todas as requisições HTTP do s
 2. **Requisições autenticadas** — São gravadas com `usuario_id` do usuário logado
 3. **Requisições anônimas** — Ex.: login (POST) — gravadas com `user_id` nulo
 4. **Exclusões** — Apenas rotas estáticas (`static`) não são auditadas; todas as demais requisições são registradas
+5. **Notificação de Segurança do Paciente** — `nsp.notificar`, `nsp.notificado` e `nsp.acompanhar` são gravadas **sem** usuário, IP, navegador e parâmetros, e com a rota genérica no lugar da URL (sem o protocolo). É a cultura justa do RI-SGQSP-001: a auditoria não pode ligar a notificação a quem a fez. Lista em `_ENDPOINTS_ANONIMOS`, `app/__init__.py`
 
 ---
 

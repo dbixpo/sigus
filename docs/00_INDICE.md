@@ -6,7 +6,7 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 2. [Checklist de transferência](CHECKLIST_TRANSFERENCIA.md) — o que conferir no primeiro dia na casa
 3. [Visão geral](01_VISÃO_GERAL.md) — o que o SIGUS é e o que não é
 4. [Arquitetura](ARQUITETURA.md) — Flask, prefixo `/sigus`, IIS, pastas
-5. [Mapa do código](MAPA_DO_CODIGO.md) — blueprints, rotas, telas públicas
+5. [Mapa do código](MAPA_DO_CODIGO.md) — blueprints, rotas, telas públicas, padrão de acesso público e QR code
 6. [Permissões e perfis](PERMISSOES.md)
 7. [Banco e migrations](BANCO.md)
 8. [IIS (referência Sorocaba)](SETUP.md)
@@ -24,7 +24,7 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [03_CONTROLE_EMPENHO.md](03_CONTROLE_EMPENHO.md) | Empenhos (`ContratoFinanceiro`) |
 | [04_RELATORIOS.md](04_RELATORIOS.md) | Relatórios e exportação |
 | [05_AUDITORIA.md](05_AUDITORIA.md) | Log de requisições |
-| [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) | NSP interno, protocolo `SP-AAAA-NNNNN`, SIS |
+| [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) | Fluxo do Núcleo (SNI-SGQSP): notificação pública e anônima, qualificação, comissões, coordenação liberada pelo Núcleo, SIS |
 | [TRANSFERENCIAS_E_LOJINHA.md](TRANSFERENCIAS_E_LOJINHA.md) | Termos, aceite, Lojinha Interna |
 | [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO, editar/excluir comunicado e mural |
 | [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, ausência/férias, arrastar eventos, prazos editáveis com histórico |

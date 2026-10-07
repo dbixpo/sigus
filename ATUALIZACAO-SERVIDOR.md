@@ -14,6 +14,29 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
 
+## Entrega mais recente (Segurança do Paciente no fluxo do Núcleo, acesso público e QR code)
+
+Depois do `git pull`:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_nsp_fluxo_nucleo.py
+```
+
+Migration idempotente. Reinicie só o SIGUS (seção 4).
+
+O que mudou:
+
+- **Segurança do Paciente** refeita no fluxo do SNI-SGQSP: qualquer pessoa notifica (com ou sem login, anônima por padrão); o Núcleo qualifica e encaminha às comissões das unidades; a coordenação só vê o que o Núcleo liberar. Auditoria anônima na notificação. Relatórios com painel. Detalhe: [docs/SEGURANCA_PACIENTE.md](docs/SEGURANCA_PACIENTE.md).
+- **Acesso público + QR code** no padrão SIGUS: Links Úteis (página pública `/links/publico` e QR de cada link), Cadastro Público, notificação de Segurança do Paciente e Mapa da Saúde. O cartão PNG quebra título e endereço sem cortar. Detalhe: [docs/MAPA_DO_CODIGO.md](docs/MAPA_DO_CODIGO.md#acesso-público-e-qr-code).
+- **Links Úteis**: saíram os botões de filtro por seção; fica só a busca.
+- **Agenda**: barras de vários dias no topo do dia, empurrando os demais eventos para baixo.
+
+**Depois de publicar:** cadastre os membros do Núcleo em **Configurações → Segurança do Paciente**. Sem ninguém na lista, as notificações chegam mas ninguém as vê.
+
+Conferência: abrir `/sigus/seguranca-paciente/notificar` numa aba anônima e notificar um caso fictício **só em ambiente de teste**; em produção, apenas abrir a tela. Baixar o QR em `/sigus/links/` e em `/sigus/relatorios/mapa-saude` e conferir o endereço `https://saudedigital.sorocaba.sp.gov.br/...` no cartão.
+
+---
+
 ## Entrega de 07/10/2026 (ausência na agenda, frequência do RH, base de servidores)
 
 Depois do `git pull`:
@@ -177,12 +200,22 @@ Reinicie o processo do SIGUS depois de editar `.env` (seção 4; em Sorocaba, nu
 
 Templates e Python ficam em cache em produção: só aparecem depois de reiniciar. CSS/JS estáticos valem na hora (aumente o `?v=` no template).
 
-**Sorocaba (IIS compartilhado com o esussamu):** não toque no IIS. Reinicie só o processo do SIGUS:
+**Sorocaba (IIS compartilhado com o esussamu):** não toque no IIS. Reinicie só o processo do SIGUS.
+
+Jeito recomendado, na raiz do projeto e com o mesmo Python que roda a produção:
+
+```powershell
+python scripts\_reiniciar_sigus.py
+```
+
+O script encerra o processo da porta 5001 **só se** a linha de comando dele contiver `run.py` (senão aborta), sobe o `run.py` de novo **em segundo plano, sem janela** (`FLASK_ENV=production`, `SIGUS_PORT=5001`) e espera `/sigus/login` responder. Resultado em `scripts\_reiniciar.log`; saída do servidor em `logs\sigus_5001.log`. Como não há janela, fechar uma janela não derruba o SIGUS.
+
+Jeito manual, se o script não estiver disponível:
 
 1. Descubra o PID na porta 5001: `netstat -ano -p TCP | findstr ":5001"`.
 2. Confirme que é o SIGUS: `(Get-CimInstance Win32_Process -Filter "ProcessId=<PID>").CommandLine` precisa conter `run.py`. Se não contiver, **pare**.
 3. `taskkill /PID <PID> /F` e espere a porta liberar.
-4. Suba de novo na raiz do projeto, em console próprio, com `FLASK_ENV=production` e `SIGUS_PORT=5001`: `python run.py`.
+4. Suba de novo na raiz do projeto com `FLASK_ENV=production` e `SIGUS_PORT=5001`: `python run.py`. Num console aberto, fechar a janela derruba o SIGUS.
 
 Nunca: `iisreset`, reciclar o `DefaultAppPool`, matar `w3wp.exe` ou outro `python.exe`, editar o `web.config` do IIS.
 
@@ -194,7 +227,7 @@ Depois:
 2. Confira o módulo da entrega (ex.: Segurança do Paciente, Transferências, Relatórios).
 3. Impressos devem abrir no **modal** padrão do SIGUS, não numa página crua.
 
-Log: `.\logs\python.log`
+Log: `.\logs\sigus_5001.log` (Sorocaba, pelo script de reinício) ou `.\logs\python.log` (HttpPlatformHandler).
 
 ---
 

@@ -18,13 +18,13 @@ Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
 | Contratos | `/relatorios/contratos` | Contratos vigentes |
 | Profissionais | `/relatorios/profissionais` | Profissionais por unidade |
 | Empenhos | `/relatorios/empenhos` | Controle financeiro (ContratoFinanceiro) |
-| Segurança do Paciente | `nsp.relatorios` (`/seguranca-paciente/relatorios`) | Notificações NSP |
+| Segurança do Paciente | `nsp.relatorios` (`/seguranca-paciente/relatorios`) | Indicadores e painel na mesma página; Excel e CSV. Só Núcleo e comissões (card some para os demais) |
 | Chamados | `/relatorios/chamados` | Chamados da rede |
 | Aniversariantes | `/relatorios/aniversariantes` | Aniversários do mês por unidade |
 | Usuários | `/relatorios/usuarios` | Usuários do sistema |
 | Unidades | `/relatorios/unidades` | Unidades |
 | Faltas abonadas | `/relatorios/faltas-abonadas` | RH |
-| Mapa da Saúde | `/relatorios/mapa-saude` (interno) e `/mapa-da-saude` (público) | Rede no mapa |
+| Mapa da Saúde | `/relatorios/mapa-saude` (interno) e `/mapa-da-saude` (público) | Rede no mapa. A tela interna tem os botões Acesso público, QR code e copiar endereço, sempre com o domínio oficial |
 
 **Aniversariantes** (relatório e card do dashboard): entra todo usuário ativo com data de nascimento e vínculo ativo na unidade, de qualquer perfil. O perfil `administrador` ficava de fora e foi incluído.
 
