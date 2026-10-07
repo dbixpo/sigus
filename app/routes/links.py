@@ -146,9 +146,11 @@ def _links_visiveis(visivel):
     return tipos, dados, sem_cat
 
 
-@links_bp.route('/')
-@login_required
+@links_bp.route('/', strict_slashes=False)
 def index():
+    # Endereço curto para divulgar: sem login cai na página pública.
+    if not current_user.is_authenticated:
+        return publico()
     if not current_user.pode('ver_links_uteis'):
         abort(403)
     tipos, dados, sem_cat = _links_visiveis(lambda l: l.visivel_para(current_user.perfil))

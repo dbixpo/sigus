@@ -29,7 +29,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `solicitacoes` | `/solicitar-vinculo-profissional` | `app/routes/solicitacoes.py` | Cadastro público de vínculo |
 | `usuarios` | `/usuarios` | `app/routes/usuarios.py` | Usuários (quem tem permissão) |
 | `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos, marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
-| `links` | `/links` | `app/routes/links.py` | Links úteis (interno, público em `/links/publico` e administração); QR code por link |
+| `links` | `/links` | `app/routes/links.py` | Links úteis: `/links` é interno para quem está logado e público para quem não está; `/links/publico` é sempre público; administração; QR code por link |
 | `notificacoes` | `/notificacoes` | `app/routes/notificacoes.py` | Sino (JSON) |
 
 Redirects legados (continuam funcionando): `/unidades` → `/configuracoes/unidades`, `/predios` → `/configuracoes/predios`, URLs antigas do mapa → `/mapa-da-saude`.
@@ -45,7 +45,7 @@ Trate como superfície de internet: CSRF, validação, sem dado clínico.
 | `/solicitar-vinculo-profissional` | Pedido de vínculo (coordenação aprova na ficha da unidade) |
 | `/salas/cadastro-externo` | Mutirão de salas |
 | `/mapa-da-saude` | Mapa público da rede |
-| `/links/publico` | Links Úteis liberados para todos os perfis |
+| `/links` (sem login) e `/links/publico` | Links Úteis liberados para todos os perfis. O endereço curto `/sigus/links` é o que vai no QR e no copiar |
 | `/seguranca-paciente/notificar` | Notificação de incidente (anônima por padrão) |
 | `/seguranca-paciente/notificado/<protocolo>` e `/seguranca-paciente/acompanhar` | Comprovante e consulta da etapa pelo protocolo |
 

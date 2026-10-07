@@ -27,7 +27,7 @@ Migration idempotente. Reinicie só o SIGUS (seção 4).
 O que mudou:
 
 - **Segurança do Paciente** refeita no fluxo do SNI-SGQSP: qualquer pessoa notifica (com ou sem login, anônima por padrão); o Núcleo qualifica e encaminha às comissões das unidades; a coordenação só vê o que o Núcleo liberar. Auditoria anônima na notificação. Relatórios com painel. Detalhe: [docs/SEGURANCA_PACIENTE.md](docs/SEGURANCA_PACIENTE.md).
-- **Acesso público + QR code** no padrão SIGUS: Links Úteis (página pública `/links/publico` e QR de cada link), Cadastro Público, notificação de Segurança do Paciente e Mapa da Saúde. O cartão PNG quebra título e endereço sem cortar. Detalhe: [docs/MAPA_DO_CODIGO.md](docs/MAPA_DO_CODIGO.md#acesso-público-e-qr-code).
+- **Acesso público + QR code** no padrão SIGUS: Links Úteis (endereço curto `/sigus/links`, público para quem não está logado, e QR de cada link), Cadastro Público, notificação de Segurança do Paciente e Mapa da Saúde. O cartão PNG quebra título e endereço sem cortar. Detalhe: [docs/MAPA_DO_CODIGO.md](docs/MAPA_DO_CODIGO.md#acesso-público-e-qr-code).
 - **Links Úteis**: saíram os botões de filtro por seção; fica só a busca.
 - **Agenda**: barras de vários dias no topo do dia, empurrando os demais eventos para baixo.
 
