@@ -109,6 +109,13 @@
                     </td>
                     <td class="text-end pe-3">
                         <div class="d-flex justify-content-end gap-1">
+                            {% if item.url %}
+                            <button type="button" class="btn btn-outline-secondary btn-sm js-qr-baixar"
+                                    data-url="{{ item.url }}" data-titulo="{{ item.nome }}"
+                                    title="Baixar QR code">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                            {% endif %}
                             <a href="{{ url_for('links.editar', id=item.id) }}"
                                class="btn btn-outline-primary btn-sm" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>

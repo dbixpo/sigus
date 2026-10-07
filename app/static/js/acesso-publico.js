@@ -133,16 +133,27 @@
         return canvas;
     }
 
+    function urlAbsoluta(url) {
+        try { return new URL(url, document.baseURI).href; } catch (e) { return url; }
+    }
+
+    function nomeArquivo(titulo) {
+        var base = (titulo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+        return base ? 'qrcode-' + base : 'qrcode';
+    }
+
     function baixarQr(url, titulo, arquivo) {
         if (typeof qrcode === 'undefined') {
             alert('Não foi possível gerar o QR code agora. Recarregue a página e tente de novo.');
             return;
         }
+        url = urlAbsoluta(url);
         var fontes = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
         fontes.then(function () {
             var canvas = desenharCartao(url, titulo);
             var a = document.createElement('a');
-            a.download = (arquivo || 'qrcode') + '.png';
+            a.download = (arquivo || nomeArquivo(titulo)) + '.png';
             a.href = canvas.toDataURL('image/png');
             document.body.appendChild(a);
             a.click();

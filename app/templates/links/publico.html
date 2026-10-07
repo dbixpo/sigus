@@ -45,5 +45,7 @@ body { background: #F4F6F9; color: #1E3A50; font-family: 'Inter', 'Segoe UI', Ar
 <footer class="pub-rodape">
     {{ identidade.nome_sistema }} · <a href="{{ url_for('auth.login') }}">Entrar no sistema</a>
 </footer>
+<script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/acesso-publico.js') }}?v=20261006c"></script>
 </body>
 </html>

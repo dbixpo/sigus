@@ -65,6 +65,21 @@
 }
 
 /* ── Card estilo Linktree ────────────────────────────────────────── */
+.lk-item { position: relative; }
+.lk-item[data-oculto="1"] { display: none !important; }
+.lk-item.com-qr .lk-arrow { margin-left: 2.2rem; }
+.lk-qr {
+    position: absolute; top: 50%; right: 2.2rem;
+    transform: translateY(-50%);
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid #d6e6f0; border-radius: 8px;
+    background: #fff; color: #1A82B8;
+    font-size: .95rem; cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+    z-index: 1;
+}
+.lk-qr:hover, .lk-qr:focus-visible { background: #1A82B8; border-color: #1A82B8; color: #fff; }
 .lk-card {
     display: flex;
     flex-direction: row;
@@ -88,8 +103,6 @@
     transform: translateY(-2px);
     color: #111827;
 }
-.lk-card[data-oculto="1"] { display: none !important; }
-
 /* Thumb quadrado com cantos arredondados */
 .lk-thumb {
     width: 52px; height: 52px;
@@ -141,6 +154,35 @@
 }
 </style>
 
+    {% macro lk_card(link, tipo_id, cor_thumb) %}{% set _src = link.imagem_src %}
+    <div class="lk-item{% if link.url %} com-qr{% endif %}"
+         data-nome="{{ link.nome | lower }}"
+         data-desc="{{ (link.descricao or '') | lower }}"
+         data-tipo="{{ tipo_id }}"
+         data-oculto="0">
+        <a href="{{ link.url or '#' }}"
+           {% if link.nova_aba %}target="_blank" rel="noopener"{% endif %}
+           class="lk-card">
+            <div class="lk-thumb" style="background:{{ cor_thumb }};">
+                {% if _src %}<img src="{{ _src }}" alt="{{ link.nome }}">
+                {% else %}<i class="{{ link.icone_fa }}"></i>{% endif %}
+            </div>
+            <div class="lk-body">
+                <div class="lk-nome">{{ link.nome }}</div>
+                {% if link.descricao %}<div class="lk-desc">{{ link.descricao }}</div>{% endif %}
+            </div>
+            <i class="fas fa-chevron-right lk-arrow"></i>
+        </a>
+        {% if link.url %}
+        <button type="button" class="lk-qr js-qr-baixar"
+                data-url="{{ link.url }}" data-titulo="{{ link.nome }}"
+                title="Baixar QR code de {{ link.nome }}" aria-label="Baixar QR code de {{ link.nome }}">
+            <i class="fas fa-qrcode"></i>
+        </button>
+        {% endif %}
+    </div>
+    {% endmacro %}
+
     {# Conta links visíveis de forma segura #}
     {% set _total = namespace(n=0) %}
     {% for d in dados %}{% for l in d.links %}{% set _total.n = _total.n + 1 %}{% endfor %}{% endfor %}
@@ -188,25 +230,8 @@
             {% endif %}
         </div>
         <div class="links-grid">
-            {% for link in d.links %}{% set _src = link.imagem_src %}
-            <a href="{{ link.url or '#' }}"
-               {% if link.nova_aba %}target="_blank" rel="noopener"{% endif %}
-               class="lk-card"
-               data-nome="{{ link.nome | lower }}"
-               data-desc="{{ (link.descricao or '') | lower }}"
-               data-tipo="{{ d.tipo.id }}"
-               data-oculto="0">
-                <div class="lk-thumb"
-                     style="background:{% if _src %}#f0f0f0{% else %}{{ d.tipo.cor }}{% endif %};">
-                    {% if _src %}<img src="{{ _src }}" alt="{{ link.nome }}">
-                    {% else %}<i class="{{ link.icone_fa }}"></i>{% endif %}
-                </div>
-                <div class="lk-body">
-                    <div class="lk-nome">{{ link.nome }}</div>
-                    {% if link.descricao %}<div class="lk-desc">{{ link.descricao }}</div>{% endif %}
-                </div>
-                <i class="fas fa-chevron-right lk-arrow"></i>
-            </a>
+            {% for link in d.links %}
+            {{ lk_card(link, d.tipo.id, '#f0f0f0' if link.imagem_src else d.tipo.cor) }}
             {% endfor %}
         </div>
     </div>
@@ -222,24 +247,8 @@
             <span class="secao-nome">Outros</span>
         </div>
         <div class="links-grid">
-            {% for link in sem_cat %}{% set _src = link.imagem_src %}
-            <a href="{{ link.url or '#' }}"
-               {% if link.nova_aba %}target="_blank" rel="noopener"{% endif %}
-               class="lk-card"
-               data-nome="{{ link.nome | lower }}"
-               data-desc="{{ (link.descricao or '') | lower }}"
-               data-tipo="sem_cat"
-               data-oculto="0">
-                <div class="lk-thumb" style="background:#6b7280;">
-                    {% if _src %}<img src="{{ _src }}" alt="{{ link.nome }}">
-                    {% else %}<i class="{{ link.icone_fa }}"></i>{% endif %}
-                </div>
-                <div class="lk-body">
-                    <div class="lk-nome">{{ link.nome }}</div>
-                    {% if link.descricao %}<div class="lk-desc">{{ link.descricao }}</div>{% endif %}
-                </div>
-                <i class="fas fa-chevron-right lk-arrow"></i>
-            </a>
+            {% for link in sem_cat %}
+            {{ lk_card(link, 'sem_cat', '#6b7280') }}
             {% endfor %}
         </div>
     </div>
@@ -268,7 +277,7 @@
 (function () {
     const inputBusca = document.getElementById('inputBusca');
     const filtros    = document.querySelectorAll('.filtro-btn');
-    const cards      = document.querySelectorAll('.lk-card');
+    const cards      = document.querySelectorAll('.lk-item');
     const secoes     = document.querySelectorAll('.links-secao');
     const noResults  = document.getElementById('noResults');
     const termoEl    = document.getElementById('termoExibido');
@@ -326,7 +335,7 @@
             var tipo   = s.dataset.secao || '';
             var okTipo = (tipoAtivo === 'todos') || (tipo === tipoAtivo);
             var temCard = false;
-            s.querySelectorAll('.lk-card').forEach(function (c) {
+            s.querySelectorAll('.lk-item').forEach(function (c) {
                 if (c.dataset.oculto === '0') temCard = true;
             });
             s.style.display = (okTipo && temCard) ? '' : 'none';
