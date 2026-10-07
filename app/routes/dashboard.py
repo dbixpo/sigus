@@ -8,7 +8,7 @@ from app.models.usuario import Usuario
 from app.models.falta_abonada import FaltaAbonada
 from app.routes.noticias import (
     pode_publicar, comunicados_da_unidade, montar_cards_comunicados, feed_mural,
-    stats_acoes_feed,
+    stats_acoes_feed, pode_editar_acao, pode_excluir_acao,
 )
 from app.utils import hoje_brasilia
 
@@ -132,6 +132,8 @@ def index():
         mural_stats=mural_stats,
         meses=meses,
         pode_publicar=pode_publicar(),
+        pode_editar_acao=pode_editar_acao,
+        pode_excluir_acao=pode_excluir_acao,
         eh_meu_aniversario=eh_meu_aniversario,
         hoje=hoje,
         preview_aniv=bool(_preview),

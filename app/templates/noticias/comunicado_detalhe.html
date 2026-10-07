@@ -11,12 +11,29 @@
 
 <div class="page-header d-flex justify-content-between align-items-start gap-3 flex-wrap">
     <h1 class="mb-0"><i class="fas fa-bullhorn"></i> {{ item.titulo }}</h1>
-    <button type="button" class="btn btn-outline-secondary"
-            data-url="{{ url_for('noticias.imprimir_comunicado', id=item.id) }}"
-            data-titulo="Ciência — {{ item.titulo }}"
-            onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
-        <i class="fas fa-print me-1"></i>Imprimir
-    </button>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if pode_editar %}
+        <a href="{{ url_for('noticias.editar_comunicado', id=item.id) }}" class="btn btn-outline-primary">
+            <i class="fas fa-pen me-1"></i>Editar
+        </a>
+        {% endif %}
+        {% if pode_excluir %}
+        <form method="POST" action="{{ url_for('noticias.excluir_comunicado', id=item.id) }}" class="m-0"
+              onsubmit="return confirm('Excluir este comunicado? Ele some do dashboard de todas as unidades.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="voltar" value="dashboard">
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fas fa-trash-alt me-1"></i>Excluir
+            </button>
+        </form>
+        {% endif %}
+        <button type="button" class="btn btn-outline-secondary"
+                data-url="{{ url_for('noticias.imprimir_comunicado', id=item.id) }}"
+                data-titulo="Ciência — {{ item.titulo }}"
+                onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
+            <i class="fas fa-print me-1"></i>Imprimir
+        </button>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -31,6 +48,16 @@
                     {% endif %}
                     {% if item.exige_ciencia and item.ciencia_alvo_resumo() %}
                     <div class="mt-1">Ciência: {{ item.ciencia_alvo_resumo() }}</div>
+                    {% endif %}
+                    {% if item.editado_em %}
+                    <div class="mt-1">
+                        <i class="fas fa-pen me-1"></i>Editado em {{ item.editado_em | br_datetime }}
+                        {% if item.editado_por %} por {{ item.editado_por.nome }}{% endif %}
+                        · versão {{ item.versao }}
+                        {% if n_ciencias_anteriores %}
+                        · {{ n_ciencias_anteriores }} assinatura(s) de versões anteriores guardada(s)
+                        {% endif %}
+                    </div>
                     {% endif %}
                 </div>
                 {% if item.texto %}

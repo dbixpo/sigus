@@ -15,6 +15,7 @@ TIPOS_NOTIFICACAO = {
     'nsp_encaminhado':     ('Ocorrência encaminhada ao seu setor',     'bi-arrow-up-right-circle',  'warning'),
     'nsp_andamento':       ('Atualização em segurança do paciente',    'bi-chat-left-text',         'info'),
     'comunicado_novo':     ('Novo comunicado na unidade',              'bi-megaphone',             'primary'),
+    'comunicado_editado':  ('Comunicado alterado',                     'bi-megaphone',             'warning'),
 }
 
 

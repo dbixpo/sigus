@@ -1,18 +1,37 @@
 {% extends 'base.html' %}
-{% block title %}Registrar ação{% endblock %}
+{% set titulo_pagina = 'Editar publicação' if item else 'Registrar ação' %}
+{% block title %}{{ titulo_pagina }}{% endblock %}
+
+{% block head %}
+<style>
+.acao-fotos-atuais { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.acao-foto-atual {
+    border: 1px solid #e2e8f0; border-radius: 8px; padding: 4px;
+    background: #fff; text-align: center; width: 112px;
+}
+.acao-foto-atual img {
+    display: block; width: 100%; height: 76px; object-fit: cover; border-radius: 5px;
+}
+.acao-foto-atual .form-check { margin: 0.3rem 0 0; font-size: 0.75rem; display: inline-block; }
+.acao-foto-atual:has(input:checked) { border-color: #E63030; opacity: 0.55; }
+</style>
+{% endblock %}
 
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
         <li class="breadcrumb-item"><a href="{{ url_for('noticias.mural') }}">Mural</a></li>
-        <li class="breadcrumb-item active">Registrar ação</li>
+        <li class="breadcrumb-item active">{{ titulo_pagina }}</li>
     </ol>
 </nav>
 
 <div class="page-header">
-    <h1><i class="fas fa-camera"></i> Registrar ação</h1>
+    <h1><i class="fas {{ 'fa-pen' if item else 'fa-camera' }}"></i> {{ titulo_pagina }}</h1>
 </div>
+
+{% set voltar = request.args.get('voltar') or request.form.get('voltar') or '' %}
+{% set url_cancelar = url_for('noticias.mural') if voltar == 'mural' else url_for('dashboard.index') %}
 
 <div class="row justify-content-center">
     <div class="col-lg-6">
@@ -30,14 +49,15 @@
                 <p class="text-muted small">Foto e um recado curto — o mural da rede é compacto de propósito.</p>
                 <form method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="voltar" value="{{ voltar }}">
 
                     {% if escolher_unidade %}
+                    {% set un_sel = request.form.get('unidade_id') or ((item.unidade_id | string) if item else ((current_user.unidade_logada.id | string) if current_user.unidade_logada else '')) %}
                     <div class="mb-3">
                         <label class="form-label" for="unidade_id">Unidade *</label>
                         <select name="unidade_id" id="unidade_id" class="form-select" required>
                             {% for u in unidades %}
-                            <option value="{{ u.id }}"
-                                {% if request.form.get('unidade_id') == (u.id | string) or (not request.form.get('unidade_id') and current_user.unidade_logada and current_user.unidade_logada.id == u.id) %}selected{% endif %}>
+                            <option value="{{ u.id }}" {% if un_sel == (u.id | string) %}selected{% endif %}>
                                 {{ u.nome }}
                             </option>
                             {% endfor %}
@@ -45,16 +65,20 @@
                     </div>
                     {% else %}
                     <p class="small text-muted">
-                        Unidade: <strong>{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}</strong>
+                        Unidade: <strong>
+                        {% if item %}{{ item.unidade.nome if item.unidade else '—' }}
+                        {% else %}{{ current_user.unidade_logada.nome if current_user.unidade_logada else '—' }}{% endif %}
+                        </strong>
                     </p>
                     {% endif %}
 
+                    {% set tipo_sel = request.form.get('tipo_acao_id') or ((item.tipo_acao_id | string) if item and item.tipo_acao_id else '') %}
                     <div class="mb-3">
                         <label class="form-label" for="tipo_acao_id">Tema *</label>
                         <select name="tipo_acao_id" id="tipo_acao_id" class="form-select" required>
                             <option value="">Selecione…</option>
                             {% for t in tipos %}
-                            <option value="{{ t.id }}" {% if request.form.get('tipo_acao_id') == (t.id | string) %}selected{% endif %}>
+                            <option value="{{ t.id }}" {% if tipo_sel == (t.id | string) %}selected{% endif %}>
                                 {{ t.nome }}
                             </option>
                             {% endfor %}
@@ -64,28 +88,52 @@
                     <div class="mb-3">
                         <label class="form-label" for="data_acao">Data da ação</label>
                         <input type="date" name="data_acao" id="data_acao" class="form-control"
-                               value="{{ request.form.get('data_acao') or hoje_iso }}">
+                               value="{{ request.form.get('data_acao') or (item.data_acao.isoformat() if item and item.data_acao else hoje_iso) }}">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label" for="descricao">Descrição *</label>
                         <textarea name="descricao" id="descricao" class="form-control" rows="4" required
                                   maxlength="{{ max_desc }}"
-                                  placeholder="O que aconteceu, em poucas linhas…">{{ request.form.get('descricao', '') }}</textarea>
+                                  placeholder="O que aconteceu, em poucas linhas…">{{ request.form.get('descricao', item.descricao if item else '') }}</textarea>
                         <div class="form-text"><span id="descCount">0</span>/{{ max_desc }}</div>
                     </div>
 
+                    {% if item and item.fotos %}
+                    <div class="mb-3">
+                        <div class="form-label">Fotos atuais</div>
+                        <div class="acao-fotos-atuais">
+                            {% for f in item.fotos %}
+                            <div class="acao-foto-atual">
+                                <img src="{{ f.url }}" alt="">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="remover_fotos"
+                                           value="{{ f.id }}" id="rmFoto{{ f.id }}"
+                                           {% if (f.id | string) in request.form.getlist('remover_fotos') %}checked{% endif %}>
+                                    <label class="form-check-label" for="rmFoto{{ f.id }}">Remover</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="mb-4">
-                        <label class="form-label" for="fotos">Fotos * (1 a 4)</label>
-                        <input type="file" name="fotos" id="fotos" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple required>
-                        <div class="form-text">JPG, PNG ou WebP, até 5 MB cada.</div>
+                        <label class="form-label" for="fotos">
+                            {% if item %}Adicionar fotos{% else %}Fotos * (1 a {{ max_fotos }}){% endif %}
+                        </label>
+                        <input type="file" name="fotos" id="fotos" class="form-control" accept=".jpg,.jpeg,.png,.webp" multiple {% if not item %}required{% endif %}>
+                        <div class="form-text">
+                            JPG, PNG ou WebP, até 5 MB cada.
+                            {% if item %}No total, de 1 a {{ max_fotos }} fotos.{% endif %}
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-check-circle me-1"></i>Publicar no mural
+                            <i class="fas fa-check-circle me-1"></i>{{ 'Salvar alterações' if item else 'Publicar no mural' }}
                         </button>
-                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+                        <a href="{{ url_cancelar }}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
                 {% endif %}

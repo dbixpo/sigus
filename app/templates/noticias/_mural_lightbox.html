@@ -45,6 +45,23 @@
     </div>
 </div>
 <style>
+.mural-post, .mural-card { position: relative; }
+.mural-post-desc, .mural-desc { white-space: pre-wrap; overflow-wrap: anywhere; }
+.mural-gerenciar {
+    position: absolute; top: 0.6rem; right: 0.7rem;
+    display: flex; gap: 0.2rem;
+}
+.mural-gerenciar form { margin: 0; }
+.mural-post:has(.mural-gerenciar) > :first-child,
+.mural-card:has(.mural-gerenciar) > :first-child { padding-right: 4rem; }
+.mural-ger-btn {
+    width: 28px; height: 28px; border: 0; border-radius: 6px;
+    background: transparent; color: #718096; font-size: 0.78rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; text-decoration: none;
+}
+.mural-ger-btn:hover { background: #e8f4fb; color: #1A82B8; }
+.mural-ger-btn.is-danger:hover { background: #fdecec; color: #E63030; }
 .mural-react {
     display: flex; align-items: center; gap: 0.85rem;
     margin-top: 0.45rem; font-size: 0.82rem; color: #718096;

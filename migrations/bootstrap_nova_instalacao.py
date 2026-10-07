@@ -33,6 +33,7 @@ SEEDS = [
     'add_ciencia_auditoria.py',
     'add_ciencia_cpf.py',
     'add_ciencia_filtros.py',
+    'add_comunicado_versao.py',
     'add_mural_social.py',
     'add_lojinha_destino.py',
     'add_nsp.py',

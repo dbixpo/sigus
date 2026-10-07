@@ -1,12 +1,18 @@
 {% extends 'base.html' %}
-{% from 'noticias/_mural_fotos.html' import thumbs, reacts %}
+{% from 'noticias/_mural_fotos.html' import thumbs, reacts, gerenciar_acao %}
 {% block title %}Dashboard{% endblock %}
 
 {% block head %}
 <style>
 .dash-unidade { color: #718096; font-size: 0.875rem; }
-.dash-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .com-card { border-left: 3px solid #edf1f5; }
+.com-texto {
+    white-space: pre-line;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.com-lado { display: flex; flex-direction: column; align-items: flex-end; gap: 0.35rem; flex-shrink: 0; }
+.com-gerenciar { display: flex; gap: 0.2rem; }
+.com-gerenciar form { margin: 0; }
 .com-card.com-pendente { border-left-color: #1A82B8; background: #f7fbfe; }
 .com-meta { font-size: 0.75rem; color: #718096; }
 .dash-bloco {
@@ -197,16 +203,6 @@
         <div class="dash-unidade">Selecione a unidade no topo para ver o dia a dia.</div>
         {% endif %}
     </div>
-    {% if pode_publicar %}
-    <div class="dash-actions">
-        <a href="{{ url_for('noticias.novo_comunicado') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-bullhorn me-1"></i>Novo comunicado
-        </a>
-        <a href="{{ url_for('noticias.nova_acao') }}" class="btn btn-outline-primary btn-sm">
-            <i class="fas fa-camera me-1"></i>Registrar ação
-        </a>
-    </div>
-    {% endif %}
 </div>
 
 {% if eh_meu_aniversario %}
@@ -342,11 +338,14 @@
                                 <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}"
                                    class="fw-semibold text-decoration-none">{{ item.titulo }}</a>
                                 {% if item.texto %}
-                                <div class="small text-muted mt-1" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{{ item.texto }}</div>
+                                <div class="small text-muted mt-1 com-texto">{{ item.texto }}</div>
                                 {% endif %}
                                 <div class="com-meta mt-1">
                                     {{ item.autor.nome.split()[0] if item.autor else '—' }}
                                     · {{ item.criado_em | br_datetime('%d/%m %H:%M') if item.criado_em else '' }}
+                                    {% if item.editado_em %}
+                                    · editado {{ item.editado_em | br_datetime('%d/%m %H:%M') }}
+                                    {% endif %}
                                     {% if item.exige_ciencia %}
                                     · {{ c.n_ok }}/{{ c.n_dest }} deram ciência
                                     {% endif %}
@@ -355,12 +354,35 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            {% if c.pendente %}
-                            <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}#ciencia"
-                               class="btn btn-sm btn-primary flex-shrink-0">Dar ciência</a>
-                            {% elif c.ja_ciencia %}
-                            <span class="badge bg-success flex-shrink-0">Ciência ok</span>
-                            {% endif %}
+                            <div class="com-lado">
+                                {% if c.pode_editar or c.pode_excluir %}
+                                <div class="com-gerenciar">
+                                    {% if c.pode_editar %}
+                                    <a href="{{ url_for('noticias.editar_comunicado', id=item.id) }}"
+                                       class="mural-ger-btn" title="Editar comunicado" aria-label="Editar comunicado">
+                                        <i class="fas fa-pen"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if c.pode_excluir %}
+                                    <form method="POST" action="{{ url_for('noticias.excluir_comunicado', id=item.id) }}"
+                                          onsubmit="return confirm('Excluir este comunicado? Ele some do dashboard de todas as unidades.');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="voltar" value="dashboard">
+                                        <button type="submit" class="mural-ger-btn is-danger"
+                                                title="Excluir comunicado" aria-label="Excluir comunicado">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                {% if c.pendente %}
+                                <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}#ciencia"
+                                   class="btn btn-sm btn-primary">Dar ciência</a>
+                                {% elif c.ja_ciencia %}
+                                <span class="badge bg-success">Ciência ok</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </li>
                     {% endfor %}
@@ -438,6 +460,7 @@
                             {% if a.autor %} · {{ a.autor.nome.split()[0] }}{% endif %}
                         </div>
                         {{ reacts(a.id, mural_stats.get(a.id, {})) }}
+                        {{ gerenciar_acao(a, 'dashboard', pode_editar_acao(a), pode_excluir_acao(a)) }}
                     </article>
                     {% else %}
                     {% set item = entry.item %}

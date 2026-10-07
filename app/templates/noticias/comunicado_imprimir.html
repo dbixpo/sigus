@@ -152,6 +152,13 @@ if (window.self !== window.top) {
         {% if item.exige_ciencia and item.ciencia_alvo_resumo() %}
         <div style="margin-top:4px;">Quem deve dar ciência: {{ item.ciencia_alvo_resumo() }}</div>
         {% endif %}
+        {% if item.editado_em %}
+        <div style="margin-top:4px;">
+            Versão {{ item.versao }}, editada em {{ item.editado_em | br_datetime }}
+            {% if item.editado_por %} por {{ item.editado_por.nome }}{% endif %}.
+            Lista de ciência referente a esta versão.
+        </div>
+        {% endif %}
     </div>
 
     {% if item.texto %}

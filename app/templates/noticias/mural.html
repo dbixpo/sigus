@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% from 'noticias/_mural_fotos.html' import thumbs, reacts %}
+{% from 'noticias/_mural_fotos.html' import thumbs, reacts, gerenciar_acao %}
 {% block title %}Mural da rede{% endblock %}
 
 {% block head %}
@@ -97,6 +97,7 @@
             {% if a.autor %} · {{ a.autor.nome.split()[0] }}{% endif %}
         </div>
         {{ reacts(a.id, mural_stats.get(a.id, {})) }}
+        {{ gerenciar_acao(a, 'mural', pode_editar_acao(a), pode_excluir_acao(a)) }}
     </article>
     {% else %}
     {% set item = entry.item %}

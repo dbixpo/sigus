@@ -15,6 +15,29 @@
 {% endif %}
 {% endmacro %}
 
+{% macro gerenciar_acao(a, voltar, editar, excluir) %}
+{% if editar or excluir %}
+<div class="mural-gerenciar">
+    {% if editar %}
+    <a href="{{ url_for('noticias.editar_acao', id=a.id, voltar=voltar) }}"
+       class="mural-ger-btn" title="Editar publicação" aria-label="Editar publicação">
+        <i class="fas fa-pen"></i>
+    </a>
+    {% endif %}
+    {% if excluir %}
+    <form method="POST" action="{{ url_for('noticias.excluir_acao', id=a.id) }}"
+          onsubmit="return confirm('Excluir esta publicação do mural? Fotos, curtidas e comentários também serão apagados.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="voltar" value="{{ voltar }}">
+        <button type="submit" class="mural-ger-btn is-danger" title="Excluir publicação" aria-label="Excluir publicação">
+            <i class="fas fa-trash-alt"></i>
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+{% endmacro %}
+
 {% macro reacts(acao_id, st) %}
 <div class="mural-react">
     <button type="button" class="mural-like-btn{% if st.curtiu %} is-on{% endif %}"

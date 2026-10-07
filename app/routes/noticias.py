@@ -98,6 +98,7 @@ def _registrar_ciencia(item, origem, exigir_assinatura=False):
         assinatura_base64=assinatura,
         origem=origem,
         cpf=cpf_informado or (cpf_cadastro if len(cpf_cadastro) == 11 else None),
+        versao=item.versao or 1,
     )
     db.session.add(rec)
     return rec, None
@@ -113,9 +114,54 @@ def pode_compartilhar(usuario=None):
     return bool(u.is_authenticated and u.perfil in PERFIS_COMPARTILHAR)
 
 
+def _pode_editar(autor_id, usuario=None):
+    """Editar: só quem publicou."""
+    u = usuario or current_user
+    return bool(u.is_authenticated and autor_id and autor_id == u.id)
+
+
+def _pode_excluir(autor_id, usuario=None):
+    """Excluir: quem publicou ou o Administrador do sistema."""
+    u = usuario or current_user
+    if not u.is_authenticated:
+        return False
+    return u.perfil == 'administrador' or bool(autor_id and autor_id == u.id)
+
+
+def pode_editar_comunicado(item, usuario=None):
+    return _pode_editar(item.autor_id, usuario)
+
+
+def pode_excluir_comunicado(item, usuario=None):
+    return _pode_excluir(item.autor_id, usuario)
+
+
+def pode_editar_acao(acao, usuario=None):
+    return _pode_editar(acao.autor_id, usuario)
+
+
+def pode_excluir_acao(acao, usuario=None):
+    return _pode_excluir(acao.autor_id, usuario)
+
+
 def _exigir_publicar():
     if not pode_publicar():
         abort(403)
+
+
+def _redirect_voltar(padrao='dashboard.index'):
+    destinos = {'dashboard': 'dashboard.index', 'mural': 'noticias.mural'}
+    voltar = request.values.get('voltar') or ''
+    return redirect(url_for(destinos.get(voltar, padrao)))
+
+
+def _remover_arquivo(pasta, filename):
+    if not filename:
+        return
+    try:
+        os.remove(os.path.join(pasta, os.path.basename(filename)))
+    except OSError:
+        pass
 
 
 def unidades_ativas():
@@ -383,17 +429,26 @@ def _salvar_arquivo(file_obj, pasta, exts, max_mb):
     }, None
 
 
-def _notificar_comunicado(comunicado):
+def _notificar_comunicado(comunicado, editado=False):
     destinos = ids_destinatarios(comunicado)
-    destinos.discard(comunicado.autor_id)
+    destinos.discard(current_user.id if editado else comunicado.autor_id)
     for uid in destinos:
         db.session.add(Notificacao(
             usuario_id=uid,
-            tipo='comunicado_novo',
+            tipo='comunicado_editado' if editado else 'comunicado_novo',
             titulo=comunicado.titulo,
-            texto='Novo comunicado na sua unidade. Dê ciência.',
+            texto=(
+                'Comunicado alterado. Dê ciência novamente.' if editado
+                else 'Novo comunicado na sua unidade. Dê ciência.'
+            ),
             comunicado_id=comunicado.id,
         ))
+
+
+def _marcar_notificacoes_lidas(comunicado_id):
+    Notificacao.query.filter_by(comunicado_id=comunicado_id, lida=False).update(
+        {'lida': True}, synchronize_session=False,
+    )
 
 
 def comunicados_da_unidade(unidade_id, limite=12):
@@ -418,7 +473,7 @@ def montar_cards_comunicados(comunicados, usuario_id):
     for c in comunicados:
         dest = ids_destinatarios(c)
         n_dest = len(dest)
-        n_ok = c.ciencias.count() if c.exige_ciencia else 0
+        n_ok = c.ciencias_atuais().count() if c.exige_ciencia else 0
         deve = c.exige_ciencia and usuario_id in dest
         ja = c.usuario_cientificou(usuario_id) if deve else False
         cards.append({
@@ -428,6 +483,8 @@ def montar_cards_comunicados(comunicados, usuario_id):
             'pendente': deve and not ja,
             'ja_ciencia': ja,
             'deve_ciencia': deve,
+            'pode_editar': pode_editar_comunicado(c),
+            'pode_excluir': pode_excluir_comunicado(c),
         })
     cards.sort(key=lambda x: (not x['pendente'], -(x['item'].criado_em.timestamp() if x['item'].criado_em else 0)))
     return cards
@@ -576,20 +633,31 @@ def _acao_payload(acao, foto_idx=0):
     }
 
 
-def _ctx_acao(tipos, unidades, escolher_unidade):
+def _ctx_acao(tipos, unidades, escolher_unidade, item=None):
     return dict(
         tipos=tipos,
         unidades=unidades,
         escolher_unidade=escolher_unidade,
         max_desc=DESCRICAO_ACAO_MAX,
+        max_fotos=FOTOS_ACAO_MAX,
         hoje_iso=date.today().isoformat(),
+        item=item,
     )
 
 
-def _ctx_comunicado(unidades):
-    marcadas = request.form.getlist('unidades')
-    if not marcadas and current_user.unidade_logada:
-        marcadas = [str(current_user.unidade_logada.id)]
+def _ctx_comunicado(unidades, item=None):
+    if item is not None and request.method != 'POST':
+        marcadas = [str(i) for i in item.ids_unidades_alvo()]
+        perfis = item.ciencia_perfis_lista
+        cbos = item.ciencia_cbos_lista
+        modo = 'perfil' if perfis else ('cbo' if cbos else 'equipe')
+    else:
+        marcadas = request.form.getlist('unidades')
+        if not marcadas and current_user.unidade_logada:
+            marcadas = [str(current_user.unidade_logada.id)]
+        perfis = request.form.getlist('ciencia_perfis')
+        cbos = request.form.getlist('ciencia_cbos')
+        modo = request.form.get('ciencia_modo') or 'equipe'
     ids_marcadas = []
     for v in marcadas:
         try:
@@ -601,9 +669,12 @@ def _ctx_comunicado(unidades):
         pode_compartilhar=pode_compartilhar(),
         marcadas=marcadas,
         opcoes_ciencia=opcoes_ciencia_para_unidades(ids_marcadas),
-        ciencia_modo=request.form.get('ciencia_modo') or 'equipe',
-        ciencia_perfis_marcados=request.form.getlist('ciencia_perfis'),
-        ciencia_cbos_marcados=request.form.getlist('ciencia_cbos'),
+        ciencia_modo=modo,
+        ciencia_perfis_marcados=perfis,
+        ciencia_cbos_marcados=cbos,
+        item=item,
+        max_anexos=ANEXOS_COMUNICADO_MAX,
+        n_ciencias_atuais=item.ciencias_atuais().count() if item is not None else 0,
     )
 
 
@@ -691,7 +762,7 @@ def detalhe_comunicado(id):
     dest_ids = {u.id for u in dest}
     if not (pode_publicar() or current_user.id in dest_ids or item.autor_id == current_user.id):
         abort(403)
-    ciencias = {c.usuario_id: c for c in item.ciencias.all()}
+    ciencias = {c.usuario_id: c for c in item.ciencias_atuais().all()}
     deve = item.exige_ciencia and current_user.id in dest_ids
     ja = current_user.id in ciencias
     ver_lista = pode_publicar() or item.autor_id == current_user.id
@@ -710,6 +781,9 @@ def detalhe_comunicado(id):
         faltam=faltam,
         deram=deram,
         minha_ciencia=minha,
+        pode_editar=pode_editar_comunicado(item),
+        pode_excluir=pode_excluir_comunicado(item),
+        n_ciencias_anteriores=item.n_ciencias_anteriores() if ver_lista else 0,
     )
 
 
@@ -744,7 +818,7 @@ def imprimir_comunicado(id):
     dest_ids = {u.id for u in dest}
     if not (pode_publicar() or current_user.id in dest_ids or item.autor_id == current_user.id):
         abort(403)
-    ciencias = {c.usuario_id: c for c in item.ciencias.all()}
+    ciencias = {c.usuario_id: c for c in item.ciencias_atuais().all()}
     deram = [ciencias[u.id] for u in dest if u.id in ciencias]
     for uid, rec in ciencias.items():
         if uid not in dest_ids:
@@ -760,6 +834,123 @@ def imprimir_comunicado(id):
         n_ok=len(ciencias),
         agora=agora_local(),
     )
+
+
+@noticias_bp.route('/comunicados/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_comunicado(id):
+    item = Comunicado.query.get_or_404(id)
+    if not item.ativo:
+        abort(404)
+    if not pode_editar_comunicado(item):
+        abort(403)
+    unidades = unidades_para_publicar()
+    ctx = _ctx_comunicado(unidades, item=item)
+    tpl = 'noticias/comunicado_form.html'
+    if request.method == 'POST':
+        titulo = (request.form.get('titulo') or '').strip()
+        texto = (request.form.get('texto') or '').strip() or None
+        if not titulo:
+            flash('Informe o título do comunicado.', 'danger')
+            return render_template(tpl, **ctx)
+        if pode_compartilhar():
+            alvos, erro = resolver_unidades_comunicado()
+            if erro:
+                flash(erro, 'danger')
+                return render_template(tpl, **ctx)
+        else:
+            alvos = list(item.unidades_alvo)
+
+        ids_remover = set()
+        for v in request.form.getlist('remover_anexos'):
+            try:
+                ids_remover.add(int(v))
+            except (TypeError, ValueError):
+                continue
+        remover = [a for a in item.anexos if a.id in ids_remover]
+        arquivos = [f for f in request.files.getlist('anexos') if f and f.filename]
+        if len(item.anexos) - len(remover) + len(arquivos) > ANEXOS_COMUNICADO_MAX:
+            flash(f'No máximo {ANEXOS_COMUNICADO_MAX} anexos no total.', 'danger')
+            return render_template(tpl, **ctx)
+
+        exige = request.form.get('exige_ciencia') == 'on'
+        perfis, cbos, err_filtro = _filtros_ciencia_form(exige)
+        if err_filtro:
+            flash(err_filtro, 'danger')
+            return render_template(tpl, **ctx)
+
+        mudou = (
+            titulo[:200] != item.titulo
+            or texto != item.texto
+            or {u.id for u in alvos} != set(item.ids_unidades_alvo())
+            or exige != item.exige_ciencia
+            or sorted(set(perfis)) != item.ciencia_perfis_lista
+            or sorted(set(cbos)) != item.ciencia_cbos_lista
+            or remover
+            or arquivos
+        )
+        if not mudou:
+            flash('Nada foi alterado.', 'info')
+            return redirect(url_for('noticias.detalhe_comunicado', id=item.id))
+
+        salvos = []
+        for f in arquivos:
+            meta, err = _salvar_arquivo(f, _DIR_COMUNICADOS, _ANEXO_EXTS, _ANEXO_MAX_MB)
+            if err:
+                for m in salvos:
+                    _remover_arquivo(_DIR_COMUNICADOS, m['filename'])
+                flash(err, 'danger')
+                return render_template(tpl, **ctx)
+            salvos.append(meta)
+
+        item.titulo = titulo[:200]
+        item.texto = texto
+        item.exige_ciencia = exige
+        item.definir_filtros_ciencia(perfis, cbos)
+        item.unidades_alvo = alvos
+        arquivos_removidos = [a.filename for a in remover]
+        for a in remover:
+            item.anexos.remove(a)
+        for meta in salvos:
+            db.session.add(ComunicadoAnexo(comunicado_id=item.id, **meta))
+        item.versao = (item.versao or 1) + 1
+        item.editado_em = agora_local()
+        item.editado_por_id = current_user.id
+        _marcar_notificacoes_lidas(item.id)
+        if item.exige_ciencia:
+            _notificar_comunicado(item, editado=True)
+        db.session.commit()
+        for nome in arquivos_removidos:
+            _remover_arquivo(_DIR_COMUNICADOS, nome)
+
+        if item.exige_ciencia:
+            dest = ids_destinatarios(item)
+            if current_user.id in dest:
+                flash('Comunicado alterado. As assinaturas foram zeradas: assine de novo para registrar a sua ciência.', 'success')
+                return redirect(url_for('noticias.detalhe_comunicado', id=item.id) + '#ciencia')
+            flash(f'Comunicado alterado. Nova ciência pedida a {len(dest)} pessoa(s).', 'success')
+        else:
+            flash('Comunicado alterado.', 'success')
+        return redirect(url_for('noticias.detalhe_comunicado', id=item.id))
+
+    return render_template(tpl, **ctx)
+
+
+@noticias_bp.route('/comunicados/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_comunicado(id):
+    item = Comunicado.query.get_or_404(id)
+    if not item.ativo:
+        abort(404)
+    if not pode_excluir_comunicado(item):
+        abort(403)
+    item.ativo = False
+    item.excluido_em = agora_local()
+    item.excluido_por_id = current_user.id
+    _marcar_notificacoes_lidas(item.id)
+    db.session.commit()
+    flash('Comunicado excluído.', 'success')
+    return _redirect_voltar()
 
 
 @noticias_bp.route('/acoes/nova', methods=['GET', 'POST'])
@@ -834,6 +1025,115 @@ def nova_acao():
     return render_template('noticias/acao_form.html', **ctx)
 
 
+@noticias_bp.route('/mural/acoes/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_acao(id):
+    acao = AcaoLocal.query.options(selectinload(AcaoLocal.fotos)).get_or_404(id)
+    if not pode_editar_acao(acao):
+        abort(403)
+    tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
+    if acao.tipo and acao.tipo not in tipos:
+        tipos = [acao.tipo] + tipos
+    escolher_unidade = current_user.perfil in ('administrador', 'gestor_secretaria')
+    unidades = unidades_para_publicar() if escolher_unidade else ([acao.unidade] if acao.unidade else [])
+    ctx = _ctx_acao(tipos, unidades, escolher_unidade, item=acao)
+    tpl = 'noticias/acao_form.html'
+    if request.method == 'POST':
+        descricao = (request.form.get('descricao') or '').strip()
+        if not descricao:
+            flash('Escreva uma descrição breve da ação.', 'danger')
+            return render_template(tpl, **ctx)
+        if len(descricao) > DESCRICAO_ACAO_MAX:
+            flash(f'A descrição pode ter no máximo {DESCRICAO_ACAO_MAX} caracteres.', 'danger')
+            return render_template(tpl, **ctx)
+        try:
+            tipo_id = int(request.form.get('tipo_acao_id') or 0)
+        except (TypeError, ValueError):
+            tipo_id = 0
+        tipo = next((t for t in tipos if t.id == tipo_id), None)
+        if not tipo:
+            flash('Escolha o tema da ação.', 'danger')
+            return render_template(tpl, **ctx)
+        data_raw = (request.form.get('data_acao') or '').strip()
+        try:
+            data_acao = datetime.strptime(data_raw, '%Y-%m-%d').date() if data_raw else acao.data_acao
+        except ValueError:
+            data_acao = acao.data_acao
+        if escolher_unidade:
+            un, erro = resolver_unidade_acao()
+            if erro:
+                flash(erro, 'danger')
+                return render_template(tpl, **ctx)
+        else:
+            un = acao.unidade
+
+        ids_remover = set()
+        for v in request.form.getlist('remover_fotos'):
+            try:
+                ids_remover.add(int(v))
+            except (TypeError, ValueError):
+                continue
+        remover = [f for f in acao.fotos if f.id in ids_remover]
+        arquivos = [f for f in request.files.getlist('fotos') if f and f.filename]
+        total = len(acao.fotos) - len(remover) + len(arquivos)
+        if total < 1:
+            flash('Mantenha ao menos uma foto na ação.', 'danger')
+            return render_template(tpl, **ctx)
+        if total > FOTOS_ACAO_MAX:
+            flash(f'No máximo {FOTOS_ACAO_MAX} fotos no total.', 'danger')
+            return render_template(tpl, **ctx)
+        salvos = []
+        for f in arquivos:
+            meta, err = _salvar_arquivo(f, _DIR_ACOES, _FOTO_EXTS, _FOTO_MAX_MB)
+            if err:
+                for m in salvos:
+                    _remover_arquivo(_DIR_ACOES, m['filename'])
+                flash(err, 'danger')
+                return render_template(tpl, **ctx)
+            salvos.append(meta)
+
+        acao.descricao = descricao
+        acao.tipo_acao_id = tipo.id
+        acao.data_acao = data_acao
+        acao.unidade_id = un.id
+        arquivos_removidos = [f.filename for f in remover]
+        for f in remover:
+            acao.fotos.remove(f)
+        for i, f in enumerate(acao.fotos):
+            f.ordem = i
+        base = len(acao.fotos)
+        for i, meta in enumerate(salvos):
+            db.session.add(AcaoLocalFoto(
+                acao_id=acao.id,
+                filename=meta['filename'],
+                original=meta['original'],
+                mime_type=meta['mime_type'],
+                ordem=base + i,
+            ))
+        db.session.commit()
+        for nome in arquivos_removidos:
+            _remover_arquivo(_DIR_ACOES, nome)
+        flash('Publicação do mural atualizada.', 'success')
+        return _redirect_voltar()
+
+    return render_template(tpl, **ctx)
+
+
+@noticias_bp.route('/mural/acoes/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_acao(id):
+    acao = AcaoLocal.query.options(selectinload(AcaoLocal.fotos)).get_or_404(id)
+    if not pode_excluir_acao(acao):
+        abort(403)
+    arquivos = [f.filename for f in acao.fotos]
+    db.session.delete(acao)
+    db.session.commit()
+    for nome in arquivos:
+        _remover_arquivo(_DIR_ACOES, nome)
+    flash('Publicação excluída do mural.', 'success')
+    return _redirect_voltar()
+
+
 @noticias_bp.route('/mural')
 @login_required
 def mural():
@@ -874,6 +1174,8 @@ def mural():
         filtro_tipo='lojinha' if so_lojinha else tipo_id,
         filtro_mes=mes_raw,
         pode_publicar=pode_publicar(),
+        pode_editar_acao=pode_editar_acao,
+        pode_excluir_acao=pode_excluir_acao,
         mural_stats=stats_acoes_feed(feed, current_user.id),
     )
 

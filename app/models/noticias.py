@@ -87,8 +87,18 @@ class Comunicado(db.Model):
     ciencia_cbos = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    versao = db.Column(db.Integer, nullable=False, default=1)
+    editado_em = db.Column(db.DateTime)
+    editado_por_id = db.Column(
+        db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL')
+    )
+    excluido_em = db.Column(db.DateTime)
+    excluido_por_id = db.Column(
+        db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL')
+    )
 
     autor = db.relationship('Usuario', foreign_keys=[autor_id])
+    editado_por = db.relationship('Usuario', foreign_keys=[editado_por_id])
     unidade_origem = db.relationship('Unidade', foreign_keys=[unidade_origem_id])
     unidades_alvo = db.relationship(
         'Unidade',
@@ -108,10 +118,17 @@ class Comunicado(db.Model):
         lazy='dynamic',
     )
 
+    def ciencias_atuais(self):
+        """Ciências da versão vigente; as de versões anteriores ficam como histórico."""
+        return self.ciencias.filter_by(versao=self.versao or 1)
+
+    def n_ciencias_anteriores(self):
+        return self.ciencias.filter(ComunicadoCiencia.versao != (self.versao or 1)).count()
+
     def usuario_cientificou(self, usuario_id):
         if not usuario_id:
             return False
-        return self.ciencias.filter_by(usuario_id=usuario_id).first() is not None
+        return self.ciencias_atuais().filter_by(usuario_id=usuario_id).first() is not None
 
     def ids_unidades_alvo(self):
         return [u.id for u in (self.unidades_alvo or [])]
@@ -213,7 +230,9 @@ class ComunicadoAnexo(db.Model):
 class ComunicadoCiencia(db.Model):
     __tablename__ = 'comunicado_ciencias'
     __table_args__ = (
-        db.UniqueConstraint('comunicado_id', 'usuario_id', name='uq_comunicado_ciencia'),
+        db.UniqueConstraint(
+            'comunicado_id', 'usuario_id', 'versao', name='uq_comunicado_ciencia_versao',
+        ),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -234,6 +253,7 @@ class ComunicadoCiencia(db.Model):
     assinatura_base64 = db.Column(db.Text)
     origem = db.Column(db.String(20))
     cpf = db.Column(db.String(11))
+    versao = db.Column(db.Integer, nullable=False, default=1)
 
     comunicado = db.relationship('Comunicado', back_populates='ciencias')
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
