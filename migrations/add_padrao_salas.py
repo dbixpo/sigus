@@ -41,6 +41,7 @@ COMANDOS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS ix_kit_padrao_sala_tipo_sala ON kit_padrao_sala (tipo_sala_id)",
+    "ALTER TABLE kit_padrao_sala ADD COLUMN IF NOT EXISTS por_profissional BOOLEAN NOT NULL DEFAULT FALSE",
 ]
 
 app = create_app()

@@ -38,6 +38,8 @@ class KitPadraoSala(db.Model):
     tipo_sala_id        = db.Column(db.Integer, db.ForeignKey('tipos_sala.id', ondelete='CASCADE'), nullable=False)
     tipo_equipamento_id = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='CASCADE'), nullable=False)
     quantidade          = db.Column(db.Integer, nullable=False, default=1)
+    # Quantidade por profissional: multiplica pelo "máx. profissionais simultâneos" da sala (0 = espera 0).
+    por_profissional    = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     observacao          = db.Column(db.String(300))
     criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -46,6 +48,11 @@ class KitPadraoSala(db.Model):
     tipo_equipamento = db.relationship('TipoEquipamento')
 
     __table_args__ = (db.UniqueConstraint('tipo_sala_id', 'tipo_equipamento_id', name='uq_kit_padrao_sala'),)
+
+    def esperado_na_sala(self, sala):
+        if self.por_profissional:
+            return self.quantidade * (sala.capacidade_maxima or 0)
+        return self.quantidade
 
     def __repr__(self):
         return f'<KitPadraoSala sala={self.tipo_sala_id} eq={self.tipo_equipamento_id} x{self.quantidade}>'

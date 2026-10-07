@@ -13,6 +13,15 @@
     .ps-barra { height:6px; background:#e9eef3; border-radius:3px; overflow:hidden; min-width:80px; }
     .ps-barra > div { height:100%; }
     .ps-sala-card .card-header { background:#F4F6F9; }
+    .ps-pilha { display:flex; height:10px; border-radius:5px; overflow:hidden; background:#e9eef3; min-width:120px; }
+    .ps-pilha > span { display:block; height:100%; }
+    .ps-donut { width:170px; height:170px; border-radius:50%; position:relative; flex-shrink:0; }
+    .ps-donut::after { content:''; position:absolute; inset:28px; background:#fff; border-radius:50%; }
+    .ps-donut-centro { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:1; }
+    .ps-legenda { cursor:pointer; border-radius:8px; padding:6px 8px; }
+    .ps-legenda:hover { background:#F4F6F9; }
+    .ps-ponto { width:12px; height:12px; border-radius:3px; display:inline-block; flex-shrink:0; }
+    .ps-filtro.active { background:#1A82B8; color:#fff; border-color:#1A82B8; }
     @media print { .filter-bar, .page-header .d-flex, .nav-tabs { display:none !important; } .tab-pane { display:block !important; opacity:1 !important; } }
 </style>
 {% endblock %}
@@ -24,6 +33,13 @@
     <span class="small fw-semibold" style="width:38px">{{ pct }}%</span>
 </div>
 {% endif %}
+{%- endmacro %}
+
+{% macro pilha(contagens) -%}
+{% set total = contagens.values()|sum %}
+<div class="ps-pilha" title="{% for k, sit in situacoes.items() %}{% if contagens[k] %}{{ sit.rotulo }}: {{ contagens[k] }}&#10;{% endif %}{% endfor %}">
+    {% if total %}{% for k, sit in situacoes.items() %}{% if contagens[k] %}<span style="width:{{ 100 * contagens[k] / total }}%; background:{{ sit.cor }}"></span>{% endif %}{% endfor %}{% endif %}
+</div>
 {%- endmacro %}
 
 {% block content %}
@@ -104,14 +120,21 @@
     <i class="fas fa-info-circle text-primary me-1"></i>
     {% if filtro_escopo == 'padrao' and not filtro_unidades %}Mostrando as UBS da planilha do padrão (unidades com código de imóvel).{% endif %}
     A conta compara os equipamentos ativos de cada sala (exceto baixados) com o kit do ambiente padrão dela.
+    Itens marcados "por profissional" no kit são multiplicados pelo máx. de profissionais simultâneos da sala.
     Itens que ainda não são inventariados no SIGUS (mobiliário, por exemplo) aparecem como faltando até serem cadastrados.
 </div>
 
-<ul class="nav nav-tabs" role="tablist">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-unidades">
+<ul class="nav nav-tabs" role="tablist" id="psAbas">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-painel">
+        <i class="fas fa-chart-pie me-1"></i>Painel</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-lista" id="abaLista">
+        <i class="fas fa-list-check me-1"></i>Salas <span class="badge bg-primary ms-1">{{ totais.avaliadas }}</span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-unidades">
         <i class="fas fa-hospital me-1"></i>Por unidade <span class="badge bg-primary ms-1">{{ dados['unidades']|length }}</span></button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-itens">
         <i class="fas fa-shopping-cart me-1"></i>Necessidade por item <span class="badge bg-danger ms-1">{{ dados['itens']|length }}</span></button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-excedentes">
+        <i class="fas fa-layer-group me-1"></i>Itens a mais <span class="badge bg-info text-dark ms-1">{{ dados['itens_excedentes']|length }}</span></button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas">
         <i class="fas fa-door-open me-1"></i>Sala a sala</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reclassificar">
@@ -119,8 +142,251 @@
 </ul>
 
 <div class="tab-content card border-top-0 rounded-top-0 mb-4">
+    {# ── Painel ── #}
+    <div class="tab-pane fade show active p-3" id="tab-painel">
+        {% if dados['avaliadas'] %}
+        {% set ns_d = namespace(acum=0, partes=[]) %}
+        {% for k, sit in situacoes.items() %}
+            {% set fim = ns_d.acum + 100 * dados['situacoes'][k] / totais.avaliadas %}
+            {% set ns_d.partes = ns_d.partes + [sit.cor ~ ' ' ~ ns_d.acum ~ '% ' ~ fim ~ '%'] %}
+            {% set ns_d.acum = fim %}
+        {% endfor %}
+        <div class="row g-3">
+            <div class="col-12 col-xl-6">
+                <div class="border rounded-3 p-3 h-100">
+                    <div class="fw-semibold mb-3" style="color:#0D3B5E">Situação do kit nas salas avaliadas</div>
+                    <div class="d-flex flex-wrap align-items-center gap-4">
+                        <div class="ps-donut" style="background:conic-gradient({{ ns_d.partes|join(', ') }})">
+                            <div class="ps-donut-centro">
+                                <div class="fs-3 fw-bold" style="color:#0D3B5E">{{ totais.avaliadas }}</div>
+                                <div class="small text-muted">salas</div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            {% for k, sit in situacoes.items() %}
+                            {% if dados['situacoes'][k] or k != 'sem_esperado' %}
+                            <div class="ps-legenda d-flex align-items-center gap-2" data-ir-situacao="{{ k }}" title="Ver estas salas">
+                                <span class="ps-ponto" style="background:{{ sit.cor }}"></span>
+                                <span class="small flex-grow-1">{{ sit.rotulo }}</span>
+                                <strong class="small">{{ dados['situacoes'][k] }}</strong>
+                                <span class="small text-muted" style="width:42px; text-align:right">{{ (100 * dados['situacoes'][k] / totais.avaliadas)|round|int }}%</span>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-6">
+                <div class="row g-3 h-100">
+                    <div class="col-6">
+                        <div class="ps-stat verde ps-legenda" data-ir-situacao="completo,excedente">
+                            <div class="ps-rotulo">Kit completo</div>
+                            <div class="ps-valor">{{ dados['situacoes']['completo'] + dados['situacoes']['excedente'] }}</div>
+                            <div class="small text-muted">{{ dados['situacoes']['excedente'] }} delas com itens a mais</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="ps-stat amarelo ps-legenda" data-ir-situacao="incompleto,vazio">
+                            <div class="ps-rotulo">Kit faltando itens</div>
+                            <div class="ps-valor">{{ dados['situacoes']['incompleto'] + dados['situacoes']['vazio'] }}</div>
+                            <div class="small text-muted">{{ dados['situacoes']['vazio'] }} sem nenhum item do kit</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="ps-stat ps-legenda" data-ir-situacao="com_excedente">
+                            <div class="ps-rotulo">Salas com itens a mais</div>
+                            <div class="ps-valor">{{ totais.com_excedente }}</div>
+                            <div class="small text-muted">{{ totais.sobra }} acima do kit · {{ totais.nao_previstos }} não previstos</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="ps-stat vermelho ps-legenda" data-ir-situacao="sem_profissionais">
+                            <div class="ps-rotulo">Sem profissionais informados</div>
+                            <div class="ps-valor">{{ totais.sem_profissionais }}</div>
+                            <div class="small text-muted">salas com item "por profissional" e 0 na sala</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="border rounded-3">
+                    <div class="px-3 py-2 border-bottom fw-semibold" style="color:#0D3B5E">Por ambiente padrão</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0 align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ambiente</th>
+                                    <th class="text-center">Salas</th>
+                                    <th style="width:28%">Situação das salas</th>
+                                    <th class="text-center">Completas</th>
+                                    <th class="text-center">Faltando</th>
+                                    <th class="text-center">Com itens a mais</th>
+                                    <th style="width:170px">Aderência</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in dados['ambientes'] %}
+                                <tr>
+                                    <td class="fw-semibold">{{ a.tipo_sala.nome_com_codigo }}</td>
+                                    <td class="text-center">{{ a.salas }}</td>
+                                    <td>{{ pilha(a.situacoes) }}</td>
+                                    <td class="text-center text-success">{{ a.situacoes.completo + a.situacoes.excedente }}</td>
+                                    <td class="text-center {{ 'text-danger fw-semibold' if a.situacoes.incompleto + a.situacoes.vazio }}">{{ a.situacoes.incompleto + a.situacoes.vazio }}</td>
+                                    <td class="text-center text-primary">{{ a.com_excedente or '—' }}</td>
+                                    <td>{{ barra(a.pct) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-lg-6">
+                <div class="border rounded-3 h-100">
+                    <div class="px-3 py-2 border-bottom fw-semibold" style="color:#0D3B5E">Itens que mais faltam</div>
+                    {% set mais_faltam = dados['itens']|sort(attribute='falta', reverse=true) %}
+                    <table class="table table-sm mb-0 small">
+                        {% for it in mais_faltam[:10] %}
+                        <tr>
+                            <td>{{ it.tipo_equipamento.nome }}</td>
+                            <td class="text-end text-danger fw-semibold">{{ it.falta }}</td>
+                            <td class="text-end text-muted">{{ it.salas }} sala(s)</td>
+                        </tr>
+                        {% else %}
+                        <tr><td class="text-muted">Nada faltando.</td></tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+            <div class="col-12 col-lg-6">
+                <div class="border rounded-3 h-100">
+                    <div class="px-3 py-2 border-bottom fw-semibold" style="color:#0D3B5E">Itens a mais (acima do kit ou não previstos)</div>
+                    <table class="table table-sm mb-0 small">
+                        {% for it in dados['itens_excedentes'][:10] %}
+                        <tr>
+                            <td>{{ it.tipo_equipamento.nome }}</td>
+                            <td class="text-end text-primary fw-semibold">{{ it.sobra + it.nao_previsto }}</td>
+                            <td class="text-end text-muted">{{ it.salas }} sala(s)</td>
+                        </tr>
+                        {% else %}
+                        <tr><td class="text-muted">Nenhum item a mais.</td></tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-chart-pie"></i><h6>Nenhuma sala em ambiente padrão com kit neste filtro.</h6></div>
+        {% endif %}
+    </div>
+
+    {# ── Lista de salas com situação ── #}
+    <div class="tab-pane fade p-0" id="tab-lista">
+        {% if dados['avaliadas'] %}
+        <div class="p-2 border-bottom d-flex flex-wrap gap-1 align-items-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary ps-filtro active" data-filtro="">Todas <span class="badge bg-light text-dark ms-1">{{ totais.avaliadas }}</span></button>
+            {% for k, sit in situacoes.items() %}
+            {% if dados['situacoes'][k] %}
+            <button type="button" class="btn btn-sm btn-outline-secondary ps-filtro" data-filtro="{{ k }}">
+                <span class="ps-ponto me-1" style="background:{{ sit.cor }}"></span>{{ sit.rotulo }} <span class="badge bg-light text-dark ms-1">{{ dados['situacoes'][k] }}</span>
+            </button>
+            {% endif %}
+            {% endfor %}
+            <button type="button" class="btn btn-sm btn-outline-secondary ps-filtro" data-filtro="com_excedente">Com itens a mais <span class="badge bg-light text-dark ms-1">{{ totais.com_excedente }}</span></button>
+            {% if totais.sem_profissionais %}
+            <button type="button" class="btn btn-sm btn-outline-secondary ps-filtro" data-filtro="sem_profissionais">0 profissionais <span class="badge bg-light text-dark ms-1">{{ totais.sem_profissionais }}</span></button>
+            {% endif %}
+            <input type="search" class="form-control form-control-sm ms-auto" style="max-width:240px" id="psBuscaSala" placeholder="Buscar unidade, sala ou ambiente">
+        </div>
+        <div class="table-responsive" style="max-height:640px">
+            <table class="table table-sm table-hover mb-0 align-middle small" id="psTabelaSalas">
+                <thead class="table-light" style="position:sticky; top:0; z-index:2">
+                    <tr>
+                        <th>Unidade</th>
+                        <th>Sala</th>
+                        <th>Ambiente</th>
+                        <th class="text-center" title="Máx. profissionais simultâneos"><i class="fas fa-user"></i></th>
+                        <th>Situação</th>
+                        <th style="width:150px">Aderência</th>
+                        <th class="text-center">Faltando</th>
+                        <th class="text-center">A mais</th>
+                        <th class="text-center">Não previstos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for av in dados['avaliadas'] %}
+                    {% set s = av.sala %}
+                    {% set sit = situacoes[av.situacao] %}
+                    <tr data-situacao="{{ av.situacao }}"
+                        data-extra="{{ 'com_excedente' if av.sobra or av.qtd_nao_previstos }} {{ 'sem_profissionais' if av.sem_profissionais }}">
+                        <td class="text-muted">{{ s.unidade.nome }}</td>
+                        <td class="fw-semibold"><a href="{{ url_for('salas.detalhe', id=s.id) }}" class="text-decoration-none" target="_blank">{{ s.nome }}</a></td>
+                        <td>{{ s.tipo_sala.nome_com_codigo }}</td>
+                        <td class="text-center {{ 'text-danger fw-semibold' if av.sem_profissionais }}">{{ s.capacidade_maxima or 0 }}</td>
+                        <td><span class="badge {{ sit.badge }}">{{ sit.rotulo }}</span></td>
+                        <td>{{ barra(av.pct) }}</td>
+                        <td class="text-center {{ 'text-danger fw-semibold' if av.falta }}">{{ av.falta or '—' }}</td>
+                        <td class="text-center {{ 'text-primary fw-semibold' if av.sobra }}">{{ av.sobra or '—' }}</td>
+                        <td class="text-center {{ 'text-primary' if av.qtd_nao_previstos }}">{{ av.qtd_nao_previstos or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="px-3 py-2 border-top small text-muted"><span id="psQtdVisiveis">{{ totais.avaliadas }}</span> sala(s) na lista. Clique na sala para ver item a item.</div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-door-open"></i><h6>Nenhuma sala em ambiente padrão com kit neste filtro.</h6></div>
+        {% endif %}
+    </div>
+
+    {# ── Itens a mais ── #}
+    <div class="tab-pane fade p-0" id="tab-excedentes">
+        {% if dados['itens_excedentes'] %}
+        <div class="px-3 py-2 small text-muted border-bottom">
+            <strong>Acima do kit:</strong> o item faz parte do kit, mas a sala tem mais do que o recomendado.
+            <strong>Não previsto:</strong> item do catálogo que está na sala sem fazer parte do kit daquele ambiente (pode ser remanejado).
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Item</th>
+                        <th class="text-center">Acima do kit</th>
+                        <th class="text-center">Não previsto</th>
+                        <th class="text-center">Total a mais</th>
+                        <th class="text-center">Salas</th>
+                        <th class="text-center">Unidades</th>
+                        <th class="text-end">Valor ref.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for it in dados['itens_excedentes'] %}
+                    {% set te = it.tipo_equipamento %}
+                    <tr>
+                        <td class="small text-muted text-nowrap">{{ te.codigo or '—' }}</td>
+                        <td class="small fw-semibold">{{ te.nome }}</td>
+                        <td class="text-center small">{{ it.sobra or '—' }}</td>
+                        <td class="text-center small">{{ it.nao_previsto or '—' }}</td>
+                        <td class="text-center small fw-semibold text-primary">{{ it.sobra + it.nao_previsto }}</td>
+                        <td class="text-center small">{{ it.salas }}</td>
+                        <td class="text-center small">{{ it.unidades }}</td>
+                        <td class="text-end small text-nowrap">{{ te.valor_referencia|br_currency if te.valor_referencia is not none else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4"><i class="fas fa-check-circle text-success"></i><h6>Nenhum item a mais neste filtro.</h6></div>
+        {% endif %}
+    </div>
+
     {# ── Por unidade ── #}
-    <div class="tab-pane fade show active p-0" id="tab-unidades">
+    <div class="tab-pane fade p-0" id="tab-unidades">
         {% if dados['unidades'] %}
         <div class="table-responsive">
             <table class="table table-sm table-hover mb-0 align-middle">
@@ -130,9 +396,10 @@
                         <th class="text-center">Salas</th>
                         <th class="text-center">Avaliadas</th>
                         <th class="text-center">Fora do padrão</th>
-                        <th style="width:190px">Aderência</th>
+                        <th style="width:160px">Situação das salas</th>
+                        <th style="width:170px">Aderência</th>
                         <th class="text-center">Faltando</th>
-                        <th class="text-center">Sobrando</th>
+                        <th class="text-center">A mais</th>
                         <th class="text-end">Custo estimado</th>
                         <th></th>
                     </tr>
@@ -150,9 +417,11 @@
                         <td class="text-center small">{{ u.salas }}</td>
                         <td class="text-center small">{{ u.avaliadas }}</td>
                         <td class="text-center small">{% if u.sem_padrao %}<span class="badge bg-warning text-dark">{{ u.sem_padrao }}</span>{% else %}—{% endif %}</td>
+                        <td>{% if u.avaliadas %}{{ pilha(u.situacoes) }}
+                            <div class="text-muted" style="font-size:.72rem">{{ u.situacoes.completo + u.situacoes.excedente }} completa(s) de {{ u.avaliadas }}</div>{% else %}<span class="text-muted small">—</span>{% endif %}</td>
                         <td>{{ barra(u.pct) }}</td>
                         <td class="text-center small {{ 'text-danger fw-semibold' if u.falta }}">{{ u.falta }}</td>
-                        <td class="text-center small text-muted">{{ u.sobra }}</td>
+                        <td class="text-center small text-muted" title="Acima do kit + não previstos">{{ u.sobra + u.nao_previstos }}</td>
                         <td class="text-end small text-nowrap">{{ u.custo|br_currency }}</td>
                         <td class="text-end">
                             <a href="{{ url_for('relatorios.padrao_salas', unidade=u.unidade.id) }}" class="btn btn-sm btn-outline-primary" title="Ver sala a sala">
@@ -240,6 +509,7 @@
             <div class="card-header py-2 d-flex flex-wrap align-items-center gap-3">
                 <a href="{{ url_for('salas.detalhe', id=s.id) }}" class="fw-semibold text-decoration-none">{{ s.nome }}</a>
                 <span class="small text-muted">{{ s.tipo_sala.nome_com_codigo }}</span>
+                <span class="badge {{ situacoes[av.situacao].badge }}">{{ situacoes[av.situacao].rotulo }}</span>
                 <div class="ms-auto d-flex align-items-center gap-3" style="min-width:260px">
                     <div class="flex-grow-1">{{ barra(av.pct) }}</div>
                     <span class="small {{ 'text-danger' if av.falta else 'text-success' }}">{{ av.falta }} faltando</span>
@@ -247,11 +517,22 @@
                 </div>
             </div>
             {% set faltas = av.linhas|selectattr('falta')|list %}
-            {% if faltas %}
+            {% set sobras = av.linhas|selectattr('sobra')|list %}
+            {% if faltas or sobras or av.nao_previstos %}
             <div class="card-body py-2 small">
                 {% for ln in faltas %}
                 <span class="badge bg-light text-dark border me-1 mb-1 fw-normal">
-                    {{ ln.tipo_equipamento.nome }} <strong class="text-danger">×{{ ln.falta }}</strong>
+                    {{ ln.tipo_equipamento.nome }} <strong class="text-danger">falta {{ ln.falta }}</strong>
+                </span>
+                {% endfor %}
+                {% for ln in sobras %}
+                <span class="badge bg-light text-dark border me-1 mb-1 fw-normal">
+                    {{ ln.tipo_equipamento.nome }} <strong class="text-primary">+{{ ln.sobra }}</strong>
+                </span>
+                {% endfor %}
+                {% for np in av.nao_previstos %}
+                <span class="badge bg-light text-muted border me-1 mb-1 fw-normal" title="Não faz parte do kit deste ambiente">
+                    {{ np.tipo_equipamento.nome }} <strong>não previsto {{ np.encontrado }}</strong>
                 </span>
                 {% endfor %}
             </div>
@@ -308,4 +589,45 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const tabela = document.getElementById('psTabelaSalas');
+    if (!tabela) return;
+    const linhas = [...tabela.querySelectorAll('tbody tr')];
+    const botoes = [...document.querySelectorAll('.ps-filtro')];
+    const busca = document.getElementById('psBuscaSala');
+    const qtd = document.getElementById('psQtdVisiveis');
+    let filtro = [];
+
+    function aplicar() {
+        const termo = (busca.value || '').trim().toLowerCase();
+        let visiveis = 0;
+        linhas.forEach(tr => {
+            const marcas = [tr.dataset.situacao, ...tr.dataset.extra.split(' ').filter(Boolean)];
+            const ok = (!filtro.length || filtro.some(f => marcas.includes(f)))
+                && (!termo || tr.textContent.toLowerCase().includes(termo));
+            tr.classList.toggle('d-none', !ok);
+            if (ok) visiveis++;
+        });
+        qtd.textContent = visiveis;
+        const chave = filtro.join(',');
+        botoes.forEach(b => b.classList.toggle('active', b.dataset.filtro === chave));
+    }
+
+    botoes.forEach(b => b.addEventListener('click', () => {
+        filtro = b.dataset.filtro ? b.dataset.filtro.split(',') : [];
+        aplicar();
+    }));
+    busca.addEventListener('input', aplicar);
+
+    document.querySelectorAll('[data-ir-situacao]').forEach(el => el.addEventListener('click', () => {
+        filtro = el.dataset.irSituacao.split(',');
+        aplicar();
+        bootstrap.Tab.getOrCreateInstance(document.getElementById('abaLista')).show();
+    }));
+})();
+</script>
 {% endblock %}

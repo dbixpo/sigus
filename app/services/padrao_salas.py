@@ -170,29 +170,66 @@ def _contagem_equipamentos(sala_ids):
     return contagem
 
 
-def _avaliar_sala(sala, kit, contagem_sala):
+SITUACOES = OrderedDict([
+    ('completo',   {'rotulo': 'Kit completo',              'cor': '#19A88B', 'badge': 'bg-success'}),
+    ('excedente',  {'rotulo': 'Completo, com itens a mais', 'cor': '#1A82B8', 'badge': 'bg-primary'}),
+    ('incompleto', {'rotulo': 'Kit incompleto',            'cor': '#F5C500', 'badge': 'bg-warning text-dark'}),
+    ('vazio',      {'rotulo': 'Nenhum item do kit',        'cor': '#E63030', 'badge': 'bg-danger'}),
+    ('sem_esperado', {'rotulo': 'Sem profissionais informados', 'cor': '#A0AEC0', 'badge': 'bg-secondary'}),
+])
+
+
+def _catalogo_por_id():
+    return {te.id: te for te in TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None)).all()}
+
+
+def _avaliar_sala(sala, kit, contagem_sala, catalogo):
     linhas = []
     esperado = atendido = falta = sobra = 0
     custo = Decimal('0')
+    tem_por_profissional = False
     for k in kit:
         te = k.tipo_equipamento
+        esp = k.esperado_na_sala(sala)
+        tem_por_profissional = tem_por_profissional or k.por_profissional
         enc = contagem_sala.get(te.id, 0)
-        f = max(0, k.quantidade - enc)
-        s = max(0, enc - k.quantidade)
+        f = max(0, esp - enc)
+        s = max(0, enc - esp)
         c = (te.valor_referencia or Decimal('0')) * f
         linhas.append({
-            'tipo_equipamento': te, 'esperado': k.quantidade, 'encontrado': enc,
+            'tipo_equipamento': te, 'esperado': esp, 'encontrado': enc,
+            'quantidade_kit': k.quantidade, 'por_profissional': k.por_profissional,
             'falta': f, 'sobra': s, 'valor': te.valor_referencia, 'custo': c, 'observacao': k.observacao,
         })
-        esperado += k.quantidade
-        atendido += min(enc, k.quantidade)
+        esperado += esp
+        atendido += min(enc, esp)
         falta += f
         sobra += s
         custo += c
+
+    no_kit = {k.tipo_equipamento_id for k in kit}
+    nao_previstos = sorted(
+        ({'tipo_equipamento': catalogo[tid], 'encontrado': n}
+         for tid, n in contagem_sala.items() if n and tid not in no_kit and tid in catalogo),
+        key=lambda x: (x['tipo_equipamento'].codigo or '', x['tipo_equipamento'].nome))
+    qtd_nao_previstos = sum(x['encontrado'] for x in nao_previstos)
+
+    if not esperado:
+        situacao = 'sem_esperado'
+    elif not falta:
+        situacao = 'excedente' if (sobra or qtd_nao_previstos) else 'completo'
+    elif not atendido:
+        situacao = 'vazio'
+    else:
+        situacao = 'incompleto'
+
     return {
         'sala': sala, 'linhas': linhas, 'esperado': esperado, 'atendido': atendido,
         'falta': falta, 'sobra': sobra, 'custo': custo,
+        'nao_previstos': nao_previstos, 'qtd_nao_previstos': qtd_nao_previstos,
         'pct': round(100 * atendido / esperado) if esperado else None,
+        'situacao': situacao,
+        'sem_profissionais': tem_por_profissional and not (sala.capacidade_maxima or 0),
     }
 
 
@@ -203,7 +240,7 @@ def aderencia_sala(sala):
     kit = _kits_por_tipo_sala([sala.tipo_sala_id]).get(sala.tipo_sala_id)
     if not kit:
         return None
-    return _avaliar_sala(sala, kit, _contagem_equipamentos([sala.id])[sala.id])
+    return _avaliar_sala(sala, kit, _contagem_equipamentos([sala.id])[sala.id], _catalogo_por_id())
 
 
 def calcular_aderencia(unidade_ids=None, tipo_unidade_ids=None, tipo_sala_ids=None, so_unidades_do_padrao=False):
@@ -227,15 +264,27 @@ def calcular_aderencia(unidade_ids=None, tipo_unidade_ids=None, tipo_sala_ids=No
 
     kits = _kits_por_tipo_sala()
     contagem = _contagem_equipamentos([s.id for s in salas if s.tipo_sala_id in kits])
+    catalogo = _catalogo_por_id()
 
     avaliadas, sem_padrao, sem_kit = [], [], []
     por_unidade = OrderedDict()
+    por_ambiente = {}
     por_item = {}
+    por_item_excedente = {}
+
+    def _excedente(te, campo, n, sala):
+        it = por_item_excedente.setdefault(te.id, {
+            'tipo_equipamento': te, 'sobra': 0, 'nao_previsto': 0, 'salas': set(), 'unidades': set(),
+        })
+        it[campo] += n
+        it['salas'].add(sala.id)
+        it['unidades'].add(sala.unidade_id)
 
     for s in sorted(salas, key=lambda s: (s.unidade.nome.lower(), s.nome.lower())):
         u = por_unidade.setdefault(s.unidade_id, {
             'unidade': s.unidade, 'salas': 0, 'avaliadas': 0, 'sem_padrao': 0, 'sem_kit': 0,
-            'esperado': 0, 'atendido': 0, 'falta': 0, 'sobra': 0, 'custo': Decimal('0'),
+            'esperado': 0, 'atendido': 0, 'falta': 0, 'sobra': 0, 'nao_previstos': 0, 'custo': Decimal('0'),
+            'situacoes': {k: 0 for k in SITUACOES},
         })
         u['salas'] += 1
         tipo = s.tipo_sala
@@ -248,12 +297,28 @@ def calcular_aderencia(unidade_ids=None, tipo_unidade_ids=None, tipo_sala_ids=No
             sem_kit.append(s)
             u['sem_kit'] += 1
             continue
-        av = _avaliar_sala(s, kit, contagem[s.id])
+        av = _avaliar_sala(s, kit, contagem[s.id], catalogo)
         avaliadas.append(av)
         u['avaliadas'] += 1
+        u['situacoes'][av['situacao']] += 1
+        u['nao_previstos'] += av['qtd_nao_previstos']
         for campo in ('esperado', 'atendido', 'falta', 'sobra', 'custo'):
             u[campo] += av[campo]
+        amb = por_ambiente.setdefault(tipo.id, {
+            'tipo_sala': tipo, 'salas': 0, 'esperado': 0, 'atendido': 0, 'com_excedente': 0,
+            'situacoes': {k: 0 for k in SITUACOES},
+        })
+        amb['salas'] += 1
+        amb['esperado'] += av['esperado']
+        amb['atendido'] += av['atendido']
+        amb['situacoes'][av['situacao']] += 1
+        if av['sobra'] or av['qtd_nao_previstos']:
+            amb['com_excedente'] += 1
+        for np in av['nao_previstos']:
+            _excedente(np['tipo_equipamento'], 'nao_previsto', np['encontrado'], s)
         for ln in av['linhas']:
+            if ln['sobra']:
+                _excedente(ln['tipo_equipamento'], 'sobra', ln['sobra'], s)
             if not ln['falta']:
                 continue
             te = ln['tipo_equipamento']
@@ -274,6 +339,21 @@ def calcular_aderencia(unidade_ids=None, tipo_unidade_ids=None, tipo_sala_ids=No
     for it in itens:
         it['unidades'] = len(it['unidades'])
 
+    itens_excedentes = sorted(por_item_excedente.values(),
+                              key=lambda i: (-(i['sobra'] + i['nao_previsto']), i['tipo_equipamento'].nome))
+    for it in itens_excedentes:
+        it['salas'] = len(it['salas'])
+        it['unidades'] = len(it['unidades'])
+
+    ambientes = sorted(por_ambiente.values(),
+                       key=lambda a: (a['tipo_sala'].ordem or 9999, a['tipo_sala'].codigo or ''))
+    for a in ambientes:
+        a['pct'] = round(100 * a['atendido'] / a['esperado']) if a['esperado'] else None
+
+    situacoes = {k: 0 for k in SITUACOES}
+    for a in avaliadas:
+        situacoes[a['situacao']] += 1
+
     esperado = sum(a['esperado'] for a in avaliadas)
     atendido = sum(a['atendido'] for a in avaliadas)
     return {
@@ -282,7 +362,13 @@ def calcular_aderencia(unidade_ids=None, tipo_unidade_ids=None, tipo_sala_ids=No
         'sem_kit': sem_kit,
         'unidades': unidades,
         'itens': itens,
+        'itens_excedentes': itens_excedentes,
+        'ambientes': ambientes,
+        'situacoes': situacoes,
         'totais': {
+            'com_excedente': sum(1 for a in avaliadas if a['sobra'] or a['qtd_nao_previstos']),
+            'nao_previstos': sum(a['qtd_nao_previstos'] for a in avaliadas),
+            'sem_profissionais': sum(1 for a in avaliadas if a['sem_profissionais']),
             'salas': len(salas),
             'avaliadas': len(avaliadas),
             'sem_padrao': len(sem_padrao),

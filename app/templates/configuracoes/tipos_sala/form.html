@@ -183,7 +183,14 @@
                         <label class="form-label small fw-semibold mb-1">Observação</label>
                         <input type="text" name="observacao" class="form-control form-control-sm" maxlength="300">
                     </div>
-                    <div class="col-12 text-end">
+                    <div class="col-12 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" name="por_profissional" value="1" id="kit-por-profissional">
+                            <label class="form-check-label small" for="kit-por-profissional">
+                                <i class="fas fa-user me-1 text-primary"></i>Por profissional
+                                <span class="text-muted">(multiplica pelo máx. de profissionais simultâneos da sala)</span>
+                            </label>
+                        </div>
                         <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Adicionar ao kit</button>
                     </div>
                 </form>
@@ -196,7 +203,7 @@
                             <th>Item</th>
                             <th class="text-center">Natureza</th>
                             <th class="text-end">Valor ref.</th>
-                            <th class="text-center" style="width:150px">Quantidade</th>
+                            <th class="text-center" style="width:210px">Quantidade</th>
                             <th class="text-end" style="width:50px"></th>
                         </tr>
                     </thead>
@@ -220,12 +227,17 @@
                                 {{ te.valor_referencia|br_currency }}
                             </td>
                             <td>
-                                <form method="POST" action="{{ url_for('configuracoes.atualizar_item_kit', kit_id=k.id) }}" class="d-flex gap-1">
+                                <form method="POST" action="{{ url_for('configuracoes.atualizar_item_kit', kit_id=k.id) }}" class="d-flex align-items-center gap-1">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="observacao" value="{{ k.observacao or '' }}">
                                     <input type="number" name="quantidade" value="{{ k.quantidade }}" min="1"
                                            class="form-control form-control-sm text-center kit-qtd" style="width:70px">
-                                    <button type="submit" class="btn btn-sm btn-outline-primary d-none kit-salvar" title="Salvar quantidade">
+                                    <div class="form-check form-check-inline mb-0 me-0 text-nowrap" title="Quantidade por profissional simultâneo da sala">
+                                        <input class="form-check-input kit-qtd" type="checkbox" name="por_profissional" value="1"
+                                               id="kit-pp-{{ k.id }}" {{ 'checked' if k.por_profissional }}>
+                                        <label class="form-check-label" for="kit-pp-{{ k.id }}">por prof.</label>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary d-none kit-salvar" title="Salvar">
                                         <i class="fas fa-check"></i>
                                     </button>
                                 </form>
@@ -252,6 +264,8 @@
         <p class="text-muted small mt-2 mb-0">
             <span class="badge bg-secondary">Base</span> pertence à sala física e conta uma vez por sala.
             <span class="badge bg-info text-dark">Função</span> pertence ao serviço prestado.
+            <br><strong>Por profissional:</strong> a quantidade vale para cada profissional simultâneo informado na sala
+            (ex.: 1 computador por profissional numa recepção com 3 = espera 3; sala com 0 profissionais espera 0).
         </p>
     </div>
     {% endif %}
@@ -301,11 +315,15 @@
     if (kitItem && window.TomSelect) {
         new TomSelect(kitItem, { maxOptions: 500, allowEmptyOption: false });
     }
-    document.querySelectorAll('.kit-qtd').forEach(function (input) {
-        const original = input.value;
-        input.addEventListener('input', function () {
-            input.closest('form').querySelector('.kit-salvar').classList.toggle('d-none', input.value === original);
-        });
+    document.querySelectorAll('form').forEach(function (form) {
+        const campos = form.querySelectorAll('.kit-qtd');
+        const salvar = form.querySelector('.kit-salvar');
+        if (!campos.length || !salvar) return;
+        const estado = () => [...campos].map(c => c.type === 'checkbox' ? c.checked : c.value).join('|');
+        const original = estado();
+        campos.forEach(c => ['input', 'change'].forEach(ev => c.addEventListener(ev, () => {
+            salvar.classList.toggle('d-none', estado() === original);
+        })));
     });
 </script>
 {% endblock %}

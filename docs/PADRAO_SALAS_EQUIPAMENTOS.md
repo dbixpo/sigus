@@ -23,9 +23,12 @@ Origem: planilha do Planejamento com o padrão de ambientes das UBS, o catálogo
 - `calcular_aderencia(unidade_ids, tipo_unidade_ids, tipo_sala_ids, so_unidades_do_padrao)` avalia as salas ativas de unidades ativas.
 - `aderencia_sala(sala)` alimenta a aba **Padrão do ambiente** no detalhe da sala.
 - Encontrado = equipamentos `ativo=True` e `status != 'baixado'` da sala, agrupados por tipo, já aplicando o "conta como".
-- Para cada item do kit: falta = max(0, esperado − encontrado), sobra = max(0, encontrado − esperado), custo = falta × valor de referência.
+- Esperado = quantidade do kit. Se o item estiver marcado **por profissional** (`kit_padrao_sala.por_profissional`), esperado = quantidade × `salas.capacidade_maxima` ("Máx. profissionais simultâneos" do cadastro da sala); sala com 0 espera 0 e aparece como "sem profissionais informados".
+- Para cada item do kit: falta = max(0, esperado − encontrado), a mais = max(0, encontrado − esperado), custo = falta × valor de referência.
+- **Não previstos**: itens do catálogo (tipo com código, ou que contam como um) que estão na sala sem fazer parte do kit do ambiente.
 - Aderência = Σ min(encontrado, esperado) ÷ Σ esperado.
 - Situação da sala: **avaliada** (ambiente com kit), **sem kit** (ambiente com código, kit vazio) ou **sem padrão** (tipo sem código).
+- Situação do kit na sala avaliada (`SITUACOES`): **kit completo** (nada faltando, nada a mais), **completo com itens a mais** (nada faltando, com item acima do kit ou não previsto), **kit incompleto**, **nenhum item do kit** e **sem profissionais informados** (esperado total 0).
 
 Enquanto mobiliário e equipamentos médicos não forem inventariados no SIGUS, eles aparecem como faltando. O número de aderência sobe à medida que o inventário é completado.
 
@@ -38,7 +41,7 @@ Enquanto mobiliário e equipamentos médicos não forem inventariados no SIGUS, 
 | Tipos de sala agrupados pelo catálogo, com contagem de salas e itens do kit | `/configuracoes/tipos-sala` | Configurações |
 | Editar tipo de sala: código, grupo, ordem e o **kit** (adicionar, mudar quantidade, remover) | `/configuracoes/tipos-sala/<id>/editar` | Configurações |
 | Tipos de equipamento agrupados por classificação, com código, valor, natureza e "conta como" | `/configuracoes/tipos-equipamento` | Configurações |
-| Relatório de aderência (por unidade, necessidade de compra por item, sala a sala, a reclassificar) e Excel | `/relatorios/padrao-salas` | `emitir_relatorios` |
+| Relatório de aderência: **Painel** (situação do kit nas salas, por ambiente, itens que mais faltam e itens a mais), lista de **Salas** filtrável por situação, por unidade, necessidade de compra por item, itens a mais, sala a sala, a reclassificar; e Excel | `/relatorios/padrao-salas` | `emitir_relatorios` |
 | Aba **Padrão do ambiente** no detalhe da sala | `/salas/<id>` | quem vê a sala |
 
 Os dados que já existiam antes do padrão continuam valendo e entram na conta de dois jeitos:

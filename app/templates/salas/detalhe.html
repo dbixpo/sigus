@@ -55,7 +55,7 @@
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-padrao">
             <i class="fas fa-clipboard-check me-1"></i>Padrão do ambiente
-            {% if aderencia %}
+            {% if aderencia and aderencia.pct is not none %}
             <span class="badge ms-1 bg-{{ 'success' if aderencia.pct >= 80 else ('warning text-dark' if aderencia.pct >= 50 else 'danger') }}">{{ aderencia.pct }}%</span>
             {% endif %}
         </button>
@@ -165,24 +165,35 @@
     <div class="tab-pane fade p-0" id="tab-padrao">
         {% set ts = sala.tipo_sala %}
         {% if aderencia %}
+        {% set sit = situacoes[aderencia.situacao] %}
+        {% set pct = aderencia.pct or 0 %}
         <div class="p-3 border-bottom d-flex flex-wrap gap-4 align-items-center">
             <div>
                 <div class="text-muted small">Ambiente padrão</div>
                 <div class="fw-semibold">{{ ts.nome_com_codigo }}</div>
+                <span class="badge {{ sit.badge }} mt-1">{{ sit.rotulo }}</span>
+            </div>
+            <div class="text-center">
+                <div class="text-muted small">Profissionais simultâneos</div>
+                <div class="fw-semibold fs-5">{{ sala.capacidade_maxima or 0 }}</div>
             </div>
             <div style="min-width:220px" class="flex-grow-1">
                 <div class="d-flex justify-content-between small mb-1">
                     <span>Aderência ao kit</span>
-                    <strong>{{ aderencia.atendido }} de {{ aderencia.esperado }} ({{ aderencia.pct }}%)</strong>
+                    <strong>{{ aderencia.atendido }} de {{ aderencia.esperado }}{% if aderencia.pct is not none %} ({{ aderencia.pct }}%){% endif %}</strong>
                 </div>
                 <div class="progress" style="height:8px">
-                    <div class="progress-bar bg-{{ 'success' if aderencia.pct >= 80 else ('warning' if aderencia.pct >= 50 else 'danger') }}"
-                         style="width: {{ aderencia.pct }}%"></div>
+                    <div class="progress-bar bg-{{ 'success' if pct >= 80 else ('warning' if pct >= 50 else 'danger') }}"
+                         style="width: {{ pct }}%"></div>
                 </div>
             </div>
             <div class="text-center">
                 <div class="text-muted small">Itens faltando</div>
                 <div class="fw-semibold fs-5 {{ 'text-danger' if aderencia.falta else 'text-success' }}">{{ aderencia.falta }}</div>
+            </div>
+            <div class="text-center">
+                <div class="text-muted small">Itens a mais</div>
+                <div class="fw-semibold fs-5 {{ 'text-primary' if aderencia.sobra + aderencia.qtd_nao_previstos else 'text-muted' }}">{{ aderencia.sobra + aderencia.qtd_nao_previstos }}</div>
             </div>
             <div class="text-center">
                 <div class="text-muted small">Custo estimado</div>
@@ -210,14 +221,31 @@
                             {% if ln.observacao %}<div class="text-muted" style="font-size:.75rem">{{ ln.observacao }}</div>{% endif %}
                         </td>
                         <td class="text-center">{{ te.natureza_kit_label or '—' }}</td>
-                        <td class="text-center">{{ ln.esperado }}</td>
+                        <td class="text-center">
+                            {{ ln.esperado }}
+                            {% if ln.por_profissional %}<div class="text-muted" style="font-size:.72rem" title="Quantidade do kit × profissionais simultâneos">{{ ln.quantidade_kit }} por profissional</div>{% endif %}
+                        </td>
                         <td class="text-center">{{ ln.encontrado }}</td>
                         <td class="text-center">
                             {% if ln.falta %}<span class="badge bg-danger">Falta {{ ln.falta }}</span>
-                            {% elif ln.sobra %}<span class="badge bg-info text-dark">Sobra {{ ln.sobra }}</span>
+                            {% elif ln.sobra %}<span class="badge bg-primary">A mais {{ ln.sobra }}</span>
                             {% else %}<span class="badge bg-success">OK</span>{% endif %}
                         </td>
                         <td class="text-end text-nowrap">{{ ln.custo|br_currency if ln.falta else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for np in aderencia.nao_previstos %}
+                    {% set te = np.tipo_equipamento %}
+                    <tr class="table-light">
+                        <td>
+                            {% if te.codigo %}<span class="text-muted">{{ te.codigo }}</span> · {% endif %}{{ te.nome }}
+                            <div class="text-muted" style="font-size:.75rem">Não faz parte do kit deste ambiente</div>
+                        </td>
+                        <td class="text-center">{{ te.natureza_kit_label or '—' }}</td>
+                        <td class="text-center">0</td>
+                        <td class="text-center">{{ np.encontrado }}</td>
+                        <td class="text-center"><span class="badge bg-secondary">Não previsto</span></td>
+                        <td class="text-end">—</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -225,6 +253,12 @@
         </div>
         <div class="px-3 py-2 text-muted small border-top">
             Conta os equipamentos ativos desta sala, exceto os baixados. O custo usa o valor de referência do catálogo de itens.
+            {% if aderencia.sem_profissionais %}
+            <div class="text-warning-emphasis mt-1"><i class="fas fa-exclamation-triangle me-1"></i>
+                Esta sala está com 0 profissionais simultâneos, então os itens "por profissional" esperam 0.
+                {% if current_user.pode('editar_sala') %}<a href="{{ url_for('salas.editar', id=sala.id) }}">Corrigir na sala</a>.{% endif %}
+            </div>
+            {% endif %}
         </div>
         {% elif ts and ts.codigo %}
         <div class="empty-state py-3">

@@ -552,9 +552,11 @@ def adicionar_item_kit(id):
     else:
         linha = KitPadraoSala(tipo_sala_id=id, tipo_equipamento_id=tipo_equip.id, quantidade=quantidade)
         db.session.add(linha)
+    linha.por_profissional = bool(request.form.get('por_profissional'))
     linha.observacao = (request.form.get('observacao') or '').strip()[:300] or None
     db.session.commit()
-    flash(f'"{tipo_equip.nome}" no kit de {tipo.nome}: {quantidade}.', 'success')
+    sufixo = ' por profissional' if linha.por_profissional else ''
+    flash(f'"{tipo_equip.nome}" no kit de {tipo.nome}: {quantidade}{sufixo}.', 'success')
     return redirect(url_for('configuracoes.editar_tipo_sala', id=id) + '#kit')
 
 
@@ -568,9 +570,10 @@ def atualizar_item_kit(kit_id):
         flash('Para tirar o item do kit, use o botão de remover.', 'warning')
     else:
         linha.quantidade = quantidade
+        linha.por_profissional = bool(request.form.get('por_profissional'))
         linha.observacao = (request.form.get('observacao') or '').strip()[:300] or None
         db.session.commit()
-        flash('Quantidade do kit atualizada.', 'success')
+        flash('Item do kit atualizado.', 'success')
     return redirect(url_for('configuracoes.editar_tipo_sala', id=linha.tipo_sala_id) + '#kit')
 
 

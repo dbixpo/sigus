@@ -33,6 +33,7 @@ O que mudou:
 - Cada tipo de sala tem um **kit padrão** editável em Configurações → Tipos de Sala.
 - Relatório novo **Padrão de Salas e Equipamentos** (`/sigus/relatorios/padrao-salas`) e aba **Padrão do ambiente** no detalhe da sala.
 - Menu Configurações → **Padrão de Salas** (`/sigus/configuracoes/padrao-salas`): atalhos para editar ambientes, kits e itens; **Encaixar salas existentes** (reclassificação em lote com sugestão pelo nome); **Ligar inventário ao catálogo** ("conta como" dos tipos de equipamento já cadastrados). Sem migração.
+- Kit com item **por profissional** (quantidade × máx. de profissionais simultâneos da sala) e relatório com **Painel** de situação do kit (completo, com itens a mais, incompleto, nenhum item). Rode de novo `migrations\add_padrao_salas.py` (cria a coluna `kit_padrao_sala.por_profissional`; idempotente) antes de reiniciar.
 
 Detalhe: [docs/PADRAO_SALAS_EQUIPAMENTOS.md](docs/PADRAO_SALAS_EQUIPAMENTOS.md).
 

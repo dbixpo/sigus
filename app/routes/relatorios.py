@@ -638,8 +638,9 @@ def padrao_salas():
         tipos_sem_padrao[nome] = tipos_sem_padrao.get(nome, 0) + 1
     tipos_sem_padrao = sorted(tipos_sem_padrao.items(), key=lambda kv: (-kv[1], kv[0]))
 
+    from app.services.padrao_salas import SITUACOES
     return render_template('relatorios/padrao_salas.html',
-                           dados=dados, totais=dados['totais'],
+                           dados=dados, totais=dados['totais'], situacoes=SITUACOES,
                            unidades=unidades, tipos_unidade=tipos_unidade,
                            ambientes={a.id: a.nome_com_codigo for a in ambientes},
                            mostrar_sala_a_sala=mostrar_sala_a_sala,
@@ -656,6 +657,7 @@ def padrao_salas():
 def exportar_padrao_salas():
     if not current_user.pode('emitir_relatorios'):
         abort(403)
+    from app.services.padrao_salas import SITUACOES
     f = _filtros_padrao_salas()
     dados = _calcular_padrao_salas(f)
     moeda = '#,##0.00'
@@ -664,16 +666,34 @@ def exportar_padrao_salas():
     ws = wb.active
     ws.title = 'Resumo por unidade'
     _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Cód. imóvel', 'Salas', 'Salas avaliadas',
+                              'Kit completo', 'Completo com itens a mais', 'Kit incompleto', 'Nenhum item do kit',
                               'Salas sem ambiente padrão', 'Ambientes sem kit', 'Itens esperados',
-                              'Itens atendidos', 'Aderência (%)', 'Itens faltando', 'Itens sobrando',
-                              'Custo estimado (R$)'])
+                              'Itens atendidos', 'Aderência (%)', 'Itens faltando', 'Itens acima do kit',
+                              'Itens não previstos', 'Custo estimado (R$)'])
     for u in dados['unidades']:
         un = u['unidade']
-        ws.append([un.nome, un.numero_cnes, un.codigo_imovel, u['salas'], u['avaliadas'], u['sem_padrao'],
-                   u['sem_kit'], u['esperado'], u['atendido'], u['pct'], u['falta'], u['sobra'], float(u['custo'])])
-        ws.cell(ws.max_row, 13).number_format = moeda
+        sit = u['situacoes']
+        ws.append([un.nome, un.numero_cnes, un.codigo_imovel, u['salas'], u['avaliadas'],
+                   sit['completo'], sit['excedente'], sit['incompleto'], sit['vazio'], u['sem_padrao'],
+                   u['sem_kit'], u['esperado'], u['atendido'], u['pct'], u['falta'], u['sobra'],
+                   u['nao_previstos'], float(u['custo'])])
+        ws.cell(ws.max_row, 18).number_format = moeda
     _autofit(ws)
     ws.freeze_panes = 'B2'
+
+    ws = wb.create_sheet('Situação das salas')
+    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Sala', 'Ambiente', 'Profissionais simultâneos', 'Situação',
+                              'Itens esperados', 'Itens atendidos', 'Aderência (%)', 'Itens faltando',
+                              'Itens acima do kit', 'Itens não previstos', 'Custo da falta (R$)'])
+    for av in dados['avaliadas']:
+        s = av['sala']
+        ws.append([s.unidade.nome, s.unidade.numero_cnes, s.nome, s.tipo_sala.nome_com_codigo,
+                   s.capacidade_maxima or 0, SITUACOES[av['situacao']]['rotulo'], av['esperado'], av['atendido'],
+                   av['pct'], av['falta'], av['sobra'], av['qtd_nao_previstos'], float(av['custo'])])
+        ws.cell(ws.max_row, 13).number_format = moeda
+    _autofit(ws)
+    ws.freeze_panes = 'D2'
+    ws.auto_filter.ref = ws.dimensions
 
     ws = wb.create_sheet('Necessidade por item')
     _estilizar_cabecalho(ws, ['Código', 'Item', 'Classificação', 'Natureza', 'Quantidade faltando',
@@ -688,18 +708,38 @@ def exportar_padrao_salas():
     _autofit(ws)
     ws.freeze_panes = 'C2'
 
+    ws = wb.create_sheet('Itens a mais')
+    _estilizar_cabecalho(ws, ['Código', 'Item', 'Classificação', 'Acima do kit', 'Não previsto no kit',
+                              'Total a mais', 'Salas', 'Unidades', 'Valor ref. (R$)'])
+    for it in dados['itens_excedentes']:
+        te = it['tipo_equipamento']
+        ws.append([te.codigo, te.nome, te.classificacao, it['sobra'], it['nao_previsto'],
+                   it['sobra'] + it['nao_previsto'], it['salas'], it['unidades'],
+                   float(te.valor_referencia) if te.valor_referencia is not None else None])
+        ws.cell(ws.max_row, 9).number_format = moeda
+    _autofit(ws)
+    ws.freeze_panes = 'C2'
+
     ws = wb.create_sheet('Sala a sala')
-    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Cód. imóvel', 'Sala', 'Ambiente', 'Cód. item', 'Item',
-                              'Natureza', 'Esperado', 'Encontrado', 'Falta', 'Sobra', 'Custo da falta (R$)'])
+    _estilizar_cabecalho(ws, ['Unidade', 'CNES', 'Cód. imóvel', 'Sala', 'Ambiente', 'Profissionais simultâneos',
+                              'Cód. item', 'Item', 'Natureza', 'Por profissional', 'Esperado', 'Encontrado',
+                              'Falta', 'A mais', 'Situação do item', 'Custo da falta (R$)'])
     for av in dados['avaliadas']:
         s = av['sala']
         un = s.unidade
+        base = [un.nome, un.numero_cnes, un.codigo_imovel, s.nome, s.tipo_sala.nome_com_codigo, s.capacidade_maxima or 0]
         for ln in av['linhas']:
             te = ln['tipo_equipamento']
-            ws.append([un.nome, un.numero_cnes, un.codigo_imovel, s.nome, s.tipo_sala.nome_com_codigo,
-                       te.codigo, te.nome, te.natureza_kit_label, ln['esperado'], ln['encontrado'],
-                       ln['falta'], ln['sobra'], float(ln['custo'])])
-            ws.cell(ws.max_row, 13).number_format = moeda
+            situacao = 'Falta' if ln['falta'] else ('Acima do kit' if ln['sobra'] else 'OK')
+            ws.append(base + [te.codigo, te.nome, te.natureza_kit_label,
+                              f"{ln['quantidade_kit']} por profissional" if ln['por_profissional'] else 'Não',
+                              ln['esperado'], ln['encontrado'], ln['falta'], ln['sobra'], situacao, float(ln['custo'])])
+            ws.cell(ws.max_row, 16).number_format = moeda
+        for np in av['nao_previstos']:
+            te = np['tipo_equipamento']
+            ws.append(base + [te.codigo, te.nome, te.natureza_kit_label, '—', 0, np['encontrado'], 0,
+                              np['encontrado'], 'Não previsto no kit', 0.0])
+            ws.cell(ws.max_row, 16).number_format = moeda
     _autofit(ws)
     ws.freeze_panes = 'E2'
     ws.auto_filter.ref = ws.dimensions
