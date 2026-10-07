@@ -35,7 +35,7 @@ Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
 
 - **Painel** (antigo Dashboard) — Comunicados com ciência (perfil **ou** CBO), mural de ações, aniversariantes, chamados abertos
 - **Planejamentos** — Kanban com GUT
-- **Agenda** — Estilo Google: compromissos, períodos e reuniões, arrastar para remarcar, prazos dos planejamentos e feriados municipais
+- **Agenda** — Estilo Google: compromissos, períodos e reuniões, arrastar para remarcar, reserva de veículos e de salas de reunião, prazos dos planejamentos e feriados municipais
 - **Segurança do Paciente** — Fluxo do Núcleo (SNI-SGQSP): qualquer pessoa notifica, com ou sem login e de forma anônima; o Núcleo qualifica e encaminha às comissões das unidades; protocolo `SP-AAAA-XXXXXX` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))
 - **Links úteis** — Lista com busca, versão pública sem login e QR code para baixar em cada link
 - **Relatórios** — Inventário, salas, contratos, NSP, mapa da saúde (com acesso público e QR code), aniversariantes…

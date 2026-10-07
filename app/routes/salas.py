@@ -159,6 +159,7 @@ def nova(unidade_id):
             capacidade_maxima=capacidade_maxima,
             ramal=request.form.get('ramal', '').strip(),
             observacoes=request.form.get('observacoes', '').strip(),
+            uso_compartilhado=bool(tipo_obj.reservavel and request.form.get('uso_compartilhado') == 'on'),
         )
         db.session.add(sala)
         db.session.commit()
@@ -210,6 +211,7 @@ def editar(id):
         sala.capacidade_maxima = capacidade_maxima
         sala.ramal = request.form.get('ramal', '').strip()
         sala.observacoes = request.form.get('observacoes', '').strip()
+        sala.uso_compartilhado = bool(tipo_obj.reservavel and request.form.get('uso_compartilhado') == 'on')
         db.session.commit()
         flash('Sala atualizada com sucesso!', 'success')
         return redirect(url_for('salas.detalhe', id=sala.id))

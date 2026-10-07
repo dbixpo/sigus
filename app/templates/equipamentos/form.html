@@ -76,7 +76,8 @@
                             <optgroup label="{{ classificacao }}">
                             {% for t in lista %}
                             <option value="{{ t.id }}"
-                                {% if equipamento and equipamento.tipo_equipamento_id == t.id %}selected{% endif %}>
+                                {% if equipamento and equipamento.tipo_equipamento_id == t.id %}selected
+                                {% elif not equipamento and tipo_pre == t.id %}selected{% endif %}>
                                 {{ t.nome }}
                             </option>
                             {% endfor %}
@@ -627,6 +628,11 @@
     {% if equipamento and equipamento.tipo_equipamento_id %}
     // Marca e modelo vêm pré-renderizados pelo Jinja — só carrega os modelos via API
     carregarModelos('{{ equipamento.marca_id or "" }}', '{{ equipamento.modelo_id or "" }}');
+    {% elif tipo_pre %}
+    if (selTipo && selTipo.value) {
+        carregarMarcas(selTipo.value, null);
+        carregarCampos(selTipo.value);
+    }
     {% endif %}
 
     // Libera o listener após a inicialização (próximo tick)

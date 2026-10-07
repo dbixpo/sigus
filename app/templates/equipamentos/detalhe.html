@@ -26,6 +26,11 @@
         </small>
     </h1>
     <div class="d-flex flex-wrap gap-2">
+        {% if equipamento.tipo_equipamento and equipamento.tipo_equipamento.eh_veiculo and equipamento.ativo %}
+        <a href="{{ url_for('veiculos.usos', id=equipamento.id) }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-route me-1"></i>Usos, km e RDV
+        </a>
+        {% endif %}
         {% if current_user.pode('editar_equipamento') %}
         <a href="{{ url_for('equipamentos.editar', id=equipamento.id) }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-pencil-alt me-1"></i>Editar

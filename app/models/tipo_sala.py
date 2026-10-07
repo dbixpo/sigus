@@ -15,6 +15,8 @@ class TipoSala(db.Model):
     codigo    = db.Column(db.String(20), unique=True)
     grupo     = db.Column(db.String(120))
     ordem     = db.Column(db.Integer)
+    # Salas deste tipo podem ser reservadas na agenda (sala de reunião, auditório).
+    reservavel = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

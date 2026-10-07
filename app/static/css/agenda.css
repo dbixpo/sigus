@@ -774,6 +774,118 @@
     color: #4A5568;
 }
 
+/* Reserva de veículo e de sala */
+.ag-recurso-status {
+    font-size: 0.78rem;
+    margin-top: 0.3rem;
+}
+.ag-recurso-status:empty { display: none; }
+.ag-recurso-status .is-livre { color: #0F7A66; }
+.ag-recurso-status .is-ocupado { color: #B42318; }
+.ag-sala-escolhida {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    padding: 0.2rem 0.3rem 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(26, 130, 184, 0.1);
+    color: var(--sigus-dark);
+    font-size: 0.8rem;
+    font-weight: 600;
+    max-width: 100%;
+}
+.ag-sala-escolhida span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ag-salas:empty { display: none; }
+.ag-salas {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    background: #fff;
+}
+.ag-salas-grupo + .ag-salas-grupo { margin-top: 0.5rem; }
+.ag-salas-tit {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--sigus-text-muted);
+    margin: 0.15rem 0.25rem 0.3rem;
+}
+.ag-sala-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    border-radius: 8px;
+    padding: 0.4rem 0.5rem;
+    color: var(--sigus-text);
+}
+.ag-sala-item > i {
+    width: 1.4rem;
+    text-align: center;
+    color: var(--sigus-primary);
+}
+.ag-sala-item:hover:not(:disabled) { background: rgba(26, 130, 184, 0.08); }
+.ag-sala-item.is-ocupada { opacity: 0.65; cursor: not-allowed; }
+.ag-sala-item.is-ocupada > i { color: var(--sigus-text-muted); }
+.ag-sala-txt {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.25;
+    font-size: 0.85rem;
+}
+.ag-sala-sub, .ag-sala-ocupada {
+    font-size: 0.74rem;
+    color: var(--sigus-text-muted);
+}
+.ag-sala-ocupada { color: #B42318; }
+.ag-sala-livre, .ag-sala-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    white-space: nowrap;
+}
+.ag-sala-livre { background: rgba(25, 168, 139, 0.14); color: #0F7A66; }
+.ag-sala-tag { background: #EDF2F7; color: var(--sigus-text-muted); }
+.ag-salas-vazio {
+    font-size: 0.8rem;
+    color: var(--sigus-text-muted);
+    padding: 0.3rem 0.25rem;
+}
+.ag-salas-vazio.is-alerta { color: #8A6D00; }
+.ag-km {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+.ag-km label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.72rem;
+    color: var(--sigus-text-muted);
+    gap: 0.15rem;
+}
+.ag-km input { width: 120px; }
+.ag-leitura-registro {
+    font-size: 0.8rem;
+    color: var(--sigus-text-muted);
+}
+
 /* Alterar prazo */
 .ag-modal-prazo {
     z-index: 1085;

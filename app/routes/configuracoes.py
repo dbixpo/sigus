@@ -478,6 +478,7 @@ def _dados_padrao_tipo_sala(tipo, form):
     tipo.codigo = codigo
     tipo.grupo = (form.get('grupo') or '').strip() or None
     tipo.ordem = form.get('ordem', type=int)
+    tipo.reservavel = form.get('reservavel') == 'on'
     return None
 
 
@@ -775,6 +776,7 @@ def _dados_padrao_tipo_equipamento(tipo, form):
     tipo.valor_referencia = valor
     tipo.natureza_kit = natureza if natureza in NATUREZA_KIT_LABELS else None
     tipo.conta_como_id = conta_como_id
+    tipo.eh_veiculo = form.get('eh_veiculo') == 'on'
     return None
 
 

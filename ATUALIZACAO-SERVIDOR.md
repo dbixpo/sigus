@@ -14,7 +14,28 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
 
-## Entrega mais recente (padrão de salas e equipamentos do Planejamento)
+## Entrega mais recente (veículos, RDV e reserva de salas na agenda)
+
+Depois do `git pull`, com backup do banco feito antes:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_veiculos_reservas.py
+```
+
+Idempotente. Reinicie só o SIGUS (seção 4).
+
+O que mudou:
+
+- Tipo de equipamento **Veículo** (placa, categoria, ano, combustível, RENAVAM, chassi, lotação, vínculo, km no cadastro…) e aba **Veículos** no detalhe da unidade. Ao cadastrar o primeiro carro, a unidade ganha a sala "Veículos / Garagem" sozinha.
+- Agenda com o tipo **Veículo**: quem vai usar, destino, bloqueio de horário duplicado, registro de quem agendou e km de saída/chegada na própria reserva.
+- Página do veículo (`/sigus/veiculos/<id>`) com os usos do mês e o **RDV** em Excel já preenchido com as reservas (layout provisório até chegar a planilha oficial).
+- Tipos de sala com **Reservável na agenda** (Sala de Reunião AMB-41 e o novo Auditório já vêm marcados) e salas com **Disponível para todas as unidades**. Na agenda, o botão **Verificar salas vazias** mostra a unidade do evento, depois o mesmo prédio/endereço e depois o resto da rede; a reserva da sala também bloqueia horário duplicado.
+
+Conferência: aba Veículos de uma unidade, agenda → Criar → Veículo, e agenda → Reunião → Verificar salas vazias.
+
+---
+
+## Entrega anterior (padrão de salas e equipamentos do Planejamento)
 
 Depois do `git pull`, com backup do banco feito antes:
 

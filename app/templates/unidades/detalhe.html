@@ -89,6 +89,14 @@
             <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
         </button>
     </li>
+    {% if veiculos_info or current_user.pode('cadastrar_equipamento') %}
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-veiculos" type="button">
+            <i class="fas fa-car me-1"></i>Veículos
+            <span class="badge bg-secondary ms-1">{{ veiculos_info | length }}</span>
+        </button>
+    </li>
+    {% endif %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas" type="button">
             <i class="fas fa-door-open me-1"></i>Salas/Setores
@@ -474,6 +482,115 @@
             </div>
         </div>
     </div>
+
+    <!-- ══════════════════════════════════════════════
+         ABA VEÍCULOS
+    ══════════════════════════════════════════════ -->
+    {% if veiculos_info or current_user.pode('cadastrar_equipamento') %}
+    <div class="tab-pane fade" id="tab-veiculos">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span><i class="fas fa-car me-2"></i>Veículos da Unidade</span>
+                <div class="d-flex gap-2">
+                    {% if veiculos_info and current_user.pode('ver_agenda') %}
+                    <a href="{{ url_for('agenda.index', unidade_id=unidade.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-calendar-alt me-1"></i>Ver na agenda
+                    </a>
+                    {% endif %}
+                    {% if current_user.pode('cadastrar_equipamento') %}
+                    <a href="{{ url_for('veiculos.novo', unidade_id=unidade.id) }}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i>Cadastrar veículo
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if veiculos_info %}
+                <div class="row g-3">
+                    {% for info in veiculos_info %}
+                    {% set v = info.veiculo %}
+                    {% set c = info.campos %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="veic-card h-100">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="veic-ico"><i class="fas fa-car-side"></i></div>
+                                <div class="flex-grow-1 min-w-0">
+                                    <div class="veic-placa">{{ c.get('Placa') or 'Sem placa' }}</div>
+                                    <div class="veic-modelo">
+                                        {{ (v.marca.nome ~ ' ' if v.marca else '') ~ (v.modelo.nome if v.modelo else '') or v.tipo_equipamento.nome }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        {{ [c.get('Categoria'), c.get('Ano fabricação/modelo'), c.get('Cor'), c.get('Combustível')] | select | join(' · ') }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="veic-status mt-3">
+                                {% if info.em_uso %}
+                                <span class="badge veic-badge-uso"><i class="fas fa-road me-1"></i>Em uso agora</span>
+                                <span class="small">
+                                    {{ (info.em_uso.condutor or info.em_uso.criador).nome if (info.em_uso.condutor or info.em_uso.criador) else '' }}
+                                    {% if not info.em_uso.dia_inteiro and info.em_uso.fim %} até {{ info.em_uso.fim.strftime('%H:%M') }}{% endif %}
+                                    {% if info.em_uso.local %} · {{ info.em_uso.local }}{% endif %}
+                                </span>
+                                {% else %}
+                                <span class="badge veic-badge-livre"><i class="fas fa-check-circle me-1"></i>Livre agora</span>
+                                {% endif %}
+                            </div>
+                            <div class="small mt-2">
+                                <i class="far fa-calendar me-1 text-muted"></i>
+                                {% if info.proxima %}
+                                Próxima reserva: <strong>{{ info.proxima.inicio.strftime('%d/%m') }}{% if not info.proxima.dia_inteiro %} {{ info.proxima.inicio.strftime('%H:%M') }}{% endif %}</strong>
+                                · {{ (info.proxima.condutor or info.proxima.criador).nome if (info.proxima.condutor or info.proxima.criador) else '' }}
+                                {% else %}
+                                <span class="text-muted">Nenhuma reserva nos próximos 60 dias</span>
+                                {% endif %}
+                            </div>
+                            <div class="small mt-1">
+                                <i class="fas fa-tachometer-alt me-1 text-muted"></i>
+                                {% if info.km_atual is not none %}{{ '{:,}'.format(info.km_atual).replace(',', '.') }} km{% else %}<span class="text-muted">Km ainda não registrado</span>{% endif %}
+                                {% if v.numero_patrimonio %}<span class="text-muted ms-2"><i class="fas fa-tag me-1"></i>{{ v.numero_patrimonio }}</span>{% endif %}
+                            </div>
+                            {% if info.pendentes %}
+                            <div class="small mt-1 text-warning-emphasis">
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ info.pendentes }} uso{{ 's' if info.pendentes > 1 }} sem km de devolução
+                            </div>
+                            {% endif %}
+
+                            <div class="d-flex flex-wrap gap-2 mt-3">
+                                {% if current_user.pode('adicionar_agenda') %}
+                                <a href="{{ url_for('agenda.index', unidade_id=unidade.id, veiculo_id=v.id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-calendar-plus me-1"></i>Reservar
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('veiculos.usos', id=v.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-list me-1"></i>Usos e km
+                                </a>
+                                <a href="{{ url_for('veiculos.rdv', id=v.id, mes=mes_atual) }}" class="btn btn-sm btn-outline-success" title="Baixar o RDV do mês atual">
+                                    <i class="fas fa-file-excel me-1"></i>RDV do mês
+                                </a>
+                                <a href="{{ url_for('equipamentos.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-secondary" title="Ficha do veículo">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-car"></i>
+                    <h6>Nenhum veículo cadastrado nesta unidade</h6>
+                    <p class="text-muted small mb-2">Ao cadastrar o primeiro, o SIGUS cria a sala "Veículos / Garagem" sozinho.</p>
+                    <a href="{{ url_for('veiculos.novo', unidade_id=unidade.id) }}" class="btn btn-primary mt-1">
+                        <i class="fas fa-plus-circle me-1"></i>Cadastrar veículo
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- ══════════════════════════════════════════════
          ABA SALAS
@@ -1633,11 +1750,13 @@ document.addEventListener('click', function (e) {
     inpBusca && inpBusca.addEventListener('input', aplicarFiltro);
     selSala  && selSala.addEventListener('change', aplicarFiltro);
 
-    // Abre a aba de equipamentos se a URL terminar com #tab-equipamentos
-    if (window.location.hash === '#tab-equipamentos') {
-        const btn = document.querySelector('[data-bs-target="#tab-equipamentos"]');
-        btn && btn.click();
-    }
+})();
+
+// Abre a aba indicada na URL (#tab-equipamentos, #tab-veiculos…)
+(function () {
+    if (!/^#tab-[a-z-]+$/.test(window.location.hash)) return;
+    const btn = document.querySelector('[data-bs-target="' + window.location.hash + '"]');
+    btn && btn.click();
 })();
 
 // ── Exportar equipamentos da unidade como CSV ─────────────────────────

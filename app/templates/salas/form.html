@@ -49,6 +49,7 @@
                             {% for t in lista %}
                             <option value="{{ t.id }}"
                                     data-icone="{{ t.icone }}"
+                                    data-reservavel="{{ '1' if t.reservavel else '0' }}"
                                     {% if sala and sala.tipo_sala_id == t.id %}selected
                                     {% elif sala and not sala.tipo_sala_id and sala.tipo == t.nome %}selected
                                     {% endif %}>
@@ -70,6 +71,22 @@
                             <a href="{{ url_for('configuracoes.novo_tipo_sala') }}">Cadastrar agora</a>
                         </div>
                         {% endif %}
+                    </div>
+
+                    <div class="mb-3 p-3 rounded border bg-light d-none" id="blocoReservavel">
+                        <div class="small mb-2">
+                            <i class="fas fa-calendar-check me-1 text-primary"></i>
+                            Este tipo de sala pode ser <strong>reservado pela agenda</strong> (botão "Verificar salas vazias").
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="uso_compartilhado" id="usoCompartilhado"
+                                   {% if sala and sala.uso_compartilhado %}checked{% endif %}>
+                            <label class="form-check-label fw-semibold" for="usoCompartilhado">Disponível para todas as unidades</label>
+                        </div>
+                        <div class="form-text">
+                            Marcado: qualquer unidade pode reservar (as do mesmo prédio/endereço aparecem primeiro).
+                            Desmarcado: só quem é desta unidade reserva.
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -144,6 +161,16 @@
   var els = document.querySelectorAll('[data-bs-toggle="tooltip"]');
   for (var i = 0; i < els.length; i++) {
     try { new bootstrap.Tooltip(els[i]); } catch (e) {}
+  }
+  var sel = document.getElementById('tipo-sala-select');
+  var bloco = document.getElementById('blocoReservavel');
+  function atualizarReservavel() {
+    var op = sel && sel.options[sel.selectedIndex];
+    bloco.classList.toggle('d-none', !(op && op.getAttribute('data-reservavel') === '1'));
+  }
+  if (sel && bloco) {
+    sel.addEventListener('change', atualizarReservavel);
+    atualizarReservavel();
   }
 })();
 </script>

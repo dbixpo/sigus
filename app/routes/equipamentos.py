@@ -201,11 +201,15 @@ def novo(sala_id):
                 ))
 
         db.session.commit()
+        if tipo.eh_veiculo:
+            flash('Veículo cadastrado! Ele já pode ser reservado na agenda.', 'success')
+            return redirect(url_for('unidades.detalhe', id=sala.unidade_id, _anchor='tab-veiculos'))
         flash(f'Equipamento cadastrado com sucesso!', 'success')
         return redirect(url_for('salas.detalhe', id=sala_id))
 
     return render_template('equipamentos/form.html',
                            equipamento=None, sala=sala, tipos=tipos, marcas=marcas,
+                           tipo_pre=request.args.get('tipo', type=int),
                            status_opts=STATUS_EQUIPAMENTO, condicao_opts=CONDICAO_EQUIPAMENTO)
 
 

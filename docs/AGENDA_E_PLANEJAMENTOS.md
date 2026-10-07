@@ -53,6 +53,28 @@ Terceiro tipo no modal (aba **Ausência**, ícone de guarda-sol). Serve para a u
 - A pessoa ausente também pode editar e excluir o registro.
 - É manual: importar a planilha de frequência **não** cria ausências na agenda.
 
+## Veículos
+
+Quarto tipo no modal (aba **Veículo**, aparece se o usuário tem veículo em alguma das suas unidades). Acaba com a dúvida "quem pegou o carro".
+
+- Veículo é um equipamento cujo tipo tem `tipos_equipamento.eh_veiculo` (tipo padrão "Veículo", criado por `migrations/add_veiculos_reservas.py` com placa, categoria, combustível, RENAVAM, km no cadastro etc.). Fica na sala "Veículos / Garagem" da unidade, criada sozinha no primeiro cadastro (`reservas.sala_garagem`).
+- Quem reserva: qualquer pessoa vinculada à unidade do carro. Campos: veículo, **quem vai usar** (`condutor_id`, padrão = quem registra), destino e período. Título automático "Placa · Marca Modelo → destino".
+- Conflito: dois usos do mesmo veículo no mesmo horário são recusados (409) em criar, editar e arrastar. Ao escolher veículo e horário, o modal já avisa se está livre (`POST /agenda/veiculo-livre`).
+- Na leitura aparecem **quem registrou e quando**, quem vai usar e o km. Km de saída e de chegada são preenchidos na volta (`POST /agenda/eventos/<id>/km`) por quem registrou, pelo condutor ou por quem pode editar o evento; chegada menor que saída é recusada.
+- Cor `COR_VEICULO` e filtro **Veículos** na barra lateral.
+- Aba **Veículos** no detalhe da unidade: cartões com placa, km atual (último km de chegada ou o do cadastro), em uso / próxima reserva, usos sem km e atalhos para reservar, usos, RDV e ficha.
+- `/veiculos/<id>` (`app/routes/veiculos.py`): usos do mês com km editável e **RDV** (`/veiculos/<id>/rdv?mes=AAAA-MM`), planilha Excel com um uso por linha (data, condutor, destino, horários, km, km rodados por fórmula, assinatura). O layout é provisório até chegar o modelo oficial.
+
+## Salas de reunião e auditórios
+
+- Tipo de sala com **Reservável na agenda** (`tipos_sala.reservavel`; Sala de Reunião AMB-41 e Auditório já marcados). Na sala desse tipo aparece **Disponível para todas as unidades** (`salas.uso_compartilhado`).
+- Em evento ou reunião, depois de data e hora, o botão **Verificar salas vazias** (`POST /agenda/salas-livres`) lista, nesta ordem: salas da unidade do evento, salas compartilhadas do **mesmo prédio/endereço** (`predio_id`, senão endereço + número normalizados) e as compartilhadas do resto da rede. Salas ocupadas aparecem com quem reservou.
+- Escolher a sala grava `agenda_eventos.sala_id` e preenche o local. Reserva no mesmo horário é recusada (409); sala privada de outra unidade, 400.
+- A unidade dona da sala também enxerga as reservas dela na agenda.
+- A capacidade mostrada ("até N pessoas") vem do campo "Máx. profissionais simultâneos" da sala.
+
+Lógica em `app/services/reservas.py` (conflitos, salas livres, situação e km dos veículos).
+
 ## Arrastar (drag & drop)
 
 | O que | Como | Rota |

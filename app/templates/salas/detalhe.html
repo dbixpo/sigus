@@ -36,6 +36,10 @@
 <div class="text-muted small mb-3 d-flex gap-3 flex-wrap">
     <span><i class="fas fa-calendar-plus me-1"></i>Criado em: <strong>{{ sala.criado_em | br_datetime }}</strong></span>
     <span><i class="fas fa-clock-history me-1"></i>Última atualização: <strong>{{ sala.atualizado_em | br_datetime }}</strong></span>
+    {% if sala.reservavel %}
+    <span class="text-primary"><i class="fas fa-calendar-check me-1"></i>Reservável na agenda
+        · {{ 'disponível para todas as unidades' if sala.uso_compartilhado else 'só desta unidade' }}</span>
+    {% endif %}
 </div>
 
 <!-- Abas -->

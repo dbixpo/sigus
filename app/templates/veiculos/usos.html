@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}{{ rotulo }} · Usos{% endblock %}
+
+{% block content %}
+{% set unidade = veiculo.sala.unidade %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos') }}">{{ unidade.nome }}</a></li>
+        <li class="breadcrumb-item active">{{ campos.get('Placa') or rotulo }}</li>
+    </ol>
+</nav>
+
+<div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="veic-ico"><i class="fas fa-car-side"></i></div>
+        <div>
+            <span class="veic-placa">{{ campos.get('Placa') or 'Sem placa' }}</span>
+            <h1 class="h4 mb-0 mt-1">{{ (veiculo.marca.nome ~ ' ' if veiculo.marca else '') ~ (veiculo.modelo.nome if veiculo.modelo else '') or veiculo.tipo_equipamento.nome }}</h1>
+            <div class="small text-muted">
+                {{ [campos.get('Categoria'), campos.get('Ano fabricação/modelo'), campos.get('Cor'), campos.get('Combustível')] | select | join(' · ') }}
+            </div>
+        </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if pode_reservar %}
+        <a href="{{ url_for('agenda.index', unidade_id=unidade.id, veiculo_id=veiculo.id) }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-calendar-plus me-1"></i>Reservar
+        </a>
+        {% endif %}
+        <a href="{{ url_for('veiculos.rdv', id=veiculo.id, mes=mes.strftime('%Y-%m')) }}" class="btn btn-success btn-sm">
+            <i class="fas fa-file-excel me-1"></i>Baixar RDV de {{ mes_nome }}
+        </a>
+        <a href="{{ url_for('equipamentos.detalhe', id=veiculo.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-eye me-1"></i>Ficha do veículo
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="small text-muted">Agora</div>
+            {% if situacao.em_uso %}
+            <div class="fw-semibold"><span class="badge veic-badge-uso">Em uso</span></div>
+            <div class="small">{{ (situacao.em_uso.condutor or situacao.em_uso.criador).nome if (situacao.em_uso.condutor or situacao.em_uso.criador) else '' }}</div>
+            {% else %}
+            <div class="fw-semibold"><span class="badge veic-badge-livre">Livre</span></div>
+            {% if situacao.proxima %}<div class="small text-muted">Próxima: {{ situacao.proxima.inicio.strftime('%d/%m %H:%M') }}</div>{% endif %}
+            {% endif %}
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="small text-muted">Km atual</div>
+            <div class="fs-5 fw-semibold">{% if km_atual is not none %}{{ '{:,}'.format(km_atual).replace(',', '.') }}{% else %}—{% endif %}</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="small text-muted">Usos em {{ mes_nome }}</div>
+            <div class="fs-5 fw-semibold">{{ usos | length }}</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card h-100"><div class="card-body py-3">
+            <div class="small text-muted">Km rodados no mês</div>
+            <div class="fs-5 fw-semibold">{{ '{:,}'.format(total_km).replace(',', '.') }}</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span><i class="fas fa-route me-2"></i>Usos do mês</span>
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('veiculos.usos', id=veiculo.id, mes=mes_anterior) }}" title="Mês anterior"><i class="fas fa-chevron-left"></i></a>
+            <form method="get" class="d-flex">
+                <input type="month" name="mes" value="{{ mes.strftime('%Y-%m') }}" class="form-control form-control-sm" onchange="this.form.submit()" aria-label="Mês">
+            </form>
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('veiculos.usos', id=veiculo.id, mes=mes_seguinte) }}" title="Próximo mês"><i class="fas fa-chevron-right"></i></a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if usos %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Horário</th>
+                        <th>Quem usa</th>
+                        <th>Destino</th>
+                        <th class="d-none d-lg-table-cell">Finalidade</th>
+                        <th class="d-none d-md-table-cell">Registrado por</th>
+                        <th style="width:110px">Km saída</th>
+                        <th style="width:110px">Km chegada</th>
+                        <th class="text-end">Rodados</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in usos %}
+                    {% set form_id = 'km' ~ ev.id %}
+                    <tr {% if ev.inicio <= agora and ev.km_chegada is none %}class="table-warning"{% endif %}>
+                        <td class="text-nowrap">{{ ev.inicio.strftime('%d/%m') }}</td>
+                        <td class="text-nowrap">
+                            {% if ev.dia_inteiro %}Dia todo{% else %}{{ ev.inicio.strftime('%H:%M') }}{% if ev.fim %}–{{ ev.fim.strftime('%H:%M') }}{% endif %}{% endif %}
+                        </td>
+                        <td>{{ ev.condutor.nome if ev.condutor else '—' }}</td>
+                        <td>{{ ev.local or '—' }}</td>
+                        <td class="d-none d-lg-table-cell">{{ finalidade(ev) or '—' }}</td>
+                        <td class="d-none d-md-table-cell text-muted">
+                            {{ ev.criador.nome if ev.criador else '—' }}
+                            {% if ev.criado_em %}<div class="small">{{ ev.criado_em | br_datetime('%d/%m %H:%M') }}</div>{% endif %}
+                        </td>
+                        <td><input form="{{ form_id }}" type="text" inputmode="numeric" name="km_saida" maxlength="9" class="form-control form-control-sm" value="{{ ev.km_saida if ev.km_saida is not none else '' }}"></td>
+                        <td><input form="{{ form_id }}" type="text" inputmode="numeric" name="km_chegada" maxlength="9" class="form-control form-control-sm" value="{{ ev.km_chegada if ev.km_chegada is not none else '' }}"></td>
+                        <td class="text-end fw-semibold">{{ ev.km_rodados if ev.km_rodados is not none else '—' }}</td>
+                        <td>
+                            <form id="{{ form_id }}" method="post" action="{{ url_for('veiculos.salvar_km', id=veiculo.id, evento_id=ev.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Salvar km"><i class="fas fa-save"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-route"></i>
+            <h6>Nenhum uso registrado em {{ mes_nome }}</h6>
+            <p class="text-muted small mb-0">As reservas feitas na agenda aparecem aqui e entram no RDV do mês.</p>
+        </div>
+        {% endif %}
+    </div>
+    <div class="card-footer small text-muted">
+        <i class="fas fa-info-circle me-1"></i>
+        Linhas em amarelo já aconteceram e ainda não têm o km de devolução. O RDV sai com essas reservas preenchidas
+        e linhas em branco para completar à mão.
+    </div>
+</div>
+{% endblock %}

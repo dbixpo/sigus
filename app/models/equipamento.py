@@ -54,6 +54,8 @@ class TipoEquipamento(db.Model):
     # No padrão de salas, equipamentos deste tipo contam como o tipo indicado
     # (ex.: All-in-One atende ao item "Computador").
     conta_como_id    = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='SET NULL'))
+    # Veículos ganham aba própria na unidade, reserva na agenda e RDV mensal.
+    eh_veiculo       = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     criado_em      = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em  = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 

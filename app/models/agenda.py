@@ -13,6 +13,7 @@ VISIBILIDADE_PESSOAL = 'pessoal'
 TIPO_EVENTO = 'evento'
 TIPO_REUNIAO = 'reuniao'
 TIPO_AUSENCIA = 'ausencia'
+TIPO_VEICULO = 'veiculo'
 
 agenda_evento_participantes = db.Table(
     'agenda_evento_participantes',
@@ -35,12 +36,22 @@ class AgendaEvento(db.Model):
     visibilidade = db.Column(db.String(20), nullable=False, default=VISIBILIDADE_UNIDADE)
     tipo = db.Column(db.String(20), nullable=False, default=TIPO_EVENTO)
     motivo = db.Column(db.String(20))
+    # Recursos reservados: uma sala reservável e/ou um veículo (equipamento do tipo veículo).
+    sala_id = db.Column(db.Integer, db.ForeignKey('salas.id', ondelete='SET NULL'))
+    veiculo_id = db.Column(db.Integer, db.ForeignKey('equipamentos.id', ondelete='SET NULL'))
+    condutor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    km_saida = db.Column(db.Integer)
+    km_chegada = db.Column(db.Integer)
+    devolvido_em = db.Column(db.DateTime)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     criado_em = db.Column(db.DateTime, nullable=False, default=agora_local_callable)
     atualizado_em = db.Column(db.DateTime)
 
     unidade = db.relationship('Unidade', foreign_keys=[unidade_id])
     criador = db.relationship('Usuario', foreign_keys=[criado_por])
+    sala = db.relationship('Sala', foreign_keys=[sala_id])
+    veiculo = db.relationship('Equipamento', foreign_keys=[veiculo_id])
+    condutor = db.relationship('Usuario', foreign_keys=[condutor_id])
     participantes = db.relationship(
         'Usuario',
         secondary=agenda_evento_participantes,
@@ -58,6 +69,16 @@ class AgendaEvento(db.Model):
     @property
     def eh_ausencia(self):
         return self.tipo == TIPO_AUSENCIA
+
+    @property
+    def eh_veiculo(self):
+        return self.tipo == TIPO_VEICULO
+
+    @property
+    def km_rodados(self):
+        if self.km_saida is not None and self.km_chegada is not None and self.km_chegada >= self.km_saida:
+            return self.km_chegada - self.km_saida
+        return None
 
     @property
     def ausente(self):

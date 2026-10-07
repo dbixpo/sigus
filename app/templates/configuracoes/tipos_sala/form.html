@@ -81,6 +81,20 @@
                                   placeholder="Descreva brevemente este tipo de sala...">{{ tipo.descricao or '' if tipo else '' }}</textarea>
                     </div>
 
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="reservavel" id="reservavel"
+                                   {% if tipo and tipo.reservavel %}checked{% endif %}>
+                            <label class="form-check-label" for="reservavel">
+                                <i class="fas fa-calendar-check me-1 text-primary"></i>Reservável na agenda
+                            </label>
+                        </div>
+                        <div class="form-text">
+                            Para salas de reunião e auditórios: aparecem no botão "Verificar salas vazias" da agenda.
+                            Em cada sala dá para liberar o uso por todas as unidades.
+                        </div>
+                    </div>
+
                     <div class="mb-4">
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="ativo" id="ativo"

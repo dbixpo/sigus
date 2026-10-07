@@ -5,7 +5,7 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
-<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006e" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006v" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -47,6 +47,12 @@
                 <input type="checkbox" id="chkEventos" checked style="accent-color:#1A82B8;">
                 <span>Eventos e reuniões</span>
             </label>
+            {% if veiculos %}
+            <label class="ag-cal-item" for="chkVeiculos">
+                <input type="checkbox" id="chkVeiculos" checked style="accent-color:#0F7A66;">
+                <span>Reservas de veículos</span>
+            </label>
+            {% endif %}
             <label class="ag-cal-item" for="chkPrazos">
                 <input type="checkbox" id="chkPrazos" checked style="accent-color:#C9A200;">
                 <span>Prazos de planejamento</span>
@@ -64,6 +70,7 @@
                 <li><span class="ag-leg-cor" style="background:#19A88B;"></span>Evento pessoal</li>
                 <li><span class="ag-leg-cor" style="background:#0D3B5E;"></span>Reunião</li>
                 <li><span class="ag-leg-cor" style="background:#718096;"></span>Ausência / férias</li>
+                {% if veiculos %}<li><span class="ag-leg-cor" style="background:#0F7A66;"></span>Reserva de veículo</li>{% endif %}
                 <li><span class="ag-leg-cor" style="background:#F5C500;"></span>Prazo em dia</li>
                 <li><span class="ag-leg-cor" style="background:#E63030;"></span>Prazo vencido / feriado</li>
                 <li><span class="ag-leg-cor ag-leg-cor-borda" style="background:#E2E8F0;"></span>Prazo concluído</li>
@@ -135,8 +142,27 @@
                 <i class="fas fa-tag"></i>
                 <div><div class="ag-leitura-rotulo">Motivo (visível para você e a gestão)</div><div id="viewMotivo"></div></div>
             </div>
+            <div class="ag-leitura-linha d-none" id="rowVeiculo">
+                <i class="fas fa-car"></i><div><div class="ag-leitura-rotulo">Veículo</div><div id="viewVeiculo"></div></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowSala">
+                <i class="fas fa-door-open"></i><div><div class="ag-leitura-rotulo">Sala reservada</div><div id="viewSala"></div></div>
+            </div>
             <div class="ag-leitura-linha d-none" id="rowLocal">
-                <i class="fas fa-map-marker-alt"></i><div id="viewLocal"></div>
+                <i class="fas fa-map-marker-alt"></i><div><div class="ag-leitura-rotulo d-none" id="viewLocalLabel">Destino</div><div id="viewLocal"></div></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowKm">
+                <i class="fas fa-tachometer-alt"></i>
+                <div class="flex-grow-1">
+                    <div class="ag-leitura-rotulo">Saída e devolução (vai para o RDV)</div>
+                    <div id="viewKm"></div>
+                    <form class="ag-km d-none" id="formKm" autocomplete="off">
+                        <label>Km saída<input type="text" inputmode="numeric" id="kmSaida" class="form-control form-control-sm" maxlength="9"></label>
+                        <label>Km chegada<input type="text" inputmode="numeric" id="kmChegada" class="form-control form-control-sm" maxlength="9"></label>
+                        <button type="submit" class="btn btn-sm btn-primary" id="btnSalvarKm">Salvar km</button>
+                    </form>
+                    <div class="text-danger small d-none" id="erroKm"></div>
+                </div>
             </div>
             <div class="ag-leitura-linha d-none" id="rowDesc">
                 <i class="fas fa-align-left"></i><div id="viewDesc" class="ag-leitura-desc"></div>
@@ -149,6 +175,9 @@
             </div>
             <div class="ag-leitura-linha d-none" id="rowVisib">
                 <i class="fas fa-lock"></i><div>Só você vê este evento</div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowRegistro">
+                <i class="fas fa-user-pen"></i><div class="ag-leitura-registro" id="viewRegistro"></div>
             </div>
             <div class="ag-leitura-rodape">
                 <a class="btn btn-sm btn-outline-primary" id="btnGoogle" target="_blank" rel="noopener">
@@ -177,7 +206,40 @@
                     <button type="button" class="ag-tipo-btn" data-tipo="evento" role="tab"><i class="fas fa-calendar-day"></i>Evento</button>
                     <button type="button" class="ag-tipo-btn" data-tipo="reuniao" role="tab"><i class="fas fa-users"></i>Reunião</button>
                     <button type="button" class="ag-tipo-btn" data-tipo="ausencia" role="tab"><i class="fas fa-umbrella-beach"></i>Ausência</button>
+                    {% if veiculos %}
+                    <button type="button" class="ag-tipo-btn" data-tipo="veiculo" role="tab"><i class="fas fa-car"></i>Veículo</button>
+                    {% endif %}
                 </div>
+
+                {% if veiculos %}
+                <div class="ag-linha d-none" id="linhaVeiculo">
+                    <i class="fas fa-car ag-linha-ico" title="Veículo"></i>
+                    <div class="ag-linha-campos">
+                        <select name="veiculo_id" id="campoVeiculo" class="form-select form-select-sm" aria-label="Veículo">
+                            <option value="">Escolha o veículo…</option>
+                            {% for unidade_nome, lista in veiculos | groupby('unidade') %}
+                            <optgroup label="{{ unidade_nome }}">
+                                {% for v in lista %}
+                                <option value="{{ v.id }}" data-unidade="{{ v.unidade_id }}">{{ v.rotulo }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="ag-recurso-status" id="veiculoStatus"></div>
+                    </div>
+                </div>
+                <div class="ag-linha d-none" id="linhaCondutor">
+                    <i class="fas fa-id-card ag-linha-ico" title="Quem vai usar"></i>
+                    <div class="ag-linha-campos">
+                        <select name="condutor_id" id="campoCondutor" class="form-select form-select-sm" aria-label="Quem vai usar">
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}{% if u.id == current_user.id %} (você){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="ag-part-dica"><i class="fas fa-user-pen me-1"></i>Quem vai usar o carro. A reserva fica registrada em seu nome como quem agendou.</div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="ag-linha d-none" id="linhaAusente">
                     <i class="fas fa-user-clock ag-linha-ico" title="Quem estará fora"></i>
@@ -252,13 +314,25 @@
                 </div>
 
                 <div class="ag-linha" id="linhaLocal">
-                    <i class="fas fa-map-marker-alt ag-linha-ico" title="Local"></i>
+                    <i class="fas fa-map-marker-alt ag-linha-ico" title="Local" id="icoLocal"></i>
                     <div class="ag-linha-campos">
                         <input type="text" name="local" id="campoLocal" class="form-control form-control-sm" maxlength="300" placeholder="Adicionar local (sala, unidade, link…)">
+                        <input type="hidden" name="sala_id" id="campoSala" value="">
+                        <div id="blocoSalaReserva">
+                            <div class="ag-sala-escolhida d-none" id="salaEscolhida">
+                                <i class="fas fa-door-open"></i>
+                                <span id="salaEscolhidaNome"></span>
+                                <button type="button" class="ag-icon-btn ag-icon-btn-sm" id="btnTirarSala" title="Não reservar esta sala"><i class="fas fa-times"></i></button>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="btnSalas">
+                                <i class="fas fa-door-open me-1"></i>Verificar salas vazias
+                            </button>
+                            <div id="blocoSalas" class="ag-salas mt-2"></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="ag-linha{% if unidades | length < 2 %} d-none{% endif %}">
+                <div class="ag-linha{% if unidades | length < 2 %} d-none{% endif %}" id="linhaUnidade" data-multi="{{ '1' if unidades | length > 1 else '0' }}">
                     <i class="fas fa-hospital ag-linha-ico" title="Unidade"></i>
                     <div class="ag-linha-campos">
                         <select name="unidade_id" id="campoUnidade" class="form-select form-select-sm" aria-label="Unidade">
@@ -363,6 +437,9 @@
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
     const pessoasUrl = {{ url_for('agenda.buscar_pessoas') | tojson }};
+    const salasUrl = {{ url_for('agenda.salas_livres') | tojson }};
+    const veiculoLivreUrl = {{ url_for('agenda.veiculo_livre') | tojson }};
+    const abrirVeiculo = {{ (abrir_veiculo or '') | tojson }};
     const DIA_MS = 24 * 3600 * 1000;
 
     const app = byId('agApp');
@@ -661,6 +738,7 @@
         byId('listaSugestoes').innerHTML = '';
         atualizarRotuloDuracao();
         agendarDisponibilidade();
+        aoMudarHorarioRecursos();
     }
     function aoMudarFim() {
         const r = lerIntervalo();
@@ -671,6 +749,7 @@
         byId('listaSugestoes').innerHTML = '';
         atualizarRotuloDuracao();
         agendarDisponibilidade();
+        aoMudarHorarioRecursos();
     }
     ['campoDataIni', 'campoHoraIni'].forEach(function (id) { byId(id).addEventListener('change', aoMudarInicio); });
     ['campoDataFim', 'campoHoraFim'].forEach(function (id) { byId(id).addEventListener('change', aoMudarFim); });
@@ -684,13 +763,147 @@
         }
         atualizarModoData();
         agendarDisponibilidade();
+        aoMudarHorarioRecursos();
     });
+
+    /* ── Salas reserváveis e veículos ───────────────────────── */
+    const campoVeiculo = byId('campoVeiculo');
+    const campoLocal = byId('campoLocal');
+    function setSala(id, nome) {
+        byId('campoSala').value = id || '';
+        byId('salaEscolhidaNome').textContent = nome || '';
+        byId('salaEscolhida').classList.toggle('d-none', !id);
+        byId('btnSalas').innerHTML = id
+            ? '<i class="fas fa-exchange-alt me-1"></i>Trocar de sala'
+            : '<i class="fas fa-door-open me-1"></i>Verificar salas vazias';
+    }
+    function limparSala() {
+        if (campoLocal.dataset.auto === '1') campoLocal.value = '';
+        campoLocal.dataset.auto = '0';
+        setSala('', '');
+        byId('blocoSalas').innerHTML = '';
+    }
+    byId('btnTirarSala').addEventListener('click', limparSala);
+    campoLocal.addEventListener('input', function () { campoLocal.dataset.auto = '0'; });
+
+    function dadosIntervalo() {
+        const fd = new FormData();
+        const v = valoresEnvio();
+        fd.append('csrf_token', csrf);
+        fd.append('inicio', v.inicio);
+        if (v.fim) fd.append('fim', v.fim);
+        if (diaInteiro()) fd.append('dia_inteiro', '1');
+        if (byId('eventoId').value) fd.append('evento_id', byId('eventoId').value);
+        return fd;
+    }
+
+    const GRUPOS_SALAS = [
+        ['unidade', function (d) { return 'Na sua unidade' + (d.unidade ? ' · ' + d.unidade : ''); }],
+        ['predio', function (d) { return 'No mesmo prédio' + (d.predio ? ' · ' + d.predio : ''); }],
+        ['rede', function () { return 'Em outros endereços (salas liberadas para toda a rede)'; }]
+    ];
+    function salaItemHtml(s, mostrarUnidade) {
+        const detalhes = [s.tipo];
+        if (mostrarUnidade) detalhes.push(s.unidade);
+        if (s.capacidade) detalhes.push('até ' + s.capacidade + ' pessoas');
+        const sub = '<span class="ag-sala-sub">' + escapeHtml(detalhes.filter(Boolean).join(' · ')) + '</span>';
+        const ocupacao = s.livre ? '' : '<span class="ag-sala-ocupada">' + escapeHtml(s.ocupacao[0] || 'Ocupada') + '</span>';
+        return '<button type="button" class="ag-sala-item' + (s.livre ? '' : ' is-ocupada') + '"' +
+            (s.livre ? '' : ' disabled') +
+            ' data-id="' + s.id + '" data-nome="' + escapeHtml(s.nome) + '" data-unidade="' + escapeHtml(s.unidade) + '">' +
+            '<i class="' + escapeHtml(s.icone) + '"></i>' +
+            '<span class="ag-sala-txt"><strong>' + escapeHtml(s.nome) + '</strong>' + sub + ocupacao + '</span>' +
+            (s.livre ? '<span class="ag-sala-livre">Livre</span>' : '<span class="ag-sala-tag">Ocupada</span>') +
+            '</button>';
+    }
+    function renderSalas(d) {
+        const bloco = byId('blocoSalas');
+        let html = '';
+        let total = 0;
+        let livres = 0;
+        GRUPOS_SALAS.forEach(function (g) {
+            const lista = (d.grupos || {})[g[0]] || [];
+            if (!lista.length) return;
+            total += lista.length;
+            livres += lista.filter(function (s) { return s.livre; }).length;
+            html += '<div class="ag-salas-grupo"><div class="ag-salas-tit">' + escapeHtml(g[1](d)) + '</div>' +
+                lista.map(function (s) { return salaItemHtml(s, g[0] !== 'unidade'); }).join('') + '</div>';
+        });
+        if (!total) {
+            bloco.innerHTML = '<div class="ag-salas-vazio"><i class="fas fa-info-circle me-1"></i>Nenhuma sala de reunião ou auditório disponível para reserva. ' +
+                'Na sala, o tipo precisa ser reservável (ex.: Sala de Reunião, Auditório); para outras unidades usarem, marque "Disponível para todas as unidades".</div>';
+            return;
+        }
+        if (!livres) {
+            html = '<div class="ag-salas-vazio is-alerta"><i class="fas fa-exclamation-triangle me-1"></i>Todas as salas estão ocupadas nesse horário. Tente outro horário.</div>' + html;
+        }
+        bloco.innerHTML = html;
+    }
+    byId('btnSalas').addEventListener('click', function () {
+        esconderErro();
+        const erro = erroIntervalo();
+        if (erro) { mostrarErro('Para procurar salas, ' + erro.charAt(0).toLowerCase() + erro.slice(1)); return; }
+        const fd = dadosIntervalo();
+        fd.append('unidade_id', byId('campoUnidade').value || '');
+        const bloco = byId('blocoSalas');
+        bloco.innerHTML = '<div class="ag-salas-vazio"><span class="spinner-border spinner-border-sm me-1"></span>Procurando salas livres…</div>';
+        fetch(salasUrl, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) { bloco.innerHTML = '<div class="ag-salas-vazio is-alerta">' + escapeHtml(d.erro || 'Não foi possível procurar.') + '</div>'; return; }
+                renderSalas(d);
+            })
+            .catch(function () { bloco.innerHTML = '<div class="ag-salas-vazio is-alerta">Falha de rede ao procurar salas.</div>'; });
+    });
+    byId('blocoSalas').addEventListener('click', function (e) {
+        const b = e.target.closest('.ag-sala-item');
+        if (!b || b.disabled) return;
+        const nome = b.getAttribute('data-nome');
+        const unidade = b.getAttribute('data-unidade');
+        setSala(b.getAttribute('data-id'), nome + ' · ' + unidade);
+        if (!campoLocal.value.trim() || campoLocal.dataset.auto === '1') {
+            campoLocal.value = nome + ' · ' + unidade;
+            campoLocal.dataset.auto = '1';
+        }
+        byId('blocoSalas').innerHTML = '';
+    });
+
+    let timerVeiculo = null;
+    function checarVeiculo() {
+        clearTimeout(timerVeiculo);
+        timerVeiculo = setTimeout(function () {
+            const st = byId('veiculoStatus');
+            if (!st || !campoVeiculo) return;
+            if (byId('campoTipo').value !== 'veiculo' || !campoVeiculo.value || erroIntervalo()) { st.innerHTML = ''; return; }
+            const fd = dadosIntervalo();
+            fd.append('veiculo_id', campoVeiculo.value);
+            fetch(veiculoLivreUrl, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.livre === true) {
+                        st.innerHTML = '<span class="is-livre"><i class="fas fa-check-circle me-1"></i>Livre nesse horário</span>';
+                    } else if (d.livre === false) {
+                        st.innerHTML = '<span class="is-ocupado"><i class="fas fa-exclamation-triangle me-1"></i>' + escapeHtml(d.ocupacao[0] || 'Já reservado nesse horário') + '</span>';
+                    } else {
+                        st.innerHTML = '';
+                    }
+                })
+                .catch(function () { st.innerHTML = ''; });
+        }, 250);
+    }
+    if (campoVeiculo) campoVeiculo.addEventListener('change', checarVeiculo);
+    function aoMudarHorarioRecursos() {
+        byId('blocoSalas').innerHTML = '';
+        checarVeiculo();
+    }
 
     /* ── Formulário ─────────────────────────────────────────── */
     function setTipo(tipo) {
-        if (['evento', 'reuniao', 'ausencia'].indexOf(tipo) < 0) tipo = 'evento';
+        if (['evento', 'reuniao', 'ausencia', 'veiculo'].indexOf(tipo) < 0) tipo = 'evento';
+        if (tipo === 'veiculo' && !campoVeiculo) tipo = 'evento';
         const reuniao = tipo === 'reuniao';
         const ausencia = tipo === 'ausencia';
+        const veiculo = tipo === 'veiculo';
         const anterior = byId('campoTipo').value;
         byId('campoTipo').value = tipo;
         form.querySelectorAll('.ag-tipo-btn').forEach(function (b) {
@@ -699,12 +912,24 @@
             b.setAttribute('aria-selected', ativo ? 'true' : 'false');
         });
         byId('linhaParticipantes').classList.toggle('d-none', !reuniao);
-        byId('linhaVisibilidade').classList.toggle('d-none', reuniao || ausencia);
+        byId('linhaVisibilidade').classList.toggle('d-none', reuniao || ausencia || veiculo);
         byId('linhaAusente').classList.toggle('d-none', !ausencia);
         byId('linhaMotivo').classList.toggle('d-none', !ausencia);
         byId('linhaLocal').classList.toggle('d-none', ausencia);
         byId('campoTitulo').classList.toggle('d-none', ausencia);
-        if (reuniao || ausencia) byId('campoVisibilidade').value = 'unidade';
+        if (campoVeiculo) {
+            byId('linhaVeiculo').classList.toggle('d-none', !veiculo);
+            byId('linhaCondutor').classList.toggle('d-none', !veiculo);
+        }
+        const linhaUnidade = byId('linhaUnidade');
+        linhaUnidade.classList.toggle('d-none', veiculo || linhaUnidade.getAttribute('data-multi') !== '1');
+        byId('blocoSalaReserva').classList.toggle('d-none', veiculo || ausencia);
+        if (veiculo || ausencia) limparSala();
+        byId('icoLocal').className = (veiculo ? 'fas fa-route' : 'fas fa-map-marker-alt') + ' ag-linha-ico';
+        campoLocal.placeholder = veiculo ? 'Destino (ex.: UBS Éden, Palácio da Saúde…)' : 'Adicionar local (sala, unidade, link…)';
+        byId('campoTitulo').placeholder = veiculo ? 'Finalidade (opcional) — ex.: entrega de insumos' : 'Adicionar título';
+        if (reuniao || ausencia || veiculo) byId('campoVisibilidade').value = 'unidade';
+        if (veiculo) checarVeiculo();
         if (ausencia && anterior !== 'ausencia' && !diaInteiro()) {
             const r = lerIntervalo();
             if (r.ini) {
@@ -720,7 +945,9 @@
         b.addEventListener('click', function () { setTipo(b.getAttribute('data-tipo')); });
     });
     function ehAusencia() { return byId('campoTipo').value === 'ausencia'; }
+    function ehVeiculo() { return byId('campoTipo').value === 'veiculo'; }
     function tituloForm() {
+        if (ehVeiculo()) return modoEdicao ? 'Editar reserva do veículo' : 'Reservar veículo';
         if (ehReuniao()) return modoEdicao ? 'Editar reunião' : 'Nova reunião';
         if (ehAusencia()) return modoEdicao ? 'Editar ausência' : 'Registrar ausência';
         return modoEdicao ? 'Editar evento' : 'Novo evento';
@@ -738,6 +965,10 @@
         esconderErro();
         byId('listaSugestoes').innerHTML = '';
         byId('blocoDisponibilidade').innerHTML = '';
+        campoLocal.dataset.auto = '0';
+        setSala('', '');
+        byId('blocoSalas').innerHTML = '';
+        if (byId('veiculoStatus')) byId('veiculoStatus').innerHTML = '';
         const f = unidadeFiltro();
         if (f) byId('campoUnidade').value = f;
         setParticipantes([euId]);
@@ -805,6 +1036,17 @@
         byId('campoDesc').value = props.descricao || '';
         byId('campoVisibilidade').value = props.visibilidade || 'unidade';
         setParticipantes(props.participante_ids && props.participante_ids.length ? props.participante_ids : [euId], props.pessoas);
+        if (props.sala_id) setSala(props.sala_id, props.sala);
+        if (props.tipo === 'veiculo' && campoVeiculo) {
+            campoVeiculo.value = props.veiculo_id ? String(props.veiculo_id) : '';
+            const selCondutor = byId('campoCondutor');
+            if (props.condutor_id && !selCondutor.querySelector('option[value="' + props.condutor_id + '"]')) {
+                const quem = (props.pessoas || [])[0];
+                selCondutor.add(new Option(quem ? quem.nome : 'Condutor', String(props.condutor_id)));
+            }
+            if (props.condutor_id) selCondutor.value = String(props.condutor_id);
+            checarVeiculo();
+        }
     }
 
     byId('btnCancelar').addEventListener('click', function () {
@@ -838,7 +1080,7 @@
         const props = ev.extendedProps || {};
         eventoAtual = ev;
         modoEdicao = false;
-        const tipos = { prazo: 'Prazo de planejamento', reuniao: 'Reunião', ausencia: 'Ausência', feriado: 'Feriado / ponto facultativo', evento: 'Evento' };
+        const tipos = { prazo: 'Prazo de planejamento', reuniao: 'Reunião', ausencia: 'Ausência', feriado: 'Feriado / ponto facultativo', evento: 'Evento', veiculo: 'Reserva de veículo' };
         byId('viewTipo').textContent = tipos[props.tipo] || 'Evento';
         byId('viewCor').style.background = ev.backgroundColor || '#1A82B8';
         byId('viewTitulo').textContent = ev.title || '';
@@ -852,8 +1094,21 @@
         }).join('');
         linha('rowMotivo', !!props.motivo_label);
         byId('viewMotivo').textContent = props.motivo_label || '';
-        linha('rowLocal', !!props.local);
+        const ehReserva = props.tipo === 'veiculo';
+        linha('rowVeiculo', ehReserva);
+        byId('viewVeiculo').textContent = props.veiculo || '';
+        linha('rowSala', !!props.sala);
+        byId('viewSala').textContent = props.sala || '';
+        linha('rowLocal', !!props.local && props.local !== props.sala);
+        byId('viewLocalLabel').classList.toggle('d-none', !ehReserva);
         byId('viewLocal').textContent = props.local || '';
+        linha('rowKm', ehReserva);
+        if (ehReserva) renderKm(props);
+        const mostraRegistro = !!props.registrado_por && (ehReserva || !!props.sala);
+        linha('rowRegistro', mostraRegistro);
+        byId('viewRegistro').textContent = mostraRegistro
+            ? 'Registrado por ' + props.registrado_por + (props.registrado_em ? ' em ' + props.registrado_em : '')
+            : '';
         linha('rowDesc', !!props.descricao);
         byId('viewDesc').textContent = props.descricao || '';
         linha('rowStatus', !!props.status);
@@ -862,7 +1117,7 @@
         byId('viewUnidade').textContent = props.unidade || '';
         linha('rowVisib', props.visibilidade === 'pessoal');
 
-        const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao' || props.tipo === 'ausencia') && !!props.pode_editar;
+        const editavel = ['evento', 'reuniao', 'ausencia', 'veiculo'].indexOf(props.tipo) >= 0 && !!props.pode_editar;
         const prazoMovel = props.tipo === 'prazo' && !!props.pode_mover;
         byId('btnEditar').classList.toggle('d-none', !(editavel || prazoMovel));
         byId('btnEditar').title = prazoMovel ? 'Alterar prazo' : 'Editar';
@@ -888,6 +1143,48 @@
             if (alvo) alvo.focus();
         }, 40);
     }
+    function formatoKm(n) { return Number(n).toLocaleString('pt-BR') + ' km'; }
+    function renderKm(props) {
+        const partes = [];
+        if (props.km_saida != null) partes.push('Saída: ' + formatoKm(props.km_saida));
+        if (props.km_chegada != null) partes.push('Chegada: ' + formatoKm(props.km_chegada));
+        if (props.km_rodados != null) partes.push(formatoKm(props.km_rodados) + ' rodados');
+        byId('viewKm').textContent = partes.length ? partes.join(' · ') : 'Ainda sem km registrado.';
+        byId('formKm').classList.toggle('d-none', !props.pode_km);
+        byId('kmSaida').value = props.km_saida != null ? props.km_saida : '';
+        byId('kmChegada').value = props.km_chegada != null ? props.km_chegada : '';
+        byId('erroKm').classList.add('d-none');
+    }
+    byId('formKm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!eventoAtual) return;
+        const props = eventoAtual.extendedProps || {};
+        const fd = new FormData();
+        fd.append('csrf_token', csrf);
+        fd.append('km_saida', byId('kmSaida').value);
+        fd.append('km_chegada', byId('kmChegada').value);
+        const btn = byId('btnSalvarKm');
+        btn.disabled = true;
+        fetch(props.km_url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) {
+                    byId('erroKm').textContent = d.erro || 'Não foi possível salvar.';
+                    byId('erroKm').classList.remove('d-none');
+                    return;
+                }
+                const novo = d.evento.extendedProps;
+                ['km_saida', 'km_chegada', 'km_rodados'].forEach(function (k) { eventoAtual.setExtendedProp(k, novo[k]); });
+                renderKm(eventoAtual.extendedProps);
+                snack(novo.km_chegada != null ? 'Devolução registrada' : 'Km de saída registrado');
+            })
+            .catch(function () {
+                byId('erroKm').textContent = 'Falha de rede. Tente de novo.';
+                byId('erroKm').classList.remove('d-none');
+            })
+            .finally(function () { btn.disabled = false; });
+    });
+
     byId('btnEditar').addEventListener('click', function () {
         if (!eventoAtual) return;
         const ev = eventoAtual;
@@ -905,8 +1202,14 @@
         e.preventDefault();
         esconderErro();
         const ausencia = ehAusencia();
+        const veiculo = ehVeiculo();
         const titulo = ausencia ? 'Ausência' : byId('campoTitulo').value.trim();
-        if (!titulo) {
+        if (veiculo && !campoVeiculo.value) {
+            mostrarErro('Escolha o veículo.');
+            campoVeiculo.focus();
+            return;
+        }
+        if (!titulo && !veiculo) {
             mostrarErro('Informe o título.');
             byId('campoTitulo').focus();
             return;
@@ -946,7 +1249,9 @@
                 }
                 calendar.refetchEvents();
                 fecharEvento();
-                if (!id && d.google_url) {
+                if (veiculo) {
+                    snack(id ? 'Reserva atualizada' : 'Veículo reservado');
+                } else if (!id && d.google_url) {
                     confirmar({
                         icone: 'fab fa-google',
                         titulo: reuniao ? 'Reunião criada!' : (ausencia ? 'Ausência registrada!' : 'Evento criado!'),
@@ -1287,7 +1592,8 @@
                 end: info.endStr,
                 eventos: byId('chkEventos').checked ? '1' : '0',
                 prazos: byId('chkPrazos').checked ? '1' : '0',
-                feriados: byId('chkFeriados').checked ? '1' : '0'
+                feriados: byId('chkFeriados').checked ? '1' : '0',
+                veiculos: !byId('chkVeiculos') || byId('chkVeiculos').checked ? '1' : '0'
             });
             const u = unidadeFiltro();
             if (u) params.set('unidade_id', u);
@@ -1412,9 +1718,15 @@
     atualizarToolbar();
 
     /* ── Filtros ────────────────────────────────────────────── */
-    ['chkEventos', 'chkPrazos', 'chkFeriados'].forEach(function (id) {
-        byId(id).addEventListener('change', function () { calendar.refetchEvents(); });
+    ['chkEventos', 'chkPrazos', 'chkFeriados', 'chkVeiculos'].forEach(function (id) {
+        if (byId(id)) byId(id).addEventListener('change', function () { calendar.refetchEvents(); });
     });
+
+    if (abrirVeiculo && podeAdicionar && campoVeiculo && campoVeiculo.querySelector('option[value="' + abrirVeiculo + '"]')) {
+        abrirNovo(null, null, false, 'veiculo');
+        campoVeiculo.value = String(abrirVeiculo);
+        checarVeiculo();
+    }
     const filtroU = byId('filtroUnidade');
     if (filtroU) filtroU.addEventListener('change', function () { calendar.refetchEvents(); });
 

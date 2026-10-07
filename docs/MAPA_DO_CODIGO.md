@@ -21,7 +21,8 @@ Registro: `app/__init__.py` (`create_app`).
 | `empresas` | `/empresas` | `app/routes/empresas.py` | Empresas contratadas |
 | `sueq` | `/sueq` | `app/routes/sueq.py` | Emendas / licitações / chamados SUEQ (schema `sueq`) |
 | `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban; prazo editável com histórico (`alterar_prazo_acao`) |
-| `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda estilo Google + reuniões; arrastar (`/eventos/<id>/mover`). Ver [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) |
+| `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda estilo Google + reuniões, reservas de veículo e de sala; arrastar (`/eventos/<id>/mover`). Ver [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) |
+| `veiculos` | `/veiculos` | `app/routes/veiculos.py` | Usos do veículo no mês, km e RDV em Excel |
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente no fluxo do Núcleo (notificação pública, qualificação, comissões, relatórios). Ver [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) |
 | `relatorios` | `/relatorios` | `app/routes/relatorios.py` | Inventário, salas, NSP, mapa, aniversariantes… |
 | `rh` | `/rh` | `app/routes/rh.py` | Faltas abonadas |

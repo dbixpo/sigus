@@ -196,6 +196,19 @@ def detalhe(id):
         equipamentos_por_sala[sala.id] = equips
     total_equipamentos_unidade = sum(len(v) for v in equipamentos_por_sala.values())
 
+    from app.services import reservas
+    from app.utils import agora_brasilia
+    veiculos = reservas.query_veiculos([id]).order_by(Equipamento.id).all()
+    campos_veiculos = reservas.campos_veiculos([v.id for v in veiculos])
+    agora_veiculos = agora_brasilia()
+    veiculos_info = [{
+        'veiculo': v,
+        'campos': campos_veiculos.get(v.id, {}),
+        'rotulo': reservas.rotulo_veiculo(v, campos_veiculos.get(v.id, {})),
+        'km_atual': reservas.km_atual(v.id, campos_veiculos.get(v.id, {})),
+        **reservas.situacao_veiculos([v], agora_veiculos)[v.id],
+    } for v in veiculos]
+
     # Solicitações de vínculo pendentes e histórico
     from app.models.solicitacao_vinculo import SolicitacaoVinculo
     solicitacoes_pendentes = (SolicitacaoVinculo.query
@@ -224,7 +237,9 @@ def detalhe(id):
                            equipamentos_por_sala=equipamentos_por_sala,
                            total_equipamentos_unidade=total_equipamentos_unidade,
                            solicitacoes_pendentes=solicitacoes_pendentes,
-                           solicitacoes_historico=solicitacoes_historico)
+                           solicitacoes_historico=solicitacoes_historico,
+                           veiculos_info=veiculos_info,
+                           mes_atual=agora_veiculos.strftime('%Y-%m'))
 
 
 @unidades_bp.route('/<int:id>/gestores-principais', methods=['POST'])

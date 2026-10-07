@@ -14,6 +14,8 @@ class Sala(db.Model):
     capacidade_maxima = db.Column(db.Integer, nullable=False, default=0, server_default='0')
     ramal         = db.Column(db.String(20))
     ativo         = db.Column(db.Boolean, nullable=False, default=True)
+    # Sala reservável que qualquer unidade pode agendar (não só a dona).
+    uso_compartilhado = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     observacoes   = db.Column(db.Text)
     criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -35,6 +37,10 @@ class Sala(db.Model):
         if self.tipo_sala:
             return self.tipo_sala.icone
         return 'bi-door-open'
+
+    @property
+    def reservavel(self):
+        return bool(self.ativo and self.tipo_sala and self.tipo_sala.reservavel)
 
     @property
     def total_equipamentos(self):
