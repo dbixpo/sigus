@@ -35,7 +35,7 @@ Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
 
 - **Dashboard** — Comunicados com ciência (perfil **ou** CBO), mural de ações, aniversariantes, chamados abertos
 - **Planejamentos** — Kanban com GUT
-- **Agenda** — Compromissos e reuniões (feriados municipais)
+- **Agenda** — Estilo Google: compromissos, períodos e reuniões, arrastar para remarcar, prazos dos planejamentos e feriados municipais
 - **Segurança do Paciente** — NSP interno, protocolo `SP-AAAA-NNNNN` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))
 - **Links úteis**
 - **Relatórios** — Inventário, salas, contratos, NSP, mapa da saúde, aniversariantes…

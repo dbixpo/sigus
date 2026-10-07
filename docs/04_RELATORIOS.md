@@ -26,6 +26,8 @@ Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
 | Faltas abonadas | `/relatorios/faltas-abonadas` | RH |
 | Mapa da Saúde | `/relatorios/mapa-saude` (interno) e `/mapa-da-saude` (público) | Rede no mapa |
 
+**Aniversariantes** (relatório e card do dashboard): entra todo usuário ativo com data de nascimento e vínculo ativo na unidade, de qualquer perfil. O perfil `administrador` ficava de fora e foi incluído.
+
 ---
 
 ## Filtros Comuns

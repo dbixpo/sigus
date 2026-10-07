@@ -36,6 +36,23 @@ Se um comunicado antigo tiver os dois JSON preenchidos, o matching passa a ser *
 
 Autor **não** ganha ciência automática. Se ele também for destinatário, o sistema o leva para assinar.
 
+## Editar e excluir (comunicados e mural)
+
+Os botões ficam no próprio card do dashboard e na página do comunicado. Os botões soltos "Novo comunicado" e "Registrar ação" no topo do dashboard saíram: o card já tem o seu.
+
+| Ação | Quem pode | Função |
+|---|---|---|
+| Editar | só quem publicou | `_pode_editar` |
+| Excluir | quem publicou **ou** perfil `administrador` | `_pode_excluir` |
+
+Vale igual para comunicado (`/comunicados/<id>/editar`, `/comunicados/<id>/excluir`) e para postagem do mural de ações (`/mural/acoes/<id>/editar`, `/mural/acoes/<id>/excluir`).
+
+**Comunicado editado pede ciência de novo.** Cada edição que muda algo sobe `versao`. A ciência é contada por versão (`ComunicadoCiencia.versao`), então as assinaturas da versão anterior deixam de valer e os destinatários são notificados de novo. As assinaturas antigas continuam no banco como histórico. Se nada mudou, o sistema avisa "Nada foi alterado" e não zera nada.
+
+Exclusão de comunicado é lógica (`ativo = False`, `excluido_em`, `excluido_por_id`). Exclusão de postagem do mural apaga a ação e as fotos.
+
+**Texto do mural:** as quebras de linha aparecem também no card fechado, não só ao expandir.
+
 ## Banco
 
 Colunas TEXT na tabela `comunicados` (JSON de listas):
@@ -45,6 +62,14 @@ migrations/add_ciencia_filtros.py
 ```
 
 Idempotente. Sem coluna nova para o “modo”: listas vazias = toda a equipe.
+
+Versão, edição e exclusão:
+
+```
+migrations/add_comunicado_versao.py
+```
+
+Idempotente. Adiciona `versao`, `editado_em`/`editado_por_id`, `excluido_em`/`excluido_por_id` em `comunicados`, `versao` na ciência e a restrição única `(comunicado_id, usuario_id, versao)`.
 
 ## Conferência
 

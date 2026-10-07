@@ -26,7 +26,8 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [05_AUDITORIA.md](05_AUDITORIA.md) | Log de requisições |
 | [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) | NSP interno, protocolo `SP-AAAA-NNNNN`, SIS |
 | [TRANSFERENCIAS_E_LOJINHA.md](TRANSFERENCIAS_E_LOJINHA.md) | Termos, aceite, Lojinha Interna |
-| [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO |
+| [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO, editar/excluir comunicado e mural |
+| [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, arrastar eventos, prazos editáveis com histórico |
 | [INSTALACAO.md](INSTALACAO.md) | Clone, banco vazio, primeiro admin, identidade |
 | [migrations/README.md](../migrations/README.md) | Scripts idempotentes de schema |
 | [scripts/README.md](../scripts/README.md) | Dump, restore, Estante, SUEQ, reset de senha |

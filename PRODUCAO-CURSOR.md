@@ -39,9 +39,10 @@ Com o `.env` **de produção** (não troque `DATABASE_URL`):
 
 ```powershell
 .\venv\Scripts\python.exe migrations\add_ciencia_filtros.py
+.\venv\Scripts\python.exe migrations\add_comunicado_versao.py
 ```
 
-Isso cria, se ainda não existirem, as colunas TEXT `ciencia_perfis` e `ciencia_cbos` em `comunicados`. O script é idempotente. **Não** rode `recriar_admin.py`, `restaura_banco.py` nem dump.
+O primeiro cria, se ainda não existirem, as colunas TEXT `ciencia_perfis` e `ciencia_cbos` em `comunicados`. O segundo (entrega de 06/10/2026) cria versão, edição e exclusão de comunicado, para pedir ciência de novo quando o comunicado é editado. O script é idempotente. **Não** rode `recriar_admin.py`, `restaura_banco.py` nem dump.
 
 Se o mural de comunicados **nunca** foi instalado neste banco (ambiente atrasado), na ordem:
 
@@ -58,7 +59,9 @@ Não rode a pasta `migrations\` inteira “por garantia”.
 
 ## 5. Reinício
 
-Recicle o Application Pool `sigus` (ou `iisreset` se for a política da casa). Abra `/sigus/login`.
+**Em Sorocaba, nunca rode `iisreset`, não recicle o `DefaultAppPool` nem mate `w3wp.exe`:** o mesmo IIS atende o esussamu, que não pode parar. Reinicie só o processo do SIGUS (`python run.py` na porta 5001), conferindo antes que o PID da porta é mesmo o `run.py`. Passo a passo: `ATUALIZACAO-SERVIDOR.md`, seção 4. Peça autorização antes de reiniciar.
+
+Em outra instalação com app pool próprio do SIGUS, recicle só esse pool. Abra `/sigus/login`.
 
 ## 6. Conferência (sem inventar dado)
 

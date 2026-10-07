@@ -12,7 +12,30 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 ---
 
-## Esta entrega (ciência perfil OU CBO + tzdata)
+> **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
+
+## Entrega de 06/10/2026 (agenda, prazos, comunicados, aniversariantes)
+
+Depois do `git pull`:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_comunicado_versao.py
+```
+
+Única migration desta entrega (idempotente). Agenda e prazos não mudam o banco.
+
+O que mudou:
+
+- **Agenda** no estilo Google: visões dia/semana/mês/lista, início e fim livres, "Dia inteiro", períodos de vários dias, arrastar para mudar data/horário/duração com **Desfazer**. Detalhe: [docs/AGENDA_E_PLANEJAMENTOS.md](docs/AGENDA_E_PLANEJAMENTOS.md).
+- **Prazos de ações** podem ser alterados ou removidos (pela agenda ou por Planejamentos). Cada mudança vira observação no histórico da ação e notifica os responsáveis.
+- **Comunicados e mural**: editar (só o autor) e excluir (autor ou administrador). Comunicado editado pede ciência de novo. Detalhe: [docs/COMUNICADOS.md](docs/COMUNICADOS.md).
+- **Aniversariantes**: perfil administrador passa a aparecer.
+
+Conferência: `/sigus/agenda/` (abrir e fechar vários eventos seguidos, arrastar um evento seu e desfazer), lápis de prazo em `/sigus/planejamentos/`, editar um comunicado próprio. Ctrl+F5 se o CSS antigo da agenda aparecer.
+
+---
+
+## Entrega anterior (ciência perfil OU CBO + tzdata)
 
 Depois do `git pull`:
 
@@ -21,7 +44,7 @@ Depois do `git pull`:
 .\venv\Scripts\python.exe migrations\add_ciencia_filtros.py
 ```
 
-`tzdata` é obrigatório no Windows (`ZoneInfo` de Brasília). A migration só adiciona `ciencia_perfis` / `ciencia_cbos` se ainda não existirem. Recicle o pool.
+`tzdata` é obrigatório no Windows (`ZoneInfo` de Brasília). A migration só adiciona `ciencia_perfis` / `ciencia_cbos` se ainda não existirem. Reinicie o SIGUS (seção 4).
 
 Conferência: **Novo comunicado** — título, texto, anexo, unidade, cobrar ciência, quem (equipe **ou** perfil **ou** CBO). A lista de CBO usa cadastro **e** matrícula ativa.
 
@@ -122,16 +145,30 @@ SIS_SSL_VERIFY=true
 
 Sem isso, o NSP continua abrindo: os campos de paciente ficam manuais.
 
-Reinicie o processo Flask/IIS depois de editar `.env`.
+Reinicie o processo do SIGUS depois de editar `.env` (seção 4; em Sorocaba, nunca o IIS).
 
 ---
 
 ## 4. Reinício
 
-1. Recicle o Application Pool `sigus` (ou `iisreset` se for a política da casa).
-2. Abra `/sigus/login`.
-3. Confira o módulo da entrega (ex.: Segurança do Paciente, Transferências, Relatórios).
-4. Impressos devem abrir no **modal** padrão do SIGUS, não numa página crua.
+Templates e Python ficam em cache em produção: só aparecem depois de reiniciar. CSS/JS estáticos valem na hora (aumente o `?v=` no template).
+
+**Sorocaba (IIS compartilhado com o esussamu):** não toque no IIS. Reinicie só o processo do SIGUS:
+
+1. Descubra o PID na porta 5001: `netstat -ano -p TCP | findstr ":5001"`.
+2. Confirme que é o SIGUS: `(Get-CimInstance Win32_Process -Filter "ProcessId=<PID>").CommandLine` precisa conter `run.py`. Se não contiver, **pare**.
+3. `taskkill /PID <PID> /F` e espere a porta liberar.
+4. Suba de novo na raiz do projeto, em console próprio, com `FLASK_ENV=production` e `SIGUS_PORT=5001`: `python run.py`.
+
+Nunca: `iisreset`, reciclar o `DefaultAppPool`, matar `w3wp.exe` ou outro `python.exe`, editar o `web.config` do IIS.
+
+**Outra instalação, com app pool próprio do SIGUS (HttpPlatformHandler):** recicle só o pool `sigus`.
+
+Depois:
+
+1. Abra `/sigus/login`.
+2. Confira o módulo da entrega (ex.: Segurança do Paciente, Transferências, Relatórios).
+3. Impressos devem abrir no **modal** padrão do SIGUS, não numa página crua.
 
 Log: `.\logs\python.log`
 

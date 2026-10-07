@@ -20,8 +20,8 @@ Registro: `app/__init__.py` (`create_app`).
 | `contrato_financeiro` | `/contratos/empenhos` | `app/routes/contrato_financeiro.py` | Empenhos |
 | `empresas` | `/empresas` | `app/routes/empresas.py` | Empresas contratadas |
 | `sueq` | `/sueq` | `app/routes/sueq.py` | Emendas / licitações / chamados SUEQ (schema `sueq`) |
-| `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban |
-| `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda da unidade + reuniões |
+| `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban; prazo editável com histórico (`alterar_prazo_acao`) |
+| `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda estilo Google + reuniões; arrastar (`/eventos/<id>/mover`). Ver [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) |
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente |
 | `relatorios` | `/relatorios` | `app/routes/relatorios.py` | Inventário, salas, NSP, mapa, aniversariantes… |
 | `rh` | `/rh` | `app/routes/rh.py` | Faltas abonadas |
