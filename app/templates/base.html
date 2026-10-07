@@ -191,27 +191,11 @@
             {% set _sidebar_sem_vinculo = current_user.requer_vinculo and not current_user.tem_vinculo %}
             <ul class="nav flex-column">
                 {% if not _sidebar_sem_vinculo %}
-                {# Sempre visíveis (fora dos grupos): Unidade → Dashboard → Links Úteis → Relatórios #}
-                {% if current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
-                {% set _sidebar_un = current_user.unidade_padrao if (current_user.unidades_ativas | length) > 1 else (current_user.unidades_ativas[0] if (current_user.unidades_ativas | length) == 1 else none) %}
-                <li class="nav-item">
-                    {% if _sidebar_un %}
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('unidades') %}active{% endif %}"
-                       href="{{ url_for('unidades.detalhe', id=_sidebar_un.id) }}">
-                        <i class="fas fa-hospital"></i><span>{{ _sidebar_un.nome | truncate(20, True, '…') }}</span>
-                    </a>
-                    {% else %}
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('unidades') %}active{% endif %}"
-                       href="{{ url_for('unidades.listar') }}">
-                        <i class="fas fa-hospital"></i><span>Unidades</span>
-                    </a>
-                    {% endif %}
-                </li>
-                {% endif %}
+                {# Sempre visíveis (fora dos grupos): Painel → Links Úteis → Relatórios #}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and (request.endpoint.startswith('dashboard') or request.endpoint.startswith('noticias')) %}active{% endif %}"
                        href="{{ url_for('dashboard.index') }}">
-                        <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+                        <i class="fas fa-tachometer-alt"></i><span>Painel</span>
                     </a>
                 </li>
                 {% if current_user.pode('ver_links_uteis') or current_user.pode('editar_links_uteis') %}
@@ -233,13 +217,30 @@
 
                 {% set _pode_plan = current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') %}
                 {% set _pode_agenda = current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') %}
-                {% if _pode_plan or _pode_agenda %}
+                {% set _pode_unidade = current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
+                {% if _pode_unidade or _pode_plan or _pode_agenda %}
                 <li class="sidebar-group" data-group="gestao-unidade">
                     <button type="button" class="sidebar-group-toggle" aria-expanded="false">
                         <span class="sidebar-group-title">Gestão da Unidade</span>
                         <i class="fas fa-chevron-down sidebar-group-chevron"></i>
                     </button>
                     <ul class="sidebar-group-items nav flex-column">
+                {% if _pode_unidade %}
+                {% set _sidebar_un = current_user.unidade_padrao if (current_user.unidades_ativas | length) > 1 else (current_user.unidades_ativas[0] if (current_user.unidades_ativas | length) == 1 else none) %}
+                <li class="nav-item">
+                    {% if _sidebar_un %}
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('unidades') %}active{% endif %}"
+                       href="{{ url_for('unidades.detalhe', id=_sidebar_un.id) }}">
+                        <i class="fas fa-hospital"></i><span>{{ _sidebar_un.nome | truncate(20, True, '…') }}</span>
+                    </a>
+                    {% else %}
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('unidades') %}active{% endif %}"
+                       href="{{ url_for('unidades.listar') }}">
+                        <i class="fas fa-hospital"></i><span>Unidades</span>
+                    </a>
+                    {% endif %}
+                </li>
+                {% endif %}
                 {% if _pode_plan %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"

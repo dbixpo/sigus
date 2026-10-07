@@ -262,7 +262,7 @@ class ComunicadoCiencia(db.Model):
     ORIGENS = {
         'formulario': 'Assinatura na tela',
         'publicacao': 'Autor na publicação',
-        'dashboard': 'Dashboard',
+        'dashboard': 'Painel',
     }
 
     @property

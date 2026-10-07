@@ -40,7 +40,7 @@
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('dashboard.index') }}">Painel</a></li>
         {% if item %}
         <li class="breadcrumb-item"><a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}">Comunicado</a></li>
         <li class="breadcrumb-item active">Editar</li>

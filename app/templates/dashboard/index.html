@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% from 'noticias/_mural_fotos.html' import thumbs, reacts, gerenciar_acao %}
-{% block title %}Dashboard{% endblock %}
+{% block title %}Painel{% endblock %}
 
 {% block head %}
 <style>
@@ -200,7 +200,7 @@
 <div class="dash-shell">
 <div class="page-header">
     <div>
-        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        <h1><i class="fas fa-tachometer-alt"></i> Painel</h1>
         {% if unidade %}
         <div class="dash-unidade">{{ unidade.nome }} · {{ hoje.strftime('%d/%m/%Y') }}</div>
         {% else %}
