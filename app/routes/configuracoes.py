@@ -603,6 +603,119 @@ def alternar_status_tipo_sala(id):
 
 
 # ══════════════════════════════════════════════════════════
+#  PADRÃO DE SALAS E EQUIPAMENTOS
+# ══════════════════════════════════════════════════════════
+
+@configuracoes_bp.route('/padrao-salas')
+@login_required
+def padrao_salas():
+    _exigir_admin()
+    from app.services.padrao_salas import resumo_padrao, candidatos_catalogo
+    catalogo = (TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None))
+                .order_by(TipoEquipamento.codigo).all())
+    contagem = dict(db.session.query(Equipamento.tipo_equipamento_id, db.func.count(Equipamento.id))
+                    .filter(Equipamento.ativo.is_(True), Equipamento.status != 'baixado')
+                    .group_by(Equipamento.tipo_equipamento_id).all())
+    fora = []
+    for t in TipoEquipamento.query.filter(TipoEquipamento.codigo.is_(None)).order_by(TipoEquipamento.nome).all():
+        if contagem.get(t.id) or t.conta_como_id:
+            fora.append({'tipo': t, 'equipamentos': contagem.get(t.id, 0),
+                         'candidatos': candidatos_catalogo(t, catalogo)})
+    fora.sort(key=lambda f: -f['equipamentos'])
+    return render_template('configuracoes/padrao_salas/index.html', resumo=resumo_padrao(),
+                           fora=fora, catalogo_agrupado=agrupar_tipos_equipamento(catalogo))
+
+
+@configuracoes_bp.route('/padrao-salas/conta-como/<int:tipo_id>', methods=['POST'])
+@login_required
+def padrao_salas_conta_como(tipo_id):
+    _exigir_admin()
+    tipo = TipoEquipamento.query.get_or_404(tipo_id)
+    alvo_id = request.form.get('conta_como_id', type=int)
+    alvo = db.session.get(TipoEquipamento, alvo_id) if alvo_id else None
+    if alvo and (alvo.id == tipo.id or not alvo.codigo):
+        flash('Escolha um item do catálogo.', 'danger')
+        return redirect(url_for('configuracoes.padrao_salas') + '#inventario')
+    tipo.conta_como_id = alvo.id if alvo else None
+    db.session.commit()
+    if alvo:
+        flash(f'"{tipo.nome}" agora conta como {alvo.nome_com_codigo}.', 'success')
+    else:
+        flash(f'"{tipo.nome}" ficou fora do catálogo.', 'info')
+    return redirect(url_for('configuracoes.padrao_salas') + '#inventario')
+
+
+@configuracoes_bp.route('/padrao-salas/reclassificar', methods=['GET', 'POST'])
+@login_required
+def reclassificar_salas():
+    _exigir_admin()
+    if not current_user.pode('editar_sala'):
+        abort(403)
+    from app.services.padrao_salas import sugerir_ambiente
+    ambientes = (TipoSala.query.filter(TipoSala.codigo.isnot(None), TipoSala.ativo.is_(True))
+                 .order_by(TipoSala.ordem, TipoSala.codigo).all())
+    por_id = {a.id: a for a in ambientes}
+
+    if request.method == 'POST':
+        alteradas = 0
+        for sala_id in request.form.getlist('sala_id', type=int):
+            destino = por_id.get(request.form.get(f'destino_{sala_id}', type=int))
+            sala = db.session.get(Sala, sala_id)
+            if not sala or not destino or sala.tipo_sala_id == destino.id:
+                continue
+            sala.tipo_sala_id = destino.id
+            sala.tipo = destino.nome
+            alteradas += 1
+        db.session.commit()
+        if alteradas:
+            flash(f'{alteradas} sala(s) reclassificada(s) no padrão de ambientes.', 'success')
+        else:
+            flash('Nenhuma sala marcada com ambiente escolhido.', 'warning')
+        return redirect(url_for('configuracoes.reclassificar_salas', **request.args))
+
+    escopo = 'todas' if request.args.get('escopo') == 'todas' else 'padrao'
+    unidade_id = request.args.get('unidade', type=int)
+    tipo_id = request.args.get('tipo', type=int)
+    busca = (request.args.get('q') or '').strip()
+
+    base = (Sala.query.join(Unidade, Unidade.id == Sala.unidade_id)
+            .outerjoin(TipoSala, TipoSala.id == Sala.tipo_sala_id)
+            .filter(Sala.ativo.is_(True), Unidade.status == 'ativa', TipoSala.codigo.is_(None)))
+    if escopo == 'padrao' and not unidade_id:
+        base = base.filter(Unidade.codigo_imovel.isnot(None))
+
+    tipos_fora = (db.session.query(TipoSala, db.func.count(Sala.id))
+                  .join(Sala, Sala.tipo_sala_id == TipoSala.id)
+                  .filter(Sala.id.in_(base.with_entities(Sala.id)))
+                  .group_by(TipoSala.id).order_by(db.func.count(Sala.id).desc()).all())
+    unidades = (Unidade.query.filter(Unidade.id.in_(base.with_entities(Sala.unidade_id)))
+                .order_by(Unidade.nome).all())
+
+    q = base
+    if unidade_id:
+        q = q.filter(Sala.unidade_id == unidade_id)
+    if tipo_id:
+        q = q.filter(Sala.tipo_sala_id == tipo_id)
+    if busca:
+        q = q.filter(Sala.nome.ilike(f'%{busca}%'))
+    salas = q.order_by(Unidade.nome, TipoSala.nome, Sala.nome).all()
+
+    equip = dict(db.session.query(Equipamento.sala_id, db.func.count(Equipamento.id))
+                 .filter(Equipamento.sala_id.in_([s.id for s in salas] or [0]), Equipamento.ativo.is_(True))
+                 .group_by(Equipamento.sala_id).all())
+    por_codigo = {a.codigo: a for a in ambientes}
+    linhas = []
+    for s in salas:
+        sugestao = por_codigo.get(sugerir_ambiente(s))
+        linhas.append({'sala': s, 'sugestao': sugestao, 'equipamentos': equip.get(s.id, 0)})
+
+    return render_template('configuracoes/padrao_salas/reclassificar.html',
+                           linhas=linhas, ambientes_agrupados=agrupar_tipos_sala(ambientes),
+                           tipos_fora=tipos_fora, unidades=unidades, escopo=escopo,
+                           filtro_unidade=unidade_id, filtro_tipo=tipo_id, busca=busca)
+
+
+# ══════════════════════════════════════════════════════════
 #  TIPOS DE EQUIPAMENTO
 # ══════════════════════════════════════════════════════════
 

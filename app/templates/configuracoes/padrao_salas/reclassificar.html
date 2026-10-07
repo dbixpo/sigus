@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% block title %}Encaixar salas no padrão{% endblock %}
+
+{% macro opcoes_ambiente() -%}
+<option value="">— escolher ambiente —</option>
+{% for grupo, lista in ambientes_agrupados %}
+<optgroup label="{{ grupo }}">
+    {% for a in lista %}<option value="{{ a.id }}">{{ a.nome_com_codigo }}</option>{% endfor %}
+</optgroup>
+{% endfor %}
+{%- endmacro %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.padrao_salas') }}">Padrão de Salas e Equipamentos</a></li>
+        <li class="breadcrumb-item active">Encaixar salas existentes</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-random"></i> Encaixar salas existentes no padrão</h1>
+</div>
+
+<p class="text-muted small mb-3">
+    Salas já cadastradas em tipos fora do padrão (ex.: "Consultório" genérico). Marque as salas, confira o ambiente de cada uma
+    e clique em <strong>Reclassificar</strong>. A sugestão vem do nome da sala e só é gravada se a linha estiver marcada.
+    Os equipamentos da sala não mudam.
+</p>
+
+<div class="filter-bar mb-3">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Abrangência</label>
+            <select name="escopo" class="form-select form-select-sm">
+                <option value="padrao" {{ 'selected' if escopo == 'padrao' }}>UBS do padrão</option>
+                <option value="todas" {{ 'selected' if escopo == 'todas' }}>Todas as unidades</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1 small fw-semibold">Unidade</label>
+            <select name="unidade" class="form-select form-select-sm" data-singleselect>
+                <option value="">Todas</option>
+                {% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if filtro_unidade == u.id }}>{{ u.nome }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label mb-1 small fw-semibold">Tipo atual</label>
+            <select name="tipo" class="form-select form-select-sm" data-singleselect>
+                <option value="">Todos</option>
+                {% for t, n in tipos_fora %}<option value="{{ t.id }}" {{ 'selected' if filtro_tipo == t.id }}>{{ t.nome }} ({{ n }})</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold">Nome da sala</label>
+            <input type="search" name="q" value="{{ busca }}" class="form-control form-control-sm" placeholder="Ex.: odonto">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="fas fa-search"></i></button>
+            <a href="{{ url_for('configuracoes.reclassificar_salas') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
+        </div>
+    </form>
+</div>
+
+{% if linhas %}
+<form method="POST" action="" id="formReclassificar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card mb-2">
+        <div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+            <span class="small"><strong id="qtdMarcadas">0</strong> de {{ linhas|length }} marcada(s)</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="marcarSugeridas">
+                <i class="fas fa-magic me-1"></i>Marcar as que têm sugestão
+            </button>
+            <div class="vr mx-1"></div>
+            <span class="small text-muted">Mesmo ambiente para as marcadas:</span>
+            <select id="ambienteLote" class="form-select form-select-sm" style="max-width:320px">{{ opcoes_ambiente() }}</select>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="aplicarLote">Aplicar</button>
+            <button type="submit" class="btn btn-primary btn-sm ms-auto"><i class="fas fa-check me-1"></i>Reclassificar marcadas</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:36px"><input type="checkbox" class="form-check-input" id="marcarTodas" title="Marcar todas"></th>
+                        <th>Unidade</th>
+                        <th>Sala</th>
+                        <th>Tipo atual</th>
+                        <th class="text-center" title="Equipamentos ativos"><i class="fas fa-desktop"></i></th>
+                        <th style="width:34%">Ambiente padrão</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ln in linhas %}
+                    {% set s = ln.sala %}
+                    <tr>
+                        <td><input type="checkbox" class="form-check-input js-sala" name="sala_id" value="{{ s.id }}" data-sugestao="{{ 1 if ln.sugestao else 0 }}"></td>
+                        <td class="small text-muted">{{ s.unidade.nome }}</td>
+                        <td class="small fw-semibold"><a href="{{ url_for('salas.detalhe', id=s.id) }}" class="text-decoration-none" target="_blank">{{ s.nome }}</a></td>
+                        <td class="small">{{ s.tipo_label }}</td>
+                        <td class="text-center small">{{ ln.equipamentos }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <select name="destino_{{ s.id }}" class="form-select form-select-sm js-destino" data-inicial="{{ ln.sugestao.id if ln.sugestao else '' }}"></select>
+                                {% if ln.sugestao %}<span class="badge bg-info-subtle text-info-emphasis border" title="Sugerido pelo nome">sugestão</span>{% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+{% else %}
+<div class="card">
+    <div class="card-body empty-state">
+        <i class="fas fa-check-circle text-success"></i>
+        <h6>Nenhuma sala fora do padrão com estes filtros.</h6>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const form = document.getElementById('formReclassificar');
+    if (!form) return;
+    const modelo = document.getElementById('ambienteLote');
+    form.querySelectorAll('.js-destino').forEach(sel => {
+        sel.innerHTML = modelo.innerHTML;
+        sel.value = sel.dataset.inicial;
+    });
+    const caixas = [...form.querySelectorAll('.js-sala')];
+    const contador = document.getElementById('qtdMarcadas');
+    const todas = document.getElementById('marcarTodas');
+    const atualizar = () => { contador.textContent = caixas.filter(c => c.checked).length; };
+    caixas.forEach(c => c.addEventListener('change', atualizar));
+    todas.addEventListener('change', () => { caixas.forEach(c => { c.checked = todas.checked; }); atualizar(); });
+    document.getElementById('marcarSugeridas').addEventListener('click', () => {
+        caixas.forEach(c => { c.checked = c.dataset.sugestao === '1'; });
+        atualizar();
+    });
+    form.querySelectorAll('.js-destino').forEach(sel => sel.addEventListener('change', () => {
+        const caixa = sel.closest('tr').querySelector('.js-sala');
+        if (sel.value) { caixa.checked = true; atualizar(); }
+    }));
+    document.getElementById('aplicarLote').addEventListener('click', () => {
+        const valor = document.getElementById('ambienteLote').value;
+        if (!valor) return;
+        caixas.filter(c => c.checked).forEach(c => { c.closest('tr').querySelector('.js-destino').value = valor; });
+    });
+    form.addEventListener('submit', (e) => {
+        const marcadas = caixas.filter(c => c.checked);
+        const semAmbiente = marcadas.filter(c => !c.closest('tr').querySelector('.js-destino').value).length;
+        if (!marcadas.length) { e.preventDefault(); alert('Marque ao menos uma sala.'); return; }
+        const msg = `Reclassificar ${marcadas.length - semAmbiente} sala(s)?` + (semAmbiente ? `\n${semAmbiente} marcada(s) sem ambiente serão ignoradas.` : '');
+        if (!confirm(msg)) e.preventDefault();
+    });
+    atualizar();
+})();
+</script>
+{% endblock %}

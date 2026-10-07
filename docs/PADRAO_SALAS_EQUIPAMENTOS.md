@@ -33,11 +33,18 @@ Enquanto mobiliário e equipamentos médicos não forem inventariados no SIGUS, 
 
 | Tela | Rota | Quem |
 |---|---|---|
+| **Hub do padrão** (menu Configurações → Padrão de Salas): números do padrão, atalhos e a lista "ligar inventário ao catálogo" | `/configuracoes/padrao-salas` | Configurações |
+| **Encaixar salas existentes**: reclassifica em lote as salas de tipos sem código para um ambiente AMB, com sugestão pelo nome (`sugerir_ambiente` em `app/services/padrao_salas.py`) | `/configuracoes/padrao-salas/reclassificar` | Configurações + `editar_sala` |
 | Tipos de sala agrupados pelo catálogo, com contagem de salas e itens do kit | `/configuracoes/tipos-sala` | Configurações |
 | Editar tipo de sala: código, grupo, ordem e o **kit** (adicionar, mudar quantidade, remover) | `/configuracoes/tipos-sala/<id>/editar` | Configurações |
 | Tipos de equipamento agrupados por classificação, com código, valor, natureza e "conta como" | `/configuracoes/tipos-equipamento` | Configurações |
 | Relatório de aderência (por unidade, necessidade de compra por item, sala a sala, a reclassificar) e Excel | `/relatorios/padrao-salas` | `emitir_relatorios` |
 | Aba **Padrão do ambiente** no detalhe da sala | `/salas/<id>` | quem vê a sala |
+
+Os dados que já existiam antes do padrão continuam valendo e entram na conta de dois jeitos:
+
+- **Salas**: as de tipo genérico (ex.: "Consultório") ficam "a reclassificar" até alguém escolher o ambiente na tela Encaixar salas existentes. A sugestão só é gravada se a linha estiver marcada; a sala muda de tipo, os equipamentos não mudam.
+- **Equipamentos**: um tipo do inventário que não é item do catálogo (ex.: "Computador All-In-One") passa a contar quando é ligado a um item ("conta como" ITEM-051). Tipos sem item correspondente (Monitor, Impressora) ficam fora do padrão.
 
 O relatório abre, por padrão, só nas **UBS do padrão** (unidades com código de imóvel, que vieram da planilha). "Todas as unidades" no filtro Abrangência inclui as demais. O detalhe sala a sala aparece com até 5 unidades no filtro; o Excel traz todas.
 

@@ -402,9 +402,15 @@
                     <ul class="sidebar-group-items nav flex-column">
                 {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') or current_user.pode('gerenciar_perfis') %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'configuracoes.index' or (request.endpoint and request.endpoint.startswith('configuracoes.') and 'feriado' not in request.endpoint and request.endpoint != 'configuracoes.auditoria') %}active{% endif %}"
+                    <a class="nav-link {% if request.endpoint == 'configuracoes.index' or (request.endpoint and request.endpoint.startswith('configuracoes.') and 'feriado' not in request.endpoint and 'padrao_salas' not in request.endpoint and request.endpoint not in ('configuracoes.auditoria', 'configuracoes.reclassificar_salas')) %}active{% endif %}"
                        href="{{ url_for('configuracoes.index') }}">
                         <i class="fas fa-cog"></i><span>Configurações do Sistema</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and ('padrao_salas' in request.endpoint and request.endpoint.startswith('configuracoes.') or request.endpoint == 'configuracoes.reclassificar_salas') %}active{% endif %}"
+                       href="{{ url_for('configuracoes.padrao_salas') }}">
+                        <i class="fas fa-clipboard-check"></i><span>Padrão de Salas</span>
                     </a>
                 </li>
                 <li class="nav-item">

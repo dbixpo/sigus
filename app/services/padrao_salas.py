@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """Padrão de salas: compara o kit de cada tipo de sala com o inventário real."""
+import re
+import unicodedata
 from collections import OrderedDict, defaultdict
 from decimal import Decimal
 
@@ -36,6 +38,108 @@ def agrupar_tipos_equipamento(tipos):
     if CLASSIFICACAO_SEM in grupos:
         ordem.append(CLASSIFICACAO_SEM)
     return [(g, sorted(grupos[g], key=lambda t: t.nome.lower())) for g in ordem]
+
+
+def _normalizar(texto):
+    texto = unicodedata.normalize('NFD', texto or '')
+    return ' '.join(''.join(c for c in texto if not unicodedata.combining(c)).lower().split())
+
+
+# Primeira regra que casar com "nome da sala + tipo atual" vence; a ordem vai do mais específico ao mais genérico.
+# Código None encerra a busca sem sugestão (ex.: banheiro sem sexo definido, corredor).
+_REGRAS_AMBIENTE = [
+    (r'^corredor', None),
+    (r'vestiario.*fem|fem.*vestiario', 'AMB-46'),
+    (r'vestiario.*masc|masc.*vestiario', 'AMB-47'),
+    (r'(banheiro|sanitario|\bwc\b).*(pcd|acessivel).*fem|(pcd|acessivel).*fem', 'AMB-04'),
+    (r'(banheiro|sanitario|\bwc\b).*(pcd|acessivel).*masc|(pcd|acessivel).*masc', 'AMB-05'),
+    (r'(banheiro|sanitario|\bwc\b).*fem', 'AMB-06'),
+    (r'(banheiro|sanitario|\bwc\b).*masc', 'AMB-07'),
+    (r'banheiro|sanitario|\bwc\b|vestiario', None),
+    (r'escov', 'AMB-23'),
+    (r'odonto|dentist|saude bucal', 'AMB-22'),
+    (r'gineco|preventivo|colpo', 'AMB-13'),
+    (r'pediat|puericult', 'AMB-12'),
+    (r'vacina|imuniza', 'AMB-30'),
+    (r'curativo', 'AMB-24'),
+    (r'coleta', 'AMB-27'),
+    (r'pos[ -]?consulta', 'AMB-21'),
+    (r'telessa|telemed|teleconsult|teleatend', 'AMB-17'),
+    (r'lilas|protegid', 'AMB-18'),
+    (r'emulti|multiprof|psicolog|nutri|fisio|fono|assist\w* social|podolog', 'AMB-16'),
+    (r'acolhimento|triagem|escuta|pre[ -]?consulta', 'AMB-15'),
+    (r'emergencia|estabiliz|urgencia', 'AMB-29'),
+    (r'aplicacao', 'AMB-25'),
+    (r'medicac|inalac|nebuliz|reidrat|observac', 'AMB-26'),
+    (r'esteriliz|\bcme\b', 'AMB-33'),
+    (r'farmacia|dispensa', 'AMB-38'),
+    (r'almox', 'AMB-49'),
+    (r'\bcopa\b|cozinha|refeit', 'AMB-45'),
+    (r'reuniao|auditorio', 'AMB-41'),
+    (r'\bacs\b|agentes? comunit', 'AMB-42'),
+    (r'faturamento|\bguias\b', 'AMB-43'),
+    (r'coordena|gerencia|gestao|administra|diretoria', 'AMB-40'),
+    (r'recepc', 'AMB-01'),
+    (r'espera', 'AMB-02'),
+    (r'arquivo|prontuario', 'AMB-03'),
+    (r'amament', 'AMB-09'),
+    (r'brinquedo', 'AMB-10'),
+    (r'fraldario', 'AMB-08'),
+    (r'conforto|descompress|convivencia|descanso', 'AMB-48'),
+    (r'\brack\b|servidor|\bti\b|\bcpd\b', 'AMB-56'),
+    (r'\bdml\b|material de limpeza', 'AMB-51'),
+    (r'residuo|\blixo\b', 'AMB-52'),
+    (r'pratica|coletiva', 'AMB-31'),
+    (r'consultorio|clinico', 'AMB-11'),
+]
+
+
+def sugerir_ambiente(sala):
+    """Código AMB sugerido pelo nome da sala e pelo tipo atual (None se nada casar)."""
+    texto = _normalizar(f'{sala.nome} {sala.tipo_label}')
+    for padrao, codigo in _REGRAS_AMBIENTE:
+        if re.search(padrao, texto):
+            return codigo
+    return None
+
+
+def candidatos_catalogo(tipo, catalogo):
+    """Itens do catálogo cujo nome começa pela primeira palavra do tipo (ex.: Balança → as 3 balanças)."""
+    palavras = [p for p in _normalizar(tipo.nome).split() if len(p) >= 4]
+    if not palavras:
+        return []
+    return [c for c in catalogo if _normalizar(c.nome).startswith(palavras[0])]
+
+
+def resumo_padrao():
+    """Números da visão geral em Configurações → Padrão de salas."""
+    ambientes = TipoSala.query.filter(TipoSala.codigo.isnot(None)).count()
+    com_kit = db.session.query(db.func.count(db.distinct(KitPadraoSala.tipo_sala_id))).scalar() or 0
+    itens = TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None)).count()
+    itens_sem_valor = TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None),
+                                                   TipoEquipamento.valor_referencia.is_(None)).count()
+
+    def salas(so_padrao):
+        q = (db.session.query(TipoSala.codigo.isnot(None), db.func.count(Sala.id))
+             .select_from(Sala).join(Unidade, Unidade.id == Sala.unidade_id)
+             .outerjoin(TipoSala, TipoSala.id == Sala.tipo_sala_id)
+             .filter(Sala.ativo.is_(True), Unidade.status == 'ativa'))
+        if so_padrao:
+            q = q.filter(Unidade.codigo_imovel.isnot(None))
+        contagem = dict(q.group_by(TipoSala.codigo.isnot(None)).all())
+        return {'no_padrao': contagem.get(True, 0), 'fora': contagem.get(False, 0) + contagem.get(None, 0)}
+
+    no_catalogo = db.or_(TipoEquipamento.codigo.isnot(None), TipoEquipamento.conta_como_id.isnot(None))
+    equip = dict(db.session.query(no_catalogo, db.func.count(Equipamento.id))
+                 .select_from(Equipamento).join(TipoEquipamento, TipoEquipamento.id == Equipamento.tipo_equipamento_id)
+                 .filter(Equipamento.ativo.is_(True), Equipamento.status != 'baixado')
+                 .group_by(no_catalogo).all())
+    return {
+        'ambientes': ambientes, 'ambientes_com_kit': com_kit, 'ambientes_sem_kit': ambientes - com_kit,
+        'itens': itens, 'itens_sem_valor': itens_sem_valor,
+        'salas_ubs': salas(True), 'salas_todas': salas(False),
+        'equip_no_catalogo': equip.get(True, 0), 'equip_fora': equip.get(False, 0),
+    }
 
 
 def _kits_por_tipo_sala(tipo_sala_ids=None):

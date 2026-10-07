@@ -125,23 +125,34 @@
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 
+    <a class="cfg-row" href="{{ url_for('configuracoes.padrao_salas') }}"
+       data-busca="padrão de salas equipamentos ambientes amb kit catálogo itens planejamento reclassificar">
+        <span class="cfg-row-icone"><i class="fas fa-clipboard-check"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Padrão de Salas e Equipamentos</div>
+            <div class="cfg-row-desc">Ambientes padrão (AMB), kit de cada ambiente, catálogo de itens (ITEM) e encaixe das salas e equipamentos já cadastrados.</div>
+        </div>
+        <span class="cfg-row-meta">Planejamento</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
     <a class="cfg-row" href="{{ url_for('configuracoes.tipos_sala') }}"
-       data-busca="tipos de sala consultório farmácia enfermagem">
+       data-busca="tipos de sala ambientes padrão amb kit consultório farmácia enfermagem">
         <span class="cfg-row-icone"><i class="fas fa-door-open"></i></span>
         <div class="flex-grow-1 min-w-0">
-            <div class="cfg-row-titulo">Tipos de Sala</div>
-            <div class="cfg-row-desc">Consultório, Farmácia, Sala de Enfermagem etc.</div>
+            <div class="cfg-row-titulo">Tipos de Sala (ambientes e kits)</div>
+            <div class="cfg-row-desc">Ambientes padrão AMB com o kit de equipamentos, e os demais tipos (Consultório, Expurgo etc.).</div>
         </div>
         <span class="cfg-row-meta">{{ total_tipos_sala }} tipo(s)</span>
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 
     <a class="cfg-row" href="{{ url_for('configuracoes.tipos_equipamento') }}"
-       data-busca="tipos de equipamento computador maca ar-condicionado patrimônio">
+       data-busca="tipos de equipamento catálogo itens item computador maca ar-condicionado patrimônio valor">
         <span class="cfg-row-icone"><i class="fas fa-desktop"></i></span>
         <div class="flex-grow-1 min-w-0">
-            <div class="cfg-row-titulo">Tipos de Equipamento</div>
-            <div class="cfg-row-desc">Computador, Maca, Ar-condicionado etc.</div>
+            <div class="cfg-row-titulo">Tipos de Equipamento (catálogo de itens)</div>
+            <div class="cfg-row-desc">Itens ITEM com valor de referência e Base/Função, e os demais tipos do inventário (Monitor, Impressora etc.).</div>
         </div>
         <span class="cfg-row-meta">{{ total_tipos_equip }} tipo(s)</span>
         <i class="fas fa-chevron-right text-muted small"></i>

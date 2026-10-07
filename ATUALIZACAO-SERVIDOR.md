@@ -32,6 +32,7 @@ O que mudou:
 - Os tipos de equipamento ganharam o catálogo de itens (`ITEM-xxx`, classificação, valor de referência, Base/Função). Foram criados os itens que não existiam (mobiliário, equipamentos médicos).
 - Cada tipo de sala tem um **kit padrão** editável em Configurações → Tipos de Sala.
 - Relatório novo **Padrão de Salas e Equipamentos** (`/sigus/relatorios/padrao-salas`) e aba **Padrão do ambiente** no detalhe da sala.
+- Menu Configurações → **Padrão de Salas** (`/sigus/configuracoes/padrao-salas`): atalhos para editar ambientes, kits e itens; **Encaixar salas existentes** (reclassificação em lote com sugestão pelo nome); **Ligar inventário ao catálogo** ("conta como" dos tipos de equipamento já cadastrados). Sem migração.
 
 Detalhe: [docs/PADRAO_SALAS_EQUIPAMENTOS.md](docs/PADRAO_SALAS_EQUIPAMENTOS.md).
 

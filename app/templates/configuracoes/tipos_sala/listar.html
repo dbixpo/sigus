@@ -12,6 +12,11 @@
 <div class="page-header">
     <h1><i class="fas fa-door-open"></i> Tipos de Sala</h1>
     <div class="d-flex gap-2">
+        {% if current_user.pode('editar_sala') %}
+        <a href="{{ url_for('configuracoes.reclassificar_salas') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-random me-1"></i>Encaixar salas existentes
+        </a>
+        {% endif %}
         <a href="{{ url_for('relatorios.padrao_salas') }}" class="btn btn-outline-primary btn-sm">
             <i class="fas fa-clipboard-check me-1"></i>Aderência ao padrão
         </a>

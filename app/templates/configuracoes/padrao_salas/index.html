@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Padrão de Salas e Equipamentos{% endblock %}
+
+{% block head %}
+<style>
+    .ps-acao { display:flex; gap:.9rem; align-items:flex-start; padding:1rem 1.1rem; text-decoration:none; color:inherit; height:100%; }
+    .ps-acao:hover { background:#F4F6F9; color:inherit; }
+    .ps-acao-icone { width:2.6rem; height:2.6rem; border-radius:10px; background:#e8f4fb; color:#1A82B8; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.1rem; }
+    .ps-acao-titulo { font-weight:600; color:#1E3A50; }
+    .ps-acao-desc { font-size:.82rem; color:#718096; }
+    .ps-num { font-size:1.35rem; font-weight:700; color:#0D3B5E; line-height:1.1; }
+    .ps-rot { font-size:.75rem; color:#718096; text-transform:uppercase; letter-spacing:.03em; }
+    .ps-barra { height:6px; background:#e9eef3; border-radius:3px; overflow:hidden; }
+    .ps-barra > div { height:100%; background:#19A88B; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Padrão de Salas e Equipamentos</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-clipboard-check"></i> Padrão de Salas e Equipamentos</h1>
+    <a href="{{ url_for('relatorios.padrao_salas') }}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-chart-bar me-1"></i>Relatório de aderência
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    Ambientes padrão (AMB), catálogo de itens (ITEM) e o kit de equipamentos de cada ambiente, no formato da planilha do Planejamento.
+    As salas e os equipamentos que já estavam cadastrados continuam valendo: aqui você encaixa cada um no padrão.
+</p>
+
+{% set su = resumo.salas_ubs %}
+{% set st = resumo.salas_todas %}
+{% set tot_ubs = su.no_padrao + su.fora %}
+{% set tot_eq = resumo.equip_no_catalogo + resumo.equip_fora %}
+<div class="row g-3 mb-3">
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="ps-rot">Ambientes padrão</div>
+            <div class="ps-num">{{ resumo.ambientes }}</div>
+            <div class="small text-muted">{{ resumo.ambientes_com_kit }} com kit · <span class="{{ 'text-warning-emphasis fw-semibold' if resumo.ambientes_sem_kit }}">{{ resumo.ambientes_sem_kit }} sem kit</span></div>
+        </div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="ps-rot">Itens no catálogo</div>
+            <div class="ps-num">{{ resumo.itens }}</div>
+            <div class="small text-muted">{{ resumo.itens_sem_valor }} sem valor de referência</div>
+        </div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="ps-rot">Salas das UBS no padrão</div>
+            <div class="ps-num">{{ su.no_padrao }} <span class="fs-6 text-muted fw-normal">de {{ tot_ubs }}</span></div>
+            <div class="ps-barra my-1"><div style="width: {{ (100 * su.no_padrao / tot_ubs)|round|int if tot_ubs else 0 }}%"></div></div>
+            <div class="small text-muted">{{ su.fora }} a reclassificar · rede toda: {{ st.no_padrao }} de {{ st.no_padrao + st.fora }}</div>
+        </div></div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100"><div class="card-body">
+            <div class="ps-rot">Equipamentos que contam no padrão</div>
+            <div class="ps-num">{{ resumo.equip_no_catalogo }} <span class="fs-6 text-muted fw-normal">de {{ tot_eq }}</span></div>
+            <div class="ps-barra my-1"><div style="width: {{ (100 * resumo.equip_no_catalogo / tot_eq)|round|int if tot_eq else 0 }}%"></div></div>
+            <div class="small text-muted">{{ resumo.equip_fora }} em tipos fora do catálogo</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="row g-0">
+        <div class="col-md-6 col-xl-3 border-end">
+            <a class="ps-acao" href="{{ url_for('configuracoes.tipos_sala') }}">
+                <span class="ps-acao-icone"><i class="fas fa-door-open"></i></span>
+                <div>
+                    <div class="ps-acao-titulo">Ambientes e kits</div>
+                    <div class="ps-acao-desc">Adicionar ou editar ambiente (código AMB, grupo, ordem) e montar o kit de equipamentos de cada um.</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3 border-end">
+            <a class="ps-acao" href="{{ url_for('configuracoes.tipos_equipamento') }}">
+                <span class="ps-acao-icone"><i class="fas fa-toolbox"></i></span>
+                <div>
+                    <div class="ps-acao-titulo">Catálogo de itens</div>
+                    <div class="ps-acao-desc">Adicionar ou editar item (código ITEM, classificação, valor de referência, Base/Função).</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3 border-end">
+            <a class="ps-acao" href="{{ url_for('configuracoes.reclassificar_salas') }}">
+                <span class="ps-acao-icone"><i class="fas fa-random"></i></span>
+                <div>
+                    <div class="ps-acao-titulo">Encaixar salas existentes</div>
+                    <div class="ps-acao-desc">Passar em lote as salas já cadastradas para um ambiente padrão, com sugestão pelo nome. {{ su.fora }} pendente(s) nas UBS.</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <a class="ps-acao" href="#inventario">
+                <span class="ps-acao-icone"><i class="fas fa-link"></i></span>
+                <div>
+                    <div class="ps-acao-titulo">Ligar inventário ao catálogo</div>
+                    <div class="ps-acao-desc">Dizer a que item do catálogo corresponde cada tipo de equipamento já cadastrado.</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card" id="inventario">
+    <div class="card-header fw-semibold">
+        <i class="fas fa-link me-1 text-primary"></i>Tipos de equipamento já cadastrados fora do catálogo
+    </div>
+    <div class="card-body small text-muted pb-2">
+        Os equipamentos destes tipos só entram na conta do padrão quando o tipo está ligado a um item do catálogo.
+        Ex.: "Câmara de Vacina" conta como "Câmara para Conservação de Vacina 120L". Deixe "fora do padrão" quando o tipo
+        não corresponde a nenhum item (Monitor, Impressora etc.).
+    </div>
+    {% if fora %}
+    <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Tipo cadastrado</th>
+                    <th class="text-center" style="width:130px">Equipamentos</th>
+                    <th style="width:48%">Conta como</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in fora %}
+                {% set t = f.tipo %}
+                <tr>
+                    <td>
+                        <i class="{{ t.icone }} me-1 text-primary"></i><span class="fw-semibold">{{ t.nome }}</span>
+                        {% if t.conta_como %}<span class="badge bg-success-subtle text-success-emphasis border ms-1">ligado</span>{% endif %}
+                    </td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">{{ f.equipamentos }}</span></td>
+                    <td>
+                        <form method="POST" action="{{ url_for('configuracoes.padrao_salas_conta_como', tipo_id=t.id) }}" class="d-flex gap-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <select name="conta_como_id" class="form-select form-select-sm js-conta-como">
+                                <option value="">— fora do padrão —</option>
+                                {% if f.candidatos %}
+                                <optgroup label="Sugestões pelo nome">
+                                    {% for c in f.candidatos %}
+                                    <option value="{{ c.id }}" {% if t.conta_como_id == c.id %}selected{% endif %}>{{ c.nome_com_codigo }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endif %}
+                                {% for classificacao, lista in catalogo_agrupado %}
+                                <optgroup label="{{ classificacao }}">
+                                    {% for c in lista if c not in f.candidatos %}
+                                    <option value="{{ c.id }}" {% if t.conta_como_id == c.id %}selected{% endif %}>{{ c.nome_com_codigo }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary" title="Salvar"><i class="fas fa-check"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-muted small">Todos os tipos com equipamento cadastrado já estão no catálogo.</div>
+    {% endif %}
+</div>
+{% endblock %}
