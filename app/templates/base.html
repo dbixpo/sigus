@@ -191,7 +191,7 @@
             {% set _sidebar_sem_vinculo = current_user.requer_vinculo and not current_user.tem_vinculo %}
             <ul class="nav flex-column">
                 {% if not _sidebar_sem_vinculo %}
-                {# Sempre visíveis (fora dos grupos): Unidade → Dashboard → Links Úteis #}
+                {# Sempre visíveis (fora dos grupos): Unidade → Dashboard → Links Úteis → Relatórios #}
                 {% if current_user.pode('ver_todas_unidades') or current_user.pode('cadastrar_unidade') %}
                 {% set _sidebar_un = current_user.unidade_padrao if (current_user.unidades_ativas | length) > 1 else (current_user.unidades_ativas[0] if (current_user.unidades_ativas | length) == 1 else none) %}
                 <li class="nav-item">
@@ -222,29 +222,6 @@
                     </a>
                 </li>
                 {% endif %}
-
-                <li class="sidebar-group" data-group="gestao-unidade">
-                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
-                        <span class="sidebar-group-title">Gestão da Unidade</span>
-                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
-                    </button>
-                    <ul class="sidebar-group-items nav flex-column">
-                {% if current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"
-                       href="{{ url_for('planejamentos.listar') }}">
-                        <i class="fas fa-clipboard-check"></i><span>Planejamentos</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('agenda') %}active{% endif %}"
-                       href="{{ url_for('agenda.index') }}">
-                        <i class="fas fa-calendar-alt"></i><span>Agenda</span>
-                    </a>
-                </li>
-                {% endif %}
                 {% if current_user.pode('emitir_relatorios') or current_user.pode('ver_dashboard_geral') %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('relatorios') %}active{% endif %}"
@@ -253,8 +230,35 @@
                     </a>
                 </li>
                 {% endif %}
+
+                {% set _pode_plan = current_user.pode('ver_planejamentos') or current_user.pode('criar_plano') or current_user.pode('criar_acao') or current_user.pode('alterar_status_acao') %}
+                {% set _pode_agenda = current_user.pode('ver_agenda') or current_user.pode('adicionar_agenda') or current_user.pode('editar_agenda') %}
+                {% if _pode_plan or _pode_agenda %}
+                <li class="sidebar-group" data-group="gestao-unidade">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Gestão da Unidade</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
+                {% if _pode_plan %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"
+                       href="{{ url_for('planejamentos.listar') }}">
+                        <i class="fas fa-clipboard-check"></i><span>Planejamentos</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if _pode_agenda %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('agenda') %}active{% endif %}"
+                       href="{{ url_for('agenda.index') }}">
+                        <i class="fas fa-calendar-alt"></i><span>Agenda</span>
+                    </a>
+                </li>
+                {% endif %}
                     </ul>
                 </li>
+                {% endif %}
 
                 {% set pode_freq = current_user.pode_importar_frequencia %}
                 <li class="sidebar-group" data-group="recursos-humanos">
