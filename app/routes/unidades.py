@@ -205,6 +205,7 @@ def detalhe(id):
         'veiculo': v,
         'campos': campos_veiculos.get(v.id, {}),
         'rotulo': reservas.rotulo_veiculo(v, campos_veiculos.get(v.id, {})),
+        'prefixo': reservas.prefixo_veiculo(campos_veiculos.get(v.id, {})),
         'km_atual': reservas.km_atual(v.id, campos_veiculos.get(v.id, {})),
         **reservas.situacao_veiculos([v], agora_veiculos)[v.id],
     } for v in veiculos]

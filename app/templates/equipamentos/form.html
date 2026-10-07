@@ -75,7 +75,7 @@
                             {% for classificacao, lista in tipos|agrupar_tipos_equipamento %}
                             <optgroup label="{{ classificacao }}">
                             {% for t in lista %}
-                            <option value="{{ t.id }}"
+                            <option value="{{ t.id }}" data-veiculo="{{ 1 if t.eh_veiculo else 0 }}"
                                 {% if equipamento and equipamento.tipo_equipamento_id == t.id %}selected
                                 {% elif not equipamento and tipo_pre == t.id %}selected{% endif %}>
                                 {{ t.nome }}
@@ -93,7 +93,14 @@
                         </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6 d-none" id="avisoVeiculo">
+                        <div class="alert alert-info alert-permanent py-2 small mb-0 h-100 d-flex align-items-center">
+                            <span><i class="fas fa-car me-1"></i>
+                            Veículo não tem patrimônio: ele é identificado pelo <strong>prefixo</strong>
+                            (ex.: 383). Se for alugado, marque <strong>Alugado</strong> e ele aparece como <strong>AL-383</strong>.</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6" data-sem-veiculo>
                         <label class="form-label">Nº de Patrimônio</label>
                         <div class="input-group">
                             <span class="input-group-text fw-semibold text-primary">PMS-</span>
@@ -105,7 +112,7 @@
                         </div>
                         <div class="form-text text-muted">Digite apenas os números — o prefixo <strong>PMS-</strong> é adicionado automaticamente.</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-6" data-sem-veiculo>
                         <label class="form-label">Nº de Série</label>
                         <input type="text" name="numero_serie" class="form-control"
                                value="{{ equipamento.numero_serie if equipamento else '' }}">
@@ -172,6 +179,14 @@
                         {% set v = (val|string)|lower %}
                         {% set v_sim = v in ('1', 'true', 't', 'sim', 's') %}
                         {% set v_nao = v in ('0', 'false', 'f', 'nao', 'não', 'n') %}
+                        {% if equipamento.tipo_equipamento.eh_veiculo and not campo.obrigatorio %}
+                        <div class="form-check form-switch pt-1">
+                            <input class="form-check-input" type="checkbox" role="switch" name="campo_{{ campo.id }}"
+                                   id="campo_{{ campo.id }}_sim" value="sim" {% if v_sim %}checked{% endif %}>
+                            <input type="hidden" name="campo_{{ campo.id }}" value="nao">
+                            <label class="form-check-label small" for="campo_{{ campo.id }}_sim">Sim</label>
+                        </div>
+                        {% else %}
                         <div class="d-flex gap-3 flex-wrap pt-1">
                             <div class="form-check">
                                 <input class="form-check-input"
@@ -194,6 +209,7 @@
                                 <label class="form-check-label small" for="campo_{{ campo.id }}_nao">Não</label>
                             </div>
                         </div>
+                        {% endif %}
                         {% else %}
                         <input type="{{ 'number' if campo.tipo_dado == 'numero' else ('date' if campo.tipo_dado == 'data' else 'text') }}"
                                name="campo_{{ campo.id }}" class="form-control"
@@ -562,6 +578,14 @@
                         input = `<select name="campo_${c.id}" class="form-select"${c.obrigatorio ? ' required' : ''}><option value="">Selecione...</option>${opts}</select>`;
                     } else if (c.tipo_dado === 'texto_longo') {
                         input = `<textarea name="campo_${c.id}" class="form-control" rows="2"${c.obrigatorio ? ' required' : ''}></textarea>`;
+                    } else if (c.tipo_dado === 'booleano' && !c.obrigatorio && tipoEhVeiculo()) {
+                        input = `
+                            <div class="form-check form-switch pt-1">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       name="campo_${c.id}" id="campo_${c.id}_sim" value="sim">
+                                <input type="hidden" name="campo_${c.id}" value="nao">
+                                <label class="form-check-label small" for="campo_${c.id}_sim">Sim</label>
+                            </div>`;
                     } else if (c.tipo_dado === 'booleano') {
                         // Sim/Não: radios
                         const req = c.obrigatorio ? ' required' : '';
@@ -605,13 +629,28 @@
             });
     }
 
+    function tipoEhVeiculo() {
+        const opt = selTipo && selTipo.selectedOptions[0];
+        return !!(opt && opt.dataset.veiculo === '1');
+    }
+
+    function ajustarVeiculo() {
+        const veiculo = tipoEhVeiculo();
+        document.getElementById('avisoVeiculo').classList.toggle('d-none', !veiculo);
+        document.querySelectorAll('[data-sem-veiculo]').forEach(function (el) {
+            el.classList.toggle('d-none', veiculo);
+        });
+    }
+
     // ── Eventos ──
     if (selTipo && !selTipo.disabled) {
         selTipo.addEventListener('change', function () {
+            ajustarVeiculo();
             carregarMarcas(this.value, null);
             carregarCampos(this.value);
         });
     }
+    ajustarVeiculo();
 
     // Guarda flag para ignorar o change que o browser pode disparar na inicialização
     let _inicializando = true;

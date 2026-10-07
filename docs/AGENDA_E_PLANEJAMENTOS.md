@@ -57,8 +57,9 @@ Terceiro tipo no modal (aba **Ausência**, ícone de guarda-sol). Serve para a u
 
 Quarto tipo no modal (aba **Veículo**, aparece se o usuário tem veículo em alguma das suas unidades). Acaba com a dúvida "quem pegou o carro".
 
-- Veículo é um equipamento cujo tipo tem `tipos_equipamento.eh_veiculo` (tipo padrão "Veículo", criado por `migrations/add_veiculos_reservas.py` com placa, categoria, combustível, RENAVAM, km no cadastro etc.). Fica na sala "Veículos / Garagem" da unidade, criada sozinha no primeiro cadastro (`reservas.sala_garagem`).
-- Quem reserva: qualquer pessoa vinculada à unidade do carro. Campos: veículo, **quem vai usar** (`condutor_id`, padrão = quem registra), destino e período. Título automático "Placa · Marca Modelo → destino".
+- Veículo é um equipamento cujo tipo tem `tipos_equipamento.eh_veiculo` (tipo padrão "Veículo", criado por `migrations/add_veiculos_reservas.py` com prefixo, placa, categoria, combustível, RENAVAM, km no cadastro etc.).
+- Veículo não tem patrimônio nem nº de série (o formulário esconde os dois e o servidor grava vazio). A identificação é o **prefixo** (campo "Prefixo", ex.: 383); com o check "Alugado" ele aparece como **AL-383** (`prefixo_veiculo` em `app/models/equipamento.py`, usado em `Equipamento.identificacao`, no rótulo da agenda, nos cartões e no RDV). Fica na sala "Veículos / Garagem" da unidade, criada sozinha no primeiro cadastro (`reservas.sala_garagem`).
+- Quem reserva: qualquer pessoa vinculada à unidade do carro. Campos: veículo, **quem vai usar** (`condutor_id`, padrão = quem registra), destino e período. Título automático "Prefixo · Placa · Marca Modelo → destino".
 - Conflito: dois usos do mesmo veículo no mesmo horário são recusados (409) em criar, editar e arrastar. Ao escolher veículo e horário, o modal já avisa se está livre (`POST /agenda/veiculo-livre`).
 - Na leitura aparecem **quem registrou e quando**, quem vai usar e o km. Km de saída e de chegada são preenchidos na volta (`POST /agenda/eventos/<id>/km`) por quem registrou, pelo condutor ou por quem pode editar o evento; chegada menor que saída é recusada.
 - Cor `COR_VEICULO` e filtro **Veículos** na barra lateral.

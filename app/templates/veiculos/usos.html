@@ -7,7 +7,7 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos') }}">{{ unidade.nome }}</a></li>
-        <li class="breadcrumb-item active">{{ campos.get('Placa') or rotulo }}</li>
+        <li class="breadcrumb-item active">{{ prefixo or campos.get('Placa') or rotulo }}</li>
     </ol>
 </nav>
 
@@ -15,7 +15,10 @@
     <div class="d-flex align-items-center gap-3">
         <div class="veic-ico"><i class="fas fa-car-side"></i></div>
         <div>
-            <span class="veic-placa">{{ campos.get('Placa') or 'Sem placa' }}</span>
+            <div class="veic-ids">
+                {% if prefixo %}<span class="veic-prefixo{{ ' is-alugado' if prefixo.startswith('AL-') }}" title="Prefixo">{{ prefixo }}</span>{% endif %}
+                <span class="veic-placa">{{ campos.get('Placa') or 'Sem placa' }}</span>
+            </div>
             <h1 class="h4 mb-0 mt-1">{{ (veiculo.marca.nome ~ ' ' if veiculo.marca else '') ~ (veiculo.modelo.nome if veiculo.modelo else '') or veiculo.tipo_equipamento.nome }}</h1>
             <div class="small text-muted">
                 {{ [campos.get('Categoria'), campos.get('Ano fabricação/modelo'), campos.get('Cor'), campos.get('Combustível')] | select | join(' · ') }}

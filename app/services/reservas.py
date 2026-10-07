@@ -9,7 +9,8 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models.agenda import AgendaEvento
-from app.models.equipamento import Equipamento, TipoEquipamento, EquipamentoCampoValor, CampoTipoEquipamento
+from app.models.equipamento import (Equipamento, TipoEquipamento, EquipamentoCampoValor, CampoTipoEquipamento,
+                                    prefixo_veiculo)
 from app.models.sala import Sala
 from app.models.tipo_sala import TipoSala
 from app.models.unidade import Unidade
@@ -202,7 +203,7 @@ def campos_veiculos(ids_veiculos):
 def rotulo_veiculo(equip, campos=None):
     campos = campos if campos is not None else campos_veiculos([equip.id]).get(equip.id, {})
     modelo = ' '.join(p for p in [equip.marca.nome if equip.marca else '', equip.modelo.nome if equip.modelo else ''] if p)
-    partes = [p for p in [campos.get('Placa', ''), modelo] if p]
+    partes = [p for p in [prefixo_veiculo(campos), campos.get('Placa', ''), modelo] if p]
     return ' · '.join(partes) if partes else equip.nome_display
 
 

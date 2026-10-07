@@ -36,6 +36,21 @@ NATUREZA_KIT_LABELS = {
     'funcao': 'Função',
 }
 
+PREFIXO_ALUGADO = 'AL-'
+VALORES_SIM = ('1', 'true', 't', 'sim', 's')
+
+
+def prefixo_veiculo(campos):
+    """Veículo não tem patrimônio: é identificado pelo prefixo (383; alugado vira AL-383)."""
+    prefixo = (campos.get('Prefixo') or '').strip().upper()
+    alugado = str(campos.get('Alugado') or '').strip().lower() in VALORES_SIM
+    if prefixo.startswith(PREFIXO_ALUGADO):
+        prefixo = prefixo[len(PREFIXO_ALUGADO):].strip()
+        alugado = True
+    if not prefixo:
+        return ''
+    return f'{PREFIXO_ALUGADO}{prefixo}' if alugado else prefixo
+
 
 class TipoEquipamento(db.Model):
     __tablename__ = 'tipos_equipamento'
@@ -231,8 +246,21 @@ class Equipamento(db.Model):
         return ' '.join(partes) if destaque_val else ' - '.join(partes)
 
     @property
+    def eh_veiculo(self):
+        return bool(self.tipo_equipamento and self.tipo_equipamento.eh_veiculo)
+
+    @property
+    def prefixo(self):
+        if not self.eh_veiculo:
+            return ''
+        campos = {cv.campo.nome_campo: cv.valor for cv in self.campos_valores if cv.campo and cv.valor}
+        return prefixo_veiculo(campos)
+
+    @property
     def identificacao(self):
-        """Patrimônio ou, na falta, número de série."""
+        """Patrimônio ou, na falta, número de série. Veículo: prefixo."""
+        if self.eh_veiculo:
+            return self.prefixo or self.numero_serie or '—'
         return self.numero_patrimonio or self.numero_serie or '—'
 
     @property

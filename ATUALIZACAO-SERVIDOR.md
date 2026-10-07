@@ -26,7 +26,7 @@ Idempotente. Reinicie só o SIGUS (seção 4).
 
 O que mudou:
 
-- Tipo de equipamento **Veículo** (placa, categoria, ano, combustível, RENAVAM, chassi, lotação, vínculo, km no cadastro…) e aba **Veículos** no detalhe da unidade. Ao cadastrar o primeiro carro, a unidade ganha a sala "Veículos / Garagem" sozinha.
+- Tipo de equipamento **Veículo** (prefixo, placa, categoria, ano, combustível, RENAVAM, chassi, lotação, km no cadastro…) e aba **Veículos** no detalhe da unidade. Veículo não tem patrimônio: é identificado pelo **prefixo** (ex.: 383) e o check **Alugado** faz ele aparecer como **AL-383**. Se a migração já tinha rodado antes do prefixo, rode de novo: ela cria Prefixo e Alugado e remove o campo antigo "Vínculo". Ao cadastrar o primeiro carro, a unidade ganha a sala "Veículos / Garagem" sozinha.
 - Agenda com o tipo **Veículo**: quem vai usar, destino, bloqueio de horário duplicado, registro de quem agendou e km de saída/chegada na própria reserva.
 - Página do veículo (`/sigus/veiculos/<id>`) com os usos do mês e o **RDV** em Excel já preenchido com as reservas (layout provisório até chegar a planilha oficial).
 - Tipos de sala com **Reservável na agenda** (Sala de Reunião AMB-41 e o novo Auditório já vêm marcados) e salas com **Disponível para todas as unidades**. Na agenda, o botão **Verificar salas vazias** mostra a unidade do evento, depois o mesmo prédio/endereço e depois o resto da rede; a reserva da sala também bloqueia horário duplicado.

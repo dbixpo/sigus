@@ -1178,6 +1178,18 @@ body.pagina-agenda .sigus-main > .container-fluid {
     font-size: .95rem;
     line-height: 1.5;
 }
+.veic-prefixo {
+    display: inline-block;
+    font-weight: 800;
+    color: #fff;
+    background: var(--sigus-dark);
+    border-radius: 6px;
+    padding: .1rem .5rem;
+    font-size: 1.05rem;
+    line-height: 1.5;
+}
+.veic-prefixo.is-alugado { background: var(--sigus-secondary); }
+.veic-ids { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; }
 .veic-modelo { font-weight: 600; color: var(--sigus-text); margin-top: .25rem; }
 .veic-status { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; }
 .veic-badge-livre { background: rgba(25, 168, 139, .15); color: #0F7A66; }

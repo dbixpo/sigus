@@ -95,7 +95,8 @@ def usos(id):
     anterior = date(mes.year - (mes.month == 1), (mes.month - 2) % 12 + 1, 1)
     return render_template(
         'veiculos/usos.html',
-        veiculo=veiculo, campos=campos, rotulo=rotulo, usos=lista, mes=mes,
+        veiculo=veiculo, campos=campos, rotulo=rotulo, prefixo=reservas.prefixo_veiculo(campos),
+        usos=lista, mes=mes,
         mes_nome=f'{MESES[mes.month - 1]}/{mes.year}',
         mes_anterior=anterior.strftime('%Y-%m'), mes_seguinte=_proximo_mes(mes).strftime('%Y-%m'),
         situacao=situacao, km_atual=reservas.km_atual(veiculo.id, campos),
@@ -174,7 +175,7 @@ def rdv(id):
     dados = [
         ('Unidade', unidade.nome, 'Mês/ano', f'{MESES[mes.month - 1]}/{mes.year}'),
         ('Veículo', modelo or veiculo.tipo_equipamento.nome, 'Placa', campos.get('Placa', '')),
-        ('Patrimônio', veiculo.numero_patrimonio or '', 'Ano', campos.get('Ano fabricação/modelo', '')),
+        ('Prefixo', reservas.prefixo_veiculo(campos), 'Ano', campos.get('Ano fabricação/modelo', '')),
         ('Categoria', campos.get('Categoria', ''), 'Combustível', campos.get('Combustível', '')),
     ]
     linha = 4

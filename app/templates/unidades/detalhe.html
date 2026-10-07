@@ -515,7 +515,10 @@
                             <div class="d-flex align-items-start gap-3">
                                 <div class="veic-ico"><i class="fas fa-car-side"></i></div>
                                 <div class="flex-grow-1 min-w-0">
-                                    <div class="veic-placa">{{ c.get('Placa') or 'Sem placa' }}</div>
+                                    <div class="veic-ids">
+                                        {% if info.prefixo %}<span class="veic-prefixo{{ ' is-alugado' if info.prefixo.startswith('AL-') }}" title="Prefixo">{{ info.prefixo }}</span>{% endif %}
+                                        <span class="veic-placa">{{ c.get('Placa') or 'Sem placa' }}</span>
+                                    </div>
                                     <div class="veic-modelo">
                                         {{ (v.marca.nome ~ ' ' if v.marca else '') ~ (v.modelo.nome if v.modelo else '') or v.tipo_equipamento.nome }}
                                     </div>
@@ -549,7 +552,6 @@
                             <div class="small mt-1">
                                 <i class="fas fa-tachometer-alt me-1 text-muted"></i>
                                 {% if info.km_atual is not none %}{{ '{:,}'.format(info.km_atual).replace(',', '.') }} km{% else %}<span class="text-muted">Km ainda não registrado</span>{% endif %}
-                                {% if v.numero_patrimonio %}<span class="text-muted ms-2"><i class="fas fa-tag me-1"></i>{{ v.numero_patrimonio }}</span>{% endif %}
                             </div>
                             {% if info.pendentes %}
                             <div class="small mt-1 text-warning-emphasis">

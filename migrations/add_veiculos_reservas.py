@@ -3,7 +3,8 @@
 
 - tipos_equipamento.eh_veiculo, tipos_sala.reservavel, salas.uso_compartilhado
 - agenda_eventos: sala_id, veiculo_id, condutor_id, km_saida, km_chegada, devolvido_em
-- Tipo de equipamento "Veículo" com os campos do carro e marcas mais comuns
+- Tipo de equipamento "Veículo" (sem patrimônio: prefixo + check "Alugado") com os campos
+  do carro e marcas mais comuns
 - Tipos de sala: "Sala de Reunião" (AMB-41) passa a ser reservável; cria "Auditório"
   (reservável) e "Garagem / Veículos" (onde ficam os carros da unidade)
 """
@@ -32,6 +33,9 @@ COMANDOS = [
 
 CAMPOS_VEICULO = [
     # (nome, tipo_dado, obrigatório, opções, destaque)
+    # Veículo não tem patrimônio: é identificado pelo prefixo (383; alugado aparece como AL-383).
+    ('Prefixo', 'texto', True, None, False),
+    ('Alugado', 'booleano', False, None, False),
     ('Placa', 'texto', True, None, True),
     ('Categoria', 'selecao', True, ['Carro de passeio', 'Utilitário', 'Caminhonete', 'Van',
                                     'Micro-ônibus / ônibus', 'Ambulância', 'Motocicleta', 'Caminhão'], False),
@@ -41,7 +45,6 @@ CAMPOS_VEICULO = [
     ('Lotação (passageiros)', 'numero', False, None, False),
     ('RENAVAM', 'texto', False, None, False),
     ('Chassi', 'texto', False, None, False),
-    ('Vínculo', 'selecao', False, ['Próprio da Prefeitura', 'Locado', 'Cedido / comodato'], False),
     ('Locadora / contrato', 'texto', False, None, False),
     ('Km no cadastro', 'numero', False, None, False),
     ('Licenciamento (vencimento)', 'texto', False, None, False),
@@ -75,12 +78,15 @@ with app.app_context():
                 RETURNING id
             """)
             print('Tipo "Veículo" criado.')
-        conn.execute(text("UPDATE tipos_equipamento SET eh_veiculo = TRUE WHERE id = :id"), {'id': tipo_id})
+        conn.execute(text("UPDATE tipos_equipamento SET eh_veiculo = TRUE, tem_patrimonio = FALSE WHERE id = :id"),
+                     {'id': tipo_id})
 
         for ordem, (nome, tipo_dado, obrig, opcoes, destaque) in enumerate(CAMPOS_VEICULO, start=1):
             existe = _id(conn, "SELECT id FROM campos_tipo_equipamento WHERE tipo_equipamento_id = :t AND nome_campo = :n",
                          t=tipo_id, n=nome)
             if existe:
+                conn.execute(text("UPDATE campos_tipo_equipamento SET ordem = :o WHERE id = :id"),
+                             {'o': ordem, 'id': existe})
                 continue
             conn.execute(text("""
                 INSERT INTO campos_tipo_equipamento (tipo_equipamento_id, nome_campo, tipo_dado, obrigatorio,
@@ -89,6 +95,22 @@ with app.app_context():
             """), {'t': tipo_id, 'n': nome, 'd': tipo_dado, 'o': obrig,
                    'op': None if opcoes is None else json.dumps(opcoes, ensure_ascii=False),
                    'ordem': ordem, 'dest': destaque})
+            print(f'Campo "{nome}" criado.')
+
+        # "Vínculo" (próprio/locado/cedido) virou o check "Alugado".
+        vinculo = _id(conn, "SELECT id FROM campos_tipo_equipamento WHERE tipo_equipamento_id = :t AND nome_campo = 'Vínculo'",
+                      t=tipo_id)
+        if vinculo:
+            alugado = _id(conn, "SELECT id FROM campos_tipo_equipamento WHERE tipo_equipamento_id = :t AND nome_campo = 'Alugado'",
+                          t=tipo_id)
+            conn.execute(text("""
+                INSERT INTO equipamento_campo_valores (equipamento_id, campo_id, valor)
+                SELECT equipamento_id, :alugado, 'sim' FROM equipamento_campo_valores
+                WHERE campo_id = :vinculo AND valor = 'Locado'
+                ON CONFLICT (equipamento_id, campo_id) DO NOTHING
+            """), {'alugado': alugado, 'vinculo': vinculo})
+            conn.execute(text("DELETE FROM campos_tipo_equipamento WHERE id = :id"), {'id': vinculo})
+            print('Campo "Vínculo" trocado pelo check "Alugado".')
 
         for nome in MARCAS_VEICULO:
             marca_id = _id(conn, "SELECT id FROM marcas WHERE lower(nome) = lower(:n)", n=nome)

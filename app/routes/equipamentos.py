@@ -53,6 +53,14 @@ def _normalizar_patrimonio(valor: str) -> str | None:
     return (PREFIXO_PATRIMONIO + v) if v else None
 
 
+def _patrimonio_e_serie(tipo):
+    """Veículo não tem patrimônio nem nº de série: é identificado pelo prefixo e pelo chassi."""
+    if tipo and tipo.eh_veiculo:
+        return None, None
+    return (_normalizar_patrimonio(request.form.get('numero_patrimonio', '')),
+            request.form.get('numero_serie', '').strip() or None)
+
+
 def _parse_ano_aquisicao(valor) -> date | None:
     """
     Aceita 'YYYY' (novo) e 'YYYY-MM-DD' (legado) e retorna YYYY-01-01.
@@ -170,11 +178,12 @@ def novo(sala_id):
                 db.session.flush()
             modelo_id = md.id
 
+        patrimonio, serie = _patrimonio_e_serie(tipo)
         equipamento = Equipamento(
             sala_id=sala_id,
             tipo_equipamento_id=tipo_id,
-            numero_patrimonio=_normalizar_patrimonio(request.form.get('numero_patrimonio', '')),
-            numero_serie=request.form.get('numero_serie', '').strip() or None,
+            numero_patrimonio=patrimonio,
+            numero_serie=serie,
             marca_id=marca_id,
             modelo_id=modelo_id,
             data_aquisicao=_parse_ano_aquisicao(
@@ -268,11 +277,12 @@ def novo_na_unidade(unidade_id):
                 db.session.flush()
             modelo_id = md.id
 
+        patrimonio, serie = _patrimonio_e_serie(tipo)
         equipamento = Equipamento(
             sala_id=sala_id,
             tipo_equipamento_id=tipo_id,
-            numero_patrimonio=_normalizar_patrimonio(request.form.get('numero_patrimonio', '')),
-            numero_serie=request.form.get('numero_serie', '').strip() or None,
+            numero_patrimonio=patrimonio,
+            numero_serie=serie,
             marca_id=marca_id,
             modelo_id=modelo_id,
             data_aquisicao=_parse_ano_aquisicao(
@@ -490,8 +500,8 @@ def editar(id):
                     acao=f'Tipo alterado de {tipo_antigo} para {novo_tipo.nome}',
                 ))
 
-        equipamento.numero_patrimonio = _normalizar_patrimonio(request.form.get('numero_patrimonio', ''))
-        equipamento.numero_serie = request.form.get('numero_serie', '').strip() or None
+        equipamento.numero_patrimonio, equipamento.numero_serie = _patrimonio_e_serie(
+            db.session.get(TipoEquipamento, equipamento.tipo_equipamento_id))
         marca_id = request.form.get('marca_id', type=int) or None
         modelo_id = request.form.get('modelo_id', type=int) or None
         if marca_id:
