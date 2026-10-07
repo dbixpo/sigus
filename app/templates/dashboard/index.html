@@ -15,6 +15,10 @@
 .com-gerenciar form { margin: 0; }
 .com-card.com-pendente { border-left-color: #1A82B8; background: #f7fbfe; }
 .com-meta { font-size: 0.75rem; color: #718096; }
+.com-ver-todos .form-check-label { color: #718096; cursor: pointer; white-space: nowrap; }
+.com-ver-todos .form-check-input { cursor: pointer; }
+.com-tudo-em-dia { padding: 1rem; }
+.com-tudo-em-dia .fa-check-circle { color: #19A88B; }
 .dash-bloco {
     padding: 0.85rem 1rem;
     border-bottom: 1px solid #edf1f5;
@@ -260,9 +264,17 @@
         <div class="card dash-painel">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <span><i class="fas fa-bullhorn me-2"></i>Comunicados da unidade</span>
-                {% if pode_publicar %}
-                <a href="{{ url_for('noticias.novo_comunicado') }}" class="btn btn-sm btn-outline-primary">Novo</a>
-                {% endif %}
+                <div class="d-flex align-items-center gap-3">
+                    {% if comunicados %}
+                    <div class="form-check form-switch mb-0 com-ver-todos" title="Mostrar também os comunicados em que você já deu ciência">
+                        <input class="form-check-input" type="checkbox" role="switch" id="comVerTodos">
+                        <label class="form-check-label small" for="comVerTodos">Ver todos</label>
+                    </div>
+                    {% endif %}
+                    {% if pode_publicar %}
+                    <a href="{{ url_for('noticias.novo_comunicado') }}" class="btn btn-sm btn-outline-primary">Novo</a>
+                    {% endif %}
+                </div>
             </div>
             <div class="dash-pessoas-grid">
                     <div class="dash-bloco">
@@ -332,7 +344,7 @@
                 <ul class="list-group list-group-flush">
                     {% for c in comunicados %}
                     {% set item = c.item %}
-                    <li class="list-group-item com-card {% if c.pendente %}com-pendente{% endif %}">
+                    <li class="list-group-item com-card {% if c.pendente %}com-pendente{% endif %}{% if c.ja_ciencia %} com-lido{% endif %}">
                         <div class="d-flex justify-content-between gap-2 align-items-start">
                             <div class="min-w-0">
                                 <a href="{{ url_for('noticias.detalhe_comunicado', id=item.id) }}"
@@ -389,6 +401,39 @@
                     </li>
                     {% endfor %}
                 </ul>
+                <div class="dash-vazio com-tudo-em-dia d-none" id="comTudoEmDia">
+                    <i class="fas fa-check-circle me-1"></i>Tudo em dia: nenhum comunicado aguardando sua ciência.
+                    <button type="button" class="btn btn-link btn-sm p-0 align-baseline" id="comMostrarLidos"></button>
+                </div>
+                <script>
+                (function () {
+                    var chave = 'sigus.dash.comunicados.todos';
+                    var sw = document.getElementById('comVerTodos');
+                    var vazio = document.getElementById('comTudoEmDia');
+                    var btnLidos = document.getElementById('comMostrarLidos');
+                    var lidos = document.querySelectorAll('.com-card.com-lido');
+                    var total = document.querySelectorAll('.com-card').length;
+                    function aplicar() {
+                        var todos = sw.checked;
+                        lidos.forEach(function (li) { li.classList.toggle('d-none', !todos); });
+                        var algumVisivel = todos || lidos.length < total;
+                        vazio.classList.toggle('d-none', algumVisivel);
+                        btnLidos.textContent = lidos.length === 1
+                            ? 'Ver 1 já lido'
+                            : 'Ver ' + lidos.length + ' já lidos';
+                    }
+                    try { sw.checked = localStorage.getItem(chave) === '1'; } catch (e) {}
+                    sw.addEventListener('change', function () {
+                        try { localStorage.setItem(chave, sw.checked ? '1' : '0'); } catch (e) {}
+                        aplicar();
+                    });
+                    btnLidos.addEventListener('click', function () {
+                        sw.checked = true;
+                        sw.dispatchEvent(new Event('change'));
+                    });
+                    aplicar();
+                })();
+                </script>
                 {% else %}
                 <div class="dash-bloco">
                     <div class="dash-bloco-titulo"><i class="fas fa-bullhorn me-1"></i>Recados</div>

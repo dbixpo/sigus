@@ -36,6 +36,10 @@ Se um comunicado antigo tiver os dois JSON preenchidos, o matching passa a ser *
 
 Autor **não** ganha ciência automática. Se ele também for destinatário, o sistema o leva para assinar.
 
+## Chave "Ver todos" no card do dashboard
+
+Por padrão o card esconde os comunicados em que o usuário já deu ciência (classe `com-lido`): fica só o que falta assinar e os informativos sem cobrança de ciência. Ligando a chave **Ver todos** no cabeçalho, os já assinados voltam. A escolha fica salva no navegador (`localStorage`, chave `sigus.dash.comunicados.todos`). Se tudo estiver assinado, aparece "Tudo em dia" com um atalho "Ver N já lidos". Como a ciência é por versão, um comunicado editado volta a aparecer sozinho.
+
 ## Editar e excluir (comunicados e mural)
 
 Os botões ficam no próprio card do dashboard e na página do comunicado. Os botões soltos "Novo comunicado" e "Registrar ação" no topo do dashboard saíram: o card já tem o seu.
