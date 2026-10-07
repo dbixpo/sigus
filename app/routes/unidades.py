@@ -202,8 +202,10 @@ def detalhe(id):
     veiculos = reservas.query_veiculos([id]).order_by(Veiculo.prefixo).all()
     agora_veiculos = agora_brasilia()
     situacao_veiculos = reservas.situacao_veiculos(veiculos, agora_veiculos)
+    emprestimos_veiculos = reservas.emprestimos_por_veiculo([v.id for v in veiculos])
     veiculos_info = [{
         'veiculo': v,
+        'emprestimo': emprestimos_veiculos.get(v.id),
         'km_atual': reservas.km_atual(v),
         **situacao_veiculos[v.id],
     } for v in veiculos]

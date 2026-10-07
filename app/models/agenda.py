@@ -40,6 +40,8 @@ class AgendaEvento(db.Model):
     sala_id = db.Column(db.Integer, db.ForeignKey('salas.id', ondelete='SET NULL'))
     veiculo_id = db.Column(db.Integer, db.ForeignKey('veiculos.id', ondelete='SET NULL'))
     condutor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    # Preenchido só quando quem usa o veículo é de outra unidade (sai no RDV como setor).
+    condutor_unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL'))
     km_saida = db.Column(db.Integer)
     km_chegada = db.Column(db.Integer)
     devolvido_em = db.Column(db.DateTime)
@@ -52,6 +54,7 @@ class AgendaEvento(db.Model):
     sala = db.relationship('Sala', foreign_keys=[sala_id])
     veiculo = db.relationship('Veiculo', foreign_keys=[veiculo_id])
     condutor = db.relationship('Usuario', foreign_keys=[condutor_id])
+    condutor_unidade = db.relationship('Unidade', foreign_keys=[condutor_unidade_id])
     participantes = db.relationship(
         'Usuario',
         secondary=agenda_evento_participantes,

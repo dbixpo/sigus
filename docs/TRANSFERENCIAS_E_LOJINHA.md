@@ -27,6 +27,18 @@ Classificação dos itens:
 
 Impresso: modal `abrirImpresso` (termo de transferência / doação). Documentos originados da Lojinha podem imprimir como **Termo de Doação**.
 
+## Veículos no termo
+
+Em `/transferencias/novo`, o bloco **Veículos da origem** (`GET /transferencias/api/veiculos-unidade/<id>`) põe o carro no termo como item com `veiculo_id`. Carro de outra unidade, desativado, já em termo pendente ou emprestado não entra.
+
+- **Transferência:** no aceite, `veiculos.unidade_id` passa para o destino (reservas e RDV seguem com a unidade nova).
+- **Empréstimo:** pede **devolução prevista** (`documentos_transferencia.devolucao_prevista`). O carro continua da unidade dona; do aceite até alguém clicar em **Devolver** (`POST /transferencias/documento/<id>/devolver`, grava `devolvido_em` / `devolvido_por`) ele aparece também na agenda, na aba Veículos e na página `/veiculos/<id>` da unidade que pegou. Editar e desativar continuam só com a dona. O RDV é um só, o da dona, com os usos das duas.
+- Termo só com veículo não pede sala no aceite. Termo misto pede sala só para os equipamentos.
+- Aba Concluídas: "Emprestado até dd/mm" (vermelho se passou), "Devolvido em", botão Devolver e o filtro **Veículos emprestados agora**. A página do veículo mostra o mesmo aviso com o termo e o Devolver.
+- Para uso de poucas horas por pessoa de outra unidade, não precisa termo: a própria agenda reserva para alguém de fora (ver `docs/AGENDA_E_PLANEJAMENTOS.md`).
+
+Migração: `migrations/add_transferencia_veiculos.py`.
+
 ## Lojinha Interna
 
 Tabela `itens_lojinha`. Vitrine por unidade. Carrinho no `localStorage` (`lojinha_cart`).

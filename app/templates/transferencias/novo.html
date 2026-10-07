@@ -76,6 +76,22 @@
                     </div>
                 </div>
             </div>
+            <div class="mt-3 d-none" id="blocoVeiculos">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="fw-semibold"><i class="fas fa-car me-1"></i>Veículos da origem</span>
+                    <span class="small text-muted">Prefixo e placa vão no termo</span>
+                </div>
+                <div id="listaVeiculos" class="border rounded bg-white"></div>
+                <div class="row g-2 mt-1 d-none" id="linhaDevolucao">
+                    <div class="col-sm-6 col-lg-4">
+                        <label class="form-label small mb-1" for="devolucaoPrevista">Devolução prevista do veículo</label>
+                        <input type="date" name="devolucao_prevista" id="devolucaoPrevista" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-sm-6 col-lg-8 small text-muted d-flex align-items-end">
+                        No empréstimo o carro continua da unidade de origem. Depois do aceite ele aparece na agenda do destino até alguém clicar em "Devolver".
+                    </div>
+                </div>
+            </div>
             <div class="mt-2">
                 <label class="form-label">Observação (opcional)</label>
                 <textarea name="observacao" class="form-control" rows="2"></textarea>
@@ -219,8 +235,64 @@
     const origemCount = document.getElementById('origemCount');
     const destinoCount = document.getElementById('destinoCount');
     const apiEquipamentosTpl = {{ url_for('transferencias.api_equipamentos_unidade', unidade_id=0) | tojson }};
+    const apiVeiculosTpl = {{ url_for('transferencias.api_veiculos_unidade', unidade_id=0) | tojson }};
+    const blocoVeiculos = document.getElementById('blocoVeiculos');
+    const listaVeiculos = document.getElementById('listaVeiculos');
+    const linhaDevolucao = document.getElementById('linhaDevolucao');
     let cacheOrigem = [];
     let cacheDestino = [];
+    let cacheVeiculos = [];
+
+    function temVeiculo(id) {
+        return items.some(it => it.veiculo_id === id);
+    }
+
+    function ajustarDevolucao() {
+        const emprestimo = document.getElementById('tipoEmprestimo').checked;
+        linhaDevolucao.classList.toggle('d-none', !(emprestimo && items.some(it => it.veiculo_id)));
+    }
+
+    function pintarVeiculos() {
+        if (!cacheVeiculos.length) {
+            blocoVeiculos.classList.add('d-none');
+            return;
+        }
+        blocoVeiculos.classList.remove('d-none');
+        listaVeiculos.innerHTML = cacheVeiculos.map(v => {
+            let acao;
+            if (v.bloqueio) acao = `<span class="badge bg-warning text-dark">${escapeHtml(v.bloqueio)}</span>`;
+            else if (temVeiculo(v.id)) acao = '<span class="badge bg-success">No termo</span>';
+            else acao = `<button type="button" class="btn btn-sm btn-outline-primary btn-add-veiculo" data-id="${v.id}">Adicionar</button>`;
+            return `<div class="d-flex justify-content-between align-items-center gap-2 px-2 py-1 border-bottom">
+                <div class="small" style="min-width:0">
+                    <div class="text-truncate">${escapeHtml(v.descricao)}</div>
+                    <div class="text-muted">${escapeHtml(v.identificacao)}</div>
+                </div>
+                <div class="flex-shrink-0">${acao}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function carregarVeiculos(uid) {
+        cacheVeiculos = [];
+        pintarVeiculos();
+        if (!uid) return;
+        fetch(apiVeiculosTpl.replace(/\/0$/, '/' + encodeURIComponent(uid)))
+            .then(r => r.ok ? r.json() : [])
+            .then(data => { cacheVeiculos = data; pintarVeiculos(); })
+            .catch(() => {});
+    }
+
+    listaVeiculos.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-add-veiculo');
+        if (!btn) return;
+        const v = cacheVeiculos.find(x => x.id === parseInt(btn.dataset.id, 10));
+        if (!v || temVeiculo(v.id)) return;
+        items.push({ veiculo_id: v.id, quantidade: 1, classificacao: 'A', descricao: v.descricao,
+                     numero_patrimonio: '', numero_serie: '', _identificacao: v.identificacao });
+        renderizar();
+    });
+    document.querySelectorAll('input[name="tipo"]').forEach(r => r.addEventListener('change', ajustarDevolucao));
 
     function equipamentosUrl(uid) {
         return apiEquipamentosTpl.replace(/\/0$/, '/' + encodeURIComponent(uid));
@@ -233,7 +305,8 @@
     function renderizar() {
         corpo.innerHTML = items.map((it, idx) => {
             const desc = it.equipamento_id ? (it._display || '—') : it.descricao;
-            const patSer = it.equipamento_id ? (it._patrimonio || it._serie || '—') : (it.numero_patrimonio || it.numero_serie || '—');
+            const patSer = it.veiculo_id ? it._identificacao
+                : it.equipamento_id ? (it._patrimonio || it._serie || '—') : (it.numero_patrimonio || it.numero_serie || '—');
             return `<tr data-idx="${idx}">
                 <td>${it.quantidade}</td>
                 <td>${escapeHtml(desc)}</td>
@@ -244,6 +317,8 @@
         }).join('');
         serializar();
         if (cacheOrigem.length) pintarListaOrigem();
+        pintarVeiculos();
+        ajustarDevolucao();
     }
 
     function escapeHtml(s) {
@@ -358,6 +433,8 @@
         corpo.innerHTML = '';
         serializar();
         carregarInventario(unidadeOrigem.value, 'origem');
+        carregarVeiculos(unidadeOrigem.value);
+        ajustarDevolucao();
     });
     unidadeDestino.addEventListener('change', function() {
         carregarInventario(unidadeDestino.value, 'destino');

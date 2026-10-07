@@ -345,7 +345,8 @@ def _pode_registrar_km(ev):
         return False
     if ev.criado_por == current_user.id or ev.condutor_id == current_user.id:
         return True
-    return bool(ev.veiculo and ev.veiculo.unidade_id in set(_ids_unidades()))
+    ids = set(_ids_unidades())
+    return bool(ev.veiculo and (ev.veiculo.unidade_id in ids or ev.unidade_id in ids))
 
 
 def _rotulo_sala(sala):
@@ -424,6 +425,8 @@ def _fc_evento(ev):
     elif ev.eh_veiculo:
         cor = COR_VEICULO
         pessoas = [_pessoa_json(ev.condutor)] if ev.condutor else []
+        if pessoas and ev.condutor_unidade:
+            pessoas[0]['setor'] = ev.condutor_unidade.nome
         pessoas_label = 'Quem vai usar'
         tipo_ui = 'veiculo'
     else:
@@ -471,6 +474,7 @@ def _fc_evento(ev):
             'veiculo_id': ev.veiculo_id,
             'veiculo': ev.veiculo.rotulo if ev.veiculo else 'Veículo removido',
             'condutor_id': ev.condutor_id,
+            'condutor_unidade_id': ev.condutor_unidade_id,
             'km_saida': ev.km_saida,
             'km_chegada': ev.km_chegada,
             'km_rodados': ev.km_rodados,
@@ -593,6 +597,24 @@ def _ausente_form(form, unidades):
     return db.session.get(Usuario, uid), None
 
 
+def _usuario_da_unidade(usuario_id, unidade_id):
+    if not usuario_id or not unidade_id:
+        return None
+    return (
+        Usuario.query
+        .join(UsuarioUnidade, UsuarioUnidade.usuario_id == Usuario.id)
+        .join(Unidade, Unidade.id == UsuarioUnidade.unidade_id)
+        .filter(
+            Usuario.id == usuario_id,
+            Usuario.ativo.is_(True),
+            UsuarioUnidade.unidade_id == unidade_id,
+            UsuarioUnidade.ativo.is_(True),
+            Unidade.status == 'ativa',
+        )
+        .first()
+    )
+
+
 def _dados_formulario(form, unidades):
     titulo = (form.get('titulo') or '').strip()
     unidade_id = form.get('unidade_id', type=int)
@@ -616,6 +638,7 @@ def _dados_formulario(form, unidades):
     sala = None
     veiculo = None
     condutor = None
+    condutor_unidade_id = None
     if tipo in (TIPO_EVENTO, TIPO_REUNIAO):
         sala_id = form.get('sala_id', type=int)
         if sala_id:
@@ -629,11 +652,19 @@ def _dados_formulario(form, unidades):
         if not veiculo:
             erro = 'Escolha o veículo.'
         else:
-            unidade_id = veiculo.unidade_id
-        condutor_id = form.get('condutor_id', type=int) or current_user.id
-        condutor = db.session.get(Usuario, condutor_id)
-        if not condutor or not condutor.ativo:
-            condutor = current_user._get_current_object()
+            unidade_id = reservas.unidade_do_uso(veiculo, ids)
+        if form.get('condutor_externo') in ('1', 'on'):
+            condutor_unidade_id = form.get('condutor_unidade_id', type=int)
+            externo_id = form.get('condutor_externo_id', type=int)
+            condutor = _usuario_da_unidade(externo_id, condutor_unidade_id)
+            if not condutor:
+                condutor_unidade_id = None
+                erro = erro or 'Escolha a unidade e quem dela vai usar o veículo.'
+        else:
+            condutor_id = form.get('condutor_id', type=int) or current_user.id
+            condutor = db.session.get(Usuario, condutor_id)
+            if not condutor or not condutor.ativo:
+                condutor = current_user._get_current_object()
         if veiculo and not titulo:
             destino = f' → {local}' if local else ''
             titulo = f'{veiculo.rotulo}{destino}'[:200]
@@ -669,6 +700,7 @@ def _dados_formulario(form, unidades):
         'sala': sala,
         'veiculo': veiculo,
         'condutor': condutor,
+        'condutor_unidade_id': condutor_unidade_id,
         'erro': erro,
         'titulo': titulo,
         'unidade_id': unidade_id,
@@ -692,13 +724,23 @@ def index():
         return redirect(url_for('dashboard.index'))
     unidade_id = _unidade_padrao(unidades)
     usuarios = _usuarios_agenda([u.id for u in unidades])
-    veiculos = reservas.query_veiculos([u.id for u in unidades]).all()
-    veiculos_json = [{
-        'id': v.id,
-        'rotulo': v.rotulo,
-        'unidade_id': v.unidade_id,
-        'unidade': v.unidade.nome,
-    } for v in veiculos]
+    ids_unidades = [u.id for u in unidades]
+    veiculos = reservas.query_veiculos(ids_unidades).all()
+    emprestimos = reservas.emprestimos_por_veiculo(v.id for v in veiculos)
+    veiculos_json = []
+    for v in veiculos:
+        doc = emprestimos.get(v.id)
+        emprestado_pra_mim = doc and doc.unidade_destino_id in ids_unidades and v.unidade_id not in ids_unidades
+        rotulo = v.rotulo
+        if emprestado_pra_mim:
+            ate = f' até {doc.devolucao_prevista.strftime("%d/%m")}' if doc.devolucao_prevista else ''
+            rotulo = f'{v.rotulo} (emprestado de {v.unidade.nome}{ate})'
+        veiculos_json.append({
+            'id': v.id,
+            'rotulo': rotulo,
+            'unidade_id': doc.unidade_destino_id if emprestado_pra_mim else v.unidade_id,
+            'unidade': f'Emprestados a {doc.unidade_destino.nome}' if emprestado_pra_mim else v.unidade.nome,
+        })
     veiculos_json.sort(key=lambda v: (v['unidade'].lower(), v['rotulo'].lower()))
     return render_template(
         'agenda/calendario.html',
@@ -710,6 +752,10 @@ def index():
         pode_ausencia_outros=current_user.pode('editar_agenda'),
         motivos_ausencia=motivos_ausencia_agrupados(),
         veiculos=veiculos_json,
+        unidades_externas=(
+            Unidade.query.filter(Unidade.status == 'ativa', Unidade.id.notin_(ids_unidades))
+            .order_by(Unidade.nome).all() if veiculos_json else []
+        ),
         abrir_veiculo=request.args.get('veiculo_id', type=int),
     )
 
@@ -834,6 +880,7 @@ def _aplicar_recursos(ev, dados):
         ev.km_saida = ev.km_chegada = ev.devolvido_em = None
     ev.veiculo_id = novo_veiculo
     ev.condutor_id = dados['condutor'].id if dados['condutor'] else None
+    ev.condutor_unidade_id = dados['condutor_unidade_id']
 
 
 @agenda_bp.route('/eventos', methods=['POST'])
@@ -1116,6 +1163,26 @@ def buscar_pessoas():
         {'value': str(u.id), 'text': u.nome, 'setor': setores.get(u.id, '')}
         for u in usuarios
     ])
+
+
+@agenda_bp.route('/pessoas-unidade/<int:unidade_id>')
+@login_required
+def pessoas_unidade(unidade_id):
+    """Quem pode usar o veículo quando a reserva é para alguém de outra unidade."""
+    _exige('adicionar_agenda', 'editar_agenda')
+    usuarios = (
+        Usuario.query
+        .join(UsuarioUnidade, UsuarioUnidade.usuario_id == Usuario.id)
+        .filter(
+            UsuarioUnidade.unidade_id == unidade_id,
+            UsuarioUnidade.ativo.is_(True),
+            Usuario.ativo.is_(True),
+        )
+        .distinct()
+        .order_by(Usuario.nome)
+        .all()
+    )
+    return jsonify([{'id': u.id, 'nome': u.nome} for u in usuarios])
 
 
 @agenda_bp.route('/eventos/<int:id>.ics')

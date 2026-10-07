@@ -214,6 +214,7 @@
                 <option value="aceita" {% if status_concluida == 'aceita' %}selected{% endif %}>Aceita</option>
                 <option value="recusada" {% if status_concluida == 'recusada' %}selected{% endif %}>Recusada</option>
                 <option value="cancelada" {% if status_concluida == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                <option value="veiculo_emprestado" {% if status_concluida == 'veiculo_emprestado' %}selected{% endif %}>Veículos emprestados agora</option>
             </select>
         </form>
     </div>
@@ -245,9 +246,30 @@
                         <td class="small">{{ item.descricao_exibicao() }}</td>
                         <td class="small text-muted">{{ item.numero_patrimonio_ou_serie() or '—' }}</td>
                         {% if loop.first %}
-                        <td rowspan="{{ doc.itens.count() }}"><span class="badge bg-{{ doc.status_badge }}">{{ doc.status_label }}</span></td>
+                        <td rowspan="{{ doc.itens.count() }}">
+                            <span class="badge bg-{{ doc.status_badge }}">{{ doc.status_label }}</span>
+                            {% if doc.tipo == 'emprestimo' and doc.status == 'aceita' and doc.itens_veiculo() %}
+                            {% if doc.devolvido_em %}
+                            <div class="small text-muted mt-1"><i class="fas fa-car me-1"></i>Devolvido em {{ doc.devolvido_em | br_date }}</div>
+                            {% else %}
+                            <div class="small mt-1 {{ 'text-danger fw-semibold' if doc.devolucao_prevista and doc.devolucao_prevista < hoje else 'text-primary' }}">
+                                <i class="fas fa-car me-1"></i>Emprestado{% if doc.devolucao_prevista %} até {{ doc.devolucao_prevista.strftime('%d/%m') }}{% endif %}
+                            </div>
+                            {% endif %}
+                            {% endif %}
+                        </td>
                         <td rowspan="{{ doc.itens.count() }}" class="small text-muted">{{ doc.resolvido_em | br_date if doc.resolvido_em else doc.criado_em | br_date }}</td>
-                        <td rowspan="{{ doc.itens.count() }}" class="text-end">
+                        <td rowspan="{{ doc.itens.count() }}" class="text-end text-nowrap">
+                            {% if doc.emprestimo_veiculo_ativo %}
+                            <form method="post" action="{{ url_for('transferencias.documento_devolver', id=doc.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Registrar a devolução do veículo para a unidade de origem?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="voltar" value="{{ request.full_path }}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Registrar devolução do veículo">
+                                    <i class="fas fa-undo me-1"></i>Devolver
+                                </button>
+                            </form>
+                            {% endif %}
                             <a href="#" class="btn btn-sm btn-outline-secondary"
                                onclick="abrirImpresso('{{ url_for('transferencias.documento_imprimir', id=doc.id) }}', 'Termo de {{ doc.tipo_label }} #{{ doc.id }}'); return false;"
                                title="Imprimir"><i class="fas fa-print"></i></a>

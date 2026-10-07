@@ -525,6 +525,13 @@
                                     {% if v.alugado and v.locadora %}
                                     <div class="small text-muted"><i class="fas fa-file-contract me-1"></i>{{ v.locadora }}</div>
                                     {% endif %}
+                                    {% set emp = info.emprestimo %}
+                                    {% if emp %}
+                                    <div class="small mt-1 text-primary fw-semibold">
+                                        <i class="fas fa-handshake me-1"></i>
+                                        {% if v.unidade_id == unidade.id %}Emprestado para {{ emp.unidade_destino.nome }}{% else %}Emprestado de {{ emp.unidade_origem.nome }}{% endif %}{% if emp.devolucao_prevista %} até {{ emp.devolucao_prevista.strftime('%d/%m') }}{% endif %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -574,7 +581,7 @@
                                         onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
                                     <i class="fas fa-print me-1"></i>RDV do mês
                                 </button>
-                                {% if current_user.pode('editar_veiculo') %}
+                                {% if current_user.pode('editar_veiculo') and v.unidade_id == unidade.id %}
                                 <a href="{{ url_for('veiculos.editar', id=v.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar veículo">
                                     <i class="fas fa-pen"></i>
                                 </a>

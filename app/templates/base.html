@@ -241,19 +241,19 @@
                     {% endif %}
                 </li>
                 {% endif %}
-                {% if _pode_plan %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"
-                       href="{{ url_for('planejamentos.listar') }}">
-                        <i class="fas fa-clipboard-check"></i><span>Planejamentos</span>
-                    </a>
-                </li>
-                {% endif %}
                 {% if _pode_agenda %}
                 <li class="nav-item">
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('agenda') %}active{% endif %}"
                        href="{{ url_for('agenda.index') }}">
                         <i class="fas fa-calendar-alt"></i><span>Agenda</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if _pode_plan %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('planejamentos') %}active{% endif %}"
+                       href="{{ url_for('planejamentos.listar') }}">
+                        <i class="fas fa-clipboard-check"></i><span>Planejamentos</span>
                     </a>
                 </li>
                 {% endif %}

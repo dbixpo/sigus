@@ -28,7 +28,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         {% if pode_reservar %}
-        <a href="{{ url_for('agenda.index', unidade_id=unidade.id, veiculo_id=veiculo.id) }}" class="btn btn-primary btn-sm">
+        <a href="{{ url_for('agenda.index', unidade_id=unidade_reserva_id, veiculo_id=veiculo.id) }}" class="btn btn-primary btn-sm">
             <i class="fas fa-calendar-plus me-1"></i>Reservar
         </a>
         {% endif %}
@@ -45,6 +45,35 @@
         {% endif %}
     </div>
 </div>
+
+{% if emprestimo %}
+<div class="alert alert-info alert-permanent d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <i class="fas fa-handshake me-1"></i>
+        Emprestado de <strong>{{ emprestimo.unidade_origem.nome }}</strong> para <strong>{{ emprestimo.unidade_destino.nome }}</strong>
+        {% if emprestimo.devolucao_prevista %}
+        até <strong class="{{ 'text-danger' if emprestimo.devolucao_prevista < agora.date() }}">{{ emprestimo.devolucao_prevista.strftime('%d/%m/%Y') }}</strong>
+        {% endif %}.
+        As reservas podem ser feitas pelas duas unidades e entram no RDV de {{ emprestimo.unidade_origem.nome }}.
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary"
+                data-url="{{ url_for('transferencias.documento_imprimir', id=emprestimo.id) }}"
+                data-titulo="Termo de Empréstimo #{{ emprestimo.id }}"
+                onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
+            <i class="fas fa-file-alt me-1"></i>Termo
+        </button>
+        {% if pode_devolver %}
+        <form method="post" action="{{ url_for('transferencias.documento_devolver', id=emprestimo.id) }}"
+              onsubmit="return confirm('Registrar a devolução do veículo para a unidade de origem?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="voltar" value="{{ request.path }}">
+            <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-undo me-1"></i>Devolver</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-lg-3">
@@ -116,7 +145,11 @@
                         <td class="text-nowrap">
                             {% if ev.dia_inteiro %}Dia todo{% else %}{{ ev.inicio.strftime('%H:%M') }}{% if ev.fim %}–{{ ev.fim.strftime('%H:%M') }}{% endif %}{% endif %}
                         </td>
-                        <td>{{ ev.condutor.nome if ev.condutor else '—' }}</td>
+                        <td>
+                            {{ ev.condutor.nome if ev.condutor else '—' }}
+                            {% if ev.condutor_unidade %}<div class="small text-muted">{{ ev.condutor_unidade.nome }}</div>
+                            {% elif emprestimo and ev.unidade_id == emprestimo.unidade_destino_id %}<div class="small text-muted">{{ emprestimo.unidade_destino.nome }}</div>{% endif %}
+                        </td>
                         <td>{{ ev.local or '—' }}</td>
                         <td class="d-none d-lg-table-cell">{{ finalidade(ev) or '—' }}</td>
                         <td class="d-none d-md-table-cell text-muted">

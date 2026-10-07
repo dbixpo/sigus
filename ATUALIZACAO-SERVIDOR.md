@@ -14,7 +14,27 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
 
-## Entrega mais recente (veículos, RDV e reserva de salas na agenda)
+## Entrega mais recente (empréstimo e transferência de veículos)
+
+Depois do `git pull`, com backup do banco feito antes:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_transferencia_veiculos.py
+```
+
+Idempotente. Reinicie só o SIGUS (seção 4).
+
+O que mudou:
+
+- Termo de **Transferência** ou **Empréstimo** aceita veículos (bloco "Veículos da origem" em Transferências → Novo). Transferência passa o carro de vez para a outra unidade. Empréstimo tem devolução prevista: o carro continua da dona, mas aparece na agenda e na aba Veículos de quem pegou até alguém clicar em **Devolver**. O RDV fica um só, o da dona.
+- Na reserva de veículo da agenda, o switch **Pessoa de outra unidade** escolhe a unidade e depois a pessoa (empréstimo de poucas horas, sem termo). O RDV sai com a unidade dessa pessoa.
+- No menu, **Agenda** vem antes de **Planejamentos**.
+
+Conferência: Transferências → Novo com um carro; aba Concluídas → "Veículos emprestados agora"; agenda → Veículo → Pessoa de outra unidade.
+
+---
+
+## Entrega anterior (veículos, RDV e reserva de salas na agenda)
 
 Depois do `git pull`, com backup do banco feito antes:
 

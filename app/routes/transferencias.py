@@ -1,11 +1,15 @@
+from datetime import date
+
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.utils import agora_local
+from app.utils import agora_brasilia, agora_local
 from app.models.transferencia import TransferenciaEquipamento, DocumentoTransferencia, ItemDocumentoTransferencia, ItemLojinha
 from app.models.equipamento import Equipamento, TipoEquipamento
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.sala import Sala
+from app.models.veiculo import Veiculo
+from app.services import reservas
 
 transferencias_bp = Blueprint('transferencias', __name__, url_prefix='/transferencias')
 
@@ -148,6 +152,8 @@ def _realocar_itens_documento(doc, sala_id, obs='', criar_se_ausente=False, usua
         nome_usuario = 'Sistema'
 
     for item in doc.itens.all():
+        if item.veiculo_id:
+            continue
         eq = _vincular_equipamento_item(item, doc.unidade_origem_id)
         criado_agora = False
         if not eq and criar_se_ausente:
@@ -192,6 +198,8 @@ def _auditar_documento_aceito(doc):
 
     pendencias = []
     for item in doc.itens.all():
+        if item.veiculo_id:
+            continue
         ident = item.numero_patrimonio_ou_serie() or item.descricao_exibicao() or f'item #{item.id}'
         eq = item.equipamento if item.equipamento_id else _equipamento_do_item(item, doc.unidade_origem_id)
         if not eq:
@@ -312,6 +320,34 @@ def _unidades_ativas():
     return Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
 
 
+def _erro_veiculos_termo(veiculos, ids_veiculos, unidade_origem_id):
+    """Só a unidade dona empresta ou transfere o carro, e um termo por vez."""
+    if set(veiculos) != set(ids_veiculos):
+        return 'Um dos veículos escolhidos não existe mais.'
+    pendentes = reservas.veiculos_em_termo_pendente(ids_veiculos)
+    emprestados = reservas.emprestimos_por_veiculo(ids_veiculos)
+    for v in veiculos.values():
+        if not v.ativo or v.unidade_id != unidade_origem_id:
+            return f'O veículo {v.rotulo} não é da unidade de origem.'
+        if v.id in pendentes:
+            return f'O veículo {v.rotulo} já está em outro termo aguardando aceite.'
+        if v.id in emprestados:
+            return f'O veículo {v.rotulo} está emprestado para {emprestados[v.id].unidade_destino.nome}. Registre a devolução antes.'
+    return None
+
+
+def _tem_itens_de_sala(doc):
+    return any(not i.veiculo_id for i in doc.itens.all())
+
+
+def _aplicar_veiculos_aceite(doc):
+    """Transferência passa o carro para o destino; empréstimo só o libera para o destino até a devolução."""
+    for item in doc.itens_veiculo():
+        if doc.tipo == 'transferencia' and item.veiculo:
+            item.veiculo.unidade_id = doc.unidade_destino_id
+            item.veiculo.atualizado_em = agora_local()
+
+
 # ──────────────────────────────────────────────
 #  LISTAR — pendentes recebidas + histórico
 # ──────────────────────────────────────────────
@@ -377,6 +413,13 @@ def listar():
     )
     if status_concluida in ('aceita', 'recusada', 'cancelada'):
         q_hist = q_hist.filter(DocumentoTransferencia.status == status_concluida)
+    elif status_concluida == 'veiculo_emprestado':
+        q_hist = q_hist.filter(
+            DocumentoTransferencia.tipo == 'emprestimo',
+            DocumentoTransferencia.status == 'aceita',
+            DocumentoTransferencia.devolvido_em.is_(None),
+            DocumentoTransferencia.itens.any(ItemDocumentoTransferencia.veiculo_id.isnot(None)),
+        )
     q_hist = _filtra_unidades(
         q_hist,
         col_origem=DocumentoTransferencia.unidade_origem_id,
@@ -413,7 +456,7 @@ def listar():
                            aba=aba, unidade_id=unidade_id, unidade_filtro=unidade_filtro, unidades=unidades,
                            unidades_lojinha=unidades_lojinha, lojinha_classificacao=lojinha_classificacao,
                            status_concluida=status_concluida, ids_unidades_user=ids_unidades_user,
-                           pode_qualquer_unidade=pode_qualquer)
+                           pode_qualquer_unidade=pode_qualquer, hoje=agora_brasilia().date())
 
 
 # ──────────────────────────────────────────────
@@ -720,6 +763,22 @@ def documento_novo():
             flash('Adicione pelo menos um item ao documento.', 'danger')
             return redirect(url_for('transferencias.documento_novo'))
 
+        ids_veiculos = {int(it['veiculo_id']) for it in items_data if str(it.get('veiculo_id') or '').isdigit()}
+        veiculos = {v.id: v for v in Veiculo.query.filter(Veiculo.id.in_(ids_veiculos)).all()} if ids_veiculos else {}
+        erro_veiculo = _erro_veiculos_termo(veiculos, ids_veiculos, unidade_origem_id)
+        if erro_veiculo:
+            flash(erro_veiculo, 'danger')
+            return redirect(url_for('transferencias.documento_novo'))
+        devolucao_prevista = None
+        if tipo == 'emprestimo' and veiculos:
+            try:
+                devolucao_prevista = date.fromisoformat(request.form.get('devolucao_prevista') or '')
+            except ValueError:
+                devolucao_prevista = None
+            if devolucao_prevista and devolucao_prevista < agora_brasilia().date():
+                flash('A devolução prevista não pode ser antes de hoje.', 'danger')
+                return redirect(url_for('transferencias.documento_novo'))
+
         doc = DocumentoTransferencia(
             tipo=tipo,
             unidade_origem_id=unidade_origem_id,
@@ -727,11 +786,20 @@ def documento_novo():
             criado_por=current_user.id,
             status='pendente',
             observacao=observacao or None,
+            devolucao_prevista=devolucao_prevista,
         )
         db.session.add(doc)
         db.session.flush()
 
+        for vid in ids_veiculos:
+            db.session.add(ItemDocumentoTransferencia(
+                documento_id=doc.id, veiculo_id=vid, quantidade=1, classificacao='A',
+                descricao=veiculos[vid].rotulo[:500],
+            ))
+
         for it in items_data:
+            if it.get('veiculo_id'):
+                continue
             equip_id = it.get('equipamento_id') or None
             qtd = int(it.get('quantidade', 1) or 1)
             desc = (it.get('descricao') or '').strip()
@@ -806,15 +874,20 @@ def documento_aceitar(id):
         sala_id = request.form.get('sala_destino_id', type=int)
 
         if acao == 'aceitar':
-            if not sala_id:
+            precisa_sala = _tem_itens_de_sala(doc)
+            if precisa_sala and not sala_id:
                 flash('Selecione a sala de destino.', 'danger')
                 return render_template('transferencias/documento_aceitar.html',
-                                       doc=doc, salas_destino=salas_destino)
+                                       doc=doc, salas_destino=salas_destino, precisa_sala=precisa_sala)
 
-            doc.sala_destino_id = sala_id
-            movidos, criados, nao_encontrados = _realocar_itens_documento(
-                doc, sala_id, obs, criar_se_ausente=True
-            )
+            movidos = criados = 0
+            nao_encontrados = []
+            if precisa_sala:
+                doc.sala_destino_id = sala_id
+                movidos, criados, nao_encontrados = _realocar_itens_documento(
+                    doc, sala_id, obs, criar_se_ausente=True
+                )
+            _aplicar_veiculos_aceite(doc)
             if nao_encontrados:
                 db.session.rollback()
                 flash(
@@ -824,7 +897,7 @@ def documento_aceitar(id):
                     'danger'
                 )
                 return render_template('transferencias/documento_aceitar.html',
-                                       doc=doc, salas_destino=salas_destino)
+                                       doc=doc, salas_destino=salas_destino, precisa_sala=precisa_sala)
 
             doc.status = 'aceita'
             doc.aceito_por = current_user.id
@@ -837,6 +910,12 @@ def documento_aceitar(id):
                 partes.append(f'{movidos} realocado(s)')
             if criados:
                 partes.append(f'{criados} cadastrado(s) no inventário')
+            n_veiculos = len(doc.itens_veiculo())
+            if n_veiculos and doc.tipo == 'transferencia':
+                partes.append(f'{n_veiculos} veículo(s) agora de {doc.unidade_destino.nome}')
+            elif n_veiculos:
+                ate = f' até {doc.devolucao_prevista.strftime("%d/%m/%Y")}' if doc.devolucao_prevista else ''
+                partes.append(f'{n_veiculos} veículo(s) emprestado(s){ate}; quando voltar, clique em "Devolver"')
             flash(
                 f'Documento aceito! {" e ".join(partes) or "Itens registrados"}.' if partes
                 else 'Documento aceito!',
@@ -861,8 +940,32 @@ def documento_aceitar(id):
         return redirect(url_for('transferencias.listar'))
 
     return render_template('transferencias/documento_aceitar.html',
-                           doc=doc, salas_destino=salas_destino,
+                           doc=doc, salas_destino=salas_destino, precisa_sala=_tem_itens_de_sala(doc),
                            pode_qualquer_unidade=_pode_escolher_qualquer_unidade())
+
+
+@transferencias_bp.route('/documento/<int:id>/devolver', methods=['POST'])
+@login_required
+def documento_devolver(id):
+    """Encerra o empréstimo de veículo: o carro volta a aparecer só para a unidade dona."""
+    doc = DocumentoTransferencia.query.get_or_404(id)
+    if not current_user.pode('ver_transferencias'):
+        abort(403)
+    if not _pode_escolher_qualquer_unidade():
+        ids = _unidades_do_usuario()
+        if ids is not None and doc.unidade_origem_id not in ids and doc.unidade_destino_id not in ids:
+            abort(403)
+    destino = request.form.get('voltar') or url_for('transferencias.listar', aba='concluidas')
+    if not destino.startswith('/') or destino.startswith('//'):
+        destino = url_for('transferencias.listar', aba='concluidas')
+    if not doc.emprestimo_veiculo_ativo:
+        flash('Este empréstimo já foi devolvido ou não está em andamento.', 'warning')
+        return redirect(destino)
+    doc.devolvido_em = agora_local()
+    doc.devolvido_por = current_user.id
+    db.session.commit()
+    flash(f'Devolução registrada: o veículo voltou para {doc.unidade_origem.nome}.', 'success')
+    return redirect(destino)
 
 
 # ──────────────────────────────────────────────
@@ -1010,6 +1113,42 @@ def api_equipamentos_unidade(unidade_id):
         'sala': e.sala.nome if e.sala else '',
         'status': e.status_label,
     } for e in equips])
+
+
+@transferencias_bp.route('/api/veiculos-unidade/<int:unidade_id>')
+@login_required
+def api_veiculos_unidade(unidade_id):
+    if not current_user.pode('ver_transferencias'):
+        abort(403)
+    ids_unidades = _unidades_do_usuario()
+    if (
+        not _pode_escolher_qualquer_unidade()
+        and ids_unidades is not None
+        and unidade_id not in ids_unidades
+        and not current_user.pode('ver_todas_unidades')
+    ):
+        abort(403)
+    veiculos = Veiculo.query.filter_by(unidade_id=unidade_id, ativo=True).order_by(Veiculo.prefixo).all()
+    ids = [v.id for v in veiculos]
+    pendentes = reservas.veiculos_em_termo_pendente(ids)
+    emprestados = reservas.emprestimos_por_veiculo(ids)
+
+    def _bloqueio(v):
+        if v.id in pendentes:
+            return 'Já está em outro termo aguardando aceite'
+        doc = emprestados.get(v.id)
+        if doc:
+            ate = f' até {doc.devolucao_prevista.strftime("%d/%m")}' if doc.devolucao_prevista else ''
+            return f'Emprestado para {doc.unidade_destino.nome}{ate}'
+        return ''
+
+    return jsonify([{
+        'id': v.id,
+        'rotulo': v.rotulo,
+        'descricao': f'Veículo {v.marca_modelo or v.categoria or ""}'.strip(),
+        'identificacao': f'Prefixo {v.prefixo_exibicao} · Placa {v.placa_exibicao}',
+        'bloqueio': _bloqueio(v),
+    } for v in veiculos])
 
 
 # ──────────────────────────────────────────────

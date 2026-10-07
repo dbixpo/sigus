@@ -48,6 +48,9 @@
                     <tr><th class="text-muted small">Destino</th><td class="small fw-semibold text-primary">{{ doc.unidade_destino.nome }}</td></tr>
                     <tr><th class="text-muted small">Criado por</th><td class="small">{{ doc.criador.nome if doc.criador else '—' }}</td></tr>
                     <tr><th class="text-muted small">Data</th><td class="small">{{ doc.criado_em | br_datetime if doc.criado_em else '—' }}</td></tr>
+                    {% if doc.devolucao_prevista %}
+                    <tr><th class="text-muted small">Devolução prevista</th><td class="small">{{ doc.devolucao_prevista.strftime('%d/%m/%Y') }}</td></tr>
+                    {% endif %}
                     {% if doc.observacao %}
                     <tr><th class="text-muted small">Observação</th><td class="small">{{ doc.observacao }}</td></tr>
                     {% endif %}
@@ -66,6 +69,19 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="acao" value="aceitar">
 
+                    {% set n_veiculos = doc.itens_veiculo() | length %}
+                    {% if n_veiculos %}
+                    <div class="alert alert-info alert-permanent small py-2">
+                        <i class="fas fa-car me-1"></i>
+                        {% if doc.tipo == 'transferencia' %}
+                        {{ 'O veículo passa' if n_veiculos == 1 else 'Os veículos passam' }} a ser de <strong>{{ doc.unidade_destino.nome }}</strong>, com reservas e RDV por lá.
+                        {% else %}
+                        {{ 'O veículo continua' if n_veiculos == 1 else 'Os veículos continuam' }} de {{ doc.unidade_origem.nome }}, mas {{ 'fica' if n_veiculos == 1 else 'ficam' }} na agenda de <strong>{{ doc.unidade_destino.nome }}</strong>{% if doc.devolucao_prevista %} até {{ doc.devolucao_prevista.strftime('%d/%m/%Y') }}{% endif %}. Na volta, clique em "Devolver" no termo ou na página do veículo.
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if precisa_sala %}
                     <div class="mb-3">
                         <label class="form-label fw-semibold">
                             Alocar em qual sala? <span class="text-danger">*</span>
@@ -83,6 +99,7 @@
                             {% endif %}
                         </div>
                     </div>
+                    {% endif %}
 
                     <div class="mb-3">
                         <label class="form-label">Observação (opcional)</label>
@@ -90,7 +107,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-check-circle me-1"></i>Aceitar e Alocar
+                        <i class="fas fa-check-circle me-1"></i>{{ 'Aceitar e Alocar' if precisa_sala else 'Aceitar' }}
                     </button>
                 </form>
             </div>

@@ -11,6 +11,7 @@ from app import db
 from app.models.agenda import AgendaEvento
 from app.models.sala import Sala
 from app.models.tipo_sala import TipoSala
+from app.models.transferencia import DocumentoTransferencia, ItemDocumentoTransferencia
 from app.models.unidade import Unidade
 from app.models.veiculo import Veiculo
 
@@ -165,12 +166,58 @@ def salas_livres(unidade_base, ini, fim, ids_proprias, ignorar_id=None, ids_visi
 
 # ── Veículos ───────────────────────────────────────────────────────────
 
+def _emprestimos_ativos():
+    """(veiculo_id, DocumentoTransferencia) dos empréstimos aceitos e ainda não devolvidos."""
+    return (db.session.query(ItemDocumentoTransferencia.veiculo_id, DocumentoTransferencia)
+            .join(DocumentoTransferencia, ItemDocumentoTransferencia.documento_id == DocumentoTransferencia.id)
+            .filter(ItemDocumentoTransferencia.veiculo_id.isnot(None),
+                    DocumentoTransferencia.tipo == 'emprestimo',
+                    DocumentoTransferencia.status == 'aceita',
+                    DocumentoTransferencia.devolvido_em.is_(None)))
+
+
+def emprestimos_por_veiculo(ids_veiculos):
+    """{veiculo_id: DocumentoTransferencia} do empréstimo em andamento."""
+    ids = list(ids_veiculos)
+    if not ids:
+        return {}
+    return dict(_emprestimos_ativos().filter(ItemDocumentoTransferencia.veiculo_id.in_(ids)).all())
+
+
+def emprestimo_ativo(veiculo_id):
+    return emprestimos_por_veiculo([veiculo_id]).get(veiculo_id)
+
+
+def veiculos_em_termo_pendente(ids_veiculos):
+    ids = list(ids_veiculos)
+    if not ids:
+        return set()
+    linhas = (db.session.query(ItemDocumentoTransferencia.veiculo_id)
+              .join(DocumentoTransferencia, ItemDocumentoTransferencia.documento_id == DocumentoTransferencia.id)
+              .filter(ItemDocumentoTransferencia.veiculo_id.in_(ids), DocumentoTransferencia.status == 'pendente'))
+    return {vid for (vid,) in linhas}
+
+
 def query_veiculos(ids_unidades):
+    """Veículos ativos das unidades, mais os que elas pegaram emprestado."""
     if not ids_unidades:
         return Veiculo.query.filter(db.false())
+    ids = list(ids_unidades)
+    emprestados = (_emprestimos_ativos()
+                   .filter(DocumentoTransferencia.unidade_destino_id.in_(ids))
+                   .with_entities(ItemDocumentoTransferencia.veiculo_id))
     return (Veiculo.query
             .options(joinedload(Veiculo.unidade))
-            .filter(Veiculo.ativo.is_(True), Veiculo.unidade_id.in_(list(ids_unidades))))
+            .filter(Veiculo.ativo.is_(True),
+                    or_(Veiculo.unidade_id.in_(ids), Veiculo.id.in_(emprestados))))
+
+
+def unidade_do_uso(veiculo, ids_unidades):
+    """Unidade em nome de quem o carro é usado: a que pegou emprestado, se for do usuário."""
+    doc = emprestimo_ativo(veiculo.id)
+    if doc and (ids_unidades is None or doc.unidade_destino_id in ids_unidades):
+        return doc.unidade_destino_id
+    return veiculo.unidade_id
 
 
 def km_atual(veiculo):

@@ -65,11 +65,16 @@ class DocumentoTransferencia(db.Model):
     observacao_aceite   = db.Column(db.Text)
     criado_em           = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     resolvido_em        = db.Column(db.DateTime)
+    # Empréstimo de veículo: o carro segue na unidade dona e volta com "Devolver".
+    devolucao_prevista  = db.Column(db.Date)
+    devolvido_em        = db.Column(db.DateTime)
+    devolvido_por       = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
 
     unidade_origem   = db.relationship('Unidade', foreign_keys=[unidade_origem_id])
     unidade_destino  = db.relationship('Unidade', foreign_keys=[unidade_destino_id])
     criador          = db.relationship('Usuario', foreign_keys=[criado_por])
     aceitador        = db.relationship('Usuario', foreign_keys=[aceito_por])
+    devolvedor       = db.relationship('Usuario', foreign_keys=[devolvido_por])
     sala_destino     = db.relationship('Sala', foreign_keys=[sala_destino_id])
     itens            = db.relationship('ItemDocumentoTransferencia', back_populates='documento',
                                        lazy='dynamic', cascade='all, delete-orphan')
@@ -87,6 +92,14 @@ class DocumentoTransferencia(db.Model):
         if self.tipo == 'transferencia' and self.observacao and 'Lojinha' in (self.observacao or ''):
             return TIPO_TITULO_IMPRESSAO['doacao']
         return TIPO_TITULO_IMPRESSAO.get(self.tipo, f'TERMO DE {self.tipo_label.upper()} DE EQUIPAMENTO')
+
+    def itens_veiculo(self):
+        return [i for i in self.itens.all() if i.veiculo_id]
+
+    @property
+    def emprestimo_veiculo_ativo(self):
+        return (self.tipo == 'emprestimo' and self.status == 'aceita' and not self.devolvido_em
+                and bool(self.itens_veiculo()))
 
     @property
     def status_label(self):
@@ -107,6 +120,7 @@ class ItemDocumentoTransferencia(db.Model):
     id                = db.Column(db.Integer, primary_key=True)
     documento_id      = db.Column(db.Integer, db.ForeignKey('documentos_transferencia.id', ondelete='CASCADE'), nullable=False)
     equipamento_id    = db.Column(db.Integer, db.ForeignKey('equipamentos.id', ondelete='SET NULL'))  # null = item manual
+    veiculo_id        = db.Column(db.Integer, db.ForeignKey('veiculos.id', ondelete='SET NULL'))
     quantidade        = db.Column(db.Integer, nullable=False, default=1)
     descricao         = db.Column(db.String(500))  # para itens manuais ou exibição
     classificacao     = db.Column(db.String(1), nullable=False)  # A | B
@@ -116,6 +130,7 @@ class ItemDocumentoTransferencia(db.Model):
     documento   = db.relationship('DocumentoTransferencia', back_populates='itens')
     equipamento = db.relationship('Equipamento', foreign_keys=[equipamento_id],
                                    back_populates='itens_documento_transferencia')
+    veiculo     = db.relationship('Veiculo', foreign_keys=[veiculo_id])
 
     @property
     def classificacao_label(self):
@@ -123,12 +138,16 @@ class ItemDocumentoTransferencia(db.Model):
 
     def descricao_exibicao(self):
         """Retorna a descrição para exibição (do equipamento ou campo manual)."""
+        if self.veiculo:
+            return f'Veículo {self.veiculo.marca_modelo or self.veiculo.categoria or ""}'.strip()
         if self.equipamento:
             return self.equipamento.nome_display or self.equipamento.tipo_equipamento.nome if self.equipamento.tipo_equipamento else 'Equipamento'
         return self.descricao or '—'
 
     def numero_patrimonio_ou_serie(self):
         """Retorna nº patrimônio ou nº série conforme disponível."""
+        if self.veiculo:
+            return f'Prefixo {self.veiculo.prefixo_exibicao} · Placa {self.veiculo.placa_exibicao}'
         if self.equipamento:
             return self.equipamento.numero_patrimonio or self.equipamento.numero_serie
         return self.numero_patrimonio or self.numero_serie

@@ -27,8 +27,8 @@ SECOES = [
     ('OP_Empresas',    'Empresas',        'building', 'OPERAÇÕES'),
     # GESTÃO (seção pai)
     ('GESTÃO',         'GESTÃO',          'clipboard-check', None),
-    ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
     ('Agenda',         'Agenda',          'calendar-event', 'GESTÃO'),
+    ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
     ('SegurancaPaciente', 'Segurança do Paciente', 'heart-pulse', 'GESTÃO'),
     ('Relatórios',     'Relatórios',      'bar-chart-line', 'GESTÃO'),
     # OUTROS (seção pai)

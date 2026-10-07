@@ -289,6 +289,23 @@
                             <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}{% if u.id == current_user.id %} (você){% endif %}</option>
                             {% endfor %}
                         </select>
+                        {% if unidades_externas %}
+                        <div class="form-check form-switch mt-2 mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" name="condutor_externo" id="campoCondutorExterno" value="1">
+                            <label class="form-check-label small" for="campoCondutorExterno">Pessoa de outra unidade</label>
+                        </div>
+                        <div class="d-none mt-2" id="blocoCondutorExterno">
+                            <select name="condutor_unidade_id" id="campoCondutorUnidade" aria-label="Unidade de quem vai usar" placeholder="Unidade de quem vai usar…">
+                                <option value="">Unidade de quem vai usar…</option>
+                                {% for u in unidades_externas %}
+                                <option value="{{ u.id }}">{{ u.nome }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="condutor_externo_id" id="campoCondutorPessoa" class="form-select form-select-sm mt-2" aria-label="Quem vai usar" disabled>
+                                <option value="">Escolha a unidade primeiro</option>
+                            </select>
+                        </div>
+                        {% endif %}
                         <div class="ag-part-dica"><i class="fas fa-user-pen me-1"></i>Quem vai usar o carro. A reserva fica registrada em seu nome como quem agendou.</div>
                     </div>
                 </div>
@@ -892,6 +909,54 @@
         }, 250);
     }
     if (campoVeiculo) campoVeiculo.addEventListener('change', checarVeiculo);
+
+    /* ── Quem vai usar: pessoa de outra unidade ─────────────── */
+    const chkExterno = byId('campoCondutorExterno');
+    const selExtUnidade = byId('campoCondutorUnidade');
+    const selExtPessoa = byId('campoCondutorPessoa');
+    const pessoasUnidadeUrl = {{ url_for('agenda.pessoas_unidade', unidade_id=0) | tojson }}.replace(/0$/, '');
+    let tsExtUnidade = null;
+    if (selExtUnidade && window.TomSelect) {
+        tsExtUnidade = new TomSelect(selExtUnidade, { allowEmptyOption: true, maxOptions: null });
+    }
+    function opcoesPessoa(texto) {
+        selExtPessoa.innerHTML = '';
+        selExtPessoa.add(new Option(texto, ''));
+        selExtPessoa.disabled = true;
+    }
+    function carregarPessoasUnidade(uid, selecionar) {
+        if (!selExtPessoa) return;
+        if (!uid) { opcoesPessoa('Escolha a unidade primeiro'); return; }
+        opcoesPessoa('Carregando…');
+        fetch(pessoasUnidadeUrl + uid, { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (lista) {
+                if (String(selExtUnidade.value) !== String(uid)) return;
+                opcoesPessoa(lista.length ? 'Quem vai usar…' : 'Ninguém cadastrado nessa unidade');
+                lista.forEach(function (p) { selExtPessoa.add(new Option(p.nome, String(p.id))); });
+                selExtPessoa.disabled = !lista.length;
+                if (selecionar) selExtPessoa.value = String(selecionar);
+            })
+            .catch(function () { opcoesPessoa('Falha ao carregar as pessoas'); });
+    }
+    function setCondutorExterno(ligado, unidadeId, pessoaId) {
+        if (!chkExterno) return;
+        chkExterno.checked = !!ligado;
+        byId('blocoCondutorExterno').classList.toggle('d-none', !ligado);
+        byId('campoCondutor').classList.toggle('d-none', !!ligado);
+        const uid = ligado && unidadeId ? String(unidadeId) : '';
+        if (tsExtUnidade) tsExtUnidade.setValue(uid, true);
+        else selExtUnidade.value = uid;
+        carregarPessoasUnidade(uid, pessoaId);
+    }
+    if (chkExterno) {
+        chkExterno.addEventListener('change', function () {
+            setCondutorExterno(chkExterno.checked, '', '');
+            if (chkExterno.checked && tsExtUnidade) tsExtUnidade.focus();
+        });
+        selExtUnidade.addEventListener('change', function () { carregarPessoasUnidade(selExtUnidade.value, ''); });
+    }
+
     function aoMudarHorarioRecursos() {
         byId('blocoSalas').innerHTML = '';
         checarVeiculo();
@@ -969,6 +1034,7 @@
         setSala('', '');
         byId('blocoSalas').innerHTML = '';
         if (byId('veiculoStatus')) byId('veiculoStatus').innerHTML = '';
+        setCondutorExterno(false);
         const f = unidadeFiltro();
         if (f) byId('campoUnidade').value = f;
         setParticipantes([euId]);
@@ -1040,7 +1106,9 @@
         if (props.tipo === 'veiculo' && campoVeiculo) {
             campoVeiculo.value = props.veiculo_id ? String(props.veiculo_id) : '';
             const selCondutor = byId('campoCondutor');
-            if (props.condutor_id && !selCondutor.querySelector('option[value="' + props.condutor_id + '"]')) {
+            if (props.condutor_unidade_id && chkExterno) {
+                setCondutorExterno(true, props.condutor_unidade_id, props.condutor_id);
+            } else if (props.condutor_id && !selCondutor.querySelector('option[value="' + props.condutor_id + '"]')) {
                 const quem = (props.pessoas || [])[0];
                 selCondutor.add(new Option(quem ? quem.nome : 'Condutor', String(props.condutor_id)));
             }
@@ -1090,7 +1158,8 @@
         linha('rowPessoas', pessoas.length > 0);
         byId('viewPessoasLabel').textContent = props.pessoas_label || 'Pessoas';
         byId('viewPessoas').innerHTML = pessoas.map(function (p) {
-            return '<div class="agenda-pessoa-item">' + faceHtml(p) + '<span>' + escapeHtml(p.nome || p.primeiro || '') + '</span></div>';
+            const setor = p.setor ? ' <small class="text-muted">· ' + escapeHtml(p.setor) + '</small>' : '';
+            return '<div class="agenda-pessoa-item">' + faceHtml(p) + '<span>' + escapeHtml(p.nome || p.primeiro || '') + setor + '</span></div>';
         }).join('');
         linha('rowMotivo', !!props.motivo_label);
         byId('viewMotivo').textContent = props.motivo_label || '';

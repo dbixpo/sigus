@@ -311,6 +311,9 @@ a { color: #0d6efd; text-decoration: none; }
             </tbody>
         </table>
         <p class="legenda-class"><strong>A</strong> — Inservíveis ao setor, plenas condições de uso. <strong>B</strong> — Inservíveis ao setor, condições de uso com necessidade de reparos.</p>
+        {% if doc.tipo == 'emprestimo' and doc.devolucao_prevista %}
+        <p class="legenda-class"><strong>Devolução prevista:</strong> {{ doc.devolucao_prevista.strftime('%d/%m/%Y') }}{% if doc.devolvido_em %} — <strong>Devolvido em</strong> {{ doc.devolvido_em | br_datetime }}{% endif %}</p>
+        {% endif %}
         <p class="data-sorocaba">{{ identidade.municipio }}, {{ (now or doc.criado_em) | br_date_extenso }}</p>
     </div>
 

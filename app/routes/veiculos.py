@@ -28,6 +28,15 @@ def _acesso_unidade(unidade_id):
 def _veiculo_ou_404(id):
     veiculo = Veiculo.query.get_or_404(id)
     if not _acesso_unidade(veiculo.unidade_id):
+        doc = reservas.emprestimo_ativo(veiculo.id)
+        if not doc or not _acesso_unidade(doc.unidade_destino_id):
+            abort(403)
+    return veiculo
+
+
+def _veiculo_dono_ou_403(id):
+    veiculo = Veiculo.query.get_or_404(id)
+    if not _acesso_unidade(veiculo.unidade_id):
         abort(403)
     return veiculo
 
@@ -159,7 +168,7 @@ def novo(unidade_id):
 def editar(id):
     if not current_user.pode('editar_veiculo'):
         abort(403)
-    veiculo = _veiculo_ou_404(id)
+    veiculo = _veiculo_dono_ou_403(id)
     if request.method == 'POST':
         erro = _preencher(veiculo, request.form)
         if erro:
@@ -176,7 +185,7 @@ def editar(id):
 def alternar_ativo(id):
     if not current_user.pode('editar_veiculo'):
         abort(403)
-    veiculo = _veiculo_ou_404(id)
+    veiculo = _veiculo_dono_ou_403(id)
     if not veiculo.ativo:
         erro = _duplicado(veiculo, veiculo.placa, veiculo.prefixo, veiculo.alugado)
         if erro:
@@ -199,8 +208,12 @@ def usos(id):
     agora = agora_brasilia()
     situacao = reservas.situacao_veiculos([veiculo], agora)[veiculo.id]
     anterior = date(mes.year - (mes.month == 1), (mes.month - 2) % 12 + 1, 1)
+    emprestimo = reservas.emprestimo_ativo(veiculo.id)
     return render_template(
         'veiculos/usos.html',
+        emprestimo=emprestimo,
+        pode_devolver=bool(emprestimo) and current_user.pode('ver_transferencias') and (
+            _acesso_unidade(emprestimo.unidade_origem_id) or _acesso_unidade(emprestimo.unidade_destino_id)),
         veiculo=veiculo, rotulo=rotulo, usos=lista, mes=mes,
         mes_nome=f'{MESES[mes.month - 1]}/{mes.year}',
         mes_anterior=anterior.strftime('%Y-%m'), mes_seguinte=_proximo_mes(mes).strftime('%Y-%m'),
@@ -209,7 +222,9 @@ def usos(id):
         finalidade=lambda ev: _finalidade(ev, rotulo),
         agora=agora,
         pode_reservar=veiculo.ativo and current_user.pode('adicionar_agenda'),
-        pode_editar=current_user.pode('editar_veiculo'),
+        unidade_reserva_id=(emprestimo.unidade_destino_id
+                            if emprestimo and not _acesso_unidade(veiculo.unidade_id) else veiculo.unidade_id),
+        pode_editar=current_user.pode('editar_veiculo') and _acesso_unidade(veiculo.unidade_id),
     )
 
 
@@ -257,7 +272,7 @@ def _linha_rdv(ev, unidade):
         'dia': dia,
         'condutor': condutor.nome.upper() if condutor else '',
         'matricula': _matricula(condutor),
-        'setor': unidade.nome,
+        'setor': (ev.condutor_unidade or ev.unidade or unidade).nome,
         'km_saida': ev.km_saida,
         'hora_saida': '' if ev.dia_inteiro else ini.strftime('%H:%M'),
         'destino': (ev.local or _finalidade(ev, ev.veiculo.rotulo if ev.veiculo else '') or '').upper(),
