@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Veículos da unidade: cadastro (sala Garagem automática), usos do mês e RDV."""
+"""Veículos da unidade: cadastro próprio (fora dos equipamentos), usos do mês e RDV."""
 import io
 from datetime import date, datetime
 
@@ -11,8 +11,9 @@ from openpyxl.utils import get_column_letter
 
 from app import db
 from app.models.agenda import AgendaEvento
-from app.models.equipamento import Equipamento
 from app.models.unidade import Unidade
+from app.models.veiculo import (CATEGORIAS_VEICULO, COMBUSTIVEIS_VEICULO, ModeloVeiculo, Veiculo,
+                                normalizar_placa, normalizar_prefixo)
 from app.services import reservas
 from app.utils import agora_brasilia, agora_local
 
@@ -29,10 +30,8 @@ def _acesso_unidade(unidade_id):
 
 
 def _veiculo_ou_404(id):
-    veiculo = Equipamento.query.get_or_404(id)
-    if not reservas.eh_veiculo(veiculo) or not veiculo.ativo:
-        abort(404)
-    if not _acesso_unidade(veiculo.sala.unidade_id):
+    veiculo = Veiculo.query.get_or_404(id)
+    if not _acesso_unidade(veiculo.unidade_id):
         abort(403)
     return veiculo
 
@@ -65,21 +64,131 @@ def _finalidade(ev, rotulo):
     return '' if titulo.startswith(rotulo) else titulo
 
 
-@veiculos_bp.route('/novo/<int:unidade_id>')
+def _inteiro(texto):
+    digitos = ''.join(ch for ch in (texto or '') if ch.isdigit())
+    return int(digitos) if digitos else None
+
+
+def _data(texto):
+    try:
+        return datetime.strptime((texto or '').strip(), '%Y-%m-%d').date()
+    except ValueError:
+        return None
+
+
+def _duplicado(veiculo, placa, prefixo, alugado):
+    """Placa e prefixo não se repetem entre veículos ativos (383 e AL-383 são carros diferentes)."""
+    outros = Veiculo.query.filter(Veiculo.ativo.is_(True), Veiculo.id != (veiculo.id or 0))
+    mesmo = outros.filter(Veiculo.placa == placa).first()
+    if mesmo:
+        return f'Já existe um veículo ativo com a placa {mesmo.placa_exibicao} ({mesmo.unidade.nome}).'
+    mesmo = outros.filter(Veiculo.prefixo == prefixo, Veiculo.alugado.is_(alugado)).first()
+    if mesmo:
+        return f'O prefixo {mesmo.prefixo_exibicao} já é do veículo {mesmo.placa_exibicao} ({mesmo.unidade.nome}).'
+    return None
+
+
+def _preencher(veiculo, form):
+    """Copia o formulário para o veículo. Devolve a mensagem de erro, se houver."""
+    prefixo, digitou_al = normalizar_prefixo(form.get('prefixo'))
+    placa = normalizar_placa(form.get('placa'))
+    if not prefixo:
+        return 'Informe o prefixo do veículo.'
+    if len(placa) != 7:
+        return 'Informe a placa com 7 caracteres (ex.: ABC1D23 ou ABC1234).'
+    categoria = form.get('categoria') or ''
+    if categoria not in CATEGORIAS_VEICULO:
+        return 'Escolha a categoria do veículo.'
+    alugado = digitou_al or form.get('alugado') == 'on'
+    erro = _duplicado(veiculo, placa, prefixo, alugado)
+    if erro:
+        return erro
+
+    combustivel = form.get('combustivel') or ''
+    veiculo.prefixo = prefixo
+    veiculo.alugado = alugado
+    veiculo.locadora = ((form.get('locadora') or '').strip()[:150] or None) if alugado else None
+    veiculo.placa = placa
+    veiculo.marca = (form.get('marca') or '').strip()[:60] or None
+    veiculo.modelo = (form.get('modelo') or '').strip()[:80] or None
+    veiculo.categoria = categoria
+    veiculo.ano = (form.get('ano') or '').strip()[:9] or None
+    veiculo.cor = (form.get('cor') or '').strip()[:30] or None
+    veiculo.combustivel = combustivel if combustivel in COMBUSTIVEIS_VEICULO else None
+    veiculo.lotacao = _inteiro(form.get('lotacao'))
+    veiculo.renavam = ''.join(ch for ch in (form.get('renavam') or '') if ch.isdigit())[:20] or None
+    veiculo.chassi = normalizar_placa(form.get('chassi'))[:30] or None
+    veiculo.km_cadastro = _inteiro(form.get('km_cadastro'))
+    veiculo.licenciamento_vencimento = _data(form.get('licenciamento_vencimento'))
+    veiculo.observacoes = (form.get('observacoes') or '').strip() or None
+    return None
+
+
+def _render_form(unidade, veiculo):
+    modelos = ModeloVeiculo.query.order_by(ModeloVeiculo.marca, ModeloVeiculo.nome).all()
+    return render_template(
+        'veiculos/form.html', unidade=unidade, veiculo=veiculo, editando=veiculo.id is not None,
+        dados_form=request.form if request.method == 'POST' else None,
+        categorias=CATEGORIAS_VEICULO, combustiveis=COMBUSTIVEIS_VEICULO,
+        marcas=sorted({m.marca for m in modelos}),
+        modelos=[{'marca': m.marca, 'nome': m.nome, 'categoria': m.categoria} for m in modelos],
+    )
+
+
+@veiculos_bp.route('/novo/<int:unidade_id>', methods=['GET', 'POST'])
 @login_required
 def novo(unidade_id):
-    if not current_user.pode('cadastrar_equipamento'):
+    if not current_user.pode('cadastrar_veiculo'):
         abort(403)
     unidade = Unidade.query.get_or_404(unidade_id)
     if not _acesso_unidade(unidade.id):
         abort(403)
-    tipo = reservas.tipo_veiculo_padrao()
-    if not tipo:
-        flash('Cadastre um tipo de equipamento marcado como veículo em Configurações.', 'warning')
-        return redirect(url_for('unidades.detalhe', id=unidade.id))
-    sala = reservas.sala_garagem(unidade)
+    veiculo = Veiculo(unidade_id=unidade.id, criado_por=current_user.id)
+    if request.method == 'POST':
+        erro = _preencher(veiculo, request.form)
+        if erro:
+            flash(erro, 'danger')
+        else:
+            db.session.add(veiculo)
+            db.session.commit()
+            flash(f'Veículo {veiculo.prefixo_exibicao} cadastrado. Ele já pode ser reservado na agenda.', 'success')
+            return redirect(url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos'))
+    return _render_form(unidade, veiculo)
+
+
+@veiculos_bp.route('/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar(id):
+    if not current_user.pode('editar_veiculo'):
+        abort(403)
+    veiculo = _veiculo_ou_404(id)
+    if request.method == 'POST':
+        erro = _preencher(veiculo, request.form)
+        if erro:
+            flash(erro, 'danger')
+        else:
+            db.session.commit()
+            flash('Veículo atualizado.', 'success')
+            return redirect(url_for('veiculos.usos', id=veiculo.id))
+    return _render_form(veiculo.unidade, veiculo)
+
+
+@veiculos_bp.route('/<int:id>/ativo', methods=['POST'])
+@login_required
+def alternar_ativo(id):
+    if not current_user.pode('editar_veiculo'):
+        abort(403)
+    veiculo = _veiculo_ou_404(id)
+    if not veiculo.ativo:
+        erro = _duplicado(veiculo, veiculo.placa, veiculo.prefixo, veiculo.alugado)
+        if erro:
+            flash(f'Não deu para reativar: {erro}', 'danger')
+            return redirect(url_for('veiculos.usos', id=veiculo.id))
+    veiculo.ativo = not veiculo.ativo
     db.session.commit()
-    return redirect(url_for('equipamentos.novo', sala_id=sala.id, tipo=tipo.id))
+    flash('Veículo reativado.' if veiculo.ativo else
+          'Veículo desativado: sai da lista da unidade e da agenda, mas o histórico de usos continua aqui.', 'success')
+    return redirect(url_for('veiculos.usos', id=veiculo.id))
 
 
 @veiculos_bp.route('/<int:id>')
@@ -87,23 +196,22 @@ def novo(unidade_id):
 def usos(id):
     veiculo = _veiculo_ou_404(id)
     mes = _mes_param()
-    campos = reservas.campos_veiculos([veiculo.id]).get(veiculo.id, {})
-    rotulo = reservas.rotulo_veiculo(veiculo, campos)
+    rotulo = veiculo.rotulo
     lista = _usos_do_mes(veiculo, mes)
     agora = agora_brasilia()
     situacao = reservas.situacao_veiculos([veiculo], agora)[veiculo.id]
     anterior = date(mes.year - (mes.month == 1), (mes.month - 2) % 12 + 1, 1)
     return render_template(
         'veiculos/usos.html',
-        veiculo=veiculo, campos=campos, rotulo=rotulo, prefixo=reservas.prefixo_veiculo(campos),
-        usos=lista, mes=mes,
+        veiculo=veiculo, rotulo=rotulo, usos=lista, mes=mes,
         mes_nome=f'{MESES[mes.month - 1]}/{mes.year}',
         mes_anterior=anterior.strftime('%Y-%m'), mes_seguinte=_proximo_mes(mes).strftime('%Y-%m'),
-        situacao=situacao, km_atual=reservas.km_atual(veiculo.id, campos),
+        situacao=situacao, km_atual=reservas.km_atual(veiculo),
         total_km=sum(ev.km_rodados or 0 for ev in lista),
         finalidade=lambda ev: _finalidade(ev, rotulo),
         agora=agora,
-        pode_reservar=current_user.pode('adicionar_agenda'),
+        pode_reservar=veiculo.ativo and current_user.pode('adicionar_agenda'),
+        pode_editar=current_user.pode('editar_veiculo'),
     )
 
 
@@ -136,10 +244,9 @@ def rdv(id):
     """RDV do mês em Excel, já preenchido com as reservas da agenda."""
     veiculo = _veiculo_ou_404(id)
     mes = _mes_param()
-    campos = reservas.campos_veiculos([veiculo.id]).get(veiculo.id, {})
-    rotulo = reservas.rotulo_veiculo(veiculo, campos)
+    rotulo = veiculo.rotulo
     lista = _usos_do_mes(veiculo, mes)
-    unidade = veiculo.sala.unidade
+    unidade = veiculo.unidade
 
     wb = Workbook()
     ws = wb.active
@@ -170,13 +277,11 @@ def rdv(id):
     _faixa(1, 'PREFEITURA DE SOROCABA · SECRETARIA DA SAÚDE', Font(bold=True, size=11, color='FFFFFF'), escuro, 20)
     _faixa(2, 'RDV · RELATÓRIO DIÁRIO DE VEÍCULO', Font(bold=True, size=14, color='0D3B5E'), None, 24)
 
-    modelo = ' '.join(p for p in [veiculo.marca.nome if veiculo.marca else '',
-                                  veiculo.modelo.nome if veiculo.modelo else ''] if p)
     dados = [
         ('Unidade', unidade.nome, 'Mês/ano', f'{MESES[mes.month - 1]}/{mes.year}'),
-        ('Veículo', modelo or veiculo.tipo_equipamento.nome, 'Placa', campos.get('Placa', '')),
-        ('Prefixo', reservas.prefixo_veiculo(campos), 'Ano', campos.get('Ano fabricação/modelo', '')),
-        ('Categoria', campos.get('Categoria', ''), 'Combustível', campos.get('Combustível', '')),
+        ('Veículo', veiculo.marca_modelo or veiculo.categoria or '', 'Placa', veiculo.placa_exibicao),
+        ('Prefixo', veiculo.prefixo_exibicao, 'Ano', veiculo.ano or ''),
+        ('Categoria', veiculo.categoria or '', 'Combustível', veiculo.combustivel or ''),
     ]
     linha = 4
     for r1, v1, r2, v2 in dados:
@@ -255,9 +360,8 @@ def rdv(id):
     buf = io.BytesIO()
     wb.save(buf)
     buf.seek(0)
-    placa = (campos.get('Placa') or f'veiculo-{veiculo.id}').replace(' ', '')
     return send_file(
         buf, as_attachment=True,
-        download_name=f'RDV_{placa}_{mes.strftime("%Y-%m")}.xlsx',
+        download_name=f'RDV_{veiculo.prefixo_exibicao}_{veiculo.placa}_{mes.strftime("%Y-%m")}.xlsx',
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     )

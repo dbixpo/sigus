@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar veículo ' ~ veiculo.prefixo_exibicao if editando else 'Novo veículo' }}{% endblock %}
+
+{% macro valor(campo, padrao='') %}{{ dados_form.get(campo, '') if dados_form else (padrao if padrao is not none else '') }}{% endmacro %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos') }}">{{ unidade.nome }}</a></li>
+        {% if editando %}
+        <li class="breadcrumb-item"><a href="{{ url_for('veiculos.usos', id=veiculo.id) }}">{{ veiculo.prefixo_exibicao }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active">{{ 'Editar' if editando else 'Novo veículo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-car-side"></i> {{ 'Editar veículo' if editando else 'Novo veículo' }}</h1>
+</div>
+
+{% set alugado = (dados_form.get('alugado') == 'on') if dados_form else veiculo.alugado %}
+<form method="POST" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="form-section">
+                <div class="form-section-title">Identificação</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="prefixo">Prefixo <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-bold text-success {{ '' if alugado else 'd-none' }}" id="prefixoAl">AL-</span>
+                            <input type="text" name="prefixo" id="prefixo" class="form-control fw-semibold" required maxlength="20"
+                                   placeholder="Ex.: 383" value="{{ valor('prefixo', veiculo.prefixo) }}">
+                        </div>
+                        <div class="form-text">Veículo não tem patrimônio: ele é identificado pelo prefixo.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label d-block">Alugado?</label>
+                        <div class="form-check form-switch pt-1">
+                            <input class="form-check-input" type="checkbox" role="switch" name="alugado" id="alugado"
+                                   {% if alugado %}checked{% endif %}>
+                            <label class="form-check-label" for="alugado">Sim, é de locadora</label>
+                        </div>
+                        <div class="form-text">Alugado aparece como <strong>AL-</strong> + prefixo.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="placa">Placa <span class="text-danger">*</span></label>
+                        <input type="text" name="placa" id="placa" class="form-control text-uppercase fw-semibold" required
+                               maxlength="8" placeholder="ABC1D23" value="{{ valor('placa', veiculo.placa_exibicao) }}">
+                    </div>
+                    <div class="col-12 {{ '' if alugado else 'd-none' }}" id="linhaLocadora">
+                        <label class="form-label" for="locadora">Locadora / contrato</label>
+                        <input type="text" name="locadora" id="locadora" class="form-control" maxlength="150"
+                               placeholder="Ex.: Locadora X · contrato 123/2026" value="{{ valor('locadora', veiculo.locadora) }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Veículo</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="marca">Marca</label>
+                        <input type="text" name="marca" id="marca" class="form-control" list="listaMarcas" maxlength="60"
+                               placeholder="Comece a digitar…" value="{{ valor('marca', veiculo.marca) }}">
+                        <datalist id="listaMarcas">
+                            {% for m in marcas %}<option value="{{ m }}">{% endfor %}
+                        </datalist>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="modelo">Modelo</label>
+                        <input type="text" name="modelo" id="modelo" class="form-control" list="listaModelos" maxlength="80"
+                               placeholder="Ex.: Mobi, Onix, Strada…" value="{{ valor('modelo', veiculo.modelo) }}">
+                        <datalist id="listaModelos"></datalist>
+                        <div class="form-text">Sugestões dos populares; se o modelo não estiver na lista, é só digitar.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="categoria">Categoria <span class="text-danger">*</span></label>
+                        {% set cat = valor('categoria', veiculo.categoria) | trim %}
+                        <select name="categoria" id="categoria" class="form-select" required>
+                            <option value="">Selecione…</option>
+                            {% for c in categorias %}
+                            <option value="{{ c }}" {% if cat == c %}selected{% endif %}>{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="ano">Ano fab./modelo</label>
+                        <input type="text" name="ano" id="ano" class="form-control" maxlength="9" placeholder="2022/2023"
+                               value="{{ valor('ano', veiculo.ano) }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="cor">Cor</label>
+                        <input type="text" name="cor" id="cor" class="form-control" maxlength="30" placeholder="Branco"
+                               value="{{ valor('cor', veiculo.cor) }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="combustivel">Combustível</label>
+                        {% set comb = valor('combustivel', veiculo.combustivel) | trim %}
+                        <select name="combustivel" id="combustivel" class="form-select">
+                            <option value="">Selecione…</option>
+                            {% for c in combustiveis %}
+                            <option value="{{ c }}" {% if comb == c %}selected{% endif %}>{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="lotacao">Lotação (passageiros)</label>
+                        <input type="number" name="lotacao" id="lotacao" class="form-control" min="1" max="99"
+                               value="{{ valor('lotacao', veiculo.lotacao) }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Documentos e quilometragem</div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="renavam">RENAVAM</label>
+                        <input type="text" name="renavam" id="renavam" class="form-control" inputmode="numeric" maxlength="20"
+                               value="{{ valor('renavam', veiculo.renavam) }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="chassi">Chassi</label>
+                        <input type="text" name="chassi" id="chassi" class="form-control text-uppercase" maxlength="30"
+                               value="{{ valor('chassi', veiculo.chassi) }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="km_cadastro">Km no cadastro</label>
+                        <input type="text" name="km_cadastro" id="km_cadastro" class="form-control" inputmode="numeric" maxlength="9"
+                               value="{{ valor('km_cadastro', veiculo.km_cadastro) }}">
+                        <div class="form-text">Ponto de partida do km até a primeira devolução registrada na agenda.</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="licenciamento_vencimento">Licenciamento vence em</label>
+                        <input type="date" name="licenciamento_vencimento" id="licenciamento_vencimento" class="form-control"
+                               value="{{ valor('licenciamento_vencimento', veiculo.licenciamento_vencimento.isoformat() if veiculo.licenciamento_vencimento else '') }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="form-section">
+                <div class="form-section-title">Unidade</div>
+                <div class="fw-semibold"><i class="fas fa-hospital me-1 text-muted"></i>{{ unidade.nome }}</div>
+                <div class="form-text">Quem é da unidade pode reservar o veículo na agenda.</div>
+            </div>
+            <div class="form-section">
+                <div class="form-section-title">Observações</div>
+                <textarea name="observacoes" class="form-control" rows="4"
+                          placeholder="Ex.: adaptado para cadeirante, fica na garagem do subsolo…">{{ valor('observacoes', veiculo.observacoes) }}</textarea>
+            </div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check-circle me-1"></i>{{ 'Salvar alterações' if editando else 'Cadastrar veículo' }}
+                </button>
+                <a href="{{ url_for('veiculos.usos', id=veiculo.id) if editando else url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos') }}"
+                   class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const MODELOS = {{ modelos | tojson }};
+    const byId = id => document.getElementById(id);
+    const prefixo = byId('prefixo'), alugado = byId('alugado');
+    const marca = byId('marca'), modelo = byId('modelo'), categoria = byId('categoria');
+    const norm = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+
+    function ajustarAlugado() {
+        byId('prefixoAl').classList.toggle('d-none', !alugado.checked);
+        byId('linhaLocadora').classList.toggle('d-none', !alugado.checked);
+    }
+    alugado.addEventListener('change', ajustarAlugado);
+    prefixo.addEventListener('input', function () {
+        if (/^al-/i.test(this.value)) {
+            this.value = this.value.replace(/^al-\s*/i, '');
+            alugado.checked = true;
+            ajustarAlugado();
+        }
+    });
+
+    byId('placa').addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    });
+    byId('chassi').addEventListener('input', function () {
+        this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    });
+
+    function listarModelos() {
+        const m = norm(marca.value);
+        const lista = MODELOS.filter(x => !m || norm(x.marca) === m);
+        byId('listaModelos').innerHTML = lista
+            .map(x => `<option value="${x.nome}">${m ? '' : x.marca}</option>`).join('');
+    }
+    function aoEscolherModelo() {
+        const item = MODELOS.find(x => norm(x.nome) === norm(modelo.value)
+            && (!marca.value || norm(x.marca) === norm(marca.value)));
+        if (!item) return;
+        if (!marca.value) { marca.value = item.marca; listarModelos(); }
+        if (!categoria.value && item.categoria) categoria.value = item.categoria;
+    }
+    marca.addEventListener('input', listarModelos);
+    modelo.addEventListener('change', aoEscolherModelo);
+    listarModelos();
+})();
+</script>
+{% endblock %}

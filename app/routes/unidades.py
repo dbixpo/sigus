@@ -198,16 +198,14 @@ def detalhe(id):
 
     from app.services import reservas
     from app.utils import agora_brasilia
-    veiculos = reservas.query_veiculos([id]).order_by(Equipamento.id).all()
-    campos_veiculos = reservas.campos_veiculos([v.id for v in veiculos])
+    from app.models.veiculo import Veiculo
+    veiculos = reservas.query_veiculos([id]).order_by(Veiculo.prefixo).all()
     agora_veiculos = agora_brasilia()
+    situacao_veiculos = reservas.situacao_veiculos(veiculos, agora_veiculos)
     veiculos_info = [{
         'veiculo': v,
-        'campos': campos_veiculos.get(v.id, {}),
-        'rotulo': reservas.rotulo_veiculo(v, campos_veiculos.get(v.id, {})),
-        'prefixo': reservas.prefixo_veiculo(campos_veiculos.get(v.id, {})),
-        'km_atual': reservas.km_atual(v.id, campos_veiculos.get(v.id, {})),
-        **reservas.situacao_veiculos([v], agora_veiculos)[v.id],
+        'km_atual': reservas.km_atual(v),
+        **situacao_veiculos[v.id],
     } for v in veiculos]
 
     # Solicitações de vínculo pendentes e histórico

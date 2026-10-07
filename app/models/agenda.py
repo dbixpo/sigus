@@ -36,9 +36,9 @@ class AgendaEvento(db.Model):
     visibilidade = db.Column(db.String(20), nullable=False, default=VISIBILIDADE_UNIDADE)
     tipo = db.Column(db.String(20), nullable=False, default=TIPO_EVENTO)
     motivo = db.Column(db.String(20))
-    # Recursos reservados: uma sala reservável e/ou um veículo (equipamento do tipo veículo).
+    # Recursos reservados: uma sala reservável e/ou um veículo da unidade.
     sala_id = db.Column(db.Integer, db.ForeignKey('salas.id', ondelete='SET NULL'))
-    veiculo_id = db.Column(db.Integer, db.ForeignKey('equipamentos.id', ondelete='SET NULL'))
+    veiculo_id = db.Column(db.Integer, db.ForeignKey('veiculos.id', ondelete='SET NULL'))
     condutor_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     km_saida = db.Column(db.Integer)
     km_chegada = db.Column(db.Integer)
@@ -50,7 +50,7 @@ class AgendaEvento(db.Model):
     unidade = db.relationship('Unidade', foreign_keys=[unidade_id])
     criador = db.relationship('Usuario', foreign_keys=[criado_por])
     sala = db.relationship('Sala', foreign_keys=[sala_id])
-    veiculo = db.relationship('Equipamento', foreign_keys=[veiculo_id])
+    veiculo = db.relationship('Veiculo', foreign_keys=[veiculo_id])
     condutor = db.relationship('Usuario', foreign_keys=[condutor_id])
     participantes = db.relationship(
         'Usuario',

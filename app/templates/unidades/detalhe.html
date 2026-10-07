@@ -89,7 +89,7 @@
             <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
         </button>
     </li>
-    {% if veiculos_info or current_user.pode('cadastrar_equipamento') %}
+    {% if veiculos_info or current_user.pode('cadastrar_veiculo') %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-veiculos" type="button">
             <i class="fas fa-car me-1"></i>Veículos
@@ -486,7 +486,7 @@
     <!-- ══════════════════════════════════════════════
          ABA VEÍCULOS
     ══════════════════════════════════════════════ -->
-    {% if veiculos_info or current_user.pode('cadastrar_equipamento') %}
+    {% if veiculos_info or current_user.pode('cadastrar_veiculo') %}
     <div class="tab-pane fade" id="tab-veiculos">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
@@ -497,7 +497,7 @@
                         <i class="fas fa-calendar-alt me-1"></i>Ver na agenda
                     </a>
                     {% endif %}
-                    {% if current_user.pode('cadastrar_equipamento') %}
+                    {% if current_user.pode('cadastrar_veiculo') %}
                     <a href="{{ url_for('veiculos.novo', unidade_id=unidade.id) }}" class="btn btn-sm btn-primary">
                         <i class="fas fa-plus-circle me-1"></i>Cadastrar veículo
                     </a>
@@ -509,22 +509,22 @@
                 <div class="row g-3">
                     {% for info in veiculos_info %}
                     {% set v = info.veiculo %}
-                    {% set c = info.campos %}
                     <div class="col-md-6 col-xl-4">
                         <div class="veic-card h-100">
                             <div class="d-flex align-items-start gap-3">
-                                <div class="veic-ico"><i class="fas fa-car-side"></i></div>
+                                <div class="veic-ico"><i class="fas {{ 'fa-motorcycle' if v.categoria == 'Motocicleta' else 'fa-car-side' }}"></i></div>
                                 <div class="flex-grow-1 min-w-0">
                                     <div class="veic-ids">
-                                        {% if info.prefixo %}<span class="veic-prefixo{{ ' is-alugado' if info.prefixo.startswith('AL-') }}" title="Prefixo">{{ info.prefixo }}</span>{% endif %}
-                                        <span class="veic-placa">{{ c.get('Placa') or 'Sem placa' }}</span>
+                                        <span class="veic-prefixo{{ ' is-alugado' if v.alugado }}" title="Prefixo">{{ v.prefixo_exibicao }}</span>
+                                        <span class="veic-placa">{{ v.placa_exibicao }}</span>
                                     </div>
-                                    <div class="veic-modelo">
-                                        {{ (v.marca.nome ~ ' ' if v.marca else '') ~ (v.modelo.nome if v.modelo else '') or v.tipo_equipamento.nome }}
-                                    </div>
+                                    <div class="veic-modelo">{{ v.marca_modelo or v.categoria }}</div>
                                     <div class="small text-muted">
-                                        {{ [c.get('Categoria'), c.get('Ano fabricação/modelo'), c.get('Cor'), c.get('Combustível')] | select | join(' · ') }}
+                                        {{ [v.categoria if v.marca_modelo else None, v.ano, v.cor, v.combustivel] | select | join(' · ') }}
                                     </div>
+                                    {% if v.alugado and v.locadora %}
+                                    <div class="small text-muted"><i class="fas fa-file-contract me-1"></i>{{ v.locadora }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -571,9 +571,11 @@
                                 <a href="{{ url_for('veiculos.rdv', id=v.id, mes=mes_atual) }}" class="btn btn-sm btn-outline-success" title="Baixar o RDV do mês atual">
                                     <i class="fas fa-file-excel me-1"></i>RDV do mês
                                 </a>
-                                <a href="{{ url_for('equipamentos.detalhe', id=v.id) }}" class="btn btn-sm btn-outline-secondary" title="Ficha do veículo">
-                                    <i class="fas fa-eye"></i>
+                                {% if current_user.pode('editar_veiculo') %}
+                                <a href="{{ url_for('veiculos.editar', id=v.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar veículo">
+                                    <i class="fas fa-pen"></i>
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -583,10 +585,12 @@
                 <div class="empty-state">
                     <i class="fas fa-car"></i>
                     <h6>Nenhum veículo cadastrado nesta unidade</h6>
-                    <p class="text-muted small mb-2">Ao cadastrar o primeiro, o SIGUS cria a sala "Veículos / Garagem" sozinho.</p>
+                    <p class="text-muted small mb-2">Cadastre os carros da unidade para reservar na agenda e gerar o RDV do mês.</p>
+                    {% if current_user.pode('cadastrar_veiculo') %}
                     <a href="{{ url_for('veiculos.novo', unidade_id=unidade.id) }}" class="btn btn-primary mt-1">
                         <i class="fas fa-plus-circle me-1"></i>Cadastrar veículo
                     </a>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>

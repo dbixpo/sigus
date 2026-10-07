@@ -15,9 +15,7 @@
         <i class="{{ equipamento.tipo_equipamento.icone }}"></i>
         {{ equipamento.nome_display }}
         <small class="text-muted fs-6 fw-normal">
-            {% if equipamento.eh_veiculo %}
-            {% if equipamento.prefixo %}<i class="fas fa-hashtag ms-2 me-1"></i>Prefixo {{ equipamento.prefixo }}{% endif %}
-            {% elif equipamento.numero_patrimonio %}
+            {% if equipamento.numero_patrimonio %}
             <i class="fas fa-tag ms-2 me-1"></i>{{ equipamento.numero_patrimonio }}
             {% elif equipamento.numero_serie %}
             <i class="fas fa-upc ms-2 me-1"></i>{{ equipamento.numero_serie }}
@@ -28,11 +26,6 @@
         </small>
     </h1>
     <div class="d-flex flex-wrap gap-2">
-        {% if equipamento.tipo_equipamento and equipamento.tipo_equipamento.eh_veiculo and equipamento.ativo %}
-        <a href="{{ url_for('veiculos.usos', id=equipamento.id) }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-route me-1"></i>Usos, km e RDV
-        </a>
-        {% endif %}
         {% if current_user.pode('editar_equipamento') %}
         <a href="{{ url_for('equipamentos.editar', id=equipamento.id) }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-pencil-alt me-1"></i>Editar
@@ -67,12 +60,6 @@
             <div class="card-header">Dados do Equipamento</div>
             <div class="card-body">
                 <div class="row g-3">
-                    {% if equipamento.eh_veiculo %}
-                    <div class="col-md-4">
-                        <div class="text-muted small">Prefixo</div>
-                        <div class="fw-semibold">{{ equipamento.prefixo or '—' }}</div>
-                    </div>
-                    {% else %}
                     <div class="col-md-4">
                         <div class="text-muted small">Nº Patrimônio</div>
                         <div class="fw-semibold">{{ equipamento.numero_patrimonio or '—' }}</div>
@@ -81,7 +68,6 @@
                         <div class="text-muted small">Nº de Série</div>
                         <div class="fw-semibold">{{ equipamento.numero_serie or '—' }}</div>
                     </div>
-                    {% endif %}
                     <div class="col-md-4">
                         <div class="text-muted small">Tipo</div>
                         <div class="fw-semibold">{{ equipamento.tipo_equipamento.nome }}</div>

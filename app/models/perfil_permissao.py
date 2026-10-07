@@ -13,6 +13,7 @@ SECOES = [
     ('Unidades',       'Unidades',        'hospital', 'PATRIMÔNIO'),
     ('Salas',          'Salas',           'door-open', 'PATRIMÔNIO'),
     ('Equipamentos',   'Equipamentos',    'pc-display', 'PATRIMÔNIO'),
+    ('Veiculos',       'Veículos',        'car-front', 'PATRIMÔNIO'),
     # OPERAÇÕES (seção pai)
     ('OPERAÇÕES',      'OPERAÇÕES',       'briefcase', None),
     ('OP_Chamados',    'Chamados',        'wrench-adjustable', 'OPERAÇÕES'),
@@ -64,6 +65,9 @@ ACAO_PARA_SECAO_TIPO = {
     'editar_equipamento':      ('Equipamentos', 'editar'),
     'dar_baixa_equipamento':   ('Equipamentos', 'editar'),
     'ver_equipamentos':        ('Equipamentos', 'ver'),
+    # PATRIMÔNIO - Veículos
+    'cadastrar_veiculo':       ('Veiculos', 'adicionar'),
+    'editar_veiculo':          ('Veiculos', 'editar'),
     # OPERAÇÕES - Chamados
     'abrir_chamado':       ('OP_Chamados', 'adicionar'),
     'editar_chamado':      ('OP_Chamados', 'editar'),

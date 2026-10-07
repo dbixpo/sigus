@@ -3,7 +3,7 @@
 from datetime import datetime, date, timedelta
 
 from flask import (
-    Blueprint, abort, flash, g, jsonify, redirect, render_template,
+    Blueprint, abort, flash, jsonify, redirect, render_template,
     request, url_for, Response,
 )
 from flask_login import current_user, login_required
@@ -15,8 +15,8 @@ from app.models.agenda import (
     AgendaEvento, VISIBILIDADE_UNIDADE, VISIBILIDADE_PESSOAL,
     TIPO_EVENTO, TIPO_REUNIAO, TIPO_AUSENCIA, TIPO_VEICULO, google_calendar_url, montar_ics,
 )
-from app.models.equipamento import Equipamento
 from app.models.sala import Sala
+from app.models.veiculo import Veiculo
 from app.services import reservas
 from app.models.frequencia import motivo_ausencia_valido, motivos_ausencia_agrupados
 from app.models.planejamento import (
@@ -345,14 +345,7 @@ def _pode_registrar_km(ev):
         return False
     if ev.criado_por == current_user.id or ev.condutor_id == current_user.id:
         return True
-    return bool(ev.veiculo and ev.veiculo.sala and ev.veiculo.sala.unidade_id in set(_ids_unidades()))
-
-
-def _rotulo_veiculo(veiculo):
-    cache = g.setdefault('_rotulos_veiculo', {})
-    if veiculo.id not in cache:
-        cache[veiculo.id] = reservas.rotulo_veiculo(veiculo)
-    return cache[veiculo.id]
+    return bool(ev.veiculo and ev.veiculo.unidade_id in set(_ids_unidades()))
 
 
 def _rotulo_sala(sala):
@@ -476,7 +469,7 @@ def _fc_evento(ev):
     if ev.eh_veiculo:
         payload['extendedProps'].update({
             'veiculo_id': ev.veiculo_id,
-            'veiculo': _rotulo_veiculo(ev.veiculo) if ev.veiculo else 'Veículo removido',
+            'veiculo': ev.veiculo.rotulo if ev.veiculo else 'Veículo removido',
             'condutor_id': ev.condutor_id,
             'km_saida': ev.km_saida,
             'km_chegada': ev.km_chegada,
@@ -632,18 +625,18 @@ def _dados_formulario(form, unidades):
                 erro = 'Essa sala não pode ser reservada por você. Use "Verificar salas vazias" e escolha outra.'
     if tipo == TIPO_VEICULO:
         veiculo_id = form.get('veiculo_id', type=int)
-        veiculo = reservas.query_veiculos(ids).filter(Equipamento.id == veiculo_id).first() if veiculo_id else None
+        veiculo = reservas.query_veiculos(ids).filter(Veiculo.id == veiculo_id).first() if veiculo_id else None
         if not veiculo:
             erro = 'Escolha o veículo.'
         else:
-            unidade_id = veiculo.sala.unidade_id
+            unidade_id = veiculo.unidade_id
         condutor_id = form.get('condutor_id', type=int) or current_user.id
         condutor = db.session.get(Usuario, condutor_id)
         if not condutor or not condutor.ativo:
             condutor = current_user._get_current_object()
         if veiculo and not titulo:
             destino = f' → {local}' if local else ''
-            titulo = f'{_rotulo_veiculo(veiculo)}{destino}'[:200]
+            titulo = f'{veiculo.rotulo}{destino}'[:200]
     if tipo == TIPO_AUSENCIA:
         motivo = (form.get('motivo') or '').strip().upper()
         if not motivo_ausencia_valido(motivo):
@@ -699,13 +692,12 @@ def index():
         return redirect(url_for('dashboard.index'))
     unidade_id = _unidade_padrao(unidades)
     usuarios = _usuarios_agenda([u.id for u in unidades])
-    veiculos = reservas.query_veiculos([u.id for u in unidades]).order_by(Equipamento.id).all()
-    campos = reservas.campos_veiculos([v.id for v in veiculos])
+    veiculos = reservas.query_veiculos([u.id for u in unidades]).all()
     veiculos_json = [{
         'id': v.id,
-        'rotulo': reservas.rotulo_veiculo(v, campos.get(v.id, {})),
-        'unidade_id': v.sala.unidade_id,
-        'unidade': v.sala.unidade.nome,
+        'rotulo': v.rotulo,
+        'unidade_id': v.unidade_id,
+        'unidade': v.unidade.nome,
     } for v in veiculos]
     veiculos_json.sort(key=lambda v: (v['unidade'].lower(), v['rotulo'].lower()))
     return render_template(
@@ -824,7 +816,7 @@ def _erro_conflito(inicio, fim, dia_inteiro, sala=None, veiculo=None, ignorar_id
     if veiculo:
         evs = reservas.conflitos(ini, fim_real, veiculo_id=veiculo.id, ignorar_id=ignorar_id)
         if evs:
-            return (f'O veículo {_rotulo_veiculo(veiculo)} já está reservado nesse horário. '
+            return (f'O veículo {veiculo.rotulo} já está reservado nesse horário. '
                     f'{reservas.texto_ocupacao(evs[0], _evento_visivel(evs[0]))}.')
     if sala:
         evs = reservas.conflitos(ini, fim_real, sala_id=sala.id, ignorar_id=ignorar_id)
@@ -1027,7 +1019,7 @@ def veiculo_livre():
     veiculo_id = request.form.get('veiculo_id', type=int)
     if not ini or not veiculo_id:
         return jsonify({'ok': True, 'livre': None})
-    veiculo = reservas.query_veiculos(_ids_unidades()).filter(Equipamento.id == veiculo_id).first()
+    veiculo = reservas.query_veiculos(_ids_unidades()).filter(Veiculo.id == veiculo_id).first()
     if not veiculo:
         return jsonify({'ok': False, 'erro': 'Veículo não encontrado.'}), 404
     evs = reservas.conflitos(ini, fim, veiculo_id=veiculo.id, ignorar_id=request.form.get('evento_id', type=int))

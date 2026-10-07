@@ -776,7 +776,6 @@ def _dados_padrao_tipo_equipamento(tipo, form):
     tipo.valor_referencia = valor
     tipo.natureza_kit = natureza if natureza in NATUREZA_KIT_LABELS else None
     tipo.conta_como_id = conta_como_id
-    tipo.eh_veiculo = form.get('eh_veiculo') == 'on'
     return None
 
 
@@ -1422,6 +1421,9 @@ PERMISSOES_LABELS = {
     'editar_equipamento':           ('Editar equipamentos',                    'Equipamentos'),
     'dar_baixa_equipamento':        ('Dar baixa em equipamentos',              'Equipamentos'),
     'gerenciar_tipos_equipamento':  ('Gerenciar tipos de equipamento',         'Equipamentos'),
+    # Veículos
+    'cadastrar_veiculo':            ('Cadastrar veículos',                     'Veículos'),
+    'editar_veiculo':               ('Editar e desativar veículos',            'Veículos'),
     # Chamados
     'abrir_chamado':                ('Abrir chamados',                         'Chamados'),
     'editar_chamado':               ('Editar chamados',                        'Chamados'),
@@ -1440,7 +1442,7 @@ PERMISSOES_LABELS = {
 }
 
 # Ordem em que os grupos aparecem na tela
-GRUPOS_ORDEM = ['Unidades', 'Salas', 'Equipamentos', 'Chamados', 'Contratos', 'Usuários', 'Relatórios']
+GRUPOS_ORDEM = ['Unidades', 'Salas', 'Equipamentos', 'Veículos', 'Chamados', 'Contratos', 'Usuários', 'Relatórios']
 
 
 @configuracoes_bp.route('/perfis')

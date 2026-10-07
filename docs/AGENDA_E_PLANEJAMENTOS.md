@@ -57,13 +57,14 @@ Terceiro tipo no modal (aba **Ausência**, ícone de guarda-sol). Serve para a u
 
 Quarto tipo no modal (aba **Veículo**, aparece se o usuário tem veículo em alguma das suas unidades). Acaba com a dúvida "quem pegou o carro".
 
-- Veículo é um equipamento cujo tipo tem `tipos_equipamento.eh_veiculo` (tipo padrão "Veículo", criado por `migrations/add_veiculos_reservas.py` com prefixo, placa, categoria, combustível, RENAVAM, km no cadastro etc.).
-- Veículo não tem patrimônio nem nº de série (o formulário esconde os dois e o servidor grava vazio). A identificação é o **prefixo** (campo "Prefixo", ex.: 383); com o check "Alugado" ele aparece como **AL-383** (`prefixo_veiculo` em `app/models/equipamento.py`, usado em `Equipamento.identificacao`, no rótulo da agenda, nos cartões e no RDV). Fica na sala "Veículos / Garagem" da unidade, criada sozinha no primeiro cadastro (`reservas.sala_garagem`).
+- Veículo tem cadastro próprio, sem ligação com equipamentos: tabela `veiculos` (`app/models/veiculo.py`), ligada só à unidade. Formulário em `/veiculos/novo/<unidade_id>` e `/veiculos/<id>/editar` (permissões `cadastrar_veiculo` / `editar_veiculo`, seção **Veículos** em Perfis). Desativar/reativar fica na página do veículo; reserva antiga continua no histórico.
+- A identificação é o **prefixo** (ex.: 383); com o check "Alugado" ele aparece como **AL-383** (`Veiculo.prefixo_exibicao`, usado no rótulo da agenda, nos cartões e no RDV). Digitar "AL-383" no prefixo marca Alugado sozinho. Placa é única entre os ativos, e o par prefixo + alugado também.
+- Marca e modelo são texto livre com sugestões do catálogo `veiculo_modelos` (modelos populares brasileiros com categoria, semeados por `migrations/add_veiculos_reservas.py`); escolher o modelo preenche marca e categoria.
 - Quem reserva: qualquer pessoa vinculada à unidade do carro. Campos: veículo, **quem vai usar** (`condutor_id`, padrão = quem registra), destino e período. Título automático "Prefixo · Placa · Marca Modelo → destino".
 - Conflito: dois usos do mesmo veículo no mesmo horário são recusados (409) em criar, editar e arrastar. Ao escolher veículo e horário, o modal já avisa se está livre (`POST /agenda/veiculo-livre`).
 - Na leitura aparecem **quem registrou e quando**, quem vai usar e o km. Km de saída e de chegada são preenchidos na volta (`POST /agenda/eventos/<id>/km`) por quem registrou, pelo condutor ou por quem pode editar o evento; chegada menor que saída é recusada.
 - Cor `COR_VEICULO` e filtro **Veículos** na barra lateral.
-- Aba **Veículos** no detalhe da unidade: cartões com placa, km atual (último km de chegada ou o do cadastro), em uso / próxima reserva, usos sem km e atalhos para reservar, usos, RDV e ficha.
+- Aba **Veículos** no detalhe da unidade: cartões com placa, km atual (último km de chegada ou o do cadastro), em uso / próxima reserva, usos sem km e atalhos para reservar, usos, RDV e editar.
 - `/veiculos/<id>` (`app/routes/veiculos.py`): usos do mês com km editável e **RDV** (`/veiculos/<id>/rdv?mes=AAAA-MM`), planilha Excel com um uso por linha (data, condutor, destino, horários, km, km rodados por fórmula, assinatura). O layout é provisório até chegar o modelo oficial.
 
 ## Salas de reunião e auditórios

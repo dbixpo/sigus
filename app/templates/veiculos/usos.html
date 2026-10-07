@@ -2,26 +2,27 @@
 {% block title %}{{ rotulo }} · Usos{% endblock %}
 
 {% block content %}
-{% set unidade = veiculo.sala.unidade %}
+{% set unidade = veiculo.unidade %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.listar') }}">Unidades</a></li>
         <li class="breadcrumb-item"><a href="{{ url_for('unidades.detalhe', id=unidade.id, _anchor='tab-veiculos') }}">{{ unidade.nome }}</a></li>
-        <li class="breadcrumb-item active">{{ prefixo or campos.get('Placa') or rotulo }}</li>
+        <li class="breadcrumb-item active">{{ veiculo.prefixo_exibicao }}</li>
     </ol>
 </nav>
 
 <div class="page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
-        <div class="veic-ico"><i class="fas fa-car-side"></i></div>
+        <div class="veic-ico"><i class="fas {{ 'fa-motorcycle' if veiculo.categoria == 'Motocicleta' else 'fa-car-side' }}"></i></div>
         <div>
             <div class="veic-ids">
-                {% if prefixo %}<span class="veic-prefixo{{ ' is-alugado' if prefixo.startswith('AL-') }}" title="Prefixo">{{ prefixo }}</span>{% endif %}
-                <span class="veic-placa">{{ campos.get('Placa') or 'Sem placa' }}</span>
+                <span class="veic-prefixo{{ ' is-alugado' if veiculo.alugado }}" title="Prefixo">{{ veiculo.prefixo_exibicao }}</span>
+                <span class="veic-placa">{{ veiculo.placa_exibicao }}</span>
+                {% if not veiculo.ativo %}<span class="badge bg-secondary">Desativado</span>{% endif %}
             </div>
-            <h1 class="h4 mb-0 mt-1">{{ (veiculo.marca.nome ~ ' ' if veiculo.marca else '') ~ (veiculo.modelo.nome if veiculo.modelo else '') or veiculo.tipo_equipamento.nome }}</h1>
+            <h1 class="h4 mb-0 mt-1">{{ veiculo.marca_modelo or veiculo.categoria }}</h1>
             <div class="small text-muted">
-                {{ [campos.get('Categoria'), campos.get('Ano fabricação/modelo'), campos.get('Cor'), campos.get('Combustível')] | select | join(' · ') }}
+                {{ [veiculo.categoria if veiculo.marca_modelo else None, veiculo.ano, veiculo.cor, veiculo.combustivel] | select | join(' · ') }}
             </div>
         </div>
     </div>
@@ -34,9 +35,11 @@
         <a href="{{ url_for('veiculos.rdv', id=veiculo.id, mes=mes.strftime('%Y-%m')) }}" class="btn btn-success btn-sm">
             <i class="fas fa-file-excel me-1"></i>Baixar RDV de {{ mes_nome }}
         </a>
-        <a href="{{ url_for('equipamentos.detalhe', id=veiculo.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-eye me-1"></i>Ficha do veículo
+        {% if pode_editar %}
+        <a href="{{ url_for('veiculos.editar', id=veiculo.id) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-pen me-1"></i>Editar
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -143,6 +146,55 @@
         <i class="fas fa-info-circle me-1"></i>
         Linhas em amarelo já aconteceram e ainda não têm o km de devolução. O RDV sai com essas reservas preenchidas
         e linhas em branco para completar à mão.
+    </div>
+</div>
+
+{% macro dado(rotulo, valor) %}
+<div class="col-6 col-md-4 col-lg-3">
+    <div class="small text-muted">{{ rotulo }}</div>
+    <div class="fw-semibold">{{ valor if valor not in (None, '') else '—' }}</div>
+</div>
+{% endmacro %}
+<div class="card mt-3">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span><i class="fas fa-id-card me-2"></i>Dados do veículo</span>
+        {% if pode_editar %}
+        <form method="post" action="{{ url_for('veiculos.alternar_ativo', id=veiculo.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if veiculo.ativo %}
+            <button type="submit" class="btn btn-sm btn-outline-danger"
+                    data-confirm-titulo="Desativar o veículo {{ veiculo.prefixo_exibicao }}?" data-confirm-ok="Desativar"
+                    data-confirm="Ele sai da lista da unidade e da agenda. O histórico de usos continua guardado.">
+                <i class="fas fa-ban me-1"></i>Desativar
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-sm btn-outline-success"><i class="fas fa-rotate-left me-1"></i>Reativar</button>
+            {% endif %}
+        </form>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {{ dado('Prefixo', veiculo.prefixo_exibicao) }}
+            {{ dado('Placa', veiculo.placa_exibicao) }}
+            {{ dado('Alugado', 'Sim' if veiculo.alugado else 'Não') }}
+            {% if veiculo.alugado %}{{ dado('Locadora / contrato', veiculo.locadora) }}{% endif %}
+            {{ dado('Marca', veiculo.marca) }}
+            {{ dado('Modelo', veiculo.modelo) }}
+            {{ dado('Categoria', veiculo.categoria) }}
+            {{ dado('Ano fabricação/modelo', veiculo.ano) }}
+            {{ dado('Cor', veiculo.cor) }}
+            {{ dado('Combustível', veiculo.combustivel) }}
+            {{ dado('Lotação', (veiculo.lotacao ~ ' passageiros') if veiculo.lotacao else None) }}
+            {{ dado('RENAVAM', veiculo.renavam) }}
+            {{ dado('Chassi', veiculo.chassi) }}
+            {{ dado('Km no cadastro', '{:,}'.format(veiculo.km_cadastro).replace(',', '.') if veiculo.km_cadastro is not none else None) }}
+            {{ dado('Licenciamento vence em', veiculo.licenciamento_vencimento.strftime('%d/%m/%Y') if veiculo.licenciamento_vencimento else None) }}
+        </div>
+        {% if veiculo.observacoes %}
+        <div class="small text-muted mt-3">Observações</div>
+        <div style="white-space:pre-line">{{ veiculo.observacoes }}</div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

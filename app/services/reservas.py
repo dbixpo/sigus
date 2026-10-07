@@ -9,13 +9,10 @@ from sqlalchemy.orm import joinedload
 
 from app import db
 from app.models.agenda import AgendaEvento
-from app.models.equipamento import (Equipamento, TipoEquipamento, EquipamentoCampoValor, CampoTipoEquipamento,
-                                    prefixo_veiculo)
 from app.models.sala import Sala
 from app.models.tipo_sala import TipoSala
 from app.models.unidade import Unidade
-
-NOME_SALA_GARAGEM = 'Veículos / Garagem'
+from app.models.veiculo import Veiculo
 
 
 # ── Intervalos e conflitos ─────────────────────────────────────────────
@@ -170,55 +167,18 @@ def salas_livres(unidade_base, ini, fim, ids_proprias, ignorar_id=None, ids_visi
 
 def query_veiculos(ids_unidades):
     if not ids_unidades:
-        return Equipamento.query.filter(db.false())
-    return (Equipamento.query
-            .join(Sala, Sala.id == Equipamento.sala_id)
-            .join(TipoEquipamento, TipoEquipamento.id == Equipamento.tipo_equipamento_id)
-            .options(joinedload(Equipamento.marca), joinedload(Equipamento.modelo),
-                     joinedload(Equipamento.sala).joinedload(Sala.unidade),
-                     joinedload(Equipamento.tipo_equipamento))
-            .filter(TipoEquipamento.eh_veiculo.is_(True), Equipamento.ativo.is_(True),
-                    Sala.unidade_id.in_(list(ids_unidades))))
+        return Veiculo.query.filter(db.false())
+    return (Veiculo.query
+            .options(joinedload(Veiculo.unidade))
+            .filter(Veiculo.ativo.is_(True), Veiculo.unidade_id.in_(list(ids_unidades))))
 
 
-def eh_veiculo(equip):
-    return bool(equip and equip.tipo_equipamento and equip.tipo_equipamento.eh_veiculo)
-
-
-def campos_veiculos(ids_veiculos):
-    """{veiculo_id: {nome_campo: valor}} numa consulta só."""
-    if not ids_veiculos:
-        return {}
-    resultado = {}
-    for eq_id, nome, valor in (db.session.query(EquipamentoCampoValor.equipamento_id,
-                                                CampoTipoEquipamento.nome_campo, EquipamentoCampoValor.valor)
-                               .join(CampoTipoEquipamento, CampoTipoEquipamento.id == EquipamentoCampoValor.campo_id)
-                               .filter(EquipamentoCampoValor.equipamento_id.in_(list(ids_veiculos)))
-                               .all()):
-        if valor:
-            resultado.setdefault(eq_id, {})[nome] = valor
-    return resultado
-
-
-def rotulo_veiculo(equip, campos=None):
-    campos = campos if campos is not None else campos_veiculos([equip.id]).get(equip.id, {})
-    modelo = ' '.join(p for p in [equip.marca.nome if equip.marca else '', equip.modelo.nome if equip.modelo else ''] if p)
-    partes = [p for p in [prefixo_veiculo(campos), campos.get('Placa', ''), modelo] if p]
-    return ' · '.join(partes) if partes else equip.nome_display
-
-
-def _km_numero(valor):
-    digitos = re.sub(r'\D', '', str(valor or ''))
-    return int(digitos) if digitos else None
-
-
-def km_atual(veiculo_id, campos=None):
+def km_atual(veiculo):
+    """Último km de chegada registrado; sem nenhum, o km informado no cadastro."""
     ultimo = (db.session.query(AgendaEvento.km_chegada)
-              .filter(AgendaEvento.veiculo_id == veiculo_id, AgendaEvento.km_chegada.isnot(None))
+              .filter(AgendaEvento.veiculo_id == veiculo.id, AgendaEvento.km_chegada.isnot(None))
               .order_by(AgendaEvento.inicio.desc()).first())
-    if ultimo:
-        return ultimo[0]
-    return _km_numero((campos or {}).get('Km no cadastro'))
+    return ultimo[0] if ultimo else veiculo.km_cadastro
 
 
 def situacao_veiculos(veiculos, agora):
@@ -240,33 +200,3 @@ def situacao_veiculos(veiculos, agora):
                    .group_by(AgendaEvento.veiculo_id).all()):
         situacao[vid]['pendentes'] = n
     return situacao
-
-
-def tipo_veiculo_padrao():
-    return (TipoEquipamento.query.filter_by(eh_veiculo=True, ativo=True)
-            .order_by(TipoEquipamento.id).first())
-
-
-def sala_garagem(unidade, criar=True):
-    """Sala onde os veículos da unidade ficam; criada na primeira vez que precisar."""
-    tipo = TipoSala.query.filter(TipoSala.nome.ilike('garagem%')).order_by(TipoSala.id).first()
-    sala = None
-    if tipo:
-        sala = Sala.query.filter_by(unidade_id=unidade.id, tipo_sala_id=tipo.id, ativo=True).order_by(Sala.id).first()
-    if sala is None:
-        com_veiculo = query_veiculos([unidade.id]).order_by(Equipamento.id).first()
-        sala = com_veiculo.sala if com_veiculo else None
-    if sala is None and criar:
-        sala = Sala(
-            unidade_id=unidade.id,
-            nome=NOME_SALA_GARAGEM,
-            tipo=tipo.nome if tipo else 'Garagem / Veículos',
-            tipo_sala_id=tipo.id if tipo else None,
-            responsavel='',
-            ramal='',
-            capacidade_maxima=0,
-            observacoes='Criada automaticamente para os veículos da unidade.',
-        )
-        db.session.add(sala)
-        db.session.flush()
-    return sala
