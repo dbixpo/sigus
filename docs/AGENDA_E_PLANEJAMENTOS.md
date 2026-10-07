@@ -39,6 +39,18 @@ Reunião: participantes, disponibilidade de cada um e **Sugerir horários livres
 - A reunião aparece na agenda de cada participante, seja qual for a unidade dele.
 - **Privacidade:** na disponibilidade, um compromisso que você não enxergaria na sua agenda (de outro setor ou pessoal) aparece só como "Ocupado", sem o título.
 
+## Ausência / férias
+
+Terceiro tipo no modal (aba **Ausência**, ícone de guarda-sol). Serve para a unidade inteira ver quem está fora e ninguém marcar reunião com essa pessoa.
+
+- Campos: **quem estará fora** (só você mesmo, ou qualquer pessoa da unidade se tiver `editar_agenda`), **motivo** e o período (já abre em "Dia inteiro"). Título e local são gerados: "Férias: Nome Sobrenome" ou "Ausente: Nome Sobrenome".
+- Motivos (`motivos_ausencia_agrupados` em `app/models/frequencia.py`): afastamentos da coluna Complemento da planilha do RH (férias, licença-prêmio, maternidade…), as siglas da aba Instruções (FA, AM, DCM, LN…) e "Outro motivo".
+- Visibilidade sempre **unidade**, cor cinza (`COR_AUSENCIA`). Coluna `agenda_eventos.motivo` (`migrations/add_agenda_ausencia.py`).
+- **Privacidade do motivo:** só vê o motivo quem criou, quem está ausente e quem tem `editar_agenda`. Os demais veem só "Férias" ou "Ausente".
+- Na disponibilidade da reunião, a pessoa aparece como fora (guarda-sol, `fora: true`), e conta como ocupada só para ela, não para quem registrou.
+- A pessoa ausente também pode editar e excluir o registro.
+- É manual: importar a planilha de frequência **não** cria ausências na agenda.
+
 ## Arrastar (drag & drop)
 
 | O que | Como | Rota |

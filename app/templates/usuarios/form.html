@@ -87,6 +87,15 @@
                     <div class="form-text text-muted">Você não tem permissão para alterar este perfil.</div>
                     {% endif %}
                 </div>
+                <div class="col-12" id="rhBase" hidden>
+                    <div class="border rounded-3 p-3" style="background:rgba(26,130,184,.05);border-color:rgba(26,130,184,.25)!important">
+                        <div class="fw-semibold small mb-1" style="color:#0D3B5E">
+                            <i class="fas fa-address-book me-1" style="color:#1A82B8"></i>Encontrado na base de servidores do RH
+                        </div>
+                        <div class="small text-muted mb-2">Marque as matrículas desta pessoa: elas são cadastradas ao salvar, já com o CBO da função.</div>
+                        <div id="rhBaseLista" class="d-flex flex-column gap-1"></div>
+                    </div>
+                </div>
                 <div class="col-12 col-md-6">
                     <label class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
                     {% if not usuario %}
@@ -456,6 +465,7 @@
                         <div class="col-12 col-md-6" id="blocoMatricula" style="display: none;">
                             <label class="form-label fw-semibold">Número da Matrícula <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="matNumero" required maxlength="50">
+                            <div id="matRhInfo" class="small mt-1"></div>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">CBO</label>
@@ -614,6 +624,67 @@ function setCampoUsuario(nome, valor) {
     else el.value = valor;
 }
 
+// ─── Base de servidores do RH ──────────────────────────
+const RH_BUSCAR_URL = {{ url_for('frequencia.buscar_servidores_json')|tojson }};
+const RH_USUARIO_ID = {{ usuario.id if usuario else 'null' }};
+function rhEsc(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+async function rhBuscar(q, limite) {
+    const url = RH_BUSCAR_URL + '?q=' + encodeURIComponent(q) + '&limite=' + (limite || 8)
+        + (RH_USUARIO_ID ? '&usuario_id=' + RH_USUARIO_ID : '');
+    const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    if (!resp.ok) return [];
+    return (await resp.json()).itens || [];
+}
+(function () {
+    const nome = document.querySelector('[name="nome"]');
+    const box = document.getElementById('rhBase');
+    const lista = document.getElementById('rhBaseLista');
+    if (!nome || !box) return;
+    let timer = null;
+    let ultima = '';
+    const marcadas = new Set();
+
+    function esconder() { box.hidden = true; lista.innerHTML = ''; }
+
+    async function atualizar() {
+        const q = nome.value.trim();
+        if (q.split(/\s+/).filter(function (t) { return t.length > 1; }).length < 2) { ultima = ''; esconder(); return; }
+        if (q === ultima) return;
+        ultima = q;
+        let itens = [];
+        try { itens = await rhBuscar(q, 6); } catch (e) { return; }
+        if (q !== ultima) return;
+        if (!itens.length || itens.every(function (s) { return s.eh_do_usuario; })) { esconder(); return; }
+        lista.innerHTML = itens.map(function (s) {
+            const ja = s.eh_do_usuario;
+            const outro = s.usuario_id && !ja;
+            const id = 'rhMat' + s.matricula;
+            const cbo = s.cbo
+                ? ' · CBO ' + rhEsc(s.cbo) + (s.cbo_desc ? ' – ' + rhEsc(s.cbo_desc) : '')
+                : ' · <span class="text-warning">função sem CBO no de-para</span>';
+            const status = ja ? ' <span class="badge bg-success">já cadastrada</span>'
+                : outro ? ' <span class="badge bg-secondary">já é de ' + rhEsc(s.usuario_nome) + '</span>' : '';
+            return '<div class="form-check"><input class="form-check-input" type="checkbox" name="rh_matricula" value="'
+                + rhEsc(s.matricula) + '" id="' + id + '"' + (ja || outro ? ' disabled' : '')
+                + (marcadas.has(s.matricula) ? ' checked' : '') + '>'
+                + '<label class="form-check-label small" for="' + id + '"><strong>' + rhEsc(s.matricula) + '</strong> · '
+                + rhEsc(s.nome) + ' · ' + rhEsc(s.funcao || '—') + (s.local ? ' · ' + rhEsc(s.local) : '') + cbo + status
+                + '</label></div>';
+        }).join('');
+        lista.querySelectorAll('input').forEach(function (c) {
+            c.addEventListener('change', function () { c.checked ? marcadas.add(c.value) : marcadas.delete(c.value); });
+        });
+        box.hidden = false;
+    }
+    nome.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(atualizar, 450); });
+    window.rhAtualizarBase = atualizar;
+    if (nome.value.trim()) atualizar();
+})();
+
 {% if sis_ok %}
 (function () {
     const btn = document.getElementById('btnImportarCadastro');
@@ -650,6 +721,7 @@ function setCampoUsuario(nome, valor) {
             }
             const campos = dados.campos || {};
             Object.keys(campos).forEach(function (k) { setCampoUsuario(k, campos[k]); });
+            if (window.rhAtualizarBase) window.rhAtualizarBase();
             const n = Object.keys(campos).filter(function (k) { return campos[k]; }).length;
             let msg = 'Importamos ' + n + ' campos. Confira as abas — nada fica travado.';
             const conselhos = dados.conselho || [];
@@ -856,6 +928,42 @@ function editarMatricula(id, numero, vinculo, tipoVinculo, cbo, conselho, orgao,
     new bootstrap.Modal(document.getElementById('modalNovaMatricula')).show();
 }
 
+// Ao digitar o número, confere na base do RH e preenche o CBO pela função
+(function () {
+    const inp = document.getElementById('matNumero');
+    const info = document.getElementById('matRhInfo');
+    if (!inp || !info) return;
+    let timer = null;
+    async function consultar() {
+        const num = inp.value.replace(/\D/g, '').replace(/^0+/, '');
+        info.innerHTML = '';
+        if (num.length < 4) return;
+        let itens = [];
+        try { itens = await rhBuscar(num, 1); } catch (e) { return; }
+        if (inp.value.replace(/\D/g, '').replace(/^0+/, '') !== num) return;
+        const s = itens[0];
+        if (!s || s.matricula !== num) {
+            info.innerHTML = '<span class="text-muted">Matrícula não encontrada na base do RH.</span>';
+            return;
+        }
+        let html = '<i class="fas fa-address-book me-1" style="color:#1A82B8"></i>Base do RH: <strong>' + rhEsc(s.nome)
+            + '</strong> · ' + rhEsc(s.funcao || '—') + (s.local ? ' · ' + rhEsc(s.local) : '');
+        if (s.usuario_id && !s.eh_do_usuario) {
+            html += '<div class="text-danger">Esta matrícula já está no cadastro de ' + rhEsc(s.usuario_nome) + '.</div>';
+        }
+        const tsEl = document.getElementById('matCbo');
+        const atual = tsEl && tsEl.tomselect ? tsEl.tomselect.getValue() : (tsEl ? tsEl.value : '');
+        if (s.cbo && !atual && tsEl) {
+            if (tsEl.tomselect) tsEl.tomselect.setValue(s.cbo); else tsEl.value = s.cbo;
+            html += '<div class="text-success">CBO ' + rhEsc(s.cbo) + ' preenchido pela função. Confira.</div>';
+        } else if (!s.cbo) {
+            html += '<div class="text-muted">A função ainda não tem CBO no de-para (Configurações → CBOs).</div>';
+        }
+        info.innerHTML = html;
+    }
+    inp.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(consultar, 450); });
+})();
+
 // Mostra/oculta campo de matrícula baseado no tipo de vínculo
 document.getElementById('matTipoVinculo')?.addEventListener('change', function () {
     const blocoMatricula = document.getElementById('blocoMatricula');
@@ -888,6 +996,7 @@ document.getElementById('modalNovaMatricula')?.addEventListener('hidden.bs.modal
     document.getElementById('matConselho').value = '';
     document.getElementById('matOrgao').value = '';
     document.getElementById('matAtivo').checked = true;
+    document.getElementById('matRhInfo').innerHTML = '';
     document.getElementById('blocoAtivoMatricula').style.setProperty('display', 'none', 'important');
     const tsEl = document.getElementById('matCbo');
     if (tsEl && tsEl.tomselect) tsEl.tomselect.setValue('');

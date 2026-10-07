@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Importar frequência{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-file-upload"></i> Importar frequência</h1>
+    <div class="d-flex gap-2">
+        {% if ve_tudo %}
+        <a href="{{ url_for('frequencia.locais') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-random me-1"></i>Locais do RH × unidades</a>
+        {% endif %}
+        <a href="{{ url_for('frequencia.unidade') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-users me-1"></i>Apontamentos da unidade</a>
+    </div>
+</div>
+<p class="fq-sub">Suba a planilha mensal que vai para o RH. O SIGUS lê os dados, guarda no banco e descarta o arquivo.</p>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="fq-card">
+            <div class="fq-card-h"><h2><i class="fas fa-file-excel"></i>Planilha do mês</h2></div>
+            <div class="fq-card-b">
+                <form method="post" enctype="multipart/form-data" id="fqForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <label class="fq-drop d-block" id="fqDrop">
+                        <input type="file" name="planilha" id="fqArquivo" accept=".xls,.xlsx" class="d-none" required>
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <div class="mt-2">Arraste a planilha aqui ou <strong class="text-primary">clique para escolher</strong></div>
+                        <div class="small text-muted">.xls ou .xlsx, até 15 MB</div>
+                        <div class="fq-drop-nome" id="fqNome"></div>
+                    </label>
+                    <div class="text-end mt-3">
+                        <button type="submit" class="btn btn-primary" id="fqEnviar" disabled>
+                            <i class="fas fa-search me-1"></i>Ler e conferir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="fq-card">
+            <div class="fq-card-h"><h2><i class="fas fa-route"></i>Como funciona</h2></div>
+            <div class="fq-card-b">
+                <ol class="fq-passos">
+                    <li>Escolha a planilha do mês, do jeito que vai para o RH.</li>
+                    <li>Confira a prévia: mês, local, profissionais, banco de horas e horas extras.</li>
+                    <li>Confirme. Cada profissional passa a ver os próprios apontamentos em <em>Recursos Humanos → Meus apontamentos</em>.</li>
+                </ol>
+                <p class="small text-muted mb-0"><i class="fas fa-sync-alt me-1"></i>Importar de novo o mesmo mês e local
+                    substitui a importação anterior. O histórico guarda quem importou e quando.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fq-card">
+    <div class="fq-card-h">
+        <h2><i class="fas fa-history"></i>Importações</h2>
+        <span class="fq-card-extra">Últimas 60</span>
+    </div>
+    {% if historico %}
+    <div class="table-responsive">
+        <table class="table table-hover fq-table">
+            <thead><tr>
+                <th>Competência</th><th>Local da planilha</th><th>Unidade</th><th class="num">Profissionais</th>
+                <th class="num">Horas extras</th><th>Importado por</th><th>Situação</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for i in historico %}
+            <tr class="{{ 'text-muted' if not i.ativa }}">
+                <td class="fw-semibold">{{ i.competencia_label }}</td>
+                <td class="small">{{ i.local }}<div class="fq-origem">{{ i.arquivo or '' }}</div></td>
+                <td class="small">{{ i.unidade.nome if i.unidade else '—' }}</td>
+                <td class="num">{{ i.n_profissionais }}</td>
+                <td class="num">{{ i.n_horas_extras }}</td>
+                <td class="small">{{ i.importador.nome if i.importador else '—' }}<div class="fq-origem">{{ i.importado_em | br_datetime }}</div></td>
+                <td>
+                    {% if i.ativa %}<span class="fq-flag ok">Em vigor</span>
+                    {% else %}<span class="fq-flag alerta" title="Substituída em {{ i.substituida_em | br_datetime }}">Substituída</span>{% endif %}
+                </td>
+                <td class="text-end text-nowrap">
+                    {% if i.ativa and i.unidade_id %}
+                    <a class="btn btn-sm btn-outline-primary" title="Ver apontamentos"
+                       href="{{ url_for('frequencia.unidade', unidade_id=i.unidade_id, competencia=i.competencia.strftime('%Y-%m')) }}">
+                        <i class="fas fa-eye"></i></a>
+                    {% endif %}
+                    {% set msg = 'Excluir a importação de ' ~ i.competencia_label ~ ' (' ~ i.local ~ ')?'
+                                 ~ (' Os apontamentos dela deixam de aparecer para os profissionais.' if i.ativa else '') %}
+                    <form method="post" action="{{ url_for('frequencia.excluir_importacao', imp_id=i.id) }}" class="d-inline"
+                          onsubmit='return confirm({{ msg | tojson }})'>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-danger" title="Excluir importação"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="fq-card-b text-muted small">Nenhuma planilha importada ainda.</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var drop = document.getElementById('fqDrop');
+    var inp = document.getElementById('fqArquivo');
+    var nome = document.getElementById('fqNome');
+    var btn = document.getElementById('fqEnviar');
+    var form = document.getElementById('fqForm');
+
+    function atualizar() {
+        var f = inp.files && inp.files[0];
+        nome.textContent = f ? f.name : '';
+        btn.disabled = !f;
+    }
+    inp.addEventListener('change', atualizar);
+    ['dragenter', 'dragover'].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('arrastando'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+        drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('arrastando'); });
+    });
+    drop.addEventListener('drop', function (e) {
+        if (e.dataTransfer.files.length) { inp.files = e.dataTransfer.files; atualizar(); }
+    });
+    form.addEventListener('submit', function () {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Lendo a planilha…';
+    });
+})();
+</script>
+{% endblock %}

@@ -27,7 +27,8 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) | NSP interno, protocolo `SP-AAAA-NNNNN`, SIS |
 | [TRANSFERENCIAS_E_LOJINHA.md](TRANSFERENCIAS_E_LOJINHA.md) | Termos, aceite, Lojinha Interna |
 | [COMUNICADOS.md](COMUNICADOS.md) | Recados, ciência por perfil **ou** CBO, editar/excluir comunicado e mural |
-| [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, arrastar eventos, prazos editáveis com histórico |
+| [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, ausência/férias, arrastar eventos, prazos editáveis com histórico |
+| [FREQUENCIA_RH.md](FREQUENCIA_RH.md) | Importar a planilha de frequência, Meus apontamentos, banco de horas, horas extras, base de servidores e de-para função × CBO |
 | [INSTALACAO.md](INSTALACAO.md) | Clone, banco vazio, primeiro admin, identidade |
 | [migrations/README.md](../migrations/README.md) | Scripts idempotentes de schema |
 | [scripts/README.md](../scripts/README.md) | Dump, restore, Estante, SUEQ, reset de senha |

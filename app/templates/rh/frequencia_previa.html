@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% from 'rh/_frequencia_macros.html' import horas, vencimento, sigla %}
+{% block title %}Conferir importação{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-clipboard-check"></i> Conferir antes de importar</h1>
+    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-times me-1"></i>Cancelar</a>
+</div>
+<p class="fq-sub">Nada foi gravado ainda. Confira os dados lidos de <strong>{{ dados.arquivo }}</strong> e confirme no fim da página.</p>
+
+<div class="fq-stats">
+    <div class="fq-stat"><i class="fas fa-calendar fq-stat-ico"></i>
+        <div class="fq-stat-rot">Competência</div><div class="fq-stat-val">{{ competencia_label }}</div>
+        <div class="fq-stat-det">lida da aba Capa</div></div>
+    <div class="fq-stat"><i class="fas fa-building fq-stat-ico"></i>
+        <div class="fq-stat-rot">Local na planilha</div><div class="fq-stat-val" style="font-size:1.25rem">{{ dados.local }}</div>
+        <div class="fq-stat-det">nome usado pelo RH</div></div>
+    <div class="fq-stat verde"><i class="fas fa-user-check fq-stat-ico"></i>
+        <div class="fq-stat-rot">Profissionais</div><div class="fq-stat-val">{{ dados.lancamentos | length }}</div>
+        <div class="fq-stat-det">{{ dados.horas_extras | length }} com hora extra lançada</div></div>
+    <div class="fq-stat amarelo"><i class="fas fa-database fq-stat-ico"></i>
+        <div class="fq-stat-rot">Base de servidores</div><div class="fq-stat-val">{{ '{:,}'.format(dados.servidores | length).replace(',', '.') }}</div>
+        <div class="fq-stat-det">matrículas na aba Banco de Dados</div></div>
+</div>
+
+{# ── Avisos ── #}
+{% if anterior %}
+<div class="fq-aviso alerta"><i class="fas fa-sync-alt"></i><div>
+    Já existe uma importação de <strong>{{ competencia_label }}</strong> para <strong>{{ dados.local }}</strong>,
+    feita por {{ anterior.importador.nome if anterior.importador else '—' }} em {{ anterior.importado_em | br_datetime }}.
+    Ao confirmar, ela será <strong>substituída</strong> por esta.
+</div></div>
+{% endif %}
+{% for a in dados.avisos %}
+<div class="fq-aviso erro"><i class="fas fa-exclamation-triangle"></i><div>{{ a }}</div></div>
+{% endfor %}
+{% if divergencias %}
+<div class="fq-aviso alerta"><i class="fas fa-piggy-bank"></i><div>
+    O saldo anterior do banco de horas não bate com o saldo de {{ mes_anterior_label }} já importado:
+    <ul class="mb-0 mt-1">
+        {% for l, prev in divergencias %}
+        <li>{{ l.nome or l.matricula }} ({{ l.matricula }}): planilha diz {{ horas(l.banco_saldo_anterior) }}, {{ mes_anterior_label }} fechou em {{ horas(prev) }}</li>
+        {% endfor %}
+    </ul>
+</div></div>
+{% endif %}
+{% if sem_cadastro %}
+<div class="fq-aviso info"><i class="fas fa-id-badge"></i><div>
+    <strong>{{ sem_cadastro | length }}</strong> matrícula{{ 's' if sem_cadastro | length != 1 }} desta planilha ainda não
+    {{ 'estão' if sem_cadastro | length != 1 else 'está' }} no cadastro de ninguém no SIGUS. Os dados ficam guardados e aparecem
+    para a pessoa assim que a matrícula for incluída no cadastro dela.
+    <details class="mt-1"><summary class="small">Ver matrículas</summary>
+        <span class="small">{{ sem_cadastro | join(', ') }}</span></details>
+</div></div>
+{% endif %}
+
+<form method="post" action="{{ url_for('frequencia.confirmar', token=token) }}" id="fqConfirmar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="fq-card">
+        <div class="fq-card-h"><h2><i class="fas fa-link"></i>A qual unidade do SIGUS esta planilha pertence?</h2></div>
+        <div class="fq-card-b">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6">
+                    <select name="unidade_id" class="form-select" required>
+                        <option value="">Escolha a unidade…</option>
+                        {% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if u.id == unidade_sel }}>{{ u.nome }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 small text-muted">
+                    {% if mapeado %}<i class="fas fa-check-circle text-success me-1"></i>"{{ dados.local }}" já está ligado a esta unidade.
+                    {% elif unidade_sel %}<i class="fas fa-magic me-1"></i>Sugestão pelo nome. Confira antes de confirmar; a escolha fica gravada para os próximos meses.
+                    {% else %}A escolha fica gravada para os próximos meses.{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-list"></i>Profissionais lidos</h2>
+            <span class="fq-card-extra">Capa, Justificativas, Horários e Banco de Horas</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table fq-table">
+                <thead><tr>
+                    <th>Profissional</th><th>Justificativas (dia)</th><th>Complemento</th><th class="num">Vencimento</th>
+                    <th class="num">Banco: anterior</th><th class="num">+ realizadas</th><th class="num">− utilizadas</th><th class="num">= saldo</th>
+                </tr></thead>
+                <tbody>
+                {% for l in dados.lancamentos %}
+                <tr class="{{ 'table-danger' if not l.banco_ok }}">
+                    <td>
+                        <div class="fw-semibold">{{ l.nome or '—' }}</div>
+                        <div class="fq-origem">{{ l.matricula }} · {{ l.funcao or '—' }}{% if l.horario %} · {{ l.horario }}{% endif %}</div>
+                    </td>
+                    <td>
+                        {% for dia, sig in l.dias_ord %}<span class="text-nowrap me-1">{{ sigla(sig, siglas) }}<small class="text-muted"> {{ dia }}</small></span>
+                        {% else %}<span class="text-muted small">—</span>{% endfor %}
+                    </td>
+                    <td class="small" style="max-width:220px">{{ l.complemento or '' }}</td>
+                    <td class="num">{{ vencimento(l) }}</td>
+                    <td class="num">{{ horas(l.banco_saldo_anterior) }}</td>
+                    <td class="num">{{ horas(l.banco_realizadas) }}</td>
+                    <td class="num">{{ horas(l.banco_utilizadas) }}</td>
+                    <td class="num fw-bold">{{ horas(l.banco_saldo_atual) }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="fq-card">
+        <div class="fq-card-h"><h2><i class="fas fa-business-time"></i>Horas extras lançadas</h2></div>
+        {% if dados.horas_extras %}
+        <div class="table-responsive">
+            <table class="table fq-table">
+                <thead><tr><th>Profissional</th><th class="num">HE 50%</th><th class="num">HE 100%</th>
+                    <th class="num">HE 50% not.</th><th class="num">HE 100% not.</th></tr></thead>
+                <tbody>
+                {% for h in dados.horas_extras %}
+                <tr>
+                    <td><div class="fw-semibold">{{ h.nome or '—' }}</div><div class="fq-origem">{{ h.matricula }} · {{ h.funcao or '—' }}</div></td>
+                    <td class="num">{{ horas(h.he50) if h.he50 else '—' }}</td>
+                    <td class="num">{{ horas(h.he100) if h.he100 else '—' }}</td>
+                    <td class="num">{{ horas(h.he50_not) if h.he50_not else '—' }}</td>
+                    <td class="num">{{ horas(h.he100_not) if h.he100_not else '—' }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="fq-card-b text-muted small">A aba Horas Extras está vazia.</div>
+        {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a href="{{ url_for('frequencia.importar') }}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" id="fqBtnConfirmar">
+            <i class="fas fa-check me-1"></i>{{ 'Substituir e importar' if anterior else 'Confirmar importação' }}
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('fqConfirmar').addEventListener('submit', function () {
+    var b = document.getElementById('fqBtnConfirmar');
+    b.disabled = true;
+    b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Importando…';
+});
+</script>
+{% endblock %}

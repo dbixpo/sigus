@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% from 'rh/_frequencia_macros.html' import horas, vencimento, sigla %}
+{% block title %}{{ 'Apontamentos' if de_outro else 'Meus apontamentos' }}{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-calendar-check"></i>
+        {% if de_outro %}Apontamentos de {{ nome_outro or 'matrícula ' ~ matricula_outro }}{% else %}Meus apontamentos{% endif %}
+    </h1>
+    {% if de_outro %}
+    <a href="{{ request.referrer or url_for('frequencia.unidade') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Voltar
+    </a>
+    {% endif %}
+</div>
+<p class="fq-sub">
+    {% if de_outro %}Matrícula {{ matricula_outro }}. {% endif %}
+    O que a unidade enviou ao RH na planilha de frequência: justificativas, banco de horas e horas extras.
+</p>
+
+{% if not mats %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-id-badge"></i>
+    <h3>Seu cadastro ainda não tem matrícula</h3>
+    <p class="mb-0">Os apontamentos são ligados pela matrícula. Peça para a gestão da sua unidade
+        incluir sua(s) matrícula(s) no seu cadastro do SIGUS.</p>
+</div></div>
+{% elif not comp %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-file-excel"></i>
+    <h3>Nenhum apontamento publicado ainda</h3>
+    <p class="mb-0">Quando a gestão importar a planilha de frequência do mês, seus lançamentos aparecem aqui
+        {% if not de_outro %}(matrícula{{ 's' if mats | length > 1 }} {{ mats | sort | join(', ') }}){% endif %}.</p>
+</div></div>
+{% else %}
+
+{# ── Competência ── #}
+{% set idx = competencias.index(comp) %}
+<form class="fq-comp-bar" method="get">
+    {% if matricula_outro %}<input type="hidden" name="matricula" value="{{ matricula_outro }}">{% endif %}
+    {% if idx + 1 < competencias | length %}
+    <a class="btn btn-outline-secondary btn-sm" title="Mês anterior"
+       href="{{ url_for('frequencia.apontamentos', competencia=competencias[idx + 1].strftime('%Y-%m'), matricula=matricula_outro) }}">
+        <i class="fas fa-chevron-left"></i></a>
+    {% endif %}
+    <select name="competencia" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Competência">
+        {% for c in competencias %}
+        <option value="{{ c.strftime('%Y-%m') }}" {{ 'selected' if c == comp }}>{{ competencia_label(c) }}</option>
+        {% endfor %}
+    </select>
+    {% if idx > 0 %}
+    <a class="btn btn-outline-secondary btn-sm" title="Mês seguinte"
+       href="{{ url_for('frequencia.apontamentos', competencia=competencias[idx - 1].strftime('%Y-%m'), matricula=matricula_outro) }}">
+        <i class="fas fa-chevron-right"></i></a>
+    {% endif %}
+</form>
+
+{% if abas | length > 1 %}
+<ul class="nav nav-tabs fq-tabs mb-3" role="tablist">
+    {% for a in abas %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {{ 'active' if loop.first }}" data-bs-toggle="tab" data-bs-target="#mat{{ a.matricula }}"
+                type="button" role="tab">
+            Matrícula {{ a.matricula }}{% if a.funcao %} <span class="fw-normal small">· {{ a.funcao | title }}</span>{% endif %}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<div class="tab-content">
+{% for a in abas %}
+<div class="tab-pane fade {{ 'show active' if loop.first }}" id="mat{{ a.matricula }}" role="tabpanel">
+
+    {# ── Resumo ── #}
+    {% set n_ocorr = namespace(v=0) %}
+    {% for x in a.lancamentos %}{% set n_ocorr.v = n_ocorr.v + (x.l.dias or {}) | length %}{% endfor %}
+    {% set b = a.banco_atual %}
+    <div class="fq-stats">
+        <div class="fq-stat {{ 'vermelho' if b and b.banco_saldo_atual < 0 else 'verde' }}">
+            <i class="fas fa-piggy-bank fq-stat-ico"></i>
+            <div class="fq-stat-rot">Saldo do banco de horas</div>
+            {% if b %}
+            <div class="fq-stat-val {{ 'neg' if b.banco_saldo_atual < 0 else ('pos' if b.banco_saldo_atual > 0) }}">{{ horas(b.banco_saldo_atual) }}</div>
+            <div class="fq-stat-det">
+                {% if b.importacao.competencia == comp %}Fechamento de {{ competencia_label(comp) }}
+                {% else %}Último informado: {{ competencia_label(b.importacao.competencia) }}{% endif %}
+            </div>
+            {% else %}
+            <div class="fq-stat-val">—</div>
+            <div class="fq-stat-det">Nenhum saldo informado até {{ competencia_label(comp) }}</div>
+            {% endif %}
+        </div>
+        <div class="fq-stat {{ 'amarelo' if n_ocorr.v else '' }}">
+            <i class="fas fa-calendar-day fq-stat-ico"></i>
+            <div class="fq-stat-rot">Justificativas no mês</div>
+            <div class="fq-stat-val">{{ n_ocorr.v }}</div>
+            <div class="fq-stat-det">{{ 'dia com apontamento' if n_ocorr.v == 1 else 'dias com apontamento' }} em {{ competencia_label(comp) }}</div>
+        </div>
+        <div class="fq-stat">
+            <i class="fas fa-business-time fq-stat-ico"></i>
+            <div class="fq-stat-rot">Horas extras no mês</div>
+            <div class="fq-stat-val">{{ horas(a.he_total_mes, '0h') }}</div>
+            <div class="fq-stat-det">{{ horas(a.he_ano_total, '0h') }} no ano de {{ comp.year }}</div>
+        </div>
+    </div>
+
+    {# ── Justificativas do mês ── #}
+    {% for x in a.lancamentos %}
+    {% set l = x.l %}
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-calendar-alt"></i>Justificativas de {{ competencia_label(comp) }}</h2>
+            <span class="fq-card-extra fq-origem">
+                <i class="fas fa-building"></i> {{ l.importacao.unidade.nome if l.importacao.unidade else l.importacao.local }}
+                · enviado por {{ l.importacao.importador.nome if l.importacao.importador else '—' }}
+                em {{ l.importacao.importado_em | br_datetime }}
+            </span>
+        </div>
+        <div class="fq-card-b">
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="fq-cal">
+                        {% for d in dias_semana %}<div class="fq-cal-dow">{{ d }}</div>{% endfor %}
+                        {% for semana in x.calendario %}{% for dia, sig in semana %}
+                        {% if not dia %}<div class="fq-cal-dia vazio"></div>
+                        {% else %}
+                        <div class="fq-cal-dia {{ 'fds' if loop.index0 in (0, 6) }} {% if sig %}tem {{ siglas[sig][1] if sig in siglas else 'outro' }}{% endif %}">
+                            <span class="fq-cal-num">{{ dia }}</span>
+                            {% if sig %}{{ sigla(sig, siglas) }}{% endif %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}{% endfor %}
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    {% if x.siglas %}
+                    <ul class="fq-leg mb-3">
+                        {% for sig, n, rotulo, grupo in x.siglas %}
+                        <li>{{ sigla(sig, siglas) }} {{ rotulo }}
+                            <span class="fq-leg-n">{{ n }} dia{{ 's' if n != 1 }}</span></li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted small mb-3"><i class="fas fa-check-circle text-success me-1"></i>
+                        Nenhuma justificativa lançada neste mês.</p>
+                    {% endif %}
+
+                    {% if l.complemento %}
+                    <div class="fq-compl mb-3"><i class="fas fa-umbrella-beach me-1"></i>{{ l.complemento }}</div>
+                    {% endif %}
+
+                    <dl class="fq-info">
+                        <div><dt>Função</dt><dd>{{ l.funcao or '—' }}</dd></div>
+                        <div><dt>Horário</dt><dd>{{ l.horario or '—' }}</dd></div>
+                        <div><dt>Vencimento</dt><dd>{{ vencimento(l) }}
+                            {% if l.horas_mensais %}<span class="text-muted small">de {{ horas(l.horas_mensais) }}/mês</span>{% endif %}</dd></div>
+                        {% if l.hora_noturna %}<div><dt>Hora noturna</dt><dd>{{ horas(l.hora_noturna) }}</dd></div>{% endif %}
+                        {% if l.regime %}<div><dt>Regime</dt><dd class="small">{{ l.regime }}</dd></div>{% endif %}
+                    </dl>
+
+                    {% set tot = l.totais or {} %}
+                    {% if tot %}
+                    <div class="mt-3 small">
+                        <div class="text-muted fw-semibold text-uppercase" style="font-size:.72rem;letter-spacing:.04em">Totais enviados na capa</div>
+                        {% for cod, rot in totais_capa if tot.get(cod) %}
+                        <span class="badge rounded-pill text-bg-light border me-1 mt-1">{{ rot }}: {{ '%g' % tot[cod] }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {# ── Horas extras ── #}
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-business-time"></i>Horas extras de {{ competencia_label(comp) }}</h2>
+            <span class="fq-card-extra">Cada linha é uma unidade que lançou horas para você</span>
+        </div>
+        {% if a.horas_extras %}
+        <div class="table-responsive">
+            <table class="table fq-table">
+                <thead><tr>
+                    <th>Lançado por</th>
+                    {% for k, rot in tipos_he %}<th class="num">{{ rot }}</th>{% endfor %}
+                    <th class="num">Total</th>
+                </tr></thead>
+                <tbody>
+                {% for h in a.horas_extras %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ h.importacao.unidade.nome if h.importacao.unidade else h.importacao.local }}</div>
+                        <div class="fq-origem">importado por {{ h.importacao.importador.nome if h.importacao.importador else '—' }}
+                            em {{ h.importacao.importado_em | br_datetime }}</div>
+                    </td>
+                    {% for k, rot in tipos_he %}<td class="num">{{ horas(h[k], '—') if h[k] else '—' }}</td>{% endfor %}
+                    <td class="num fw-bold">{{ horas(h.total) }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                <tr>
+                    <td>Acumulado em {{ comp.year }}</td>
+                    {% for k, rot in tipos_he %}<td class="num">{{ horas(a.he_ano[k]) if a.he_ano[k] else '—' }}</td>{% endfor %}
+                    <td class="num">{{ horas(a.he_ano_total) }}</td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="fq-card-b text-muted small">
+            Nenhuma hora extra lançada para esta matrícula em {{ competencia_label(comp) }}.
+            {% if a.he_ano_total %}No ano de {{ comp.year }} já são <strong>{{ horas(a.he_ano_total) }}</strong>.{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    {# ── Banco de horas ── #}
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-piggy-bank"></i>Banco de horas mês a mês</h2>
+            <span class="fq-card-extra">Saldo atual = anterior + realizadas − utilizadas</span>
+        </div>
+        {% if a.banco_hist %}
+        <div class="table-responsive">
+            <table class="table fq-table">
+                <thead><tr>
+                    <th>Competência</th><th class="num">Saldo anterior</th><th class="num">Realizadas</th>
+                    <th class="num">Utilizadas</th><th class="num">Saldo atual</th><th>Conferência</th>
+                </tr></thead>
+                <tbody>
+                {% for item in a.banco_hist %}
+                {% set l = item.l %}
+                <tr class="{{ 'table-active' if l.importacao.competencia == comp }}">
+                    <td class="fw-semibold">{{ competencia_label(l.importacao.competencia) }}</td>
+                    <td class="num">{{ horas(l.banco_saldo_anterior) }}</td>
+                    <td class="num text-success">{{ '+' ~ horas(l.banco_realizadas) if l.banco_realizadas else '—' }}</td>
+                    <td class="num text-danger">{{ '−' ~ horas(l.banco_utilizadas) if l.banco_utilizadas else '—' }}</td>
+                    <td class="num fw-bold">{{ horas(l.banco_saldo_atual) }}</td>
+                    <td>
+                        {% if not l.banco_confere %}<span class="fq-flag erro" title="A conta do mês não fecha">Conta não fecha</span>
+                        {% elif not item.continuidade %}<span class="fq-flag alerta" title="O saldo anterior não é igual ao saldo atual do mês passado">Saldo anterior diferente do mês passado</span>
+                        {% else %}<span class="fq-flag ok">Confere</span>{% endif %}
+                        {% if l.banco_obs %}<div class="small text-muted mt-1">{{ l.banco_obs }}</div>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="fq-card-b text-muted small">A planilha ainda não trouxe banco de horas para esta matrícula.</div>
+        {% endif %}
+    </div>
+
+</div>
+{% endfor %}
+</div>
+
+<p class="text-muted small mt-2">
+    <i class="fas fa-info-circle me-1"></i>
+    Estes dados são uma cópia do que a unidade enviou ao RH. Se algo estiver diferente do combinado,
+    fale com a gestão da sua unidade antes do fechamento da folha.
+</p>
+{% endif %}
+{% endblock %}

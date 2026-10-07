@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Base de servidores do RH{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-address-book"></i> Base de servidores do RH</h1>
+    {% if pode_cbo %}
+    <a href="{{ url_for('configuracoes.funcoes_cbo') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-briefcase me-1"></i>Funções × CBO</a>
+    {% endif %}
+</div>
+<p class="fq-sub">Lista que o RH manda todo mês na aba "Banco de Dados" da planilha de frequência.
+    Atualizada a cada importação. Use para conferir matrícula, função e lotação antes de cadastrar alguém.</p>
+
+<div class="mini-stats mb-3">
+    <span class="mini-stat">Servidores na base: <strong>{{ '{:,}'.format(total).replace(',', '.') }}</strong></span>
+    <span class="mini-stat">Atualizada com: <strong>{{ ultima or '—' }}</strong></span>
+    <span class="mini-stat">Funções com CBO definido: <strong>{{ n_funcoes_cbo }} de {{ n_funcoes }}</strong></span>
+</div>
+
+<form class="fq-card mb-3" method="get">
+    <div class="fq-card-b d-flex gap-2">
+        <input type="search" name="q" value="{{ q }}" class="form-control" autofocus
+               placeholder="Nome ou matrícula do servidor" aria-label="Buscar servidor">
+        <button class="btn btn-primary"><i class="fas fa-search me-1"></i>Buscar</button>
+    </div>
+</form>
+
+{% if not total %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-address-book"></i><h3>A base ainda está vazia</h3>
+    <p class="mb-0">Ela é preenchida na primeira importação de uma planilha de frequência.</p>
+</div></div>
+{% elif q %}
+<div class="fq-card">
+    <div class="fq-card-h">
+        <h2><i class="fas fa-list"></i>{{ itens | length }} resultado{{ 's' if itens | length != 1 }}{% if itens | length == 100 %} (mostrando os 100 primeiros){% endif %}</h2>
+    </div>
+    {% if itens %}
+    <div class="table-responsive">
+        <table class="table table-hover fq-table">
+            <thead><tr><th>Matrícula</th><th>Nome</th><th>Função</th><th>CBO sugerido</th><th>Local no RH</th><th>No SIGUS</th></tr></thead>
+            <tbody>
+            {% for s in itens %}
+            <tr>
+                <td class="fw-semibold">{{ s.matricula }}</td>
+                <td>{{ s.nome }}</td>
+                <td class="small">{{ s.funcao or '—' }}</td>
+                <td class="small">{% if s.cbo %}<span class="badge bg-primary">{{ s.cbo }}</span> {{ s.cbo_desc }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                <td class="small">{{ s.local or '—' }}</td>
+                <td class="small">
+                    {% if s.usuario_id %}
+                    <a href="{{ url_for('usuarios.editar', id=s.usuario_id) }}"><i class="fas fa-user-check text-success me-1"></i>{{ s.usuario_nome }}</a>
+                    {% else %}<span class="fq-flag alerta">Sem cadastro</span>{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="fq-card-b text-muted small">Ninguém encontrado com "{{ q }}".</div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

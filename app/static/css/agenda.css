@@ -763,6 +763,17 @@
     opacity: 0.8;
 }
 
+/* Ausência / férias */
+.ag-ausente-eu {
+    font-size: 0.88rem;
+    color: var(--sigus-text);
+    padding: 0.3rem 0;
+}
+.agenda-disp-fora {
+    background: rgba(113, 128, 150, 0.14);
+    color: #4A5568;
+}
+
 /* Alterar prazo */
 .ag-modal-prazo {
     z-index: 1085;

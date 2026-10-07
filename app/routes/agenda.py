@@ -13,8 +13,9 @@ from sqlalchemy.orm import joinedload, selectinload
 from app import db
 from app.models.agenda import (
     AgendaEvento, VISIBILIDADE_UNIDADE, VISIBILIDADE_PESSOAL,
-    TIPO_EVENTO, TIPO_REUNIAO, google_calendar_url, montar_ics,
+    TIPO_EVENTO, TIPO_REUNIAO, TIPO_AUSENCIA, google_calendar_url, montar_ics,
 )
+from app.models.frequencia import motivo_ausencia_valido, motivos_ausencia_agrupados
 from app.models.planejamento import (
     Planejamento, AcaoPlanejamento, planejamento_unidades,
     planejamento_tipos_unidade, STATUS_ACAO_LABELS,
@@ -29,6 +30,7 @@ agenda_bp = Blueprint('agenda', __name__, url_prefix='/agenda')
 COR_EVENTO = '#1A82B8'
 COR_PESSOAL = '#19A88B'
 COR_REUNIAO = '#0D3B5E'
+COR_AUSENCIA = '#718096'
 COR_PRAZO = '#F5C500'
 COR_PRAZO_VENCIDO = '#E63030'
 COR_PRAZO_FEITO = '#E2E8F0'
@@ -178,6 +180,8 @@ def _intervalos_pessoa(usuario_id, janela_ini, janela_fim, ignorar_id=None):
     for ev in q.all():
         if ev.eh_pessoal and ev.criado_por != usuario_id:
             continue
+        if ev.eh_ausencia and not any(p.id == usuario_id for p in ev.participantes):
+            continue
         fim = _fim_evento(ev)
         if fim <= janela_ini or ev.inicio >= janela_fim:
             continue
@@ -186,11 +190,17 @@ def _intervalos_pessoa(usuario_id, janela_ini, janela_fim, ignorar_id=None):
 
 
 def _livre_em(usuario_id, slot_ini, slot_fim, ignorar_id=None):
-    """(livre, título do conflito). Compromisso que o usuário logado não enxerga volta sem título."""
+    """(livre, título do conflito, está fora). Compromisso que o usuário logado não enxerga volta sem título."""
+    conflito = None
     for ini, fim, ev in _intervalos_pessoa(usuario_id, slot_ini, slot_fim, ignorar_id):
         if ini < slot_fim and fim > slot_ini:
-            return False, (ev.titulo or 'Compromisso') if _evento_visivel(ev) else None
-    return True, None
+            if ev.eh_ausencia:
+                return False, ev.rotulo_publico, True
+            if conflito is None:
+                conflito = ((ev.titulo or 'Compromisso') if _evento_visivel(ev) else None,)
+    if conflito:
+        return False, conflito[0], False
+    return True, None, False
 
 
 def _sugerir_horarios(usuario_ids, duracao_min=60, ignorar_id=None, quantidade=5):
@@ -315,7 +325,28 @@ def _pode_editar_evento(ev):
         return False
     if current_user.pode('editar_agenda'):
         return True
+    if ev.eh_ausencia and ev.ausente and ev.ausente.id == current_user.id:
+        return True
     return ev.criado_por == current_user.id
+
+
+def _pode_ver_motivo(ev):
+    if ev.criado_por == current_user.id or current_user.pode('editar_agenda'):
+        return True
+    return bool(ev.ausente and ev.ausente.id == current_user.id)
+
+
+def _nome_curto(nome):
+    partes = (nome or '').split()
+    if len(partes) <= 2:
+        return ' '.join(partes)
+    return f'{partes[0]} {partes[-1]}'
+
+
+def _titulo_ausencia(motivo, usuario):
+    rotulo = 'Férias' if motivo == 'FERIAS' else 'Ausente'
+    nome = _nome_curto(usuario.nome) if usuario else ''
+    return f'{rotulo}: {nome}' if nome else rotulo
 
 
 def _primeiro_nome(nome):
@@ -363,6 +394,11 @@ def _fc_evento(ev):
             pessoas = [_pessoa_json(ev.criador)] + pessoas
         pessoas_label = 'Participantes'
         tipo_ui = 'reuniao'
+    elif ev.eh_ausencia:
+        cor = COR_AUSENCIA
+        pessoas = [_pessoa_json(ev.ausente)] if ev.ausente else []
+        pessoas_label = 'Quem estará fora'
+        tipo_ui = 'ausencia'
     else:
         cor = COR_PESSOAL if ev.eh_pessoal else COR_EVENTO
         pessoas = [_pessoa_json(ev.criador)] if ev.criador else []
@@ -389,6 +425,8 @@ def _fc_evento(ev):
             'pessoas_label': pessoas_label,
             'pessoas': pessoas,
             'participante_ids': [u.id for u in (ev.participantes or [])],
+            'motivo': (ev.motivo or '') if ev.eh_ausencia and _pode_ver_motivo(ev) else '',
+            'motivo_label': ev.motivo_label if ev.eh_ausencia and _pode_ver_motivo(ev) else '',
             'visibilidade': ev.visibilidade,
             'pode_editar': pode_editar,
             'google_url': google_calendar_url(
@@ -500,6 +538,19 @@ def _fc_feriado(f):
     return fundo, chip
 
 
+def _ausente_form(form, unidades):
+    """Cada um marca a própria ausência; quem edita a agenda marca a de colegas da unidade."""
+    uid = form.get('ausente_id', type=int) or current_user.id
+    if uid == current_user.id:
+        return current_user, None
+    if not current_user.pode('editar_agenda'):
+        return None, 'Você só pode registrar a sua própria ausência.'
+    ids = {u.id for u in _usuarios_agenda([u.id for u in unidades])}
+    if uid not in ids:
+        return None, 'Essa pessoa não é da sua unidade.'
+    return db.session.get(Usuario, uid), None
+
+
 def _dados_formulario(form, unidades):
     titulo = (form.get('titulo') or '').strip()
     unidade_id = form.get('unidade_id', type=int)
@@ -513,11 +564,21 @@ def _dados_formulario(form, unidades):
     descricao = (form.get('descricao') or '').strip() or None
     local = (form.get('local') or '').strip() or None
     tipo = form.get('tipo') or TIPO_EVENTO
-    if tipo not in (TIPO_EVENTO, TIPO_REUNIAO):
+    if tipo not in (TIPO_EVENTO, TIPO_REUNIAO, TIPO_AUSENCIA):
         tipo = TIPO_EVENTO
-    if tipo == TIPO_REUNIAO:
+    if tipo in (TIPO_REUNIAO, TIPO_AUSENCIA):
         visibilidade = VISIBILIDADE_UNIDADE
     erro = None
+    motivo = None
+    ausente = None
+    if tipo == TIPO_AUSENCIA:
+        motivo = (form.get('motivo') or '').strip().upper()
+        if not motivo_ausencia_valido(motivo):
+            erro = 'Escolha o motivo da ausência.'
+        ausente, erro_ausente = _ausente_form(form, unidades)
+        erro = erro or erro_ausente
+        titulo = _titulo_ausencia(motivo, ausente)
+        local = None
     if dia_inteiro:
         inicio = _parse_iso(form.get('inicio_data') or form.get('inicio'))
         fim = _parse_iso(form.get('fim_data') or form.get('fim'))
@@ -526,7 +587,7 @@ def _dados_formulario(form, unidades):
         if fim:
             fim = datetime.combine(fim.date() if isinstance(fim, datetime) else fim, datetime.min.time())
             if inicio and fim < inicio:
-                erro = 'A data final precisa ser igual ou depois da data inicial.'
+                erro = erro or 'A data final precisa ser igual ou depois da data inicial.'
             elif inicio and fim.date() == inicio.date():
                 fim = None
     else:
@@ -535,8 +596,10 @@ def _dados_formulario(form, unidades):
         if inicio and not fim:
             fim = inicio + timedelta(hours=1)
         if inicio and fim and fim <= inicio:
-            erro = 'O horário final precisa ser depois do horário inicial.'
+            erro = erro or 'O horário final precisa ser depois do horário inicial.'
     return {
+        'motivo': motivo,
+        'ausente': ausente,
         'erro': erro,
         'titulo': titulo,
         'unidade_id': unidade_id,
@@ -567,6 +630,8 @@ def index():
         usuarios=usuarios,
         setores=_setores_por_usuario([u.id for u in usuarios]),
         pode_adicionar=current_user.pode('adicionar_agenda'),
+        pode_ausencia_outros=current_user.pode('editar_agenda'),
+        motivos_ausencia=motivos_ausencia_agrupados(),
     )
 
 
@@ -670,12 +735,15 @@ def criar():
         dia_inteiro=dados['dia_inteiro'],
         visibilidade=dados['visibilidade'],
         tipo=dados['tipo'],
+        motivo=dados['motivo'],
         criado_por=current_user.id,
         criado_em=agora_local(),
     )
     if dados['tipo'] == TIPO_REUNIAO:
         ids_p = _ids_participantes_form(request.form, unidades)
         ev.participantes = Usuario.query.filter(Usuario.id.in_(ids_p)).all()
+    elif dados['tipo'] == TIPO_AUSENCIA:
+        ev.participantes = [dados['ausente']]
     db.session.add(ev)
     db.session.commit()
     return jsonify({
@@ -708,10 +776,13 @@ def editar(id):
     ev.dia_inteiro = dados['dia_inteiro']
     ev.visibilidade = dados['visibilidade']
     ev.tipo = dados['tipo']
+    ev.motivo = dados['motivo']
     ev.atualizado_em = agora_local()
     if dados['tipo'] == TIPO_REUNIAO:
         ids_p = _ids_participantes_form(request.form, unidades)
         ev.participantes = Usuario.query.filter(Usuario.id.in_(ids_p)).all()
+    elif dados['tipo'] == TIPO_AUSENCIA:
+        ev.participantes = [dados['ausente']]
     else:
         ev.participantes = []
     db.session.commit()
@@ -805,13 +876,14 @@ def disponibilidade():
     usuarios = {u.id: u for u in Usuario.query.filter(Usuario.id.in_(ids)).all()}
     pessoas = []
     for uid in ids:
-        livre, titulo = _livre_em(uid, inicio, fim, ignorar)
+        livre, titulo, fora = _livre_em(uid, inicio, fim, ignorar)
         u = usuarios.get(uid)
         pessoas.append({
             'id': uid,
             'nome': u.nome if u else '',
             'primeiro': _primeiro_nome(u.nome if u else ''),
             'livre': livre,
+            'fora': fora,
             'conflito': None if livre else titulo,
         })
     return jsonify({

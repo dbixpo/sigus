@@ -267,16 +267,38 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.pode('ver_faltas_abonadas') or current_user.pode('editar_faltas_abonadas') or current_user.pode('adicionar_faltas_abonadas') or current_user.perfil in ['gestor_secretaria', 'coordenador'] or current_user.pode('ver_cadastro_publico') %}
+                {% set pode_freq = current_user.pode_importar_frequencia %}
                 <li class="sidebar-group" data-group="recursos-humanos">
                     <button type="button" class="sidebar-group-toggle" aria-expanded="false">
                         <span class="sidebar-group-title">Recursos Humanos</span>
                         <i class="fas fa-chevron-down sidebar-group-chevron"></i>
                     </button>
                     <ul class="sidebar-group-items nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'frequencia.apontamentos' %}active{% endif %}"
+                       href="{{ url_for('frequencia.apontamentos') }}">
+                        <i class="fas fa-calendar-alt"></i><span>Meus apontamentos</span>
+                    </a>
+                </li>
+                {% if pode_freq %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'frequencia.unidade' %}active{% endif %}"
+                       href="{{ url_for('frequencia.unidade') }}">
+                        <i class="fas fa-users"></i><span>Apontamentos da unidade</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if pode_freq or current_user.pode('cadastrar_usuario') or current_user.pode('gerenciar_usuarios') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'frequencia.servidores' %}active{% endif %}"
+                       href="{{ url_for('frequencia.servidores') }}">
+                        <i class="fas fa-address-book"></i><span>Base de servidores</span>
+                    </a>
+                </li>
+                {% endif %}
                 {% if current_user.pode('ver_faltas_abonadas') or current_user.pode('editar_faltas_abonadas') or current_user.pode('adicionar_faltas_abonadas') %}
                 <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('rh') %}active{% endif %}"
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('rh.') %}active{% endif %}"
                        href="{{ url_for('rh.faltas_abonadas') }}">
                         <i class="fas fa-calendar-check"></i><span>Faltas Abonadas</span>
                     </a>
@@ -291,7 +313,6 @@
                 {% endif %}
                     </ul>
                 </li>
-                {% endif %}
 
                 {% if current_user.pode_ver_gestao_chamados or current_user.pode('ver_transferencias') %}
                 <li class="sidebar-group" data-group="operacoes">
@@ -373,7 +394,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') or current_user.pode('gerenciar_perfis') or current_user.pode('ver_usuarios_unidade') or current_user.pode('cadastrar_usuario') or current_user.pode('gerenciar_usuarios') or current_user.pode('ver_auditoria') %}
+                {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') or current_user.pode('gerenciar_perfis') or current_user.pode('ver_usuarios_unidade') or current_user.pode('cadastrar_usuario') or current_user.pode('gerenciar_usuarios') or current_user.pode('ver_auditoria') or pode_freq %}
                 <li class="sidebar-group" data-group="configuracoes">
                     <button type="button" class="sidebar-group-toggle" aria-expanded="false">
                         <span class="sidebar-group-title">Configurações</span>
@@ -399,6 +420,14 @@
                     <a class="nav-link {% if request.endpoint and request.endpoint.startswith('usuarios') %}active{% endif %}"
                        href="{{ url_for('usuarios.listar') }}">
                         <i class="fas fa-users"></i><span>Usuários</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if pode_freq %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint in ('frequencia.importar', 'frequencia.previa', 'frequencia.locais') %}active{% endif %}"
+                       href="{{ url_for('frequencia.importar') }}">
+                        <i class="fas fa-file-upload"></i><span>Importar frequência</span>
                     </a>
                 </li>
                 {% endif %}

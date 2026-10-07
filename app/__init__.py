@@ -64,6 +64,7 @@ def create_app(config_name='default'):
     from app.routes.solicitacoes import solicitacoes_bp
     from app.routes.notificacoes import notificacoes_bp
     from app.routes.rh import rh_bp
+    from app.routes.frequencia import frequencia_bp
     from app.routes.planejamentos import planejamentos_bp
     from app.routes.empresas import empresas_bp
     from app.routes.sueq import sueq_bp
@@ -90,6 +91,7 @@ def create_app(config_name='default'):
     app.register_blueprint(solicitacoes_bp)
     app.register_blueprint(notificacoes_bp)
     app.register_blueprint(rh_bp)
+    app.register_blueprint(frequencia_bp)
     app.register_blueprint(planejamentos_bp)
     app.register_blueprint(empresas_bp)
     app.register_blueprint(sueq_bp)

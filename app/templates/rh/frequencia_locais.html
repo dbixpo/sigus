@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Locais do RH × unidades{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-random"></i> Locais do RH × unidades</h1>
+    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Importar frequência</a>
+</div>
+<p class="fq-sub">O RH usa nomes próprios para os locais ("SES - UBS FIORE"). Ligue cada um à unidade do SIGUS:
+    a importação usa esta ligação para saber de qual unidade é a planilha.</p>
+
+{% if not linhas %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-random"></i><h3>Nenhum local conhecido ainda</h3>
+    <p class="mb-0">Os locais aparecem aqui depois da primeira importação (vêm da aba Banco de Dados).</p>
+</div></div>
+{% else %}
+<div class="mini-stats mb-3">
+    <span class="mini-stat">Locais: <strong>{{ linhas | length }}</strong></span>
+    <span class="mini-stat">Ligados a uma unidade: <strong>{{ n_mapeados }}</strong></span>
+    <span class="mini-stat">Com sugestão automática: <strong>{{ linhas | selectattr('sugerida') | list | length }}</strong></span>
+</div>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-list"></i>Locais</h2>
+            <input type="search" class="form-control form-control-sm ms-auto" style="max-width:240px"
+                   placeholder="Filtrar locais" id="fqBusca">
+        </div>
+        <div class="table-responsive">
+            <table class="table fq-table" id="fqTabela">
+                <thead><tr><th>Local no RH</th><th class="num">Servidores</th><th style="min-width:280px">Unidade do SIGUS</th></tr></thead>
+                <tbody>
+                {% for x in linhas %}
+                {% set atual = x.mapa.unidade_id if x.mapa and x.mapa.unidade_id else (x.sugerida.id if x.sugerida else None) %}
+                <tr data-busca="{{ x.nome | lower }}">
+                    <td class="fw-semibold">{{ x.nome }}
+                        <input type="hidden" name="nome_{{ x.i }}" value="{{ x.nome }}"></td>
+                    <td class="num">{{ x.servidores }}</td>
+                    <td>
+                        <select name="local_{{ x.i }}" class="form-select form-select-sm">
+                            <option value="">Sem unidade</option>
+                            {% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if u.id == atual }}>{{ u.nome }}</option>{% endfor %}
+                        </select>
+                        {% if x.sugerida and not (x.mapa and x.mapa.unidade_id) %}
+                        <div class="small text-muted mt-1"><i class="fas fa-magic me-1"></i>Sugestão pelo nome: confira e salve</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="text-end mb-4">
+        <button class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar ligações</button>
+    </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var busca = document.getElementById('fqBusca');
+    if (!busca) return;
+    busca.addEventListener('input', function () {
+        var t = busca.value.trim().toLowerCase();
+        document.querySelectorAll('#fqTabela tbody tr').forEach(function (tr) {
+            tr.style.display = !t || tr.dataset.busca.indexOf(t) !== -1 ? '' : 'none';
+        });
+    });
+})();
+</script>
+{% endblock %}

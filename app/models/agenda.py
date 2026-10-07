@@ -4,6 +4,7 @@ from datetime import datetime, date, timedelta
 from urllib.parse import urlencode
 
 from app import db
+from app.models.frequencia import motivo_ausencia_label
 from app.utils import agora_local_callable
 
 
@@ -11,6 +12,7 @@ VISIBILIDADE_UNIDADE = 'unidade'
 VISIBILIDADE_PESSOAL = 'pessoal'
 TIPO_EVENTO = 'evento'
 TIPO_REUNIAO = 'reuniao'
+TIPO_AUSENCIA = 'ausencia'
 
 agenda_evento_participantes = db.Table(
     'agenda_evento_participantes',
@@ -32,6 +34,7 @@ class AgendaEvento(db.Model):
     dia_inteiro = db.Column(db.Boolean, nullable=False, default=False)
     visibilidade = db.Column(db.String(20), nullable=False, default=VISIBILIDADE_UNIDADE)
     tipo = db.Column(db.String(20), nullable=False, default=TIPO_EVENTO)
+    motivo = db.Column(db.String(20))
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     criado_em = db.Column(db.DateTime, nullable=False, default=agora_local_callable)
     atualizado_em = db.Column(db.DateTime)
@@ -51,6 +54,23 @@ class AgendaEvento(db.Model):
     @property
     def eh_reuniao(self):
         return self.tipo == TIPO_REUNIAO
+
+    @property
+    def eh_ausencia(self):
+        return self.tipo == TIPO_AUSENCIA
+
+    @property
+    def ausente(self):
+        return self.participantes[0] if self.eh_ausencia and self.participantes else None
+
+    @property
+    def motivo_label(self):
+        return motivo_ausencia_label(self.motivo)
+
+    @property
+    def rotulo_publico(self):
+        """O que a unidade inteira vê: o motivo detalhado (atestado etc.) fica reservado."""
+        return 'Férias' if self.motivo == 'FERIAS' else 'Ausente'
 
     @property
     def inicio_date(self):

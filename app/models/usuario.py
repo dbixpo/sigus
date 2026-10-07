@@ -418,6 +418,13 @@ class Usuario(UserMixin, db.Model):
         return self.unidade_logada
 
     @property
+    def pode_importar_frequencia(self):
+        """Gestor local, gestor central ou administrador: importa planilhas de frequência."""
+        from app.models.frequencia import unidades_gestao_rh
+        ids = unidades_gestao_rh(self)
+        return ids is None or bool(ids)
+
+    @property
     def pode_ver_gestao_chamados(self):
         """Gestão de chamados: permissão + unidade logada que trata algum tipo."""
         if not self.pode('gerir_chamados_setor') and not self.pode('ver_chamados_todos'):

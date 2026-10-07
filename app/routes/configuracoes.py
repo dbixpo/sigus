@@ -1288,6 +1288,53 @@ def alternar_status_cbo(id):
     return redirect(url_for('configuracoes.cbos'))
 
 
+@configuracoes_bp.route('/cbos/funcoes-rh', methods=['GET', 'POST'])
+@login_required
+def funcoes_cbo():
+    """De-para: função de concurso (base do RH) → CBO sugerido ao cadastrar a matrícula."""
+    _exigir_admin()
+    from app.models.frequencia import RhFuncaoCbo, RhServidor
+    from app.services.base_rh import sugerir_cbo
+
+    cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.descricao).all()]
+    validos = {c for c, _ in cbos_ativos}
+
+    if request.method == 'POST':
+        atuais = {f.funcao: f for f in RhFuncaoCbo.query.all()}
+        n = 0
+        for chave, nome in request.form.items():
+            if not chave.startswith('funcao_'):
+                continue
+            nome = nome.strip()
+            cbo = request.form.get('cbo_' + chave[7:], '').strip() or None
+            if not nome or (cbo and cbo not in validos):
+                continue
+            reg = atuais.get(nome)
+            if reg is None and cbo:
+                db.session.add(RhFuncaoCbo(funcao=nome, cbo=cbo))
+                n += 1
+            elif reg is not None and reg.cbo != cbo:
+                reg.cbo = cbo
+                n += 1
+        db.session.commit()
+        flash(f'De-para de funções salvo ({n} alteração(ões)).', 'success')
+        return redirect(url_for('configuracoes.funcoes_cbo'))
+
+    contagem = dict(db.session.query(RhServidor.funcao, db.func.count(RhServidor.id))
+                    .filter(RhServidor.funcao.isnot(None)).group_by(RhServidor.funcao).all())
+    atuais = {f.funcao: f.cbo for f in RhFuncaoCbo.query.all()}
+    descs = dict(cbos_ativos)
+    linhas = []
+    for i, funcao in enumerate(sorted(set(contagem) | set(atuais), key=lambda f: (-contagem.get(f, 0), f))):
+        cbo = atuais.get(funcao)
+        sug = None if cbo else sugerir_cbo(funcao, cbos_ativos)
+        linhas.append({'i': i, 'funcao': funcao, 'servidores': contagem.get(funcao, 0), 'cbo': cbo,
+                       'sugerido': sug, 'sugerido_desc': descs.get(sug, '')})
+    return render_template('configuracoes/cbos/funcoes_rh.html', linhas=linhas, cbos=cbos_ativos,
+                           n_definidas=sum(1 for l in linhas if l['cbo']),
+                           n_sugeridas=sum(1 for l in linhas if l['sugerido']))
+
+
 # ══════════════════════════════════════════════════════════
 #  STATUS DE CHAMADOS
 # ══════════════════════════════════════════════════════════

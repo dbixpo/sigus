@@ -46,5 +46,8 @@ from app.models.planejamento import (
     AcaoObservacao, AcaoObservacaoAnexo,
 )
 from app.models.falta_abonada import FaltaAbonada
+from app.models.frequencia import (
+    RhLocal, RhServidor, RhFuncaoCbo, FreqImportacao, FreqLancamento, FreqHoraExtra,
+)
 from app.models.contrato_financeiro import ContratoFinanceiro
 from app.models.solicitacao_vinculo import SolicitacaoVinculo

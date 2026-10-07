@@ -1,0 +1,21 @@
+{# Horas decimais (11.5) → "11h30". Negativos mantêm o sinal. #}
+{% macro horas(v, vazio='—') -%}
+{%- if v is none -%}{{ vazio }}
+{%- else -%}
+{%- set t = ((v | abs) * 60) | round | int -%}
+{{ '−' if v < 0 and t else '' }}{{ t // 60 }}h{% if t % 60 %}{{ '%02d' % (t % 60) }}{% endif %}
+{%- endif -%}
+{%- endmacro %}
+
+{# Vencimento: horistas em horas, mensalistas em dias. #}
+{% macro vencimento(l) -%}
+{%- if l.vencimento is none -%}—
+{%- elif l.tipo_jornada == 'MENSAL' -%}{{ '%g' % l.vencimento }} dia{{ 's' if l.vencimento != 1 else '' }}
+{%- else -%}{{ horas(l.vencimento) }}
+{%- endif -%}
+{%- endmacro %}
+
+{% macro sigla(codigo, siglas) -%}
+<span class="fq-sig {{ siglas[codigo][1] if codigo in siglas else 'outro' }}"
+      title="{{ siglas[codigo][0] if codigo in siglas else codigo }}">{{ codigo }}</span>
+{%- endmacro %}

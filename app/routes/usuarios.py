@@ -70,6 +70,21 @@ def _normalizar_numero_matricula(numero):
     return ' '.join((numero or '').strip().upper().split())
 
 
+def _matriculas_da_base_rh(usuario):
+    """Cadastra as matrículas marcadas na busca da base do RH (aba Acesso do formulário)."""
+    from app.services.base_rh import cadastrar_matriculas_rh
+    criadas, ignoradas = cadastrar_matriculas_rh(usuario, request.form.getlist('rh_matricula'))
+    if criadas:
+        db.session.commit()
+        flash(f'Matrícula{"s" if len(criadas) > 1 else ""} {", ".join(criadas)} cadastrada'
+              f'{"s" if len(criadas) > 1 else ""} a partir da base do RH, com o CBO da função. Confira na aba Matrículas.',
+              'info')
+    if ignoradas:
+        flash(f'Não cadastrei {", ".join(ignoradas)}: a matrícula já pertence a alguém ou saiu da base do RH.',
+              'warning')
+    return criadas
+
+
 def _preencher_usuario(u, form):
     for campo in _CAMPOS_PROF:
         val = form.get(campo, '').strip() or None
@@ -164,6 +179,7 @@ def novo():
         _preencher_usuario(u, request.form)
         db.session.add(u)
         db.session.commit()
+        _matriculas_da_base_rh(u)
         flash(f'Usuário {u.nome} criado com sucesso!', 'success')
         return redirect(url_for('usuarios.editar', id=u.id))
 
@@ -224,6 +240,7 @@ def editar(id):
                 usuario.set_senha(nova_senha)
             _preencher_usuario(usuario, request.form)
             db.session.commit()
+            _matriculas_da_base_rh(usuario)
             flash('Usuário atualizado!', 'success')
             return redirect(url_for('usuarios.editar', id=usuario.id))
         except Exception as e:

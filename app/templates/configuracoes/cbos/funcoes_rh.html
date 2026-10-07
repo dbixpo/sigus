@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Funções do RH × CBO{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.cbos') }}">CBOs</a></li>
+        <li class="breadcrumb-item active">Funções do RH</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-briefcase"></i> CBOs (Códigos Brasileiros de Ocupação)</h1>
+</div>
+
+<ul class="nav nav-tabs fq-tabs mb-3">
+    <li class="nav-item"><a class="nav-link" href="{{ url_for('configuracoes.cbos') }}">CBOs</a></li>
+    <li class="nav-item"><a class="nav-link active" href="#">Funções do RH × CBO</a></li>
+</ul>
+
+<p class="fq-sub">A base do RH traz a <strong>função de concurso</strong> de cada servidor, mas não o CBO.
+    Defina aqui qual CBO corresponde a cada função: ao cadastrar uma matrícula da base, o SIGUS já preenche o CBO.</p>
+
+{% if not linhas %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-briefcase"></i><h3>Nenhuma função conhecida ainda</h3>
+    <p class="mb-0">As funções aparecem aqui depois da primeira importação de planilha de frequência
+        (<a href="{{ url_for('frequencia.importar') }}">Importar frequência</a>).</p>
+</div></div>
+{% else %}
+<div class="mini-stats mb-3">
+    <span class="mini-stat">Funções: <strong>{{ linhas | length }}</strong></span>
+    <span class="mini-stat">Com CBO: <strong>{{ n_definidas }}</strong></span>
+    <span class="mini-stat">Com sugestão: <strong>{{ n_sugeridas }}</strong></span>
+</div>
+
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="fq-card">
+        <div class="fq-card-h">
+            <h2><i class="fas fa-list"></i>Funções</h2>
+            <div class="ms-auto d-flex gap-2 align-items-center">
+                {% if n_sugeridas %}
+                <button type="button" class="btn btn-outline-primary btn-sm" id="fqUsarTodas">
+                    <i class="fas fa-magic me-1"></i>Usar todas as sugestões</button>
+                {% endif %}
+                <input type="search" class="form-control form-control-sm" style="max-width:220px"
+                       placeholder="Filtrar funções" id="fqBusca">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table fq-table" id="fqTabela">
+                <thead><tr><th>Função no RH</th><th class="num">Servidores</th><th style="min-width:340px">CBO</th></tr></thead>
+                <tbody>
+                {% for l in linhas %}
+                <tr data-busca="{{ l.funcao | lower }}">
+                    <td class="fw-semibold">{{ l.funcao }}<input type="hidden" name="funcao_{{ l.i }}" value="{{ l.funcao }}"></td>
+                    <td class="num">{{ l.servidores }}</td>
+                    <td>
+                        <select name="cbo_{{ l.i }}" class="form-select form-select-sm fq-cbo" data-valor="{{ l.cbo or '' }}"
+                                data-singleselect data-placeholder="Sem CBO — digite para buscar">
+                            <option value="">Sem CBO</option>
+                            {% if l.cbo %}<option value="{{ l.cbo }}" selected>{{ l.cbo }}</option>{% endif %}
+                        </select>
+                        {% if l.sugerido %}
+                        <button type="button" class="btn btn-link btn-sm p-0 mt-1 fq-sug" data-cbo="{{ l.sugerido }}">
+                            <i class="fas fa-magic me-1"></i>Sugestão: {{ l.sugerido }} – {{ l.sugerido_desc }}</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="text-end mb-4">
+        <button class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar de-para</button>
+    </div>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var CBOS = {{ cbos | tojson }};
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    var modelo = '<option value="">Sem CBO</option>' + CBOS.map(function (c) {
+        return '<option value="' + esc(c[0]) + '">' + esc(c[0] + ' – ' + c[1]) + '</option>';
+    }).join('');
+    document.querySelectorAll('select.fq-cbo').forEach(function (sel) {
+        var valor = sel.dataset.valor;
+        sel.innerHTML = modelo;
+        if (valor && !CBOS.some(function (c) { return c[0] === valor; })) {
+            sel.insertAdjacentHTML('beforeend', '<option value="' + esc(valor) + '">' + esc(valor) + ' (inativo)</option>');
+        }
+        sel.value = valor;
+    });
+
+    function usar(btn) {
+        var sel = btn.closest('td').querySelector('select');
+        if (sel.tomselect) sel.tomselect.setValue(btn.dataset.cbo); else sel.value = btn.dataset.cbo;
+        btn.remove();
+    }
+    document.querySelectorAll('.fq-sug').forEach(function (b) {
+        b.addEventListener('click', function () { usar(b); });
+    });
+    var todas = document.getElementById('fqUsarTodas');
+    if (todas) todas.addEventListener('click', function () {
+        document.querySelectorAll('.fq-sug').forEach(usar);
+        todas.remove();
+    });
+    var busca = document.getElementById('fqBusca');
+    if (busca) busca.addEventListener('input', function () {
+        var t = busca.value.trim().toLowerCase();
+        document.querySelectorAll('#fqTabela tbody tr').forEach(function (tr) {
+            tr.style.display = !t || tr.dataset.busca.indexOf(t) !== -1 ? '' : 'none';
+        });
+    });
+})();
+</script>
+{% endblock %}

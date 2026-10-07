@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% from 'rh/_frequencia_macros.html' import horas, vencimento, sigla %}
+{% block title %}Apontamentos da unidade{% endblock %}
+{% block head %}
+<link href="{{ url_for('static', filename='css/frequencia.css') }}?v=20261006a" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-users"></i> Apontamentos da unidade</h1>
+    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-file-upload me-1"></i>Importar frequência
+    </a>
+</div>
+<p class="fq-sub">Tudo o que foi enviado ao RH nas planilhas de frequência importadas.</p>
+
+{% if not unidades %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-file-excel"></i>
+    <h3>Nenhuma planilha importada ainda</h3>
+    <p>Importe a planilha mensal de frequência para ver os apontamentos da equipe.</p>
+    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-primary btn-sm"><i class="fas fa-file-upload me-1"></i>Importar agora</a>
+</div></div>
+{% else %}
+
+<form class="fq-comp-bar" method="get">
+    <select name="unidade_id" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Unidade">
+        {% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if u.id == un_id }}>{{ u.nome }}</option>{% endfor %}
+    </select>
+    <select name="competencia" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Competência">
+        {% for c in competencias %}
+        <option value="{{ c.strftime('%Y-%m') }}" {{ 'selected' if c == comp }}>{{ competencia_label(c) }}</option>
+        {% endfor %}
+    </select>
+</form>
+
+{% for imp in imps_mes %}
+<div class="fq-origem mb-2">
+    <i class="fas fa-file-excel"></i> <strong>{{ imp.local }}</strong> · {{ imp.arquivo or 'planilha' }}
+    · importada por {{ imp.importador.nome if imp.importador else '—' }} em {{ imp.importado_em | br_datetime }}
+</div>
+{% endfor %}
+
+<div class="fq-stats">
+    <div class="fq-stat"><i class="fas fa-user-check fq-stat-ico"></i>
+        <div class="fq-stat-rot">Profissionais</div><div class="fq-stat-val">{{ linhas | length }}</div>
+        <div class="fq-stat-det">matrículas na capa</div></div>
+    {% set com_just = linhas | selectattr('siglas') | list | length %}
+    <div class="fq-stat amarelo"><i class="fas fa-calendar-day fq-stat-ico"></i>
+        <div class="fq-stat-rot">Com justificativa</div><div class="fq-stat-val">{{ com_just }}</div>
+        <div class="fq-stat-det">profissionais com algum dia apontado</div></div>
+    <div class="fq-stat verde"><i class="fas fa-business-time fq-stat-ico"></i>
+        <div class="fq-stat-rot">Horas extras lançadas</div>
+        <div class="fq-stat-val">{{ horas(he_totais.values() | sum, '0h') }}</div>
+        <div class="fq-stat-det">{{ hes | length }} lançamento{{ 's' if hes | length != 1 }}</div></div>
+    <div class="fq-stat {{ 'vermelho' if n_sem_banco_ok else '' }}"><i class="fas fa-piggy-bank fq-stat-ico"></i>
+        <div class="fq-stat-rot">Banco de horas</div>
+        <div class="fq-stat-val">{{ n_sem_banco_ok }}</div>
+        <div class="fq-stat-det">{{ 'conta que não fecha' if n_sem_banco_ok == 1 else 'contas que não fecham' }}</div></div>
+</div>
+
+<div class="fq-card">
+    <div class="fq-card-h">
+        <h2><i class="fas fa-list"></i>Profissionais</h2>
+        <input type="search" class="form-control form-control-sm ms-auto" style="max-width:240px"
+               placeholder="Buscar nome ou matrícula" id="fqBusca">
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover fq-table" id="fqTabela">
+            <thead><tr>
+                <th>Profissional</th><th>Justificativas</th><th>Complemento</th>
+                <th class="num">Vencimento</th><th class="num">Banco (saldo)</th><th></th>
+            </tr></thead>
+            <tbody>
+            {% for x in linhas %}{% set l = x.l %}
+            <tr data-busca="{{ (l.nome or '') | lower }} {{ l.matricula }}">
+                <td>
+                    <div class="fw-semibold">{{ l.nome or '—' }}</div>
+                    <div class="fq-origem">{{ l.matricula }} · {{ l.funcao or '—' }}</div>
+                </td>
+                <td>
+                    {% for sig, n, rotulo, grupo in x.siglas %}
+                    <span class="me-1" title="{{ rotulo }}">{{ sigla(sig, siglas) }}<small class="text-muted">×{{ n }}</small></span>
+                    {% else %}<span class="text-muted small">—</span>{% endfor %}
+                </td>
+                <td class="small" style="max-width:260px">{{ l.complemento or '' }}</td>
+                <td class="num">{{ vencimento(l) }}</td>
+                <td class="num">
+                    {% if l.tem_banco %}
+                    <span class="fw-semibold {{ 'text-danger' if l.banco_saldo_atual < 0 }}">{{ horas(l.banco_saldo_atual) }}</span>
+                    {% if not l.banco_confere %}<div><span class="fq-flag erro">conta não fecha</span></div>{% endif %}
+                    {% else %}—{% endif %}
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" title="Ver apontamentos"
+                       href="{{ url_for('frequencia.apontamentos', matricula=l.matricula, competencia=comp.strftime('%Y-%m')) }}">
+                        <i class="fas fa-eye"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="fq-card">
+    <div class="fq-card-h">
+        <h2><i class="fas fa-business-time"></i>Horas extras lançadas pela unidade</h2>
+        <span class="fq-card-extra">Podem ser de profissionais de outras lotações</span>
+    </div>
+    {% if hes %}
+    <div class="table-responsive">
+        <table class="table fq-table">
+            <thead><tr>
+                <th>Profissional</th>
+                {% for k, rot in tipos_he %}<th class="num">{{ rot }}</th>{% endfor %}<th class="num">Total</th>
+            </tr></thead>
+            <tbody>
+            {% for h in hes %}
+            <tr>
+                <td><div class="fw-semibold">{{ h.nome or '—' }}</div><div class="fq-origem">{{ h.matricula }} · {{ h.funcao or '—' }}</div></td>
+                {% for k, rot in tipos_he %}<td class="num">{{ horas(h[k]) if h[k] else '—' }}</td>{% endfor %}
+                <td class="num fw-bold">{{ horas(h.total) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot><tr>
+                <td>Total</td>
+                {% for k, rot in tipos_he %}<td class="num">{{ horas(he_totais[k]) if he_totais[k] else '—' }}</td>{% endfor %}
+                <td class="num">{{ horas(he_totais.values() | sum) }}</td>
+            </tr></tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div class="fq-card-b text-muted small">Nenhuma hora extra lançada em {{ competencia_label(comp) }}.</div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var busca = document.getElementById('fqBusca');
+    if (!busca) return;
+    busca.addEventListener('input', function () {
+        var t = busca.value.trim().toLowerCase();
+        document.querySelectorAll('#fqTabela tbody tr').forEach(function (tr) {
+            tr.style.display = !t || tr.dataset.busca.indexOf(t) !== -1 ? '' : 'none';
+        });
+    });
+})();
+</script>
+{% endblock %}

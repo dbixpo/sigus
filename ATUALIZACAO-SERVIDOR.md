@@ -14,6 +14,30 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
 
+## Entrega de 07/10/2026 (ausência na agenda, frequência do RH, base de servidores)
+
+Depois do `git pull`:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe migrations\add_agenda_ausencia.py
+.\venv\Scripts\python.exe migrations\add_frequencia_rh.py
+```
+
+`requirements.txt` ganhou `xlrd` (lê a planilha `.xls`). As duas migrations são idempotentes. Reinicie só o SIGUS (seção 4).
+
+O que mudou:
+
+- **Agenda**: tipo **Ausência / férias**, visível para a unidade, com motivo privado. Quem está fora aparece como indisponível nas reuniões.
+- **Importar frequência** (Configurações): gestores locais, centrais e administradores sobem a planilha mensal do RH. O SIGUS guarda os dados e descarta o arquivo; reimportar o mesmo mês e local substitui.
+- **Recursos Humanos → Meus apontamentos**: cada profissional vê justificativas do mês, banco de horas e horas extras das suas matrículas. **Apontamentos da unidade** para gestores.
+- **Base de servidores** (aba oculta Banco de Dados) e **Funções do RH × CBO** (Configurações → CBOs). No cadastro de usuário, a base sugere as matrículas e o CBO.
+- Detalhe: [docs/FREQUENCIA_RH.md](docs/FREQUENCIA_RH.md).
+
+Conferência: importar uma planilha em `/sigus/rh/frequencia/importar`, conferir a prévia e confirmar; abrir `/sigus/rh/apontamentos/unidade`; na agenda, criar uma ausência e ver a pessoa "fora" na disponibilidade de uma reunião.
+
+---
+
 ## Entrega de 06/10/2026 (agenda, prazos, comunicados, aniversariantes)
 
 Depois do `git pull`:

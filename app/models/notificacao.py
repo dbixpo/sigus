@@ -17,6 +17,7 @@ TIPOS_NOTIFICACAO = {
     'nsp_andamento':       ('Atualização em segurança do paciente',    'bi-chat-left-text',         'info'),
     'comunicado_novo':     ('Novo comunicado na unidade',              'bi-megaphone',             'primary'),
     'comunicado_editado':  ('Comunicado alterado',                     'bi-megaphone',             'warning'),
+    'apontamentos':        ('Apontamentos do mês publicados',          'bi-calendar2-check',       'info'),
 }
 
 
@@ -55,4 +56,6 @@ class Notificacao(db.Model):
             return prefixed_static_url(f'/seguranca-paciente/{self.nsp_ocorrencia_id}')
         if self.chamado_id:
             return prefixed_static_url(f'/chamados/{self.chamado_id}')
+        if self.tipo == 'apontamentos':
+            return prefixed_static_url('/rh/apontamentos')
         return '#'

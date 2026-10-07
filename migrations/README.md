@@ -34,6 +34,11 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 - `add_agenda.py`
 - `add_agenda_reunioes.py`
 - `add_feriados.py`
+- `add_agenda_ausencia.py` — coluna `motivo` (tipo Ausência / férias)
+
+**Frequência do RH**
+
+- `add_frequencia_rh.py` — importações, lançamentos, horas extras, base de servidores, de-para de locais e função × CBO
 
 **Transferências / Lojinha**
 

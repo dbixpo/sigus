@@ -25,9 +25,10 @@ Registro: `app/__init__.py` (`create_app`).
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente |
 | `relatorios` | `/relatorios` | `app/routes/relatorios.py` | Inventário, salas, NSP, mapa, aniversariantes… |
 | `rh` | `/rh` | `app/routes/rh.py` | Faltas abonadas |
+| `frequencia` | `/rh` | `app/routes/frequencia.py` | Importar planilha de frequência, Meus apontamentos, apontamentos da unidade, base de servidores, locais do RH. Ver [FREQUENCIA_RH.md](FREQUENCIA_RH.md) |
 | `solicitacoes` | `/solicitar-vinculo-profissional` | `app/routes/solicitacoes.py` | Cadastro público de vínculo |
 | `usuarios` | `/usuarios` | `app/routes/usuarios.py` | Usuários (quem tem permissão) |
-| `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos, marcas, perfis, feriados, catálogos NSP, auditoria |
+| `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos, marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
 | `links` | `/links` | `app/routes/links.py` | Links úteis |
 | `notificacoes` | `/notificacoes` | `app/routes/notificacoes.py` | Sino (JSON) |
 

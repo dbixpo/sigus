@@ -5,7 +5,7 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
-<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006d" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006e" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -63,6 +63,7 @@
                 <li><span class="ag-leg-cor" style="background:#1A82B8;"></span>Evento da unidade</li>
                 <li><span class="ag-leg-cor" style="background:#19A88B;"></span>Evento pessoal</li>
                 <li><span class="ag-leg-cor" style="background:#0D3B5E;"></span>Reunião</li>
+                <li><span class="ag-leg-cor" style="background:#718096;"></span>Ausência / férias</li>
                 <li><span class="ag-leg-cor" style="background:#F5C500;"></span>Prazo em dia</li>
                 <li><span class="ag-leg-cor" style="background:#E63030;"></span>Prazo vencido / feriado</li>
                 <li><span class="ag-leg-cor ag-leg-cor-borda" style="background:#E2E8F0;"></span>Prazo concluído</li>
@@ -130,6 +131,10 @@
                 <i class="fas fa-user-friends"></i>
                 <div><div class="ag-leitura-rotulo" id="viewPessoasLabel"></div><div id="viewPessoas" class="ag-pessoas"></div></div>
             </div>
+            <div class="ag-leitura-linha d-none" id="rowMotivo">
+                <i class="fas fa-tag"></i>
+                <div><div class="ag-leitura-rotulo">Motivo (visível para você e a gestão)</div><div id="viewMotivo"></div></div>
+            </div>
             <div class="ag-leitura-linha d-none" id="rowLocal">
                 <i class="fas fa-map-marker-alt"></i><div id="viewLocal"></div>
             </div>
@@ -171,6 +176,40 @@
                 <div class="ag-tipos" role="tablist" aria-label="Tipo">
                     <button type="button" class="ag-tipo-btn" data-tipo="evento" role="tab"><i class="fas fa-calendar-day"></i>Evento</button>
                     <button type="button" class="ag-tipo-btn" data-tipo="reuniao" role="tab"><i class="fas fa-users"></i>Reunião</button>
+                    <button type="button" class="ag-tipo-btn" data-tipo="ausencia" role="tab"><i class="fas fa-umbrella-beach"></i>Ausência</button>
+                </div>
+
+                <div class="ag-linha d-none" id="linhaAusente">
+                    <i class="fas fa-user-clock ag-linha-ico" title="Quem estará fora"></i>
+                    <div class="ag-linha-campos">
+                        {% if pode_ausencia_outros %}
+                        <select name="ausente_id" id="campoAusente" class="form-select form-select-sm" aria-label="Quem estará fora">
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}{% if u.id == current_user.id %} (você){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="hidden" name="ausente_id" id="campoAusente" value="{{ current_user.id }}">
+                        <div class="ag-ausente-eu">{{ current_user.nome }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="ag-linha d-none" id="linhaMotivo">
+                    <i class="fas fa-tag ag-linha-ico" title="Motivo"></i>
+                    <div class="ag-linha-campos">
+                        <select name="motivo" id="campoMotivo" class="form-select form-select-sm" aria-label="Motivo">
+                            <option value="">Motivo da ausência…</option>
+                            {% for grupo, opcoes in motivos_ausencia %}
+                            <optgroup label="{{ grupo }}">
+                                {% for codigo, rotulo in opcoes %}
+                                <option value="{{ codigo }}">{{ rotulo }}{% if codigo|length <= 4 %} ({{ codigo }}){% endif %}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="ag-part-dica"><i class="fas fa-lock me-1"></i>A unidade vê só "Férias" ou "Ausente". O motivo fica visível para você e para a gestão.</div>
+                    </div>
                 </div>
 
                 <div class="ag-linha">
@@ -212,7 +251,7 @@
                     </div>
                 </div>
 
-                <div class="ag-linha">
+                <div class="ag-linha" id="linhaLocal">
                     <i class="fas fa-map-marker-alt ag-linha-ico" title="Local"></i>
                     <div class="ag-linha-campos">
                         <input type="text" name="local" id="campoLocal" class="form-control form-control-sm" maxlength="300" placeholder="Adicionar local (sala, unidade, link…)">
@@ -649,16 +688,30 @@
 
     /* ── Formulário ─────────────────────────────────────────── */
     function setTipo(tipo) {
+        if (['evento', 'reuniao', 'ausencia'].indexOf(tipo) < 0) tipo = 'evento';
         const reuniao = tipo === 'reuniao';
-        byId('campoTipo').value = reuniao ? 'reuniao' : 'evento';
+        const ausencia = tipo === 'ausencia';
+        const anterior = byId('campoTipo').value;
+        byId('campoTipo').value = tipo;
         form.querySelectorAll('.ag-tipo-btn').forEach(function (b) {
-            const ativo = b.getAttribute('data-tipo') === byId('campoTipo').value;
+            const ativo = b.getAttribute('data-tipo') === tipo;
             b.classList.toggle('is-ativo', ativo);
             b.setAttribute('aria-selected', ativo ? 'true' : 'false');
         });
         byId('linhaParticipantes').classList.toggle('d-none', !reuniao);
-        byId('linhaVisibilidade').classList.toggle('d-none', reuniao);
-        if (reuniao) byId('campoVisibilidade').value = 'unidade';
+        byId('linhaVisibilidade').classList.toggle('d-none', reuniao || ausencia);
+        byId('linhaAusente').classList.toggle('d-none', !ausencia);
+        byId('linhaMotivo').classList.toggle('d-none', !ausencia);
+        byId('linhaLocal').classList.toggle('d-none', ausencia);
+        byId('campoTitulo').classList.toggle('d-none', ausencia);
+        if (reuniao || ausencia) byId('campoVisibilidade').value = 'unidade';
+        if (ausencia && anterior !== 'ausencia' && !diaInteiro()) {
+            const r = lerIntervalo();
+            if (r.ini) {
+                setIntervalo(r.ini, r.ini, true);
+                agendarDisponibilidade();
+            }
+        }
         byId('formTitulo').textContent = tituloForm();
         if (reuniao) agendarDisponibilidade();
         else byId('blocoDisponibilidade').innerHTML = '';
@@ -666,8 +719,10 @@
     form.querySelectorAll('.ag-tipo-btn').forEach(function (b) {
         b.addEventListener('click', function () { setTipo(b.getAttribute('data-tipo')); });
     });
+    function ehAusencia() { return byId('campoTipo').value === 'ausencia'; }
     function tituloForm() {
         if (ehReuniao()) return modoEdicao ? 'Editar reunião' : 'Nova reunião';
+        if (ehAusencia()) return modoEdicao ? 'Editar ausência' : 'Registrar ausência';
         return modoEdicao ? 'Editar evento' : 'Novo evento';
     }
     function esconderErro() { byId('alertaErro').classList.add('d-none'); }
@@ -701,7 +756,7 @@
         byId('btnExcluir').classList.toggle('d-none', !editar);
         byId('formTitulo').textContent = tituloForm();
         abrirModal(modalEvento);
-        setTimeout(function () { byId('campoTitulo').focus(); }, 40);
+        setTimeout(function () { byId(ehAusencia() ? 'campoMotivo' : 'campoTitulo').focus(); }, 40);
         if (ehReuniao()) agendarDisponibilidade();
     }
 
@@ -732,7 +787,12 @@
     function preencherForm(ev) {
         const props = ev.extendedProps || {};
         limparForm();
-        setTipo(props.tipo === 'reuniao' ? 'reuniao' : 'evento');
+        setTipo(props.tipo);
+        if (props.tipo === 'ausencia') {
+            byId('campoMotivo').value = props.motivo || '';
+            const ausente = (props.participante_ids || [])[0];
+            if (ausente && byId('campoAusente').tagName === 'SELECT') byId('campoAusente').value = String(ausente);
+        }
         byId('eventoId').value = props.evento_id || '';
         byId('campoTitulo').value = ev.title || '';
         if (props.unidade_id) byId('campoUnidade').value = props.unidade_id;
@@ -778,7 +838,7 @@
         const props = ev.extendedProps || {};
         eventoAtual = ev;
         modoEdicao = false;
-        const tipos = { prazo: 'Prazo de planejamento', reuniao: 'Reunião', feriado: 'Feriado / ponto facultativo', evento: 'Evento' };
+        const tipos = { prazo: 'Prazo de planejamento', reuniao: 'Reunião', ausencia: 'Ausência', feriado: 'Feriado / ponto facultativo', evento: 'Evento' };
         byId('viewTipo').textContent = tipos[props.tipo] || 'Evento';
         byId('viewCor').style.background = ev.backgroundColor || '#1A82B8';
         byId('viewTitulo').textContent = ev.title || '';
@@ -790,6 +850,8 @@
         byId('viewPessoas').innerHTML = pessoas.map(function (p) {
             return '<div class="agenda-pessoa-item">' + faceHtml(p) + '<span>' + escapeHtml(p.nome || p.primeiro || '') + '</span></div>';
         }).join('');
+        linha('rowMotivo', !!props.motivo_label);
+        byId('viewMotivo').textContent = props.motivo_label || '';
         linha('rowLocal', !!props.local);
         byId('viewLocal').textContent = props.local || '';
         linha('rowDesc', !!props.descricao);
@@ -800,7 +862,7 @@
         byId('viewUnidade').textContent = props.unidade || '';
         linha('rowVisib', props.visibilidade === 'pessoal');
 
-        const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao') && !!props.pode_editar;
+        const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao' || props.tipo === 'ausencia') && !!props.pode_editar;
         const prazoMovel = props.tipo === 'prazo' && !!props.pode_mover;
         byId('btnEditar').classList.toggle('d-none', !(editavel || prazoMovel));
         byId('btnEditar').title = prazoMovel ? 'Alterar prazo' : 'Editar';
@@ -842,10 +904,16 @@
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         esconderErro();
-        const titulo = byId('campoTitulo').value.trim();
+        const ausencia = ehAusencia();
+        const titulo = ausencia ? 'Ausência' : byId('campoTitulo').value.trim();
         if (!titulo) {
             mostrarErro('Informe o título.');
             byId('campoTitulo').focus();
+            return;
+        }
+        if (ausencia && !byId('campoMotivo').value) {
+            mostrarErro('Escolha o motivo da ausência.');
+            byId('campoMotivo').focus();
             return;
         }
         const erro = erroIntervalo();
@@ -881,14 +949,14 @@
                 if (!id && d.google_url) {
                     confirmar({
                         icone: 'fab fa-google',
-                        titulo: reuniao ? 'Reunião criada!' : 'Evento criado!',
+                        titulo: reuniao ? 'Reunião criada!' : (ausencia ? 'Ausência registrada!' : 'Evento criado!'),
                         texto: 'Quer adicionar também no seu Google Agenda?',
                         okHtml: '<i class="fab fa-google me-1"></i>Adicionar ao Google Agenda',
                         cancelar: 'Agora não',
                         aoConfirmar: function () { window.open(d.google_url, '_blank', 'noopener'); }
                     });
                 } else {
-                    snack(reuniao ? 'Reunião atualizada' : 'Evento atualizado');
+                    snack(reuniao ? 'Reunião atualizada' : (ausencia ? 'Ausência atualizada' : 'Evento atualizado'));
                 }
             })
             .catch(function () { mostrarErro('Falha de rede ao salvar. Tente de novo.'); })
@@ -904,10 +972,11 @@
         const id = props.evento_id || byId('eventoId').value;
         if (!id) return;
         const reuniao = props.tipo === 'reuniao' || ehReuniao();
+        const ausencia = props.tipo === 'ausencia' || ehAusencia();
         confirmar({
             icone: 'fas fa-trash-alt',
             perigo: true,
-            titulo: reuniao ? 'Excluir esta reunião?' : 'Excluir este evento?',
+            titulo: reuniao ? 'Excluir esta reunião?' : (ausencia ? 'Excluir esta ausência?' : 'Excluir este evento?'),
             texto: '"' + ((ev && ev.title) || byId('campoTitulo').value) + '" será removido da agenda. Essa ação não pode ser desfeita.',
             ok: 'Excluir',
             aoConfirmar: function () {
@@ -919,7 +988,7 @@
                         if (!d.ok) { snack(d.erro || 'Não foi possível excluir.'); return; }
                         fecharEvento();
                         calendar.refetchEvents();
-                        snack(reuniao ? 'Reunião excluída' : 'Evento excluído');
+                        snack(reuniao ? 'Reunião excluída' : (ausencia ? 'Ausência excluída' : 'Evento excluído'));
                     })
                     .catch(function () { snack('Não foi possível excluir.'); });
             }
@@ -961,7 +1030,8 @@
             extendedProps: props
         };
         const reuniao = props.tipo === 'reuniao';
-        const prefixo = info.endDelta ? 'Horário ajustado: ' : (reuniao ? 'Reunião movida: ' : 'Evento movido: ');
+        const prefixo = info.endDelta ? 'Horário ajustado: '
+            : (reuniao ? 'Reunião movida: ' : (props.tipo === 'ausencia' ? 'Ausência movida: ' : 'Evento movido: '));
         moverEvento(info.event)
             .then(function () {
                 calendar.refetchEvents();
@@ -1062,9 +1132,9 @@
             .then(function (d) {
                 if (!d.ok || !d.pessoas || !d.pessoas.length) { box.innerHTML = ''; return; }
                 box.innerHTML = d.pessoas.map(function (p) {
-                    const cls = p.livre ? 'agenda-disp-livre' : 'agenda-disp-ocupado';
-                    const ico = p.livre ? 'fa-check-circle' : 'fa-times-circle';
-                    const extra = p.livre ? 'Livre' : ('Ocupado' + (p.conflito ? ' · ' + p.conflito : ''));
+                    const cls = p.livre ? 'agenda-disp-livre' : (p.fora ? 'agenda-disp-ocupado agenda-disp-fora' : 'agenda-disp-ocupado');
+                    const ico = p.livre ? 'fa-check-circle' : (p.fora ? 'fa-umbrella-beach' : 'fa-times-circle');
+                    const extra = p.livre ? 'Livre' : (p.fora ? p.conflito : ('Ocupado' + (p.conflito ? ' · ' + p.conflito : '')));
                     return '<span class="agenda-disp-item ' + cls + '" title="' + escapeHtml(extra) + '">' +
                         '<i class="fas ' + ico + '"></i> ' + escapeHtml(p.primeiro || p.nome) +
                         ' <small>' + escapeHtml(extra) + '</small></span>';

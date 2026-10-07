@@ -11,6 +11,7 @@ SQLAlchemy==2.0.36
 Werkzeug==3.1.6
 waitress
 openpyxl
+xlrd>=2.0
 Pillow
 tzdata
 requests
