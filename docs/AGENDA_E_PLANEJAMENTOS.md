@@ -65,7 +65,7 @@ Quarto tipo no modal (aba **Veículo**, aparece se o usuário tem veículo em al
 - Na leitura aparecem **quem registrou e quando**, quem vai usar e o km. Km de saída e de chegada são preenchidos na volta (`POST /agenda/eventos/<id>/km`) por quem registrou, pelo condutor ou por quem pode editar o evento; chegada menor que saída é recusada.
 - Cor `COR_VEICULO` e filtro **Veículos** na barra lateral.
 - Aba **Veículos** no detalhe da unidade: cartões com placa, km atual (último km de chegada ou o do cadastro), em uso / próxima reserva, usos sem km e atalhos para reservar, usos, RDV e editar.
-- `/veiculos/<id>` (`app/routes/veiculos.py`): usos do mês com km editável e **RDV** (`/veiculos/<id>/rdv?mes=AAAA-MM`), planilha Excel com um uso por linha (data, condutor, destino, horários, km, km rodados por fórmula, assinatura). O layout é provisório até chegar o modelo oficial.
+- `/veiculos/<id>` (`app/routes/veiculos.py`): usos do mês com km editável e **RDV** (`/veiculos/<id>/rdv?mes=AAAA-MM`, template `veiculos/rdv.html`), aberto no modal global de impressão (`abrirImpresso`) para imprimir ou salvar em PDF. Reproduz o "Mapa - Uso Diário do Veículo" oficial da Prefeitura: A4 paisagem, frente com 12 linhas, observações, fechamento de km e chefia; verso com 23 linhas. Passando de 35 usos, entram mais versos, sempre em número par de páginas para sair em frente e verso. Cada linha vem da reserva: dia, condutor, matrícula ativa, unidade, km/hora de saída, destino, km/hora de chegada (assinatura fica em branco). `?branco=1` gera o mapa vazio para preencher à mão.
 
 ## Salas de reunião e auditórios
 

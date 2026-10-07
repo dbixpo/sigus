@@ -32,9 +32,12 @@
             <i class="fas fa-calendar-plus me-1"></i>Reservar
         </a>
         {% endif %}
-        <a href="{{ url_for('veiculos.rdv', id=veiculo.id, mes=mes.strftime('%Y-%m')) }}" class="btn btn-success btn-sm">
-            <i class="fas fa-file-excel me-1"></i>Baixar RDV de {{ mes_nome }}
-        </a>
+        <button type="button" class="btn btn-success btn-sm"
+                data-url="{{ url_for('veiculos.rdv', id=veiculo.id, mes=mes.strftime('%Y-%m')) }}"
+                data-titulo="RDV {{ veiculo.prefixo_exibicao }} · {{ mes_nome }}"
+                onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
+            <i class="fas fa-print me-1"></i>RDV de {{ mes_nome }}
+        </button>
         {% if pode_editar %}
         <a href="{{ url_for('veiculos.editar', id=veiculo.id) }}" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-pen me-1"></i>Editar

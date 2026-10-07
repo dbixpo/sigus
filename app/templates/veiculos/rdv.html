@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ mes.strftime('%Y.%m') }} - RDV {{ veiculo.prefixo_exibicao }} ({{ placa }})</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #525659; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .barra {
+    position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 8px 14px; background: #0D3B5E; border-bottom: 3px solid #1A82B8; color: #fff;
+    font: 13px/1.3 Inter, "Segoe UI", Arial, sans-serif;
+  }
+  .barra .grupo { display: inline-flex; border: 1px solid #1A82B8; border-radius: 6px; overflow: hidden; }
+  .barra .grupo a { padding: 5px 12px; color: #fff; text-decoration: none; }
+  .barra .grupo a.ativo { background: #1A82B8; font-weight: 600; }
+  .barra .dica { color: #cfe3f1; font-size: 12px; }
+  .barra button {
+    margin-left: auto; padding: 6px 14px; border: 0; border-radius: 6px; background: #1A82B8; color: #fff;
+    font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .barra button:hover { background: #155d8c; }
+
+  .folhas { padding: 14px 0 24px; }
+  .folha {
+    width: 297mm; height: 209mm; margin: 0 auto 14px; padding: 0 18mm; background: #fff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .45); overflow: hidden; break-after: page; page-break-after: always;
+  }
+  .folha:last-child { break-after: auto; page-break-after: auto; }
+
+  .topo { display: flex; align-items: flex-end; justify-content: flex-end; gap: 2mm; height: 12.6mm; padding-bottom: .6mm; }
+  .verso .topo { height: 13.8mm; }
+  .topo b { font-size: 7.5pt; }
+  .topo span { font-size: 6.6pt; }
+
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .mapa { border: 1.6px solid #000; }
+  .mapa td {
+    border: .6pt solid #000; padding: 0 1mm; text-align: center; vertical-align: middle;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mapa .g { border: 1.6px solid #000; font-weight: bold; }
+  .mapa .quebra { white-space: normal; line-height: 1.1; }
+  .cab td { height: 6.4mm; }
+  .col td { height: 5mm; }
+  .verso .col td { height: 5.4mm; }
+  .uso td { height: 6.4mm; font-size: 8pt; }
+  .verso .uso td { height: 7mm; }
+
+  .mapa td.logo { padding: 0 1.5mm; }
+  .logo div { display: flex; align-items: center; justify-content: center; height: 12.4mm; overflow: hidden; }
+  .logo img { display: block; height: 14.6mm; max-width: 100%; object-fit: contain; }
+  .mapa td.mes-longo { font-size: 7.6pt; }
+  .mapa td.mes { padding: 0 .4mm; }
+  .titulo { font-size: 13pt; }
+  .rotulo-veic { font-size: 11.5pt; }
+  .rotulo-mes { font-size: 10pt; }
+  .t-dia { font-size: 8.3pt; }
+  .t-nome { font-size: 6.6pt; }
+  .t-mini { font-size: 5pt; }
+  .t-setor { font-size: 5.8pt; }
+  .t-grupo { font-size: 11.5pt; }
+  .t-sub { font-size: 9pt; }
+
+  .uso .esq { text-align: left; }
+  .uso .nome { font-size: 7.2pt; white-space: normal; line-height: 1.05; }
+  .uso .setor { font-size: 6pt; white-space: normal; line-height: 1.05; }
+  .uso .mat { font-size: 7pt; }
+
+  .obs { margin-top: .8mm; font-size: 6.6pt; font-weight: bold; line-height: 1.22; }
+  .obs p { margin-bottom: .9mm; }
+
+  .fech { margin-top: 2mm; border: 1px solid #000; }
+  .fech td { height: 10.7mm; border: 1px solid #000; padding: 0 1.2mm; font-size: 9pt; font-weight: bold; white-space: nowrap; }
+  .fech .nome-fech { text-align: center; font-size: 10pt; }
+  .fech .valor { font-size: 10pt; margin-left: 1.5mm; }
+
+  .chefia { margin-top: 2.6mm; }
+  .chefia .linha { display: flex; align-items: flex-end; height: 7.4mm; gap: 3.5mm; }
+  .chefia .esq { display: flex; align-items: flex-end; width: 69.3%; font-size: 8.3pt; font-weight: bold; }
+  .chefia .esq i { flex: 1; margin-left: 1mm; border-bottom: .8pt solid #000; transform: translateY(-.8mm); }
+  .chefia .dir { flex: 1; text-align: center; font-size: 10pt; font-weight: bold; }
+  .chefia .dir.risco { border-bottom: .8pt solid #000; height: 0; transform: translateY(-.8mm); }
+
+  @media print {
+    html, body { background: #fff; }
+    .barra { display: none !important; }
+    .folhas { padding: 0; }
+    .folha { margin: 0; box-shadow: none; zoom: 1 !important; }
+  }
+</style>
+</head>
+<body>
+
+{% set url_preenchido = url_for('veiculos.rdv', id=veiculo.id, mes=mes.strftime('%Y-%m')) %}
+<div class="barra">
+    <span class="grupo">
+        <a href="{{ url_preenchido }}" class="{{ '' if em_branco else 'ativo' }}">Preenchido com a agenda</a>
+        <a href="{{ url_preenchido }}&branco=1" class="{{ 'ativo' if em_branco else '' }}">Em branco</a>
+    </span>
+    <span class="dica">A4 paisagem. Na impressão marque <strong>Frente e verso</strong> (virar pela borda curta).</span>
+    <button type="button" onclick="window.print()">Imprimir / Salvar PDF</button>
+</div>
+
+{% macro fmt_km(valor) %}{{ '{:,}'.format(valor).replace(',', '.') if valor is not none else '' }}{% endmacro %}
+
+{% macro cabecalho() %}
+<colgroup>
+    <col style="width:3.11%"><col style="width:16.11%"><col style="width:6.44%"><col style="width:6.11%">
+    <col style="width:6.89%"><col style="width:7%"><col style="width:6.44%"><col style="width:17.22%">
+    <col style="width:17.22%"><col style="width:6.89%"><col style="width:6.57%">
+</colgroup>
+<tr class="cab">
+    <td class="g logo" colspan="2" rowspan="2"><div><img src="{{ identidade.asset_url('brasao') }}" alt="{{ identidade.alt_brasao }}"></div></td>
+    <td class="g titulo" colspan="5" rowspan="2">MAPA - USO DIÁRIO DO VEÍCULO</td>
+    <td class="g rotulo-veic">PREFIXO</td>
+    <td class="g rotulo-veic">PLACA</td>
+    <td class="g rotulo-mes">MÊS</td>
+    <td class="g rotulo-mes">ANO</td>
+</tr>
+<tr class="cab">
+    <td class="g rotulo-veic">{{ veiculo.prefixo_exibicao }}</td>
+    <td class="g rotulo-veic">{{ placa }}</td>
+    <td class="g rotulo-mes mes {{ 'mes-longo' if mes_nome | length > 6 }}">{{ mes_nome }}</td>
+    <td class="g rotulo-mes">{{ mes.year }}</td>
+</tr>
+<tr class="col">
+    <td class="g t-dia" rowspan="2">DIA</td>
+    <td class="g t-nome quebra" rowspan="2">NOME POR EXTENSO DO<br>CONDUTOR</td>
+    <td class="g t-mini quebra" rowspan="2">ASSINATURA<br>RUBRICA</td>
+    <td class="g t-mini" rowspan="2">MATRICULA</td>
+    <td class="g t-setor quebra" rowspan="2">SECRETARIA<br>SETOR</td>
+    <td class="g t-grupo" colspan="2">SAÍDA</td>
+    <td class="g t-grupo" colspan="2" rowspan="2">DESTINO</td>
+    <td class="g t-grupo" colspan="2">CHEGADA</td>
+</tr>
+<tr class="col">
+    <td class="g t-sub">KM</td>
+    <td class="g t-sub">HORA</td>
+    <td class="g t-sub">KM</td>
+    <td class="g t-sub">HORA</td>
+</tr>
+{% endmacro %}
+
+{% macro linhas(itens, total) %}
+{% for i in range(total) %}
+{% set l = itens[i] if i < itens | length else none %}
+<tr class="uso">
+    <td>{{ l.dia if l }}</td>
+    <td class="esq nome">{{ l.condutor if l }}</td>
+    <td></td>
+    <td class="mat">{{ l.matricula if l }}</td>
+    <td class="setor">{{ l.setor if l }}</td>
+    <td>{{ fmt_km(l.km_saida) if l }}</td>
+    <td>{{ l.hora_saida if l }}</td>
+    <td class="esq" colspan="2">{{ l.destino if l }}</td>
+    <td>{{ fmt_km(l.km_chegada) if l }}</td>
+    <td>{{ l.hora_chegada if l }}</td>
+</tr>
+{% endfor %}
+{% endmacro %}
+
+<div class="folhas">
+{% for itens in paginas %}
+{% set frente = loop.first %}
+<section class="folha {{ 'frente' if frente else 'verso' }}">
+    <div class="topo"><b>(Imprimir frente e verso)</b><span>Folha Nº {{ loop.index }}</span></div>
+    <table class="mapa">
+        {{ cabecalho() }}
+        {{ linhas(itens, linhas_frente if frente else linhas_verso) }}
+    </table>
+
+    {% if frente %}
+    <div class="obs">
+        <p>OBSERVAÇÕES:</p>
+        <p>1)&nbsp; O MAPA DEVERÁ, OBRIGATORIAMENTE, PERMANECER NO VEÍCULO DURANTE TODOS OS DIAS DO MÊS.</p>
+        <p>2)&nbsp; TODOS OS CAMPOS, DESTE MAPA, DEVERÃO SER PREENCHIDOS COM FORMA LEGÍVEL E, CASO SE FAÇA NECESSÁRIO, EM LETRA BASTÃO.</p>
+        <p>3)&nbsp; É COMPULSÓRIA A RESPONSABILIDADE DO CONDUTOR POR QUALQUER INFRAÇÃO QUE OCORRA DURANTE O PERÍODO EM QUE O VEÍCULO ESTIVER EM USO, CONFORME ANOTAÇÕES CONTIDAS NESTE MAPA.</p>
+        <p>4)&nbsp; AO FINAL DE CADA MÊS, A CHEFIA RESPONSÁVEL DEVERÁ IDENTIFICAR O PREFIXO DO VEÍCULO, CONFERIR, ASSINAR, CARIMBAR E, POR FIM, DIGITALIZAR O MAPA INDIVIDUALMENTE, SALVANDO O ARQUIVO COM O NOME DE CADA DO PREFIXO DO VEÍCULO</p>
+        <p>5)&nbsp; OS ARQUIVOS DOS MAPAS, DEVIDAMENTE IDENTIFICADOS, DEVERÃO SER ENCAMINHADOS, IMPRETERIVELMENTE, ATÉ O 5º DIA ÚTIL DO MÊS SUBSEQUENTE, ATRAVÉS DO E-MAIL FUNCIONAL DA CHEFIA RESPONSÁVEL, PARA: mapadeuso@sorocaba.sp.gov.br.</p>
+        <p>6)&nbsp; OS MAPAS DE USO QUE NÃO SEGUIREM AS INSTRUÇÕES ACIMA, CONFORME O DECRETO Nº. 22.534/2017, DEVERÃO SER REALIZADAS AS DEVIDAS APURAÇÕES E PROVIDÊNCIAS, ACARRETANDO NA SUSPENSÃO DO ABASTECIMENTO ATÉ QUE SE REGULARIZEM</p>
+        <p>7)&nbsp; FICA O SERVIDOR CIENTE DE QUE É RESPONSÁVEL POR QUAISQUER INFRAÇÕES COMETIDAS NA CONDUÇÃO DO VEÍCULO, BEM COMO PELA PONTUAÇÃO DELAS DECORRENTES.</p>
+    </div>
+
+    <table class="fech">
+        <colgroup><col style="width:19.22%"><col style="width:19.44%"><col style="width:30.66%"><col style="width:30.68%"></colgroup>
+        <tr>
+            <td class="nome-fech">FECHAMENTO</td>
+            <td>KM INICIAL:<span class="valor">{{ fmt_km(km_inicial) }}</span></td>
+            <td>KM FINAL:<span class="valor">{{ fmt_km(km_final) }}</span></td>
+            <td>TOTAL KM / MÊS:<span class="valor">{{ fmt_km(total_km) }}</span></td>
+        </tr>
+    </table>
+
+    <div class="chefia">
+        <div class="linha"><div class="esq">CHEFE IMEDIATO<i></i></div><div class="dir"></div></div>
+        <div class="linha"><div class="esq">E-MAIL<i></i></div><div class="dir risco"></div></div>
+        <div class="linha"><div class="esq">TELEFONE<i></i></div><div class="dir">Assinatura e carimbo da chefia responsável</div></div>
+    </div>
+    {% endif %}
+</section>
+{% endfor %}
+</div>
+
+<script>
+(function () {
+    var larguraFolha = 297 * 96 / 25.4;
+    function ajustar(z) {
+        document.querySelectorAll('.folha').forEach(function (f) { f.style.zoom = z; });
+    }
+    function caber() { ajustar(Math.min(1, (document.documentElement.clientWidth - 24) / larguraFolha)); }
+    caber();
+    window.addEventListener('resize', caber);
+    window.addEventListener('beforeprint', function () { ajustar(1); });
+    window.addEventListener('afterprint', caber);
+})();
+</script>
+</body>
+</html>

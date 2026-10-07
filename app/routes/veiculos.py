@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
 """Veículos da unidade: cadastro próprio (fora dos equipamentos), usos do mês e RDV."""
-import io
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from openpyxl import Workbook
-from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.utils import get_column_letter
 
 from app import db
 from app.models.agenda import AgendaEvento
@@ -240,130 +236,67 @@ def salvar_km(id, evento_id):
     return redirect(url_for('veiculos.usos', id=veiculo.id, mes=ev.inicio.strftime('%Y-%m')))
 
 
+RDV_LINHAS_FRENTE = 12
+RDV_LINHAS_VERSO = 23
+
+
+def _matricula(usuario):
+    if not usuario:
+        return ''
+    mats = [m for m in usuario.matriculas if m.numero]
+    ativas = [m for m in mats if m.ativo]
+    return (ativas or mats)[0].numero if mats else ''
+
+
+def _linha_rdv(ev, unidade):
+    ini, fim = reservas.intervalo_evento(ev)
+    ultimo_dia = (fim - timedelta(microseconds=1)).date()
+    dia = f'{ini.day:02d}' if ultimo_dia <= ini.date() else f'{ini.day:02d} a {ultimo_dia.day:02d}'
+    condutor = ev.condutor or ev.criador
+    return {
+        'dia': dia,
+        'condutor': condutor.nome.upper() if condutor else '',
+        'matricula': _matricula(condutor),
+        'setor': unidade.nome,
+        'km_saida': ev.km_saida,
+        'hora_saida': '' if ev.dia_inteiro else ini.strftime('%H:%M'),
+        'destino': (ev.local or _finalidade(ev, ev.veiculo.rotulo if ev.veiculo else '') or '').upper(),
+        'km_chegada': ev.km_chegada,
+        'hora_chegada': '' if ev.dia_inteiro else fim.strftime('%H:%M'),
+    }
+
+
+def _paginas_rdv(linhas):
+    """Frente com 12 linhas, versos com 23; sempre em número par para sair em frente e verso."""
+    paginas = [linhas[:RDV_LINHAS_FRENTE]]
+    resto = linhas[RDV_LINHAS_FRENTE:]
+    while resto or len(paginas) % 2:
+        paginas.append(resto[:RDV_LINHAS_VERSO])
+        resto = resto[RDV_LINHAS_VERSO:]
+    return paginas
+
+
 @veiculos_bp.route('/<int:id>/rdv')
 @login_required
 def rdv(id):
-    """RDV do mês em Excel, já preenchido com as reservas da agenda."""
+    """RDV (Mapa de Uso Diário do Veículo) para imprimir em A4 paisagem, frente e verso."""
     veiculo = _veiculo_ou_404(id)
     mes = _mes_param()
-    rotulo = veiculo.rotulo
-    lista = _usos_do_mes(veiculo, mes)
-    unidade = veiculo.unidade
-
-    wb = Workbook()
-    ws = wb.active
-    ws.title = f'RDV {mes.strftime("%m-%Y")}'
-    escuro = PatternFill('solid', fgColor='0D3B5E')
-    claro = PatternFill('solid', fgColor='E8F2F8')
-    fino = Side(style='thin', color='A0AEC0')
-    borda = Border(left=fino, right=fino, top=fino, bottom=fino)
-    negrito = Font(bold=True, color='1E3A50')
-    colunas = [('Data', 11), ('Condutor', 26), ('Destino / itinerário', 30), ('Finalidade', 26),
-               ('Hora saída', 10), ('Km saída', 11), ('Hora chegada', 11), ('Km chegada', 11),
-               ('Km rodados', 11), ('Assinatura do condutor', 26)]
-    ultima = get_column_letter(len(colunas))
-    for i, (_, largura) in enumerate(colunas, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = largura
-
-    def _faixa(linha, texto, fonte, preenchimento=None, altura=None):
-        ws.merge_cells(f'A{linha}:{ultima}{linha}')
-        c = ws[f'A{linha}']
-        c.value = texto
-        c.font = fonte
-        c.alignment = Alignment(horizontal='center', vertical='center')
-        if preenchimento:
-            c.fill = preenchimento
-        if altura:
-            ws.row_dimensions[linha].height = altura
-
-    _faixa(1, 'PREFEITURA DE SOROCABA · SECRETARIA DA SAÚDE', Font(bold=True, size=11, color='FFFFFF'), escuro, 20)
-    _faixa(2, 'RDV · RELATÓRIO DIÁRIO DE VEÍCULO', Font(bold=True, size=14, color='0D3B5E'), None, 24)
-
-    dados = [
-        ('Unidade', unidade.nome, 'Mês/ano', f'{MESES[mes.month - 1]}/{mes.year}'),
-        ('Veículo', veiculo.marca_modelo or veiculo.categoria or '', 'Placa', veiculo.placa_exibicao),
-        ('Prefixo', veiculo.prefixo_exibicao, 'Ano', veiculo.ano or ''),
-        ('Categoria', veiculo.categoria or '', 'Combustível', veiculo.combustivel or ''),
-    ]
-    linha = 4
-    for r1, v1, r2, v2 in dados:
-        ws.cell(row=linha, column=1, value=r1).font = negrito
-        ws.merge_cells(start_row=linha, start_column=2, end_row=linha, end_column=4)
-        ws.cell(row=linha, column=2, value=v1)
-        ws.cell(row=linha, column=5, value=r2).font = negrito
-        ws.merge_cells(start_row=linha, start_column=6, end_row=linha, end_column=len(colunas))
-        ws.cell(row=linha, column=6, value=v2)
-        linha += 1
-
-    linha += 1
-    cab = linha
-    for i, (nome, _) in enumerate(colunas, start=1):
-        c = ws.cell(row=cab, column=i, value=nome)
-        c.font = Font(bold=True, color='FFFFFF')
-        c.fill = PatternFill('solid', fgColor='1A82B8')
-        c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-        c.border = borda
-    ws.row_dimensions[cab].height = 30
-
-    linhas_uso = max(len(lista), 31)
-    for n in range(linhas_uso):
-        r = cab + 1 + n
-        ev = lista[n] if n < len(lista) else None
-        if ev:
-            ini, fim = reservas.intervalo_evento(ev)
-            valores = [
-                ev.inicio.date(),
-                ev.condutor.nome if ev.condutor else (ev.criador.nome if ev.criador else ''),
-                ev.local or '',
-                _finalidade(ev, rotulo),
-                None if ev.dia_inteiro else ini.strftime('%H:%M'),
-                ev.km_saida,
-                None if ev.dia_inteiro else fim.strftime('%H:%M'),
-                ev.km_chegada,
-            ]
-        else:
-            valores = [None] * 8
-        for i, v in enumerate(valores, start=1):
-            ws.cell(row=r, column=i, value=v)
-        ws.cell(row=r, column=9, value=f'=IF(AND(F{r}<>"",H{r}<>""),H{r}-F{r},"")')
-        for i in range(1, len(colunas) + 1):
-            c = ws.cell(row=r, column=i)
-            c.border = borda
-            c.alignment = Alignment(vertical='center', horizontal='center' if i not in (2, 3, 4, 10) else 'left',
-                                    wrap_text=i in (3, 4))
-            if n % 2:
-                c.fill = claro
-        ws.cell(row=r, column=1).number_format = 'DD/MM/YYYY'
-        for col in (6, 8, 9):
-            ws.cell(row=r, column=col).number_format = '#,##0'
-        ws.row_dimensions[r].height = 20
-
-    total = cab + linhas_uso + 1
-    ws.cell(row=total, column=8, value='Total km').font = negrito
-    c = ws.cell(row=total, column=9, value=f'=SUM(I{cab + 1}:I{total - 1})')
-    c.font = negrito
-    c.number_format = '#,##0'
-    c.border = borda
-    ws.cell(row=total + 3, column=1, value='Responsável pela unidade: ________________________________')
-    ws.cell(row=total + 3, column=6, value='Data: ____/____/________')
-    ws.cell(row=total + 5, column=1,
-            value=f'Gerado pelo SIGUS em {agora_brasilia().strftime("%d/%m/%Y %H:%M")} a partir das reservas da agenda.'
-            ).font = Font(italic=True, size=8, color='718096')
-
-    ws.freeze_panes = ws.cell(row=cab + 1, column=1)
-    ws.print_title_rows = f'{cab}:{cab}'
-    ws.page_setup.orientation = 'landscape'
-    ws.page_setup.paperSize = ws.PAPERSIZE_A4
-    ws.page_setup.fitToWidth = 1
-    ws.page_setup.fitToHeight = 0
-    ws.sheet_properties.pageSetUpPr.fitToPage = True
-    ws.print_options.horizontalCentered = True
-
-    buf = io.BytesIO()
-    wb.save(buf)
-    buf.seek(0)
-    return send_file(
-        buf, as_attachment=True,
-        download_name=f'RDV_{veiculo.prefixo_exibicao}_{veiculo.placa}_{mes.strftime("%Y-%m")}.xlsx',
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    em_branco = request.args.get('branco') == '1'
+    lista = [] if em_branco else _usos_do_mes(veiculo, mes)
+    linhas = [_linha_rdv(ev, veiculo.unidade) for ev in lista]
+    saidas = [ev.km_saida for ev in lista if ev.km_saida is not None]
+    chegadas = [ev.km_chegada for ev in lista if ev.km_chegada is not None]
+    km_inicial = saidas[0] if saidas else None
+    km_final = chegadas[-1] if chegadas else None
+    placa = veiculo.placa or ''
+    return render_template(
+        'veiculos/rdv.html',
+        veiculo=veiculo, mes=mes, em_branco=em_branco,
+        mes_nome=MESES[mes.month - 1].upper(),
+        placa=f'{placa[:3]}-{placa[3:]}' if len(placa) == 7 else placa,
+        paginas=_paginas_rdv(linhas),
+        linhas_frente=RDV_LINHAS_FRENTE, linhas_verso=RDV_LINHAS_VERSO,
+        km_inicial=km_inicial, km_final=km_final,
+        total_km=km_final - km_inicial if km_inicial is not None and km_final is not None and km_final >= km_inicial else None,
     )

@@ -568,9 +568,12 @@
                                 <a href="{{ url_for('veiculos.usos', id=v.id) }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-list me-1"></i>Usos e km
                                 </a>
-                                <a href="{{ url_for('veiculos.rdv', id=v.id, mes=mes_atual) }}" class="btn btn-sm btn-outline-success" title="Baixar o RDV do mês atual">
-                                    <i class="fas fa-file-excel me-1"></i>RDV do mês
-                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-success" title="Imprimir o RDV do mês atual"
+                                        data-url="{{ url_for('veiculos.rdv', id=v.id, mes=mes_atual) }}"
+                                        data-titulo="RDV {{ v.prefixo_exibicao }}"
+                                        onclick="abrirImpresso(this.dataset.url, this.dataset.titulo)">
+                                    <i class="fas fa-print me-1"></i>RDV do mês
+                                </button>
                                 {% if current_user.pode('editar_veiculo') %}
                                 <a href="{{ url_for('veiculos.editar', id=v.id) }}" class="btn btn-sm btn-outline-secondary" title="Editar veículo">
                                     <i class="fas fa-pen"></i>

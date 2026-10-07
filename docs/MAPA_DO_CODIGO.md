@@ -22,7 +22,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `sueq` | `/sueq` | `app/routes/sueq.py` | Emendas / licitações / chamados SUEQ (schema `sueq`) |
 | `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban; prazo editável com histórico (`alterar_prazo_acao`) |
 | `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda estilo Google + reuniões, reservas de veículo e de sala; arrastar (`/eventos/<id>/mover`). Ver [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) |
-| `veiculos` | `/veiculos` | `app/routes/veiculos.py` | Cadastro de veículos (tabela própria, sem equipamentos), usos do mês, km e RDV em Excel |
+| `veiculos` | `/veiculos` | `app/routes/veiculos.py` | Cadastro de veículos (tabela própria, sem equipamentos), usos do mês, km e RDV para imprimir (A4 paisagem, frente e verso) |
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente no fluxo do Núcleo (notificação pública, qualificação, comissões, relatórios). Ver [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) |
 | `relatorios` | `/relatorios` | `app/routes/relatorios.py` | Inventário, salas, NSP, mapa, aniversariantes… |
 | `rh` | `/rh` | `app/routes/rh.py` | Faltas abonadas |
