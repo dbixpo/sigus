@@ -211,36 +211,6 @@
                     {% endif %}
                 </div>
 
-                {% if veiculos %}
-                <div class="ag-linha d-none" id="linhaVeiculo">
-                    <i class="fas fa-car ag-linha-ico" title="Veículo"></i>
-                    <div class="ag-linha-campos">
-                        <select name="veiculo_id" id="campoVeiculo" class="form-select form-select-sm" aria-label="Veículo">
-                            <option value="">Escolha o veículo…</option>
-                            {% for unidade_nome, lista in veiculos | groupby('unidade') %}
-                            <optgroup label="{{ unidade_nome }}">
-                                {% for v in lista %}
-                                <option value="{{ v.id }}" data-unidade="{{ v.unidade_id }}">{{ v.rotulo }}</option>
-                                {% endfor %}
-                            </optgroup>
-                            {% endfor %}
-                        </select>
-                        <div class="ag-recurso-status" id="veiculoStatus"></div>
-                    </div>
-                </div>
-                <div class="ag-linha d-none" id="linhaCondutor">
-                    <i class="fas fa-id-card ag-linha-ico" title="Quem vai usar"></i>
-                    <div class="ag-linha-campos">
-                        <select name="condutor_id" id="campoCondutor" class="form-select form-select-sm" aria-label="Quem vai usar">
-                            {% for u in usuarios %}
-                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}{% if u.id == current_user.id %} (você){% endif %}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="ag-part-dica"><i class="fas fa-user-pen me-1"></i>Quem vai usar o carro. A reserva fica registrada em seu nome como quem agendou.</div>
-                    </div>
-                </div>
-                {% endif %}
-
                 <div class="ag-linha d-none" id="linhaAusente">
                     <i class="fas fa-user-clock ag-linha-ico" title="Quem estará fora"></i>
                     <div class="ag-linha-campos">
@@ -293,6 +263,36 @@
                         </div>
                     </div>
                 </div>
+
+                {% if veiculos %}
+                <div class="ag-linha d-none" id="linhaVeiculo">
+                    <i class="fas fa-car ag-linha-ico" title="Veículo"></i>
+                    <div class="ag-linha-campos">
+                        <select name="veiculo_id" id="campoVeiculo" class="form-select form-select-sm" aria-label="Veículo">
+                            <option value="">Escolha o veículo…</option>
+                            {% for unidade_nome, lista in veiculos | groupby('unidade') %}
+                            <optgroup label="{{ unidade_nome }}">
+                                {% for v in lista %}
+                                <option value="{{ v.id }}" data-unidade="{{ v.unidade_id }}">{{ v.rotulo }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                        <div class="ag-recurso-status" id="veiculoStatus"></div>
+                    </div>
+                </div>
+                <div class="ag-linha d-none" id="linhaCondutor">
+                    <i class="fas fa-id-card ag-linha-ico" title="Quem vai usar"></i>
+                    <div class="ag-linha-campos">
+                        <select name="condutor_id" id="campoCondutor" class="form-select form-select-sm" aria-label="Quem vai usar">
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}{% if u.id == current_user.id %} (você){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="ag-part-dica"><i class="fas fa-user-pen me-1"></i>Quem vai usar o carro. A reserva fica registrada em seu nome como quem agendou.</div>
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="ag-linha d-none" id="linhaParticipantes">
                     <i class="fas fa-user-friends ag-linha-ico" title="Participantes"></i>
