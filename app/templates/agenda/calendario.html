@@ -1204,6 +1204,11 @@
         eventDrop: aoArrastar,
         eventResize: aoArrastar,
         dayMaxEvents: true,
+        eventOrder: [
+            function (a, b) { return (b.duration > 864e5) - (a.duration > 864e5); },
+            'start', '-duration', '-allDay', 'title'
+        ],
+        eventOrderStrict: true,
         moreLinkText: function (n) { return '+' + n + ' mais'; },
         nowIndicator: true,
         allDayText: 'Dia todo',

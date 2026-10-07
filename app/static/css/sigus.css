@@ -881,8 +881,9 @@ body.pagina-agenda .sigus-main > .container-fluid {
     margin-top: 1px;
     padding: 0 2px 2px;
 }
+/* margin-top do harness é calculado inline pelo FullCalendar para empilhar eventos sob barras de vários dias */
 #agendaCalendario .fc-daygrid-event-harness {
-    margin-top: 1px !important;
+    padding-top: 1px;
 }
 #agendaCalendario .fc-more-link {
     font-size: 0.72rem;
