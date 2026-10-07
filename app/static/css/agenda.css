@@ -743,6 +743,26 @@
     gap: 0.5rem;
 }
 
+/* Participantes de outros setores */
+.ag-part-dica {
+    font-size: 0.74rem;
+    color: var(--sigus-text-muted);
+    margin-top: 0.3rem;
+}
+.ag-part-op {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+.ag-part-op small {
+    font-size: 0.72rem;
+    color: var(--sigus-text-muted);
+}
+.ts-dropdown .active .ag-part-op small {
+    color: inherit;
+    opacity: 0.8;
+}
+
 /* Alterar prazo */
 .ag-modal-prazo {
     z-index: 1085;

@@ -5,7 +5,7 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
-<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006c" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006d" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -198,9 +198,10 @@
                     <div class="ag-linha-campos">
                         <select name="participantes" id="campoParticipantes" multiple placeholder="Adicionar participantes">
                             {% for u in usuarios %}
-                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}</option>
+                            <option value="{{ u.id }}" data-data='{{ {"setor": setores.get(u.id, "")} | tojson }}' {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}</option>
                             {% endfor %}
                         </select>
+                        <div class="ag-part-dica"><i class="fas fa-search me-1"></i>Digite o nome para chamar pessoas de outros setores.</div>
                         <div id="blocoDisponibilidade" class="agenda-disp mt-2"></div>
                         <div class="mt-2" id="blocoSugestao">
                             <button type="button" class="btn btn-sm btn-outline-primary" id="btnSugerir">
@@ -322,6 +323,7 @@
     const moverUrlBase = {{ url_for('agenda.mover', id=0) | tojson }};
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
+    const pessoasUrl = {{ url_for('agenda.buscar_pessoas') | tojson }};
     const DIA_MS = 24 * 3600 * 1000;
 
     const app = byId('agApp');
@@ -480,13 +482,42 @@
         tsParticipantes = new TomSelect(selPart, {
             plugins: ['remove_button'],
             placeholder: 'Adicionar participantes',
-            maxOptions: null
+            maxOptions: null,
+            valueField: 'value',
+            labelField: 'text',
+            searchField: ['text'],
+            loadThrottle: 250,
+            shouldLoad: function (q) { return q.trim().length >= 2; },
+            load: function (q, callback) {
+                fetch(pessoasUrl + '?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (lista) { callback(lista); })
+                    .catch(function () { callback(); });
+            },
+            render: {
+                option: function (d, esc) {
+                    return '<div class="ag-part-op"><span>' + esc(d.text) + '</span>' +
+                        (d.setor ? '<small>' + esc(d.setor) + '</small>' : '') + '</div>';
+                },
+                item: function (d, esc) {
+                    return '<div title="' + esc(d.setor || '') + '">' + esc(d.text) + '</div>';
+                },
+                no_results: function (d) {
+                    return '<div class="no-results">' + (d.input.trim().length < 2 ? 'Digite ao menos 2 letras' : 'Ninguém encontrado') + '</div>';
+                },
+                loading: function () { return '<div class="no-results">Buscando…</div>'; }
+            }
         });
         tsParticipantes.on('change', agendarDisponibilidade);
     }
-    function setParticipantes(ids) {
+    function setParticipantes(ids, pessoas) {
         if (!tsParticipantes) return;
         tsParticipantes.clear(true);
+        (pessoas || []).forEach(function (p) {
+            if (p.id && !tsParticipantes.options[String(p.id)]) {
+                tsParticipantes.addOption({ value: String(p.id), text: p.nome, setor: '' });
+            }
+        });
         (ids || []).forEach(function (id) { tsParticipantes.addItem(String(id), true); });
         if (!tsParticipantes.items.length) tsParticipantes.addItem(String(euId), true);
     }
@@ -713,7 +744,7 @@
         byId('campoLocal').value = props.local || '';
         byId('campoDesc').value = props.descricao || '';
         byId('campoVisibilidade').value = props.visibilidade || 'unidade';
-        setParticipantes(props.participante_ids && props.participante_ids.length ? props.participante_ids : [euId]);
+        setParticipantes(props.participante_ids && props.participante_ids.length ? props.participante_ids : [euId], props.pessoas);
     }
 
     byId('btnCancelar').addEventListener('click', function () {

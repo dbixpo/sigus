@@ -7,7 +7,7 @@ from flask import (
     request, url_for, Response,
 )
 from flask_login import current_user, login_required
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from sqlalchemy.orm import joinedload, selectinload
 
 from app import db
@@ -98,17 +98,55 @@ def _usuarios_agenda(ids_unidades):
     return lista
 
 
-def _ids_participantes_form(form, unidades):
-    ids_ok = {u.id for u in _usuarios_agenda([x.id for x in unidades])}
-    ids_ok.add(current_user.id)
-    escolhidos = []
+_ACENTOS = 'áàâãäéèêëíìîïóòôõöúùûüç'
+_SEM_ACENTOS = 'aaaaaeeeeiiiiooooouuuuc'
+
+
+def _sem_acento(texto):
+    return (texto or '').lower().translate(str.maketrans(_ACENTOS, _SEM_ACENTOS))
+
+
+def _setores_por_usuario(ids_usuarios):
+    """{usuario_id: 'Unidade A, Unidade B'} com os vínculos ativos."""
+    if not ids_usuarios:
+        return {}
+    nomes = {}
+    for uid, nome in (
+        db.session.query(UsuarioUnidade.usuario_id, Unidade.nome)
+        .join(Unidade, Unidade.id == UsuarioUnidade.unidade_id)
+        .filter(
+            UsuarioUnidade.usuario_id.in_(list(ids_usuarios)),
+            UsuarioUnidade.ativo.is_(True),
+            Unidade.status == 'ativa',
+        )
+        .order_by(Unidade.nome)
+        .all()
+    ):
+        nomes.setdefault(uid, []).append(nome)
+    return {
+        uid: ', '.join(lista[:2]) + (f' +{len(lista) - 2}' if len(lista) > 2 else '')
+        for uid, lista in nomes.items()
+    }
+
+
+def _ids_participantes_form(form, unidades=None):
+    """Participantes podem ser de qualquer setor: basta ser usuário ativo."""
+    pedidos = []
     for raw in form.getlist('participantes'):
         try:
             uid = int(raw)
         except (TypeError, ValueError):
             continue
-        if uid in ids_ok and uid not in escolhidos:
-            escolhidos.append(uid)
+        if uid not in pedidos:
+            pedidos.append(uid)
+    ativos = set()
+    if pedidos:
+        ativos = {
+            uid for uid, in db.session.query(Usuario.id).filter(
+                Usuario.id.in_(pedidos), Usuario.ativo.is_(True)
+            ).all()
+        }
+    escolhidos = [uid for uid in pedidos if uid in ativos]
     if current_user.id not in escolhidos:
         escolhidos.append(current_user.id)
     return escolhidos
@@ -143,14 +181,15 @@ def _intervalos_pessoa(usuario_id, janela_ini, janela_fim, ignorar_id=None):
         fim = _fim_evento(ev)
         if fim <= janela_ini or ev.inicio >= janela_fim:
             continue
-        intervalos.append((ev.inicio, fim, ev.titulo or 'Compromisso'))
+        intervalos.append((ev.inicio, fim, ev))
     return intervalos
 
 
 def _livre_em(usuario_id, slot_ini, slot_fim, ignorar_id=None):
-    for ini, fim, _titulo in _intervalos_pessoa(usuario_id, slot_ini, slot_fim, ignorar_id):
+    """(livre, título do conflito). Compromisso que o usuário logado não enxerga volta sem título."""
+    for ini, fim, ev in _intervalos_pessoa(usuario_id, slot_ini, slot_fim, ignorar_id):
         if ini < slot_fim and fim > slot_ini:
-            return False, _titulo
+            return False, (ev.titulo or 'Compromisso') if _evento_visivel(ev) else None
     return True, None
 
 
@@ -295,6 +334,7 @@ def _pessoa_json(usuario=None, empresa=None):
         }
     nome = (usuario.nome if usuario else '') or ''
     return {
+        'id': usuario.id if usuario else None,
         'nome': nome,
         'primeiro': _primeiro_nome(nome),
         'foto_url': usuario.foto_url if usuario else None,
@@ -525,6 +565,7 @@ def index():
         unidades=unidades,
         unidade_id=unidade_id,
         usuarios=usuarios,
+        setores=_setores_por_usuario([u.id for u in usuarios]),
         pode_adicionar=current_user.pode('adicionar_agenda'),
     )
 
@@ -778,6 +819,26 @@ def disponibilidade():
         'todos_livres': all(p['livre'] for p in pessoas),
         'pessoas': pessoas,
     })
+
+
+@agenda_bp.route('/pessoas')
+@login_required
+def buscar_pessoas():
+    """Busca participantes na rede toda (reuniões intersetoriais)."""
+    _exige('ver_agenda', 'adicionar_agenda', 'editar_agenda')
+    termos = [t for t in _sem_acento(request.args.get('q', '')).split() if t][:5]
+    if not termos or len(''.join(termos)) < 2:
+        return jsonify([])
+    nome_norm = func.translate(func.lower(Usuario.nome), _ACENTOS, _SEM_ACENTOS)
+    q = Usuario.query.filter(Usuario.ativo.is_(True))
+    for termo in termos:
+        q = q.filter(nome_norm.like(f'%{termo}%'))
+    usuarios = q.order_by(Usuario.nome).limit(20).all()
+    setores = _setores_por_usuario([u.id for u in usuarios])
+    return jsonify([
+        {'value': str(u.id), 'text': u.nome, 'setor': setores.get(u.id, '')}
+        for u in usuarios
+    ])
 
 
 @agenda_bp.route('/eventos/<int:id>.ics')

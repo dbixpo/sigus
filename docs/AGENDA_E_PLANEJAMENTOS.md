@@ -32,6 +32,13 @@ Validação (front e `_dados_formulario`): fim depois do início; em dia inteiro
 
 Reunião: participantes, disponibilidade de cada um e **Sugerir horários livres** (`/agenda/sugerir`, duração de 15 min a 8 h, passos de 30 min no expediente).
 
+### Reunião intersetorial
+
+- A lista já vem com as pessoas das suas unidades. Para chamar alguém de **outro setor**, digite o nome (2 letras ou mais): o campo busca na rede toda em `GET /agenda/pessoas?q=` (sem acento, até 20 resultados) e mostra o setor embaixo do nome.
+- O servidor aceita qualquer usuário ativo como participante (`_ids_participantes_form`).
+- A reunião aparece na agenda de cada participante, seja qual for a unidade dele.
+- **Privacidade:** na disponibilidade, um compromisso que você não enxergaria na sua agenda (de outro setor ou pessoal) aparece só como "Ocupado", sem o título.
+
 ## Arrastar (drag & drop)
 
 | O que | Como | Rota |
