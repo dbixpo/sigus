@@ -31,10 +31,11 @@
                         <label class="form-label" for="prefixo">Prefixo <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text fw-bold text-success {{ '' if alugado else 'd-none' }}" id="prefixoAl">AL-</span>
-                            <input type="text" name="prefixo" id="prefixo" class="form-control fw-semibold" required maxlength="20"
+                            <input type="text" name="prefixo" id="prefixo" class="form-control fw-semibold" required maxlength="7"
+                                   inputmode="numeric" pattern="\d{1,4}" title="Só números, até 4 dígitos"
                                    placeholder="Ex.: 383" value="{{ valor('prefixo', veiculo.prefixo) }}">
                         </div>
-                        <div class="form-text">Veículo não tem patrimônio: ele é identificado pelo prefixo.</div>
+                        <div class="form-text">Só números, até 4 dígitos (ex.: 383 ou 1024). Veículo não tem patrimônio.</div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label d-block">Alugado?</label>
@@ -184,6 +185,9 @@
             this.value = this.value.replace(/^al-\s*/i, '');
             alugado.checked = true;
             ajustarAlugado();
+        }
+        if (!/^al?$/i.test(this.value)) {
+            this.value = this.value.replace(/\D/g, '').slice(0, 4);
         }
     });
 

@@ -12,8 +12,8 @@ from openpyxl.utils import get_column_letter
 from app import db
 from app.models.agenda import AgendaEvento
 from app.models.unidade import Unidade
-from app.models.veiculo import (CATEGORIAS_VEICULO, COMBUSTIVEIS_VEICULO, ModeloVeiculo, Veiculo,
-                                normalizar_placa, normalizar_prefixo)
+from app.models.veiculo import (CATEGORIAS_VEICULO, COMBUSTIVEIS_VEICULO, PREFIXO_MAX_DIGITOS, ModeloVeiculo,
+                                Veiculo, normalizar_placa, normalizar_prefixo)
 from app.services import reservas
 from app.utils import agora_brasilia, agora_local
 
@@ -94,6 +94,8 @@ def _preencher(veiculo, form):
     placa = normalizar_placa(form.get('placa'))
     if not prefixo:
         return 'Informe o prefixo do veículo.'
+    if not prefixo.isdigit() or len(prefixo) > PREFIXO_MAX_DIGITOS:
+        return f'O prefixo tem só números, até {PREFIXO_MAX_DIGITOS} dígitos (ex.: 383 ou 1024). Alugado é o check abaixo.'
     if len(placa) != 7:
         return 'Informe a placa com 7 caracteres (ex.: ABC1D23 ou ABC1234).'
     categoria = form.get('categoria') or ''

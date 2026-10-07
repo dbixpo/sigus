@@ -6,6 +6,7 @@ from app import db
 from app.utils import agora_local_callable
 
 PREFIXO_ALUGADO = 'AL-'
+PREFIXO_MAX_DIGITOS = 4
 
 CATEGORIAS_VEICULO = ['Carro de passeio', 'Utilitário', 'Caminhonete', 'Van', 'Micro-ônibus / ônibus',
                       'Ambulância', 'Motocicleta', 'Caminhão']
