@@ -774,93 +774,6 @@ body.pagina-agenda .sigus-main > .container-fluid {
     overflow: hidden;
     padding: 0.5rem 0.75rem 0.35rem !important;
 }
-.agenda-page {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    overflow: hidden;
-}
-
-/* Topbar compacta */
-.agenda-topbar {
-    flex-shrink: 0;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 1rem;
-    min-height: 40px;
-}
-.agenda-topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0;
-}
-.agenda-topbar-title {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--sigus-dark);
-    letter-spacing: -0.02em;
-}
-.agenda-unidade-select {
-    min-width: 160px;
-    max-width: 220px;
-    border-color: #dadce0;
-    font-size: 0.8rem;
-}
-.agenda-topbar-filters {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 1rem;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-.agenda-filter {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin: 0;
-    font-size: 0.8rem;
-    color: var(--sigus-text);
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-}
-.agenda-filter input {
-    width: 14px;
-    height: 14px;
-    margin: 0;
-    accent-color: var(--sigus-primary);
-    cursor: pointer;
-}
-.agenda-filter-swatch {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-.agenda-topbar-actions {
-    flex-shrink: 0;
-    margin-left: auto;
-}
-.agenda-btn-criar {
-    border-radius: 24px;
-    padding: 0.35rem 1rem;
-    font-weight: 600;
-    box-shadow: 0 1px 2px rgba(13, 59, 94, 0.12), 0 1px 3px rgba(13, 59, 94, 0.08);
-}
-
-/* Modal fechado não pode interceptar cliques no calendário (bug clássico do fade) */
-body.pagina-agenda > #modalEvento:not(.show),
-body.pagina-agenda > .modal-backdrop:not(.show) {
-    pointer-events: none !important;
-}
-
 /* Calendário full-bleed */
 #agendaCalendario {
     flex: 1 1 auto;
@@ -1000,6 +913,13 @@ body.pagina-agenda > .modal-backdrop:not(.show) {
     font-size: 0.75rem;
     margin: 0 !important;
 }
+#agendaCalendario a.fc-event,
+#agendaCalendario a.fc-event:hover {
+    text-decoration: none;
+}
+#agendaCalendario .fc-list-event-title a {
+    color: var(--sigus-text);
+}
 #agendaCalendario .fc-event.agenda-ev-bar {
     border-radius: 4px !important;
     padding: 1px 6px !important;
@@ -1063,7 +983,7 @@ body.pagina-agenda > .modal-backdrop:not(.show) {
 }
 .agenda-ev-barra .agenda-ev-title {
     color: inherit;
-    font-weight: 500;
+    font-weight: 600;
 }
 .agenda-ev-timed .agenda-ev-title {
     color: var(--sigus-text);

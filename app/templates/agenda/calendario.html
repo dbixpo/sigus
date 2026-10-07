@@ -5,595 +5,868 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/locales-all.global.min.js"></script>
+<link href="{{ url_for('static', filename='css/agenda.css') }}?v=20261006b" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-<div class="agenda-page">
-    <div class="agenda-topbar">
-        <div class="agenda-topbar-left">
-            <h1 class="agenda-topbar-title">Agenda</h1>
-            {% if unidades | length > 1 %}
-            <select id="filtroUnidade" class="form-select form-select-sm agenda-unidade-select" title="Unidade">
+<div class="ag-app" id="agApp">
+    <aside class="ag-side" id="agSide" aria-label="Painel da agenda">
+        {% if pode_adicionar %}
+        <button type="button" class="ag-criar" id="btnCriar" title="Criar (C)">
+            <span class="ag-criar-plus"><i class="fas fa-plus"></i></span>Criar
+        </button>
+        {% endif %}
+
+        <div class="ag-mini" id="agMini">
+            <div class="ag-mini-cab">
+                <span class="ag-mini-titulo" id="agMiniTitulo"></span>
+                <button type="button" class="ag-icon-btn ag-icon-btn-sm" id="agMiniPrev" title="Mês anterior"><i class="fas fa-chevron-left"></i></button>
+                <button type="button" class="ag-icon-btn ag-icon-btn-sm" id="agMiniNext" title="Próximo mês"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="ag-mini-semana">
+                <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+            </div>
+            <div class="ag-mini-dias" id="agMiniDias"></div>
+        </div>
+
+        {% if unidades | length > 1 %}
+        <div class="ag-side-sec">
+            <label class="ag-side-tit" for="filtroUnidade">Unidade</label>
+            <select id="filtroUnidade" class="form-select form-select-sm">
                 <option value="">Todas as unidades</option>
                 {% for u in unidades %}
                 <option value="{{ u.id }}" {% if unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
                 {% endfor %}
             </select>
-            {% endif %}
         </div>
-        <div class="agenda-topbar-filters">
-            <label class="agenda-filter" for="chkEventos">
-                <input type="checkbox" id="chkEventos" checked>
-                <span class="agenda-filter-swatch" style="background:#1A82B8;"></span>
-                <span class="agenda-filter-swatch" style="background:#0D3B5E;"></span>
-                <span>Eventos / Reuniões</span>
+        {% endif %}
+
+        <div class="ag-side-sec">
+            <div class="ag-side-tit">Mostrar</div>
+            <label class="ag-cal-item" for="chkEventos">
+                <input type="checkbox" id="chkEventos" checked style="accent-color:#1A82B8;">
+                <span>Eventos e reuniões</span>
             </label>
-            <label class="agenda-filter" for="chkPrazos">
-                <input type="checkbox" id="chkPrazos" checked>
-                <span class="agenda-filter-swatch" style="background:#F5C500;"></span>
-                <span>Prazos</span>
+            <label class="ag-cal-item" for="chkPrazos">
+                <input type="checkbox" id="chkPrazos" checked style="accent-color:#C9A200;">
+                <span>Prazos de planejamento</span>
             </label>
-            <label class="agenda-filter" for="chkFeriados">
-                <input type="checkbox" id="chkFeriados" checked>
-                <span class="agenda-filter-swatch" style="background:#E63030;"></span>
+            <label class="ag-cal-item" for="chkFeriados">
+                <input type="checkbox" id="chkFeriados" checked style="accent-color:#E63030;">
                 <span>Feriados</span>
             </label>
         </div>
-        {% if pode_adicionar %}
-        <div class="agenda-topbar-actions dropdown">
-            <button type="button" class="btn btn-primary btn-sm agenda-btn-criar" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-plus me-1"></i>Criar
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><button type="button" class="dropdown-item" id="btnNovoEvento"><i class="fas fa-calendar-plus me-2 text-primary"></i>Evento</button></li>
-                <li><button type="button" class="dropdown-item" id="btnNovaReuniao"><i class="fas fa-users me-2" style="color:#0D3B5E;"></i>Reunião</button></li>
+
+        <div class="ag-side-sec">
+            <div class="ag-side-tit">Legenda</div>
+            <ul class="ag-legenda">
+                <li><span class="ag-leg-cor" style="background:#1A82B8;"></span>Evento da unidade</li>
+                <li><span class="ag-leg-cor" style="background:#19A88B;"></span>Evento pessoal</li>
+                <li><span class="ag-leg-cor" style="background:#0D3B5E;"></span>Reunião</li>
+                <li><span class="ag-leg-cor" style="background:#F5C500;"></span>Prazo em dia</li>
+                <li><span class="ag-leg-cor" style="background:#E63030;"></span>Prazo vencido / feriado</li>
+                <li><span class="ag-leg-cor ag-leg-cor-borda" style="background:#E2E8F0;"></span>Prazo concluído</li>
             </ul>
         </div>
-        {% endif %}
-    </div>
-    <div id="agendaCalendario"></div>
-</div>{# /.agenda-page #}
 
-<div class="modal fade" id="modalEvento" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <form id="formEvento">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="evento_id" id="eventoId" value="">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalEventoTitulo">Novo evento</h5>
-                    <button type="button" class="btn-close" data-agenda-close aria-label="Fechar"></button>
+        <div class="ag-side-dica">
+            <i class="far fa-keyboard me-1"></i>Atalhos: <kbd>T</kbd> hoje · <kbd>D</kbd> <kbd>S</kbd> <kbd>M</kbd> <kbd>L</kbd> visões · <kbd>J</kbd> <kbd>K</kbd> avançar/voltar{% if pode_adicionar %} · <kbd>C</kbd> criar{% endif %}
+        </div>
+    </aside>
+    <div class="ag-side-veu" id="agSideVeu"></div>
+
+    <section class="ag-main">
+        <header class="ag-toolbar">
+            <button type="button" class="ag-icon-btn" id="btnSide" title="Mostrar/ocultar painel"><i class="fas fa-bars"></i></button>
+            <button type="button" class="ag-btn-hoje" id="btnHoje" title="Hoje (T)">Hoje</button>
+            <div class="ag-nav">
+                <button type="button" class="ag-icon-btn" id="btnPrev" title="Anterior (K)"><i class="fas fa-chevron-left"></i></button>
+                <button type="button" class="ag-icon-btn" id="btnNext" title="Próximo (J)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <h1 class="ag-titulo" id="agTitulo"></h1>
+            <div class="ag-toolbar-dir">
+                {% if pode_adicionar %}
+                <button type="button" class="btn btn-primary btn-sm ag-criar-topo" id="btnCriarTopo" title="Criar (C)">
+                    <i class="fas fa-plus"></i><span>Criar</span>
+                </button>
+                {% endif %}
+                <div class="ag-views" role="group" aria-label="Visão">
+                    <button type="button" class="ag-view-btn" data-view="timeGridDay" title="Dia (D)">Dia</button>
+                    <button type="button" class="ag-view-btn" data-view="timeGridWeek" title="Semana (S)">Semana</button>
+                    <button type="button" class="ag-view-btn" data-view="dayGridMonth" title="Mês (M)">Mês</button>
+                    <button type="button" class="ag-view-btn" data-view="listWeek" title="Lista (L)">Lista</button>
                 </div>
-                <div class="modal-body">
-                    <div id="blocoLeitura" class="d-none">
-                        <div class="fw-semibold mb-1" id="viewTitulo"></div>
-                        <div class="text-muted small mb-2" id="viewQuando"></div>
-                        <div id="viewPessoas" class="agenda-pessoas-modal mb-3 d-none"></div>
-                        <div class="small mb-2" id="viewLocal"></div>
-                        <div class="small mb-3" id="viewDesc"></div>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a class="btn btn-sm btn-outline-primary" id="btnGoogle" target="_blank" rel="noopener">
-                                <i class="fab fa-google me-1"></i>Adicionar ao Google Agenda
-                            </a>
-                            <a class="btn btn-sm btn-outline-secondary" id="btnIcs">
-                                <i class="fas fa-download me-1"></i>Baixar .ics
-                            </a>
-                            <a class="btn btn-sm btn-outline-secondary d-none" id="btnPlano">
-                                <i class="fas fa-clipboard-check me-1"></i>Abrir planejamento
-                            </a>
-                            <a class="btn btn-sm btn-outline-danger d-none" id="btnDecreto" target="_blank" rel="noopener">
-                                <i class="fas fa-landmark me-1"></i>Ver decreto
-                            </a>
+                <select class="form-select form-select-sm ag-views-select" id="selView" aria-label="Visão">
+                    <option value="timeGridDay">Dia</option>
+                    <option value="timeGridWeek">Semana</option>
+                    <option value="dayGridMonth">Mês</option>
+                    <option value="listWeek">Lista</option>
+                </select>
+            </div>
+        </header>
+        <div id="agendaCalendario"></div>
+    </section>
+</div>
+
+<div class="ag-modal" id="agModalEvento" aria-hidden="true">
+    <div class="ag-dialog" id="agDialogEvento" role="dialog" aria-modal="true">
+        <div id="paneLeitura" class="ag-leitura d-none">
+            <div class="ag-leitura-acoes">
+                <button type="button" class="ag-icon-btn d-none" id="btnEditar" title="Editar"><i class="fas fa-pen"></i></button>
+                <button type="button" class="ag-icon-btn d-none" id="btnExcluirLeitura" title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                <a class="ag-icon-btn" id="btnIcs" title="Baixar arquivo .ics"><i class="fas fa-download"></i></a>
+                <button type="button" class="ag-icon-btn" data-ag-fechar title="Fechar (Esc)"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="ag-leitura-cab">
+                <span class="ag-leitura-cor" id="viewCor"></span>
+                <div class="ag-leitura-cab-txt">
+                    <div class="ag-leitura-tipo" id="viewTipo"></div>
+                    <h2 class="ag-leitura-titulo" id="viewTitulo"></h2>
+                    <div class="ag-leitura-quando" id="viewQuando"></div>
+                </div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowPessoas">
+                <i class="fas fa-user-friends"></i>
+                <div><div class="ag-leitura-rotulo" id="viewPessoasLabel"></div><div id="viewPessoas" class="ag-pessoas"></div></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowLocal">
+                <i class="fas fa-map-marker-alt"></i><div id="viewLocal"></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowDesc">
+                <i class="fas fa-align-left"></i><div id="viewDesc" class="ag-leitura-desc"></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowStatus">
+                <i class="fas fa-tasks"></i><div id="viewStatus"></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowUnidade">
+                <i class="fas fa-hospital"></i><div id="viewUnidade"></div>
+            </div>
+            <div class="ag-leitura-linha d-none" id="rowVisib">
+                <i class="fas fa-lock"></i><div>Só você vê este evento</div>
+            </div>
+            <div class="ag-leitura-rodape">
+                <a class="btn btn-sm btn-outline-primary" id="btnGoogle" target="_blank" rel="noopener">
+                    <i class="fab fa-google me-1"></i>Adicionar ao Google Agenda
+                </a>
+                <a class="btn btn-sm btn-outline-secondary d-none" id="btnPlano">
+                    <i class="fas fa-clipboard-check me-1"></i>Abrir planejamento
+                </a>
+                <a class="btn btn-sm btn-outline-danger d-none" id="btnDecreto" target="_blank" rel="noopener">
+                    <i class="fas fa-landmark me-1"></i>Ver decreto
+                </a>
+            </div>
+        </div>
+
+        <form id="formEvento" class="ag-form d-none" novalidate autocomplete="off">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="evento_id" id="eventoId" value="">
+            <input type="hidden" name="tipo" id="campoTipo" value="evento">
+            <div class="ag-form-cab">
+                <h2 class="ag-form-titulo" id="formTitulo">Novo evento</h2>
+                <button type="button" class="ag-icon-btn" data-ag-fechar title="Fechar (Esc)"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="ag-form-corpo">
+                <input type="text" name="titulo" id="campoTitulo" class="ag-input-titulo" maxlength="200" placeholder="Adicionar título" aria-label="Título">
+                <div class="ag-tipos" role="tablist" aria-label="Tipo">
+                    <button type="button" class="ag-tipo-btn" data-tipo="evento" role="tab"><i class="fas fa-calendar-day"></i>Evento</button>
+                    <button type="button" class="ag-tipo-btn" data-tipo="reuniao" role="tab"><i class="fas fa-users"></i>Reunião</button>
+                </div>
+
+                <div class="ag-linha">
+                    <i class="far fa-clock ag-linha-ico" title="Quando"></i>
+                    <div class="ag-linha-campos">
+                        <div class="ag-quando">
+                            <input type="date" id="campoDataIni" class="form-control form-control-sm ag-data" aria-label="Data inicial">
+                            <input type="time" id="campoHoraIni" class="form-control form-control-sm ag-hora" step="300" aria-label="Hora inicial">
+                            <span class="ag-ate">até</span>
+                            <input type="time" id="campoHoraFim" class="form-control form-control-sm ag-hora" step="300" aria-label="Hora final">
+                            <input type="date" id="campoDataFim" class="form-control form-control-sm ag-data" aria-label="Data final">
+                        </div>
+                        <div class="ag-quando-extra">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" name="dia_inteiro" id="campoDiaInteiro" value="1">
+                                <label class="form-check-label" for="campoDiaInteiro">Dia inteiro</label>
+                            </div>
+                            <span class="ag-duracao" id="rotuloDuracao"></span>
                         </div>
                     </div>
-                    <div id="blocoForm">
-                        <input type="hidden" name="tipo" id="campoTipo" value="evento">
-                        <div class="mb-3">
-                            <label class="form-label">Título *</label>
-                            <input type="text" name="titulo" id="campoTitulo" class="form-control" required maxlength="200">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Unidade *</label>
-                            <select name="unidade_id" id="campoUnidade" class="form-select" required>
-                                {% for u in unidades %}
-                                <option value="{{ u.id }}" {% if unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div id="blocoReuniao" class="d-none">
-                            <div class="mb-3">
-                                <label class="form-label">Participantes *</label>
-                                <select name="participantes" id="campoParticipantes" multiple placeholder="Quem entra na reunião">
-                                    {% for u in usuarios %}
-                                    <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}</option>
-                                    {% endfor %}
-                                </select>
-                                <div class="form-text">O sistema marca quem está livre ou ocupado no horário escolhido.</div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Duração</label>
-                                <select name="duracao" id="campoDuracao" class="form-select">
-                                    <option value="30">30 minutos</option>
-                                    <option value="60" selected>1 hora</option>
-                                    <option value="90">1 hora e 30</option>
-                                    <option value="120">2 horas</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-check mb-3" id="blocoDiaInteiro">
-                            <input class="form-check-input" type="checkbox" name="dia_inteiro" id="campoDiaInteiro" value="1">
-                            <label class="form-check-label" for="campoDiaInteiro">Dia inteiro</label>
-                        </div>
-                        <div class="row g-2 mb-3" id="camposDataHora">
-                            <div class="col-6">
-                                <label class="form-label">Início *</label>
-                                <input type="datetime-local" name="inicio" id="campoInicio" class="form-control">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Fim</label>
-                                <input type="datetime-local" name="fim" id="campoFim" class="form-control">
-                            </div>
-                        </div>
-                        <div class="row g-2 mb-3 d-none" id="camposData">
-                            <div class="col-6">
-                                <label class="form-label">Início *</label>
-                                <input type="date" name="inicio_data" id="campoInicioData" class="form-control">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label">Fim</label>
-                                <input type="date" name="fim_data" id="campoFimData" class="form-control">
-                            </div>
-                        </div>
-                        <div id="blocoSugestao" class="d-none mb-3">
+                </div>
+
+                <div class="ag-linha d-none" id="linhaParticipantes">
+                    <i class="fas fa-user-friends ag-linha-ico" title="Participantes"></i>
+                    <div class="ag-linha-campos">
+                        <select name="participantes" id="campoParticipantes" multiple placeholder="Adicionar participantes">
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if u.id == current_user.id %}selected{% endif %}>{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div id="blocoDisponibilidade" class="agenda-disp mt-2"></div>
+                        <div class="mt-2" id="blocoSugestao">
                             <button type="button" class="btn btn-sm btn-outline-primary" id="btnSugerir">
                                 <i class="fas fa-magic me-1"></i>Sugerir horários livres
                             </button>
                             <div id="listaSugestoes" class="agenda-sugestoes mt-2"></div>
-                            <div id="blocoDisponibilidade" class="agenda-disp mt-2"></div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Local</label>
-                            <input type="text" name="local" id="campoLocal" class="form-control" maxlength="300" placeholder="Sala, unidade, link…">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Descrição</label>
-                            <textarea name="descricao" id="campoDesc" class="form-control" rows="3"></textarea>
-                        </div>
-                        <div class="mb-0" id="blocoVisibilidade">
-                            <label class="form-label">Quem vê</label>
-                            <select name="visibilidade" id="campoVisibilidade" class="form-select">
-                                <option value="unidade">Toda a unidade</option>
-                                <option value="pessoal">Só eu</option>
-                            </select>
                         </div>
                     </div>
-                    <div id="alertaErro" class="alert alert-danger mt-3 d-none mb-0"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-danger me-auto d-none" id="btnExcluir">Excluir</button>
-                    <button type="button" class="btn btn-outline-secondary" data-agenda-close>Fechar</button>
-                    <button type="button" class="btn btn-outline-secondary d-none" id="btnEditar">Editar</button>
-                    <button type="submit" class="btn btn-primary" id="btnSalvar">Salvar</button>
+
+                <div class="ag-linha">
+                    <i class="fas fa-map-marker-alt ag-linha-ico" title="Local"></i>
+                    <div class="ag-linha-campos">
+                        <input type="text" name="local" id="campoLocal" class="form-control form-control-sm" maxlength="300" placeholder="Adicionar local (sala, unidade, link…)">
+                    </div>
                 </div>
-            </form>
+
+                <div class="ag-linha{% if unidades | length < 2 %} d-none{% endif %}">
+                    <i class="fas fa-hospital ag-linha-ico" title="Unidade"></i>
+                    <div class="ag-linha-campos">
+                        <select name="unidade_id" id="campoUnidade" class="form-select form-select-sm" aria-label="Unidade">
+                            {% for u in unidades %}
+                            <option value="{{ u.id }}" {% if unidade_id == u.id %}selected{% endif %}>{{ u.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ag-linha" id="linhaVisibilidade">
+                    <i class="fas fa-eye ag-linha-ico" title="Quem vê"></i>
+                    <div class="ag-linha-campos">
+                        <select name="visibilidade" id="campoVisibilidade" class="form-select form-select-sm" aria-label="Quem vê">
+                            <option value="unidade">Toda a unidade vê</option>
+                            <option value="pessoal">Só eu vejo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ag-linha">
+                    <i class="fas fa-align-left ag-linha-ico" title="Descrição"></i>
+                    <div class="ag-linha-campos">
+                        <textarea name="descricao" id="campoDesc" class="form-control form-control-sm" rows="3" placeholder="Adicionar descrição"></textarea>
+                    </div>
+                </div>
+
+                <div id="alertaErro" class="alert alert-danger alert-permanent py-2 px-3 small mb-0 d-none" role="alert"></div>
+            </div>
+            <div class="ag-form-rodape">
+                <button type="button" class="btn btn-sm btn-outline-danger me-auto d-none" id="btnExcluir">
+                    <i class="fas fa-trash-alt me-1"></i>Excluir
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelar">Cancelar</button>
+                <button type="submit" class="btn btn-sm btn-primary" id="btnSalvar">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="ag-modal ag-modal-confirm" id="agModalConfirm" aria-hidden="true">
+    <div class="ag-dialog ag-dialog-confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitulo" aria-describedby="confirmTexto">
+        <div class="ag-confirm-ico" id="confirmIco"></div>
+        <h2 class="ag-confirm-titulo" id="confirmTitulo"></h2>
+        <p class="ag-confirm-texto" id="confirmTexto"></p>
+        <div class="ag-confirm-acoes">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="confirmCancelar">Cancelar</button>
+            <button type="button" class="btn btn-sm btn-primary" id="confirmOk">OK</button>
         </div>
     </div>
 </div>
+
+<div class="ag-snack" id="agSnack" role="status" aria-live="polite"></div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 (function () {
+    const byId = function (id) { return document.getElementById(id); };
     const csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     const podeAdicionar = {{ 'true' if pode_adicionar else 'false' }};
     const euId = {{ current_user.id | tojson }};
+    const unidadePadrao = {{ (unidade_id or '') | tojson }};
     const eventosUrl = {{ url_for('agenda.eventos_json') | tojson }};
     const criarUrl = {{ url_for('agenda.criar') | tojson }};
+    const editarUrlBase = {{ url_for('agenda.editar', id=0) | tojson }};
+    const excluirUrlBase = {{ url_for('agenda.excluir', id=0) | tojson }};
     const sugerirUrl = {{ url_for('agenda.sugerir') | tojson }};
     const dispUrl = {{ url_for('agenda.disponibilidade') | tojson }};
-    const modalEl = document.getElementById('modalEvento');
-    // Modal dentro de .sigus-main (overflow + stacking) fica atrás da navbar —
-    // move para o body como o modalImpresso.
-    if (modalEl && modalEl.parentElement !== document.body) {
-        document.body.appendChild(modalEl);
-    }
+    const DIA_MS = 24 * 3600 * 1000;
 
-    // Controle próprio (sem bootstrap.Modal): o dispose/show do Bootstrap
-    // corrompia o estado após alguns ESC e a agenda ficava “morta” até F5.
-    const AGENDA_BACKDROP_ID = 'agendaModalBackdrop';
-    let modalAgendaAberto = false;
-    let aposFecharFila = [];
-    let fecharAgendaTimer = null;
-
-    function limparUiModal() {
-        const nosso = document.getElementById(AGENDA_BACKDROP_ID);
-        if (nosso) nosso.remove();
-        document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
-        document.body.classList.remove('modal-open');
-        document.body.style.removeProperty('overflow');
-        document.body.style.removeProperty('padding-right');
-        if (!modalEl) return;
-        modalEl.classList.remove('show');
-        modalEl.style.display = 'none';
-        modalEl.setAttribute('aria-hidden', 'true');
-        modalEl.removeAttribute('aria-modal');
-        modalAgendaAberto = false;
-    }
-
-    function fecharDropdownCriar() {
-        const btn = document.querySelector('.agenda-btn-criar');
-        if (!btn) return;
-        const dd = bootstrap.Dropdown.getInstance(btn);
-        if (dd) dd.hide();
-        btn.setAttribute('aria-expanded', 'false');
-        const menu = btn.parentElement && btn.parentElement.querySelector('.dropdown-menu');
-        if (menu) menu.classList.remove('show');
-    }
-
-    function drainAposFechar() {
-        const fila = aposFecharFila.splice(0, aposFecharFila.length);
-        fila.forEach(function (fn) {
-            try { fn(); } catch (err) { console.error(err); }
-        });
-    }
-
-    function mostrarModalAgenda() {
-        fecharDropdownCriar();
-        if (fecharAgendaTimer) {
-            clearTimeout(fecharAgendaTimer);
-            fecharAgendaTimer = null;
-        }
-        // Garante que nenhuma instância Bootstrap fique interferindo
-        const old = bootstrap.Modal.getInstance(modalEl);
-        if (old) {
-            try { old.dispose(); } catch (e) { /* ignore */ }
-        }
-        limparUiModal();
-
-        modalEl.style.display = 'block';
-        modalEl.removeAttribute('aria-hidden');
-        modalEl.setAttribute('aria-modal', 'true');
-        modalEl.setAttribute('role', 'dialog');
-        void modalEl.offsetWidth;
-        modalEl.classList.add('show');
-
-        const backdrop = document.createElement('div');
-        backdrop.id = AGENDA_BACKDROP_ID;
-        backdrop.className = 'modal-backdrop fade show';
-        backdrop.addEventListener('click', function () { esconderModalAgenda(); });
-        document.body.appendChild(backdrop);
-        document.body.classList.add('modal-open');
-        modalAgendaAberto = true;
-
-        setTimeout(function () {
-            const alvo = modalEl.querySelector('[data-agenda-close], #btnEditar, #btnSalvar, input, select, textarea');
-            if (alvo && typeof alvo.focus === 'function') alvo.focus();
-        }, 30);
-    }
-
-    function esconderModalAgenda() {
-        // Já está fechando / fechado
-        if (fecharAgendaTimer) return;
-        if (!modalAgendaAberto && !modalEl.classList.contains('show')) {
-            limparUiModal();
-            drainAposFechar();
-            return;
-        }
-        modalAgendaAberto = false;
-        modalEl.classList.remove('show');
-        const bd = document.getElementById(AGENDA_BACKDROP_ID);
-        if (bd) bd.classList.remove('show');
-        fecharAgendaTimer = setTimeout(function () {
-            fecharAgendaTimer = null;
-            limparUiModal();
-            drainAposFechar();
-        }, 160);
-    }
-
-    /** Roda depois que o modal realmente fechou (ex.: confirm do Google). */
-    function aposFecharModal(fn) {
-        if (typeof fn === 'function') aposFecharFila.push(fn);
-    }
-
-    modalEl.querySelectorAll('[data-agenda-close]').forEach(function (btn) {
-        btn.addEventListener('click', function () { esconderModalAgenda(); });
+    const app = byId('agApp');
+    const modalEvento = byId('agModalEvento');
+    const modalConfirm = byId('agModalConfirm');
+    const dialogEvento = byId('agDialogEvento');
+    const form = byId('formEvento');
+    // Dentro de .sigus-main os modais ficam atrás da navbar (overflow + stacking).
+    [modalEvento, modalConfirm, byId('agSnack')].forEach(function (el) {
+        if (el && el.parentElement !== document.body) document.body.appendChild(el);
     });
 
-    document.addEventListener('keydown', function (e) {
-        if (e.key !== 'Escape' || !modalAgendaAberto) return;
-        e.preventDefault();
-        esconderModalAgenda();
-    });
-
-    // Estado inicial limpo
-    limparUiModal();
-
-    const form = document.getElementById('formEvento');
     let calendar;
-    let modoEdicao = false;
     let eventoAtual = null;
+    let modoEdicao = false;
     let dispTimer = null;
     let tsParticipantes = null;
+    let duracaoMs = 3600 * 1000;
+    let spanDias = 0;
+    const mini = { mes: new Date(new Date().getFullYear(), new Date().getMonth(), 1) };
 
-    const selPart = document.getElementById('campoParticipantes');
-    if (selPart && window.TomSelect) {
-        tsParticipantes = new TomSelect(selPart, {
-            plugins: ['remove_button'],
-            placeholder: 'Quem entra na reunião',
-            maxOptions: null
-        });
-        tsParticipantes.on('change', agendarDisponibilidade);
+    /* ── Utilidades ─────────────────────────────────────────── */
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function toDateInput(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function toTimeInput(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+    function parseLocal(data, hora) {
+        if (!data) return null;
+        const p = data.split('-').map(Number);
+        const h = (hora || '00:00').split(':').map(Number);
+        const d = new Date(p[0], p[1] - 1, p[2], h[0] || 0, h[1] || 0);
+        return isNaN(d.getTime()) ? null : d;
     }
-
-    function pad(n) {
-        return String(n).padStart(2, '0');
-    }
-
-    function unidadeFiltro() {
-        const sel = document.getElementById('filtroUnidade');
-        return sel ? sel.value : '{{ unidade_id or "" }}';
-    }
-
-    function ehReuniao() {
-        return document.getElementById('campoTipo').value === 'reuniao';
-    }
-
-    function setTipo(tipo) {
-        document.getElementById('campoTipo').value = tipo === 'reuniao' ? 'reuniao' : 'evento';
-        const reuniao = ehReuniao();
-        document.getElementById('blocoReuniao').classList.toggle('d-none', !reuniao);
-        document.getElementById('blocoSugestao').classList.toggle('d-none', !reuniao);
-        document.getElementById('blocoDiaInteiro').classList.toggle('d-none', reuniao);
-        document.getElementById('blocoVisibilidade').classList.toggle('d-none', reuniao);
-        if (reuniao) {
-            document.getElementById('campoDiaInteiro').checked = false;
-            document.getElementById('campoVisibilidade').value = 'unidade';
-            toggleDiaInteiro();
-        }
-        document.getElementById('campoFim').readOnly = reuniao;
-    }
-
-    function toggleDiaInteiro() {
-        const on = document.getElementById('campoDiaInteiro').checked;
-        document.getElementById('camposDataHora').classList.toggle('d-none', on);
-        document.getElementById('camposData').classList.toggle('d-none', !on);
-        document.getElementById('campoInicio').required = !on;
-        document.getElementById('campoInicioData').required = on;
-    }
-
-    function duracaoMin() {
-        return parseInt(document.getElementById('campoDuracao').value, 10) || 60;
-    }
-
-    function aplicarDuracao() {
-        const ini = document.getElementById('campoInicio').value;
-        if (!ini || !ehReuniao()) return;
-        const d = new Date(ini);
-        if (isNaN(d.getTime())) return;
-        d.setMinutes(d.getMinutes() + duracaoMin());
-        document.getElementById('campoFim').value = toLocalInput(d);
-    }
-
+    function addDias(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n, d.getHours(), d.getMinutes()); }
+    function mesmoDia(a, b) { return a && b && toDateInput(a) === toDateInput(b); }
+    function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
     function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, function (c) {
             return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
         });
     }
+    function textoDia(d) {
+        const opts = { weekday: 'long', day: 'numeric', month: 'long' };
+        if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+        return cap(d.toLocaleDateString('pt-BR', opts));
+    }
+    function textoHora(d) { return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+    function textoDuracao(ms) {
+        const min = Math.round(ms / 60000);
+        if (min < 60) return min + ' min';
+        const h = Math.floor(min / 60), m = min % 60;
+        if (h >= 24 && m === 0 && h % 24 === 0) return (h / 24) + (h === 24 ? ' dia' : ' dias');
+        return h + ' h' + (m ? ' ' + m + ' min' : '');
+    }
+    function unidadeFiltro() {
+        const sel = byId('filtroUnidade');
+        return sel ? sel.value : String(unidadePadrao || '');
+    }
+    function urlEvento(base, id) { return base.replace('/eventos/0', '/eventos/' + id); }
+    function ehReuniao() { return byId('campoTipo').value === 'reuniao'; }
+    function ehTelaEstreita() { return window.matchMedia('(max-width: 1199.98px)').matches; }
 
-    function faceHtml(p) {
-        if (p.foto_url) {
-            return '<img src="' + escapeHtml(p.foto_url) + '" alt="' + escapeHtml(p.nome) + '" title="' + escapeHtml(p.nome) + '">';
-        }
-        const cls = p.empresa ? ' agenda-face-empresa' : '';
-        const inner = p.empresa ? '<i class="fas fa-building"></i>' : escapeHtml(p.inicial || '?');
-        return '<span class="agenda-face-inicial' + cls + '" title="' + escapeHtml(p.nome) + '">' + inner + '</span>';
+    let snackTimer = null;
+    function snack(msg) {
+        const el = byId('agSnack');
+        el.textContent = msg;
+        el.classList.add('is-visivel');
+        clearTimeout(snackTimer);
+        snackTimer = setTimeout(function () { el.classList.remove('is-visivel'); }, 3500);
     }
 
-    function renderPessoasModal(pessoas, label) {
-        const box = document.getElementById('viewPessoas');
-        box.innerHTML = '';
-        if (!pessoas || !pessoas.length) {
-            box.classList.add('d-none');
-            return;
+    /* ── Modais (controle próprio, sem bootstrap.Modal) ─────── */
+    const pilhaModais = [];
+    function abrirModal(el) {
+        document.querySelectorAll('.fc-popover-close').forEach(function (b) { b.click(); });
+        if (!el.classList.contains('is-open')) {
+            el.classList.add('is-open');
+            el.setAttribute('aria-hidden', 'false');
         }
-        box.classList.remove('d-none');
-        const lab = document.createElement('div');
-        lab.className = 'text-muted small mb-1';
-        lab.textContent = label || 'Pessoas';
-        box.appendChild(lab);
-        const row = document.createElement('div');
-        row.className = 'd-flex flex-wrap gap-2 align-items-center';
-        pessoas.forEach(function (p) {
-            const item = document.createElement('div');
-            item.className = 'agenda-pessoa-item';
-            item.innerHTML = faceHtml(p) + '<span>' + escapeHtml(p.nome || p.primeiro || '') + '</span>';
-            row.appendChild(item);
+        const i = pilhaModais.indexOf(el);
+        if (i >= 0) pilhaModais.splice(i, 1);
+        pilhaModais.push(el);
+    }
+    function fecharModal(el) {
+        el.classList.remove('is-open');
+        el.setAttribute('aria-hidden', 'true');
+        const i = pilhaModais.indexOf(el);
+        if (i >= 0) pilhaModais.splice(i, 1);
+    }
+    function fecharEvento() {
+        fecharModal(modalEvento);
+        eventoAtual = null;
+        modoEdicao = false;
+    }
+    function fecharTopo() {
+        const topo = pilhaModais[pilhaModais.length - 1];
+        if (topo === modalConfirm) resolverConfirm(false);
+        else if (topo === modalEvento) fecharEvento();
+    }
+    [modalEvento, modalConfirm].forEach(function (m) {
+        let downFora = false;
+        m.addEventListener('mousedown', function (e) { downFora = e.target === m; });
+        m.addEventListener('click', function (e) {
+            if (e.target === m && downFora) fecharTopo();
+            downFora = false;
         });
-        box.appendChild(row);
-    }
+    });
+    modalEvento.querySelectorAll('[data-ag-fechar]').forEach(function (b) {
+        b.addEventListener('click', fecharEvento);
+    });
 
-    function toLocalInput(d) {
-        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-            'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    let confirmAtual = null;
+    function confirmar(opts) {
+        if (confirmAtual) resolverConfirm(false);
+        confirmAtual = opts;
+        const ico = byId('confirmIco');
+        ico.className = 'ag-confirm-ico' + (opts.perigo ? ' is-perigo' : '');
+        ico.innerHTML = '<i class="' + (opts.icone || 'fas fa-question') + '"></i>';
+        byId('confirmTitulo').textContent = opts.titulo || '';
+        byId('confirmTexto').textContent = opts.texto || '';
+        byId('confirmTexto').classList.toggle('d-none', !opts.texto);
+        const ok = byId('confirmOk');
+        ok.innerHTML = opts.okHtml || escapeHtml(opts.ok || 'OK');
+        ok.className = 'btn btn-sm ' + (opts.perigo ? 'btn-danger' : 'btn-primary');
+        byId('confirmCancelar').textContent = opts.cancelar || 'Cancelar';
+        abrirModal(modalConfirm);
+        setTimeout(function () { ok.focus(); }, 30);
     }
-    function toDateInput(d) {
-        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    function resolverConfirm(aceitou) {
+        const opts = confirmAtual;
+        confirmAtual = null;
+        fecharModal(modalConfirm);
+        if (!opts) return;
+        if (aceitou && typeof opts.aoConfirmar === 'function') opts.aoConfirmar();
+        if (!aceitou && typeof opts.aoCancelar === 'function') opts.aoCancelar();
     }
+    byId('confirmOk').addEventListener('click', function () { resolverConfirm(true); });
+    byId('confirmCancelar').addEventListener('click', function () { resolverConfirm(false); });
 
+    /* ── Participantes ──────────────────────────────────────── */
+    const selPart = byId('campoParticipantes');
+    if (selPart && window.TomSelect) {
+        tsParticipantes = new TomSelect(selPart, {
+            plugins: ['remove_button'],
+            placeholder: 'Adicionar participantes',
+            maxOptions: null
+        });
+        tsParticipantes.on('change', agendarDisponibilidade);
+    }
     function setParticipantes(ids) {
         if (!tsParticipantes) return;
         tsParticipantes.clear(true);
-        (ids || []).forEach(function (id) {
-            tsParticipantes.addItem(String(id), true);
-        });
+        (ids || []).forEach(function (id) { tsParticipantes.addItem(String(id), true); });
         if (!tsParticipantes.items.length) tsParticipantes.addItem(String(euId), true);
     }
+    function idsParticipantes() {
+        const ids = tsParticipantes ? tsParticipantes.getValue() : [];
+        return (Array.isArray(ids) ? ids : [ids]).filter(Boolean);
+    }
 
+    /* ── Data e hora do formulário ──────────────────────────── */
+    function diaInteiro() { return byId('campoDiaInteiro').checked; }
+    function lerIntervalo() {
+        const dIni = byId('campoDataIni').value;
+        const dFim = byId('campoDataFim').value || dIni;
+        if (diaInteiro()) {
+            return { ini: parseLocal(dIni), fim: parseLocal(dFim), dIni: dIni, dFim: dFim };
+        }
+        return {
+            ini: parseLocal(dIni, byId('campoHoraIni').value),
+            fim: byId('campoHoraFim').value ? parseLocal(dFim, byId('campoHoraFim').value) : null,
+            dIni: dIni, dFim: dFim
+        };
+    }
+    function valoresEnvio() {
+        const r = lerIntervalo();
+        if (diaInteiro()) {
+            return { inicio: r.dIni, fim: r.dFim && r.dFim !== r.dIni ? r.dFim : '' };
+        }
+        return {
+            inicio: r.dIni && byId('campoHoraIni').value ? r.dIni + 'T' + byId('campoHoraIni').value : '',
+            fim: r.dFim && byId('campoHoraFim').value ? r.dFim + 'T' + byId('campoHoraFim').value : ''
+        };
+    }
+    function erroIntervalo() {
+        const r = lerIntervalo();
+        if (!r.dIni || !r.ini) return 'Informe a data.';
+        if (diaInteiro()) {
+            if (r.fim && r.fim < r.ini) return 'A data final precisa ser igual ou depois da data inicial.';
+            return null;
+        }
+        if (!byId('campoHoraIni').value) return 'Informe a hora inicial.';
+        if (!byId('campoHoraFim').value || !r.fim) return 'Informe a hora final.';
+        if (r.fim <= r.ini) return 'O horário final precisa ser depois do horário inicial.';
+        return null;
+    }
+    function setIntervalo(ini, fim, todoDia) {
+        byId('campoDiaInteiro').checked = !!todoDia;
+        byId('campoDataIni').value = toDateInput(ini);
+        if (todoDia) {
+            const ultimo = fim && fim > ini ? fim : ini;
+            byId('campoDataFim').value = toDateInput(ultimo);
+            spanDias = Math.round((parseLocal(toDateInput(ultimo)) - parseLocal(toDateInput(ini))) / DIA_MS);
+            const base = new Date();
+            base.setMinutes(0, 0, 0);
+            base.setHours(Math.min(22, base.getHours() + 1));
+            byId('campoHoraIni').value = toTimeInput(base);
+            byId('campoHoraFim').value = toTimeInput(new Date(base.getTime() + 3600 * 1000));
+            duracaoMs = 3600 * 1000;
+        } else {
+            const f = fim && fim > ini ? fim : new Date(ini.getTime() + 3600 * 1000);
+            byId('campoHoraIni').value = toTimeInput(ini);
+            byId('campoHoraFim').value = toTimeInput(f);
+            byId('campoDataFim').value = toDateInput(f);
+            duracaoMs = f - ini;
+            spanDias = 0;
+        }
+        atualizarModoData();
+    }
+    function atualizarModoData() {
+        const on = diaInteiro();
+        form.classList.toggle('ag-dia-inteiro', on);
+        byId('blocoSugestao').classList.toggle('d-none', on);
+        atualizarRotuloDuracao();
+    }
+    function atualizarRotuloDuracao() {
+        const el = byId('rotuloDuracao');
+        const erro = erroIntervalo();
+        const r = lerIntervalo();
+        el.classList.remove('is-erro');
+        if (erro && r.ini && (byId('campoHoraFim').value || diaInteiro())) {
+            el.textContent = erro;
+            el.classList.add('is-erro');
+            return;
+        }
+        if (!r.ini || !r.fim) { el.textContent = ''; return; }
+        if (diaInteiro()) {
+            const dias = Math.round((r.fim - r.ini) / DIA_MS) + 1;
+            el.textContent = dias > 1 ? dias + ' dias' : '';
+        } else {
+            el.textContent = 'Duração: ' + textoDuracao(r.fim - r.ini);
+        }
+    }
+    function aoMudarInicio() {
+        const r = lerIntervalo();
+        if (!r.ini) return;
+        if (diaInteiro()) {
+            byId('campoDataFim').value = toDateInput(addDias(r.ini, spanDias));
+        } else {
+            const f = new Date(r.ini.getTime() + duracaoMs);
+            byId('campoHoraFim').value = toTimeInput(f);
+            byId('campoDataFim').value = toDateInput(f);
+        }
+        byId('listaSugestoes').innerHTML = '';
+        atualizarRotuloDuracao();
+        agendarDisponibilidade();
+    }
+    function aoMudarFim() {
+        const r = lerIntervalo();
+        if (r.ini && r.fim && r.fim > r.ini) {
+            if (diaInteiro()) spanDias = Math.round((r.fim - r.ini) / DIA_MS);
+            else duracaoMs = r.fim - r.ini;
+        }
+        byId('listaSugestoes').innerHTML = '';
+        atualizarRotuloDuracao();
+        agendarDisponibilidade();
+    }
+    ['campoDataIni', 'campoHoraIni'].forEach(function (id) { byId(id).addEventListener('change', aoMudarInicio); });
+    ['campoDataFim', 'campoHoraFim'].forEach(function (id) { byId(id).addEventListener('change', aoMudarFim); });
+    byId('campoDiaInteiro').addEventListener('change', function () {
+        const r = lerIntervalo();
+        if (diaInteiro() && r.ini) {
+            const fimD = parseLocal(byId('campoDataFim').value) || r.ini;
+            spanDias = Math.max(0, Math.round((parseLocal(toDateInput(fimD)) - parseLocal(toDateInput(r.ini))) / DIA_MS));
+        } else if (!diaInteiro()) {
+            aoMudarInicio();
+        }
+        atualizarModoData();
+        agendarDisponibilidade();
+    });
+
+    /* ── Formulário ─────────────────────────────────────────── */
+    function setTipo(tipo) {
+        const reuniao = tipo === 'reuniao';
+        byId('campoTipo').value = reuniao ? 'reuniao' : 'evento';
+        form.querySelectorAll('.ag-tipo-btn').forEach(function (b) {
+            const ativo = b.getAttribute('data-tipo') === byId('campoTipo').value;
+            b.classList.toggle('is-ativo', ativo);
+            b.setAttribute('aria-selected', ativo ? 'true' : 'false');
+        });
+        byId('linhaParticipantes').classList.toggle('d-none', !reuniao);
+        byId('linhaVisibilidade').classList.toggle('d-none', reuniao);
+        if (reuniao) byId('campoVisibilidade').value = 'unidade';
+        byId('formTitulo').textContent = tituloForm();
+        if (reuniao) agendarDisponibilidade();
+        else byId('blocoDisponibilidade').innerHTML = '';
+    }
+    form.querySelectorAll('.ag-tipo-btn').forEach(function (b) {
+        b.addEventListener('click', function () { setTipo(b.getAttribute('data-tipo')); });
+    });
+    function tituloForm() {
+        if (ehReuniao()) return modoEdicao ? 'Editar reunião' : 'Nova reunião';
+        return modoEdicao ? 'Editar evento' : 'Novo evento';
+    }
+    function esconderErro() { byId('alertaErro').classList.add('d-none'); }
+    function mostrarErro(msg) {
+        const el = byId('alertaErro');
+        el.textContent = msg;
+        el.classList.remove('d-none');
+        el.scrollIntoView({ block: 'nearest' });
+    }
     function limparForm() {
         form.reset();
-        document.getElementById('eventoId').value = '';
-        document.getElementById('alertaErro').classList.add('d-none');
-        document.getElementById('listaSugestoes').innerHTML = '';
-        document.getElementById('blocoDisponibilidade').innerHTML = '';
-        const selU = document.getElementById('campoUnidade');
+        byId('eventoId').value = '';
+        esconderErro();
+        byId('listaSugestoes').innerHTML = '';
+        byId('blocoDisponibilidade').innerHTML = '';
         const f = unidadeFiltro();
-        if (f) selU.value = f;
-        document.getElementById('campoDuracao').value = '60';
+        if (f) byId('campoUnidade').value = f;
         setParticipantes([euId]);
         setTipo('evento');
-        toggleDiaInteiro();
     }
-
-    function tituloModal(editar) {
-        if (ehReuniao()) return editar ? 'Editar reunião' : 'Nova reunião';
-        return editar ? 'Editar evento' : 'Novo evento';
+    function mostrarPane(qual) {
+        const leitura = qual === 'leitura';
+        byId('paneLeitura').classList.toggle('d-none', !leitura);
+        form.classList.toggle('d-none', leitura);
+        dialogEvento.classList.toggle('ag-dialog-leitura', leitura);
+        dialogEvento.classList.toggle('ag-dialog-form', !leitura);
     }
-
     function mostrarFormulario(editar) {
         modoEdicao = !!editar;
-        document.getElementById('blocoForm').classList.remove('d-none');
-        document.getElementById('blocoLeitura').classList.add('d-none');
-        document.getElementById('btnSalvar').classList.remove('d-none');
-        document.getElementById('btnEditar').classList.add('d-none');
-        document.getElementById('btnExcluir').classList.toggle('d-none', !editar);
-        document.getElementById('modalEventoTitulo').textContent = tituloModal(editar);
+        mostrarPane('form');
+        byId('btnExcluir').classList.toggle('d-none', !editar);
+        byId('formTitulo').textContent = tituloForm();
+        abrirModal(modalEvento);
+        setTimeout(function () { byId('campoTitulo').focus(); }, 40);
         if (ehReuniao()) agendarDisponibilidade();
     }
 
-    function mostrarLeitura(props, title, whenText) {
-        document.getElementById('blocoForm').classList.add('d-none');
-        document.getElementById('blocoLeitura').classList.remove('d-none');
-        document.getElementById('btnSalvar').classList.add('d-none');
-        document.getElementById('btnExcluir').classList.add('d-none');
-        document.getElementById('viewTitulo').textContent = title;
-        document.getElementById('viewQuando').textContent = whenText || '';
-        renderPessoasModal(props.pessoas, props.pessoas_label);
-        document.getElementById('viewLocal').textContent = props.local ? ('Local: ' + props.local) : '';
-        document.getElementById('viewDesc').textContent = props.descricao || '';
-        document.getElementById('btnGoogle').href = props.google_url || '#';
-        document.getElementById('btnIcs').href = props.ics_url || '#';
-        const btnPlano = document.getElementById('btnPlano');
-        if (props.plano_url) {
-            btnPlano.href = props.plano_url;
-            btnPlano.classList.remove('d-none');
+    function abrirNovo(start, end, allDay, tipo, todoDia) {
+        if (!podeAdicionar) return;
+        eventoAtual = null;
+        limparForm();
+        setTipo(tipo || 'evento');
+        const agora = new Date();
+        if (start && todoDia) {
+            setIntervalo(start, start, true);
+        } else if (start && allDay && end && (end - start) > DIA_MS) {
+            setIntervalo(start, addDias(end, -1), true);
+        } else if (start && !allDay) {
+            setIntervalo(start, end || null, false);
         } else {
-            btnPlano.classList.add('d-none');
+            const base = start ? new Date(start.getTime()) : new Date(agora.getTime());
+            if (mesmoDia(base, agora)) {
+                base.setHours(agora.getHours(), agora.getMinutes() < 30 ? 30 : 60, 0, 0);
+            } else {
+                base.setHours(9, 0, 0, 0);
+            }
+            setIntervalo(base, null, false);
         }
-        document.getElementById('btnEditar').classList.toggle('d-none', !props.pode_editar);
-        const t = props.tipo === 'prazo' ? 'Prazo de planejamento'
-            : (props.tipo === 'reuniao' ? 'Reunião'
-            : (props.tipo === 'feriado' ? 'Feriado / ponto facultativo' : 'Evento'));
-        document.getElementById('modalEventoTitulo').textContent = t;
-        const ehFeriado = props.tipo === 'feriado';
-        document.getElementById('btnGoogle').classList.toggle('d-none', ehFeriado);
-        document.getElementById('btnIcs').classList.toggle('d-none', ehFeriado);
-        const btnDecreto = document.getElementById('btnDecreto');
-        if (ehFeriado && props.decreto_url) {
-            btnDecreto.href = props.decreto_url;
-            btnDecreto.classList.remove('d-none');
-        } else {
-            btnDecreto.classList.add('d-none');
-        }
+        mostrarFormulario(false);
     }
 
-    function preencherFormEvento(info) {
-        const props = info.event.extendedProps || {};
-        const tipo = props.tipo === 'reuniao' ? 'reuniao' : 'evento';
-        setTipo(tipo);
-        document.getElementById('eventoId').value = props.evento_id || '';
-        document.getElementById('campoTitulo').value = info.event.title;
-        if (props.unidade_id) document.getElementById('campoUnidade').value = props.unidade_id;
-        document.getElementById('campoDiaInteiro').checked = tipo === 'reuniao' ? false : info.event.allDay;
-        toggleDiaInteiro();
-        if (info.event.allDay && tipo !== 'reuniao') {
-            document.getElementById('campoInicioData').value = toDateInput(info.event.start);
-        } else if (info.event.start) {
-            document.getElementById('campoInicio').value = toLocalInput(info.event.start);
-            if (info.event.end) document.getElementById('campoFim').value = toLocalInput(info.event.end);
+    function preencherForm(ev) {
+        const props = ev.extendedProps || {};
+        limparForm();
+        setTipo(props.tipo === 'reuniao' ? 'reuniao' : 'evento');
+        byId('eventoId').value = props.evento_id || '';
+        byId('campoTitulo').value = ev.title || '';
+        if (props.unidade_id) byId('campoUnidade').value = props.unidade_id;
+        if (ev.allDay) {
+            setIntervalo(ev.start, ev.end ? addDias(ev.end, -1) : ev.start, true);
+        } else {
+            setIntervalo(ev.start, ev.end, false);
         }
-        if (tipo === 'reuniao' && info.event.start && info.event.end) {
-            const mins = Math.round((info.event.end - info.event.start) / 60000);
-            const sel = document.getElementById('campoDuracao');
-            const opcoes = [30, 60, 90, 120];
-            sel.value = String(opcoes.reduce(function (a, b) {
-                return Math.abs(b - mins) < Math.abs(a - mins) ? b : a;
-            }, 60));
-        }
-        document.getElementById('campoLocal').value = props.local || '';
-        document.getElementById('campoDesc').value = props.descricao || '';
-        document.getElementById('campoVisibilidade').value = props.visibilidade || 'unidade';
+        byId('campoLocal').value = props.local || '';
+        byId('campoDesc').value = props.descricao || '';
+        byId('campoVisibilidade').value = props.visibilidade || 'unidade';
         setParticipantes(props.participante_ids && props.participante_ids.length ? props.participante_ids : [euId]);
     }
 
-    function abrirNovo(start, end, allDay, tipo) {
-        if (!podeAdicionar) return;
-        limparForm();
-        setTipo(tipo || 'evento');
-        mostrarFormulario(false);
-        if (ehReuniao()) {
-            document.getElementById('campoDiaInteiro').checked = false;
-            toggleDiaInteiro();
-            const ini = start && !allDay ? new Date(start.getTime()) : new Date();
-            ini.setSeconds(0, 0);
-            if (ini.getMinutes() > 0 && ini.getMinutes() < 30) ini.setMinutes(0);
-            else if (ini.getMinutes() > 30) { ini.setHours(ini.getHours() + 1); ini.setMinutes(0); }
-            document.getElementById('campoInicio').value = toLocalInput(ini);
-            aplicarDuracao();
-        } else {
-            // Clique no dia do mês: FullCalendar manda allDay=true — abre formulário de dia inteiro
-            document.getElementById('campoDiaInteiro').checked = !!allDay;
-            toggleDiaInteiro();
-            if (start) {
-                if (allDay) {
-                    document.getElementById('campoInicioData').value = toDateInput(start);
-                    if (end) {
-                        const fim = new Date(end.getTime() - 24 * 3600 * 1000);
-                        if (fim > start) document.getElementById('campoFimData').value = toDateInput(fim);
-                    }
-                } else {
-                    document.getElementById('campoInicio').value = toLocalInput(start);
-                    if (end) document.getElementById('campoFim').value = toLocalInput(end);
-                }
-            }
-        }
-        mostrarModalAgenda();
-        if (ehReuniao()) agendarDisponibilidade();
-    }
+    byId('btnCancelar').addEventListener('click', function () {
+        if (modoEdicao && eventoAtual) mostrarLeitura(eventoAtual);
+        else fecharEvento();
+    });
 
+    /* ── Leitura (detalhe do evento) ────────────────────────── */
+    function faceHtml(p) {
+        if (p.foto_url) {
+            return '<img src="' + escapeHtml(p.foto_url) + '" alt="' + escapeHtml(p.nome) + '">';
+        }
+        const cls = p.empresa ? ' agenda-face-empresa' : '';
+        const inner = p.empresa ? '<i class="fas fa-building"></i>' : escapeHtml(p.inicial || '?');
+        return '<span class="agenda-face-inicial' + cls + '">' + inner + '</span>';
+    }
+    function textoQuando(ev) {
+        const ini = ev.start;
+        if (!ini) return '';
+        if (ev.allDay) {
+            const ultimo = ev.end ? addDias(ev.end, -1) : ini;
+            if (ultimo <= ini || mesmoDia(ultimo, ini)) return textoDia(ini);
+            return textoDia(ini) + ' – ' + textoDia(ultimo);
+        }
+        const fim = ev.end || ini;
+        if (mesmoDia(ini, fim)) return textoDia(ini) + ' · ' + textoHora(ini) + ' – ' + textoHora(fim);
+        return textoDia(ini) + ', ' + textoHora(ini) + ' – ' + textoDia(fim) + ', ' + textoHora(fim);
+    }
+    function linha(id, mostrar) { byId(id).classList.toggle('d-none', !mostrar); }
+    function mostrarLeitura(ev) {
+        const props = ev.extendedProps || {};
+        eventoAtual = ev;
+        modoEdicao = false;
+        const tipos = { prazo: 'Prazo de planejamento', reuniao: 'Reunião', feriado: 'Feriado / ponto facultativo', evento: 'Evento' };
+        byId('viewTipo').textContent = tipos[props.tipo] || 'Evento';
+        byId('viewCor').style.background = ev.backgroundColor || '#1A82B8';
+        byId('viewTitulo').textContent = ev.title || '';
+        byId('viewQuando').textContent = textoQuando(ev);
+
+        const pessoas = props.pessoas || [];
+        linha('rowPessoas', pessoas.length > 0);
+        byId('viewPessoasLabel').textContent = props.pessoas_label || 'Pessoas';
+        byId('viewPessoas').innerHTML = pessoas.map(function (p) {
+            return '<div class="agenda-pessoa-item">' + faceHtml(p) + '<span>' + escapeHtml(p.nome || p.primeiro || '') + '</span></div>';
+        }).join('');
+        linha('rowLocal', !!props.local);
+        byId('viewLocal').textContent = props.local || '';
+        linha('rowDesc', !!props.descricao);
+        byId('viewDesc').textContent = props.descricao || '';
+        linha('rowStatus', !!props.status);
+        byId('viewStatus').textContent = props.status ? ('Status: ' + props.status) : '';
+        linha('rowUnidade', !!props.unidade);
+        byId('viewUnidade').textContent = props.unidade || '';
+        linha('rowVisib', props.visibilidade === 'pessoal');
+
+        const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao') && !!props.pode_editar;
+        byId('btnEditar').classList.toggle('d-none', !editavel);
+        byId('btnExcluirLeitura').classList.toggle('d-none', !editavel);
+        const ehFeriado = props.tipo === 'feriado';
+        const btnIcs = byId('btnIcs');
+        btnIcs.classList.toggle('d-none', ehFeriado || !props.ics_url);
+        btnIcs.href = props.ics_url || '#';
+        const btnGoogle = byId('btnGoogle');
+        btnGoogle.classList.toggle('d-none', ehFeriado || !props.google_url);
+        btnGoogle.href = props.google_url || '#';
+        const btnPlano = byId('btnPlano');
+        btnPlano.classList.toggle('d-none', !props.plano_url);
+        btnPlano.href = props.plano_url || '#';
+        const btnDecreto = byId('btnDecreto');
+        btnDecreto.classList.toggle('d-none', !(ehFeriado && props.decreto_url));
+        btnDecreto.href = props.decreto_url || '#';
+
+        mostrarPane('leitura');
+        abrirModal(modalEvento);
+        setTimeout(function () {
+            const alvo = byId('paneLeitura').querySelector('.ag-icon-btn:not(.d-none)');
+            if (alvo) alvo.focus();
+        }, 40);
+    }
+    byId('btnEditar').addEventListener('click', function () {
+        if (!eventoAtual) return;
+        const ev = eventoAtual;
+        preencherForm(ev);
+        eventoAtual = ev;
+        mostrarFormulario(true);
+    });
+
+    /* ── Salvar / excluir ───────────────────────────────────── */
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        esconderErro();
+        const titulo = byId('campoTitulo').value.trim();
+        if (!titulo) {
+            mostrarErro('Informe o título.');
+            byId('campoTitulo').focus();
+            return;
+        }
+        const erro = erroIntervalo();
+        if (erro) { mostrarErro(erro); return; }
+
+        const id = byId('eventoId').value;
+        const url = id ? urlEvento(editarUrlBase, id) : criarUrl;
+        const reuniao = ehReuniao();
+        const fd = new FormData(form);
+        const v = valoresEnvio();
+        fd.set('titulo', titulo);
+        fd.set('inicio', v.inicio);
+        if (v.fim) fd.set('fim', v.fim); else fd.delete('fim');
+        if (!diaInteiro()) fd.delete('dia_inteiro');
+        fd.delete('participantes');
+        if (reuniao) {
+            fd.set('tipo', 'reuniao');
+            fd.set('visibilidade', 'unidade');
+            idsParticipantes().forEach(function (pid) { fd.append('participantes', pid); });
+        }
+        const btn = byId('btnSalvar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando…';
+        fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.ok) {
+                    mostrarErro(d.erro || 'Não foi possível salvar.');
+                    return;
+                }
+                calendar.refetchEvents();
+                fecharEvento();
+                if (!id && d.google_url) {
+                    confirmar({
+                        icone: 'fab fa-google',
+                        titulo: reuniao ? 'Reunião criada!' : 'Evento criado!',
+                        texto: 'Quer adicionar também no seu Google Agenda?',
+                        okHtml: '<i class="fab fa-google me-1"></i>Adicionar ao Google Agenda',
+                        cancelar: 'Agora não',
+                        aoConfirmar: function () { window.open(d.google_url, '_blank', 'noopener'); }
+                    });
+                } else {
+                    snack(reuniao ? 'Reunião atualizada' : 'Evento atualizado');
+                }
+            })
+            .catch(function () { mostrarErro('Falha de rede ao salvar. Tente de novo.'); })
+            .finally(function () {
+                btn.disabled = false;
+                btn.textContent = 'Salvar';
+            });
+    });
+
+    function excluirAtual() {
+        const ev = eventoAtual;
+        const props = ev ? (ev.extendedProps || {}) : {};
+        const id = props.evento_id || byId('eventoId').value;
+        if (!id) return;
+        const reuniao = props.tipo === 'reuniao' || ehReuniao();
+        confirmar({
+            icone: 'fas fa-trash-alt',
+            perigo: true,
+            titulo: reuniao ? 'Excluir esta reunião?' : 'Excluir este evento?',
+            texto: '"' + ((ev && ev.title) || byId('campoTitulo').value) + '" será removido da agenda. Essa ação não pode ser desfeita.',
+            ok: 'Excluir',
+            aoConfirmar: function () {
+                const fd = new FormData();
+                fd.append('csrf_token', csrf);
+                fetch(urlEvento(excluirUrlBase, id), { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (!d.ok) { snack(d.erro || 'Não foi possível excluir.'); return; }
+                        fecharEvento();
+                        calendar.refetchEvents();
+                        snack(reuniao ? 'Reunião excluída' : 'Evento excluído');
+                    })
+                    .catch(function () { snack('Não foi possível excluir.'); });
+            }
+        });
+    }
+    byId('btnExcluir').addEventListener('click', excluirAtual);
+    byId('btnExcluirLeitura').addEventListener('click', excluirAtual);
+
+    /* ── Disponibilidade e sugestões (reunião) ──────────────── */
     function formReuniao() {
         const fd = new FormData();
         fd.append('csrf_token', csrf);
-        const eventoId = document.getElementById('eventoId').value;
+        const eventoId = byId('eventoId').value;
         if (eventoId) fd.append('evento_id', eventoId);
-        fd.append('duracao', String(duracaoMin()));
-        fd.append('inicio', document.getElementById('campoInicio').value || '');
-        fd.append('fim', document.getElementById('campoFim').value || '');
-        const ids = tsParticipantes ? tsParticipantes.getValue() : [];
-        (Array.isArray(ids) ? ids : [ids]).forEach(function (id) {
-            if (id) fd.append('participantes', id);
-        });
+        const v = valoresEnvio();
+        fd.append('inicio', v.inicio || '');
+        fd.append('fim', v.fim || '');
+        if (diaInteiro()) fd.append('dia_inteiro', '1');
+        idsParticipantes().forEach(function (pid) { fd.append('participantes', pid); });
         return fd;
     }
-
     function agendarDisponibilidade() {
         if (!ehReuniao()) return;
         clearTimeout(dispTimer);
         dispTimer = setTimeout(carregarDisponibilidade, 350);
     }
-
     function carregarDisponibilidade() {
-        if (!ehReuniao() || !document.getElementById('campoInicio').value) {
-            document.getElementById('blocoDisponibilidade').innerHTML = '';
-            return;
-        }
+        const box = byId('blocoDisponibilidade');
+        if (!ehReuniao() || !valoresEnvio().inicio) { box.innerHTML = ''; return; }
         fetch(dispUrl, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: formReuniao() })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                const box = document.getElementById('blocoDisponibilidade');
-                if (!d.ok || !d.pessoas || !d.pessoas.length) {
-                    box.innerHTML = '';
-                    return;
-                }
+                if (!d.ok || !d.pessoas || !d.pessoas.length) { box.innerHTML = ''; return; }
                 box.innerHTML = d.pessoas.map(function (p) {
                     const cls = p.livre ? 'agenda-disp-livre' : 'agenda-disp-ocupado';
                     const ico = p.livre ? 'fa-check-circle' : 'fa-times-circle';
@@ -605,17 +878,16 @@
             })
             .catch(function () {});
     }
-
-    function sugerirHorarios() {
-        const btn = document.getElementById('btnSugerir');
+    byId('btnSugerir').addEventListener('click', function () {
+        const btn = byId('btnSugerir');
         btn.disabled = true;
         fetch(sugerirUrl, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: formReuniao() })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                const box = document.getElementById('listaSugestoes');
+                const box = byId('listaSugestoes');
                 box.innerHTML = '';
                 if (!d.ok || !d.sugestoes || !d.sugestoes.length) {
-                    box.innerHTML = '<div class="text-muted small">Não achei horários livres nos próximos dias úteis (8h–17h, sem almoço e sem feriados).</div>';
+                    box.innerHTML = '<div class="text-muted small">Não achei horários livres com essa duração nos próximos dias úteis (8h–17h, sem almoço e sem feriados).</div>';
                     return;
                 }
                 d.sugestoes.forEach(function (s) {
@@ -624,8 +896,9 @@
                     b.className = 'agenda-sugestao';
                     b.textContent = s.label;
                     b.addEventListener('click', function () {
-                        document.getElementById('campoInicio').value = s.inicio;
-                        document.getElementById('campoFim').value = s.fim;
+                        const ini = parseLocal(s.inicio.slice(0, 10), s.inicio.slice(11, 16));
+                        const fim = parseLocal(s.fim.slice(0, 10), s.fim.slice(11, 16));
+                        setIntervalo(ini, fim, false);
                         box.querySelectorAll('.agenda-sugestao').forEach(function (el) { el.classList.remove('is-ativa'); });
                         b.classList.add('is-ativa');
                         agendarDisponibilidade();
@@ -633,64 +906,53 @@
                     box.appendChild(b);
                 });
             })
+            .catch(function () {})
             .finally(function () { btn.disabled = false; });
-    }
+    });
 
-    function formatoQuando(info) {
-        try {
-            return calendar.formatRange(info.event.start, info.event.end || info.event.start, {
-                hour: info.event.allDay ? undefined : '2-digit',
-                minute: info.event.allDay ? undefined : '2-digit',
-                day: '2-digit', month: 'short', year: 'numeric'
-            });
-        } catch (e) {
-            return '';
-        }
-    }
-
-    function alturaAgenda() {
-        const el = document.getElementById('agendaCalendario');
-        if (!el) return 480;
-        const h = el.clientHeight;
-        if (h >= 280) return h;
-        const top = el.getBoundingClientRect().top;
-        return Math.max(360, Math.floor(window.innerHeight - top - 4));
-    }
-
-    function ajustarAlturaCalendario() {
-        if (!calendar) return;
-        calendar.setOption('height', alturaAgenda());
-        calendar.updateSize();
-    }
-
+    /* ── Calendário ─────────────────────────────────────────── */
     function ehBarraDiaInteiro(arg) {
         const props = arg.event.extendedProps || {};
-        return !!arg.event.allDay
-            || props.tipo === 'prazo'
-            || props.tipo === 'feriado'
-            || arg.event.display === 'background';
+        return !!arg.event.allDay || props.tipo === 'prazo' || props.tipo === 'feriado' || arg.event.display === 'background';
+    }
+    function viewInicial() {
+        const salva = localStorage.getItem('sigus.agenda.view');
+        if (window.innerWidth < 576) return 'listWeek';
+        if (['timeGridDay', 'timeGridWeek', 'dayGridMonth', 'listWeek'].indexOf(salva) >= 0) return salva;
+        return 'dayGridMonth';
     }
 
-    calendar = new FullCalendar.Calendar(document.getElementById('agendaCalendario'), {
+    calendar = new FullCalendar.Calendar(byId('agendaCalendario'), {
         locale: 'pt-br',
-        initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,listWeek'
-        },
-        buttonText: { today: 'Hoje', month: 'Mês', week: 'Semana', list: 'Lista' },
-        height: alturaAgenda(),
+        initialView: viewInicial(),
+        headerToolbar: false,
+        height: '100%',
         navLinks: true,
         selectable: podeAdicionar,
         selectMirror: true,
-        // Clique simples no dia não dispara select (só arraste) — dateClick cobre o clique
         selectMinDistance: 8,
         dayMaxEvents: true,
         moreLinkText: function (n) { return '+' + n + ' mais'; },
         nowIndicator: true,
-        slotMinTime: '07:00:00',
-        slotMaxTime: '20:00:00',
+        allDayText: 'Dia todo',
+        scrollTime: '07:00:00',
+        slotLabelFormat: { hour: '2-digit', minute: '2-digit' },
+        eventTimeFormat: { hour: '2-digit', minute: '2-digit' },
+        noEventsContent: 'Nada agendado neste período.',
+        dayHeaderContent: function (arg) {
+            if (arg.view.type.indexOf('timeGrid') !== 0) return arg.text;
+            const wrap = document.createElement('div');
+            wrap.className = 'ag-dia-cab' + (arg.isToday ? ' is-hoje' : '');
+            const dow = document.createElement('span');
+            dow.className = 'ag-dia-cab-dow';
+            dow.textContent = arg.date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+            const num = document.createElement('span');
+            num.className = 'ag-dia-cab-num';
+            num.textContent = arg.date.getDate();
+            wrap.appendChild(dow);
+            wrap.appendChild(num);
+            return { domNodes: [wrap] };
+        },
         eventClassNames: function (arg) {
             if (arg.event.display === 'background') return [];
             if (ehBarraDiaInteiro(arg)) return ['agenda-ev-bar'];
@@ -703,56 +965,52 @@
             const view = arg.view.type;
             const barra = ehBarraDiaInteiro(arg);
             const wrap = document.createElement('div');
+            const corTexto = arg.event.textColor || '#FFFFFF';
+            function span(cls, txt) {
+                const s = document.createElement('span');
+                s.className = cls;
+                s.textContent = txt;
+                return s;
+            }
 
-            // Mês: linha fina (bolinha + hora + título) ou barra de dia inteiro
-            if (view === 'dayGridMonth' || view === 'dayGridWeek') {
+            if (view === 'dayGridMonth') {
                 if (barra) {
                     wrap.className = 'agenda-ev agenda-ev-barra';
-                    const title = document.createElement('span');
-                    title.className = 'agenda-ev-title';
-                    title.textContent = arg.event.title;
-                    wrap.appendChild(title);
+                    wrap.style.color = corTexto;
+                    wrap.appendChild(span('agenda-ev-title', arg.event.title));
                 } else {
                     wrap.className = 'agenda-ev agenda-ev-linha';
-                    const dot = document.createElement('span');
-                    dot.className = 'agenda-ev-dot';
+                    const dot = span('agenda-ev-dot', '');
                     dot.style.backgroundColor = arg.event.backgroundColor || '#1A82B8';
                     wrap.appendChild(dot);
-                    if (arg.timeText) {
-                        const t = document.createElement('span');
-                        t.className = 'agenda-ev-hora';
-                        t.textContent = arg.timeText;
-                        wrap.appendChild(t);
-                    }
-                    const title = document.createElement('span');
-                    title.className = 'agenda-ev-title';
-                    title.textContent = arg.event.title;
-                    wrap.appendChild(title);
+                    if (arg.timeText) wrap.appendChild(span('agenda-ev-hora', arg.timeText));
+                    wrap.appendChild(span('agenda-ev-title', arg.event.title));
                 }
                 return { domNodes: [wrap] };
             }
-
-            // Semana / lista: compacto, sem avatares (detalhes no modal)
-            wrap.className = 'agenda-ev agenda-ev-compacto';
-            if (arg.timeText && !barra) {
-                const t = document.createElement('span');
-                t.className = 'agenda-ev-hora';
-                t.textContent = arg.timeText;
-                wrap.appendChild(t);
+            if (view.indexOf('timeGrid') === 0 && !barra) {
+                wrap.className = 'agenda-ev agenda-ev-bloco';
+                wrap.style.color = corTexto;
+                wrap.appendChild(span('agenda-ev-title', arg.event.title));
+                if (arg.timeText) wrap.appendChild(span('agenda-ev-hora', arg.timeText));
+                return { domNodes: [wrap] };
             }
-            const title = document.createElement('span');
-            title.className = 'agenda-ev-title';
-            title.textContent = arg.event.title;
-            wrap.appendChild(title);
+            wrap.className = 'agenda-ev agenda-ev-compacto';
+            if (view.indexOf('list') !== 0) wrap.style.color = corTexto;
+            wrap.appendChild(span('agenda-ev-title', arg.event.title));
             return { domNodes: [wrap] };
+        },
+        eventDidMount: function (info) {
+            if (info.event.display === 'background') return;
+            info.el.setAttribute('title', info.event.title + (info.timeText ? ' · ' + info.timeText : ''));
         },
         events: function (info, success, failure) {
             const params = new URLSearchParams({
                 start: info.startStr,
                 end: info.endStr,
-                eventos: document.getElementById('chkEventos').checked ? '1' : '0',
-                prazos: document.getElementById('chkPrazos').checked ? '1' : '0',
-                feriados: document.getElementById('chkFeriados').checked ? '1' : '0'
+                eventos: byId('chkEventos').checked ? '1' : '0',
+                prazos: byId('chkPrazos').checked ? '1' : '0',
+                feriados: byId('chkFeriados').checked ? '1' : '0'
             });
             const u = unidadeFiltro();
             if (u) params.set('unidade_id', u);
@@ -762,157 +1020,161 @@
                 .catch(failure);
         },
         select: function (info) {
-            abrirNovo(info.start, info.end, info.allDay, 'evento');
             calendar.unselect();
+            abrirNovo(info.start, info.end, info.allDay, 'evento');
         },
         dateClick: function (info) {
             if (!podeAdicionar) return;
-            // No mês, clique no dia abre evento de dia inteiro; na semana/lista, com hora se houver
-            abrirNovo(info.date, null, info.allDay, 'evento');
+            if (info.allDay && info.view.type.indexOf('timeGrid') === 0) {
+                abrirNovo(info.date, null, true, 'evento', true);
+                return;
+            }
+            const fim = info.allDay ? null : new Date(info.date.getTime() + 3600 * 1000);
+            abrirNovo(info.date, fim, info.allDay, 'evento');
         },
         eventClick: function (info) {
             info.jsEvent.preventDefault();
             info.jsEvent.stopPropagation();
             const props = info.event.extendedProps || {};
             if (props.tipo === 'feriado-bg' || info.event.display === 'background') return;
-            eventoAtual = info.event;
-            const editavel = (props.tipo === 'evento' || props.tipo === 'reuniao') && props.pode_editar;
-            if (editavel) {
-                limparForm();
-                preencherFormEvento(info);
-                mostrarLeitura(props, info.event.title, formatoQuando(info));
-            } else {
-                mostrarLeitura(props, info.event.title, formatoQuando(info));
-            }
-            mostrarModalAgenda();
+            mostrarLeitura(info.event);
+        },
+        datesSet: function () {
+            atualizarToolbar();
+            mini.mes = new Date(calendar.getDate().getFullYear(), calendar.getDate().getMonth(), 1);
+            renderMini();
         }
     });
     calendar.render();
-    // Recalcula depois do layout flex assentar (evita 1–2px de scroll residual)
-    requestAnimationFrame(function () {
-        ajustarAlturaCalendario();
-        requestAnimationFrame(ajustarAlturaCalendario);
-    });
 
-    // Bolinha do mouse sobre a agenda: troca mês/semana (estilo Google Agenda), sem rolar a página
-    (function () {
-        const el = document.getElementById('agendaCalendario');
-        let wheelLock = false;
-        el.addEventListener('wheel', function (e) {
-            const tipo = calendar.view.type;
-            if (tipo !== 'dayGridMonth' && tipo !== 'timeGridWeek') return;
-            e.preventDefault();
-            if (wheelLock) return;
-            if (Math.abs(e.deltaY) < 2 && Math.abs(e.deltaX) < 2) return;
-            wheelLock = true;
-            const frente = (Math.abs(e.deltaY) >= Math.abs(e.deltaX)) ? (e.deltaY > 0) : (e.deltaX > 0);
-            if (frente) calendar.next();
-            else calendar.prev();
-            setTimeout(function () { wheelLock = false; }, 320);
-        }, { passive: false });
+    if (window.ResizeObserver) {
+        let rzTimer = null;
+        new ResizeObserver(function () {
+            clearTimeout(rzTimer);
+            rzTimer = setTimeout(function () { calendar.updateSize(); }, 60);
+        }).observe(byId('agendaCalendario'));
+    }
 
-        let resizeTimer = null;
-        window.addEventListener('resize', function () {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(ajustarAlturaCalendario, 120);
+    /* ── Toolbar ────────────────────────────────────────────── */
+    function atualizarToolbar() {
+        const view = calendar.view;
+        byId('agTitulo').textContent = cap(view.title);
+        document.querySelectorAll('.ag-view-btn').forEach(function (b) {
+            b.classList.toggle('is-ativo', b.getAttribute('data-view') === view.type);
         });
-    })();
+        byId('selView').value = view.type;
+        const hoje = new Date();
+        byId('btnHoje').disabled = hoje >= view.currentStart && hoje < view.currentEnd;
+    }
+    function mudarView(v) {
+        calendar.changeView(v);
+        try { localStorage.setItem('sigus.agenda.view', v); } catch (e) { /* ignore */ }
+    }
+    byId('btnHoje').addEventListener('click', function () { calendar.today(); });
+    byId('btnPrev').addEventListener('click', function () { calendar.prev(); });
+    byId('btnNext').addEventListener('click', function () { calendar.next(); });
+    document.querySelectorAll('.ag-view-btn').forEach(function (b) {
+        b.addEventListener('click', function () { mudarView(b.getAttribute('data-view')); });
+    });
+    byId('selView').addEventListener('change', function () { mudarView(this.value); });
 
-    document.getElementById('campoDiaInteiro').addEventListener('change', toggleDiaInteiro);
-    document.getElementById('campoInicio').addEventListener('change', function () {
-        aplicarDuracao();
-        agendarDisponibilidade();
+    function criarRapido() { abrirNovo(null, null, false, 'evento'); }
+    if (byId('btnCriar')) byId('btnCriar').addEventListener('click', function () { fecharSideDrawer(); criarRapido(); });
+    if (byId('btnCriarTopo')) byId('btnCriarTopo').addEventListener('click', criarRapido);
+
+    /* ── Painel lateral ─────────────────────────────────────── */
+    function fecharSideDrawer() { app.classList.remove('ag-side-aberta'); }
+    if (localStorage.getItem('sigus.agenda.side') === 'oculta') app.classList.add('ag-side-recolhida');
+    byId('btnSide').addEventListener('click', function () {
+        if (ehTelaEstreita()) {
+            app.classList.toggle('ag-side-aberta');
+        } else {
+            app.classList.toggle('ag-side-recolhida');
+            try {
+                localStorage.setItem('sigus.agenda.side', app.classList.contains('ag-side-recolhida') ? 'oculta' : 'visivel');
+            } catch (e) { /* ignore */ }
+        }
     });
-    document.getElementById('campoFim').addEventListener('change', agendarDisponibilidade);
-    document.getElementById('campoDuracao').addEventListener('change', function () {
-        aplicarDuracao();
-        document.getElementById('listaSugestoes').innerHTML = '';
-        agendarDisponibilidade();
+    byId('agSideVeu').addEventListener('click', fecharSideDrawer);
+
+    /* ── Mini calendário ────────────────────────────────────── */
+    function renderMini() {
+        byId('agMiniTitulo').textContent = cap(mini.mes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }));
+        const box = byId('agMiniDias');
+        const inicio = addDias(mini.mes, -mini.mes.getDay());
+        const hoje = toDateInput(new Date());
+        const v = calendar.view;
+        const html = [];
+        for (let i = 0; i < 42; i++) {
+            const d = addDias(inicio, i);
+            const cls = ['ag-mini-dia'];
+            if (d.getMonth() !== mini.mes.getMonth()) cls.push('is-fora');
+            if (toDateInput(d) === hoje) cls.push('is-hoje');
+            if (v.type !== 'dayGridMonth' && d >= v.currentStart && d < v.currentEnd) cls.push('is-intervalo');
+            html.push('<button type="button" class="' + cls.join(' ') + '" data-data="' + toDateInput(d) + '">' + d.getDate() + '</button>');
+        }
+        box.innerHTML = html.join('');
+    }
+    byId('agMiniDias').addEventListener('click', function (e) {
+        const b = e.target.closest('.ag-mini-dia');
+        if (!b) return;
+        const d = parseLocal(b.getAttribute('data-data'));
+        if (calendar.view.type === 'dayGridMonth') mudarView('timeGridDay');
+        calendar.gotoDate(d);
+        fecharSideDrawer();
     });
-    document.getElementById('btnSugerir').addEventListener('click', sugerirHorarios);
-    document.getElementById('chkEventos').addEventListener('change', function () { calendar.refetchEvents(); });
-    document.getElementById('chkPrazos').addEventListener('change', function () { calendar.refetchEvents(); });
-    document.getElementById('chkFeriados').addEventListener('change', function () { calendar.refetchEvents(); });
-    const filtroU = document.getElementById('filtroUnidade');
+    byId('agMiniPrev').addEventListener('click', function () {
+        mini.mes = new Date(mini.mes.getFullYear(), mini.mes.getMonth() - 1, 1);
+        renderMini();
+    });
+    byId('agMiniNext').addEventListener('click', function () {
+        mini.mes = new Date(mini.mes.getFullYear(), mini.mes.getMonth() + 1, 1);
+        renderMini();
+    });
+    renderMini();
+    atualizarToolbar();
+
+    /* ── Filtros ────────────────────────────────────────────── */
+    ['chkEventos', 'chkPrazos', 'chkFeriados'].forEach(function (id) {
+        byId(id).addEventListener('change', function () { calendar.refetchEvents(); });
+    });
+    const filtroU = byId('filtroUnidade');
     if (filtroU) filtroU.addEventListener('change', function () { calendar.refetchEvents(); });
 
-    const btnNovo = document.getElementById('btnNovoEvento');
-    if (btnNovo) btnNovo.addEventListener('click', function () { abrirNovo(new Date(), null, false, 'evento'); });
-    const btnReuniao = document.getElementById('btnNovaReuniao');
-    if (btnReuniao) btnReuniao.addEventListener('click', function () { abrirNovo(new Date(), null, false, 'reuniao'); });
-
-    document.getElementById('btnEditar').addEventListener('click', function () {
-        mostrarFormulario(true);
-    });
-
-    form.addEventListener('submit', function (e) {
+    /* ── Rolagem e teclado ──────────────────────────────────── */
+    let wheelLock = false;
+    byId('agendaCalendario').addEventListener('wheel', function (e) {
+        if (calendar.view.type !== 'dayGridMonth') return;
+        if (e.target.closest('.fc-popover')) return;
         e.preventDefault();
-        const id = document.getElementById('eventoId').value;
-        const url = id
-            ? ('{{ url_for("agenda.editar", id=0) }}'.replace(/\/0$/, '/' + id))
-            : criarUrl;
-        const fd = new FormData(form);
-        if (!document.getElementById('campoDiaInteiro').checked) fd.delete('dia_inteiro');
-        if (ehReuniao()) {
-            fd.set('tipo', 'reuniao');
-            fd.set('visibilidade', 'unidade');
-            fd.delete('dia_inteiro');
-            fd.delete('participantes');
-            const ids = tsParticipantes ? tsParticipantes.getValue() : [];
-            (Array.isArray(ids) ? ids : [ids]).forEach(function (id) {
-                if (id) fd.append('participantes', id);
-            });
-        }
-        fetch(url, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': csrf },
-            body: fd
-        }).then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
-          .then(function (res) {
-              const d = res.d;
-              if (!d.ok) {
-                  const el = document.getElementById('alertaErro');
-                  el.textContent = d.erro || 'Não foi possível salvar.';
-                  el.classList.remove('d-none');
-                  return;
-              }
-              calendar.refetchEvents();
-              const googleUrl = d.google_url;
-              const perguntarGoogle = !!(googleUrl && !id);
-              const msg = ehReuniao()
-                  ? 'Reunião salva. Adicionar agora no Google Agenda?'
-                  : 'Evento salvo. Adicionar agora no Google Agenda?';
-              aposFecharModal(function () {
-                  if (perguntarGoogle && confirm(msg)) {
-                      window.open(googleUrl, '_blank', 'noopener');
-                  }
-              });
-              esconderModalAgenda();
-          })
-          .catch(function () {
-              const el = document.getElementById('alertaErro');
-              el.textContent = 'Falha de rede ao salvar. Tente de novo.';
-              el.classList.remove('d-none');
-          });
-    });
+        if (wheelLock) return;
+        if (Math.abs(e.deltaY) < 2 && Math.abs(e.deltaX) < 2) return;
+        wheelLock = true;
+        const frente = (Math.abs(e.deltaY) >= Math.abs(e.deltaX)) ? (e.deltaY > 0) : (e.deltaX > 0);
+        if (frente) calendar.next(); else calendar.prev();
+        setTimeout(function () { wheelLock = false; }, 320);
+    }, { passive: false });
 
-    document.getElementById('btnExcluir').addEventListener('click', function () {
-        const id = document.getElementById('eventoId').value;
-        if (!id) return;
-        const msg = ehReuniao() ? 'Excluir esta reunião?' : 'Excluir este evento?';
-        // confirm() com modal aberto também prende o backdrop — fecha antes de perguntar
-        aposFecharModal(function () {
-            if (!confirm(msg)) return;
-            const url = '{{ url_for("agenda.excluir", id=0) }}'.replace(/\/0$/, '/' + id);
-            const fd = new FormData();
-            fd.append('csrf_token', csrf);
-            fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrf }, body: fd })
-                .then(function (r) { return r.json(); })
-                .then(function (d) {
-                    if (d.ok) calendar.refetchEvents();
-                });
-        });
-        esconderModalAgenda();
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (pilhaModais.length) { e.preventDefault(); fecharTopo(); return; }
+            if (app.classList.contains('ag-side-aberta')) { fecharSideDrawer(); return; }
+        }
+        if (pilhaModais.length || e.ctrlKey || e.metaKey || e.altKey) return;
+        const t = e.target;
+        if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+        const k = e.key.toLowerCase();
+        const acoes = {
+            t: function () { calendar.today(); },
+            d: function () { mudarView('timeGridDay'); },
+            s: function () { mudarView('timeGridWeek'); },
+            m: function () { mudarView('dayGridMonth'); },
+            l: function () { mudarView('listWeek'); },
+            j: function () { calendar.next(); },
+            k: function () { calendar.prev(); },
+            c: function () { if (podeAdicionar) criarRapido(); }
+        };
+        if (acoes[k]) { e.preventDefault(); acoes[k](); }
     });
 })();
 </script>

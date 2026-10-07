@@ -31,8 +31,11 @@ COR_PESSOAL = '#19A88B'
 COR_REUNIAO = '#0D3B5E'
 COR_PRAZO = '#F5C500'
 COR_PRAZO_VENCIDO = '#E63030'
-COR_PRAZO_FEITO = '#718096'
+COR_PRAZO_FEITO = '#E2E8F0'
 COR_FERIADO = '#E63030'
+
+TEXTO_CLARO = '#FFFFFF'
+TEXTO_ESCURO = '#1E3A50'
 
 EXPEDIENTE_INI = 8
 EXPEDIENTE_FIM = 17
@@ -152,7 +155,7 @@ def _livre_em(usuario_id, slot_ini, slot_fim, ignorar_id=None):
 
 
 def _sugerir_horarios(usuario_ids, duracao_min=60, ignorar_id=None, quantidade=5):
-    duracao = timedelta(minutes=max(30, min(240, int(duracao_min or 60))))
+    duracao = timedelta(minutes=max(15, min(480, int(duracao_min or 60))))
     agora = agora_brasilia().replace(second=0, microsecond=0)
     janela_fim = datetime.combine(agora.date() + timedelta(days=60), datetime.min.time())
     ocupado = {
@@ -185,10 +188,8 @@ def _sugerir_horarios(usuario_ids, duracao_min=60, ignorar_id=None, quantidade=5
         fim_expediente = datetime.combine(dia, datetime.min.time()).replace(hour=exp_fim)
         almoco = datetime.combine(dia, datetime.min.time()).replace(hour=ALMOCO_INI)
         almoco_fim = datetime.combine(dia, datetime.min.time()).replace(hour=ALMOCO_FIM)
-        for hora in range(exp_ini, exp_fim):
-            if ALMOCO_INI <= hora < ALMOCO_FIM:
-                continue
-            slot_ini = datetime.combine(dia, datetime.min.time()).replace(hour=hora)
+        for minuto in range(exp_ini * 60, exp_fim * 60, 30):
+            slot_ini = datetime.combine(dia, datetime.min.time()) + timedelta(minutes=minuto)
             slot_fim = slot_ini + duracao
             if slot_ini < agora or slot_fim > fim_expediente:
                 continue
@@ -334,6 +335,7 @@ def _fc_evento(ev):
         'allDay': ev.dia_inteiro,
         'backgroundColor': cor,
         'borderColor': cor,
+        'textColor': TEXTO_CLARO,
         'extendedProps': {
             'tipo': tipo_ui,
             'evento_id': ev.id,
@@ -361,11 +363,11 @@ def _fc_evento(ev):
 def _fc_prazo(acao, hoje):
     prazo = acao.prazo
     if acao.status == 'concluido':
-        cor = COR_PRAZO_FEITO
+        cor, texto = COR_PRAZO_FEITO, TEXTO_ESCURO
     elif prazo < hoje:
-        cor = COR_PRAZO_VENCIDO
+        cor, texto = COR_PRAZO_VENCIDO, TEXTO_CLARO
     else:
-        cor = COR_PRAZO
+        cor, texto = COR_PRAZO, TEXTO_ESCURO
     titulo = acao.titulo
     plano = acao.planejamento.titulo if acao.planejamento else ''
     if plano:
@@ -384,6 +386,7 @@ def _fc_prazo(acao, hoje):
         'allDay': True,
         'backgroundColor': cor,
         'borderColor': cor,
+        'textColor': texto,
         'extendedProps': {
             'tipo': 'prazo',
             'acao_id': acao.id,
@@ -423,6 +426,7 @@ def _fc_feriado(f):
         'allDay': True,
         'backgroundColor': COR_FERIADO,
         'borderColor': COR_FERIADO,
+        'textColor': TEXTO_CLARO,
         'classNames': ['agenda-ev-feriado'],
         'extendedProps': {
             'tipo': 'feriado',
@@ -463,11 +467,8 @@ def _dados_formulario(form, unidades):
     if tipo not in (TIPO_EVENTO, TIPO_REUNIAO):
         tipo = TIPO_EVENTO
     if tipo == TIPO_REUNIAO:
-        dia_inteiro = False
         visibilidade = VISIBILIDADE_UNIDADE
-    duracao = form.get('duracao', type=int) or 60
-    if duracao not in (30, 60, 90, 120):
-        duracao = 60
+    erro = None
     if dia_inteiro:
         inicio = _parse_iso(form.get('inicio_data') or form.get('inicio'))
         fim = _parse_iso(form.get('fim_data') or form.get('fim'))
@@ -475,16 +476,19 @@ def _dados_formulario(form, unidades):
             inicio = datetime.combine(inicio.date() if isinstance(inicio, datetime) else inicio, datetime.min.time())
         if fim:
             fim = datetime.combine(fim.date() if isinstance(fim, datetime) else fim, datetime.min.time())
-            if inicio and fim.date() == inicio.date():
+            if inicio and fim < inicio:
+                erro = 'A data final precisa ser igual ou depois da data inicial.'
+            elif inicio and fim.date() == inicio.date():
                 fim = None
     else:
         inicio = _parse_iso(form.get('inicio'))
         fim = _parse_iso(form.get('fim'))
-        if tipo == TIPO_REUNIAO and inicio:
-            fim = inicio + timedelta(minutes=duracao)
-        elif inicio and not fim:
-            fim = inicio + timedelta(minutes=duracao)
+        if inicio and not fim:
+            fim = inicio + timedelta(hours=1)
+        if inicio and fim and fim <= inicio:
+            erro = 'O horário final precisa ser depois do horário inicial.'
     return {
+        'erro': erro,
         'titulo': titulo,
         'unidade_id': unidade_id,
         'dia_inteiro': dia_inteiro,
@@ -601,6 +605,8 @@ def criar():
     dados = _dados_formulario(request.form, unidades)
     if not dados['titulo'] or not dados['inicio']:
         return jsonify({'ok': False, 'erro': 'Informe o título e a data.'}), 400
+    if dados['erro']:
+        return jsonify({'ok': False, 'erro': dados['erro']}), 400
     ev = AgendaEvento(
         unidade_id=dados['unidade_id'],
         titulo=dados['titulo'],
@@ -638,6 +644,8 @@ def editar(id):
     dados = _dados_formulario(request.form, unidades)
     if not dados['titulo'] or not dados['inicio']:
         return jsonify({'ok': False, 'erro': 'Informe o título e a data.'}), 400
+    if dados['erro']:
+        return jsonify({'ok': False, 'erro': dados['erro']}), 400
     ev.unidade_id = dados['unidade_id']
     ev.titulo = dados['titulo']
     ev.descricao = dados['descricao']
@@ -681,6 +689,10 @@ def sugerir():
     unidades = _unidades()
     ids = _ids_participantes_form(request.form, unidades)
     duracao = request.form.get('duracao', type=int) or 60
+    inicio = _parse_iso(request.form.get('inicio'))
+    fim = _parse_iso(request.form.get('fim'))
+    if inicio and fim and fim > inicio:
+        duracao = int((fim - inicio).total_seconds() // 60)
     ignorar = request.form.get('evento_id', type=int)
     return jsonify({
         'ok': True,
@@ -695,12 +707,15 @@ def disponibilidade():
     unidades = _unidades()
     ids = _ids_participantes_form(request.form, unidades)
     inicio = _parse_iso(request.form.get('inicio'))
-    duracao = request.form.get('duracao', type=int) or 60
-    if duracao not in (30, 60, 90, 120):
-        duracao = 60
     fim = _parse_iso(request.form.get('fim'))
-    if inicio and not fim:
-        fim = inicio + timedelta(minutes=duracao)
+    dia_inteiro = request.form.get('dia_inteiro') in ('1', 'true', 'on')
+    if inicio and dia_inteiro:
+        ini_d = inicio.date()
+        fim_d = fim.date() if fim and fim.date() >= ini_d else ini_d
+        inicio = datetime.combine(ini_d, datetime.min.time())
+        fim = datetime.combine(fim_d + timedelta(days=1), datetime.min.time())
+    elif inicio and (not fim or fim <= inicio):
+        fim = inicio + timedelta(hours=1)
     if not inicio or not fim:
         return jsonify({'ok': True, 'todos_livres': True, 'pessoas': []})
     ignorar = request.form.get('evento_id', type=int)
