@@ -260,6 +260,38 @@
                 </li>
                 {% endif %}
 
+                <li class="sidebar-group" data-group="operacoes">
+                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
+                        <span class="sidebar-group-title">Operações</span>
+                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
+                    </button>
+                    <ul class="sidebar-group-items nav flex-column">
+
+                {% if current_user.pode_ver_gestao_chamados %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint == 'chamados.gestao' %}active{% endif %}"
+                       href="{{ url_for('chamados.gestao') }}">
+                        <i class="fas fa-columns"></i><span>Gestão de Chamados</span>
+                    </a>
+                </li>
+                {% endif %}
+                {% if current_user.pode('ver_transferencias') %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transferencias') %}active{% endif %}"
+                       href="{{ url_for('transferencias.listar') }}">
+                        <i class="fas fa-exchange-alt"></i><span>Transferências</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nsp') %}active{% endif %}"
+                       href="{{ url_for('nsp.index') }}">
+                        <i class="fas fa-user-shield"></i><span>Segurança do Paciente</span>
+                    </a>
+                </li>
+                    </ul>
+                </li>
+
                 {% set pode_freq = current_user.pode_importar_frequencia %}
                 <li class="sidebar-group" data-group="recursos-humanos">
                     <button type="button" class="sidebar-group-toggle" aria-expanded="false">
@@ -306,38 +338,6 @@
                     </a>
                 </li>
                 {% endif %}
-                    </ul>
-                </li>
-
-                <li class="sidebar-group" data-group="operacoes">
-                    <button type="button" class="sidebar-group-toggle" aria-expanded="false">
-                        <span class="sidebar-group-title">Operações</span>
-                        <i class="fas fa-chevron-down sidebar-group-chevron"></i>
-                    </button>
-                    <ul class="sidebar-group-items nav flex-column">
-
-                {% if current_user.pode_ver_gestao_chamados %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint == 'chamados.gestao' %}active{% endif %}"
-                       href="{{ url_for('chamados.gestao') }}">
-                        <i class="fas fa-columns"></i><span>Gestão de Chamados</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if current_user.pode('ver_transferencias') %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('transferencias') %}active{% endif %}"
-                       href="{{ url_for('transferencias.listar') }}">
-                        <i class="fas fa-exchange-alt"></i><span>Transferências</span>
-                    </a>
-                </li>
-                {% endif %}
-                <li class="nav-item">
-                    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('nsp') %}active{% endif %}"
-                       href="{{ url_for('nsp.index') }}">
-                        <i class="fas fa-user-shield"></i><span>Segurança do Paciente</span>
-                    </a>
-                </li>
                     </ul>
                 </li>
 
