@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -45,9 +46,9 @@ class TipoLink(db.Model):
     cor           = db.Column(db.String(7), nullable=False, default='#1a6abf')  # hex
     ordem         = db.Column(db.Integer, nullable=False, default=0)
     ativo         = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
-                              onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local,
+                              onupdate=agora_local)
 
     links = db.relationship(
         'LinkUtil',

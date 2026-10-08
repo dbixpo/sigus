@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -10,8 +11,8 @@ class TipoUnidade(db.Model):
     sigla = db.Column(db.String(20), nullable=False, unique=True)
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     unidades = db.relationship('Unidade', back_populates='tipo_unidade', lazy='dynamic')
 

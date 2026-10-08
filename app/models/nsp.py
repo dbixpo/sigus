@@ -8,7 +8,7 @@ A coordenação da unidade só vê o caso se o Núcleo liberar. Cultura justa e 
 """
 from datetime import datetime
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 
 TIPOLOGIAS = ['Atenção Primária', 'Urgência e Emergência', 'Atenção Especializada',
@@ -186,7 +186,7 @@ class NspCatalogo(db.Model):
     never_event = db.Column(db.Boolean, nullable=False, default=False)
     encerra = db.Column(db.Boolean, nullable=False, default=False)
     padrao = db.Column(db.Boolean, nullable=False, default=False)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     def __repr__(self):
         return f'<NspCatalogo {self.grupo}:{self.slug}>'
@@ -289,8 +289,8 @@ class NspOcorrencia(db.Model):
     notivisa_em = db.Column(db.Date)
 
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
     encerrado_em = db.Column(db.DateTime)
 
     unidade = db.relationship('Unidade', foreign_keys=[unidade_id])
@@ -414,7 +414,7 @@ class NspAnexo(db.Model):
     mime_type = db.Column(db.String(100))
     tamanho_bytes = db.Column(db.Integer)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     ocorrencia = db.relationship('NspOcorrencia', back_populates='anexos')
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
@@ -445,7 +445,7 @@ class NspAndamento(db.Model):
     tipo = db.Column(db.String(30), nullable=False, default='comentario')
     texto = db.Column(db.Text, nullable=False)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     ocorrencia = db.relationship('NspOcorrencia', back_populates='andamentos')
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
@@ -468,7 +468,7 @@ class NspEncaminhamento(db.Model):
     liberado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     liberado_em = db.Column(db.DateTime)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     ocorrencia = db.relationship('NspOcorrencia', back_populates='encaminhamentos')
     destino = db.relationship('NspCatalogo', foreign_keys=[destino_id])
@@ -498,7 +498,7 @@ class NspAcao(db.Model):
     concluida = db.Column(db.Boolean, nullable=False, default=False)
     concluida_em = db.Column(db.DateTime)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     ocorrencia = db.relationship('NspOcorrencia', back_populates='acoes')
     autor = db.relationship('Usuario', foreign_keys=[criado_por])
@@ -528,7 +528,7 @@ class NspMembro(db.Model):
     unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='CASCADE'), index=True)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
     unidade = db.relationship('Unidade', foreign_keys=[unidade_id])

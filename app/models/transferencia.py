@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 STATUS_TRANSFERENCIA = {
@@ -36,7 +37,7 @@ class HistoricoEquipamento(db.Model):
     usuario_id     = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     acao           = db.Column(db.String(300), nullable=False)
     observacao     = db.Column(db.Text)
-    criado_em      = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em      = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     equipamento = db.relationship('Equipamento', back_populates='historico')
     usuario     = db.relationship('Usuario')
@@ -63,7 +64,7 @@ class DocumentoTransferencia(db.Model):
     status              = db.Column(db.String(20), nullable=False, default='pendente')
     observacao          = db.Column(db.Text)
     observacao_aceite   = db.Column(db.Text)
-    criado_em           = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em           = db.Column(db.DateTime, nullable=False, default=agora_local)
     resolvido_em        = db.Column(db.DateTime)
     # Empréstimo de veículo: o carro segue na unidade dona e volta com "Devolver".
     devolucao_prevista  = db.Column(db.Date)
@@ -166,7 +167,7 @@ class ItemLojinha(db.Model):
     numero_patrimonio = db.Column(db.String(80))
     numero_serie      = db.Column(db.String(150))
     criado_por        = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em         = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em         = db.Column(db.DateTime, nullable=False, default=agora_local)
     ativo             = db.Column(db.Boolean, nullable=False, default=True)
     destino_unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL'))
     destino_em        = db.Column(db.DateTime)
@@ -225,7 +226,7 @@ class TransferenciaEquipamento(db.Model):
     status              = db.Column(db.String(20), nullable=False, default='pendente')
     observacao          = db.Column(db.Text)
     observacao_aceite   = db.Column(db.Text)
-    criado_em           = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em           = db.Column(db.DateTime, nullable=False, default=agora_local)
     resolvido_em        = db.Column(db.DateTime)
 
     equipamento      = db.relationship('Equipamento',  foreign_keys=[equipamento_id],     back_populates='transferencias')

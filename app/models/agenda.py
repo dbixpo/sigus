@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from app import db
 from app.models.frequencia import motivo_ausencia_label
-from app.utils import agora_local_callable
+from app.utils import agora_local_callable, agora_local
 
 
 VISIBILIDADE_UNIDADE = 'unidade'
@@ -152,7 +152,7 @@ def _ics_escape(texto):
 
 def montar_ics(uid, titulo, inicio, fim=None, descricao='', local='', dia_inteiro=False):
     """Gera um .ics simples (Google, Outlook, Apple)."""
-    agora = datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+    agora = agora_local().strftime('%Y%m%dT%H%M%SZ')
 
     def _date(v):
         if isinstance(v, datetime):

@@ -2,7 +2,7 @@ from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 
 PERFIS = {
@@ -208,8 +208,8 @@ class Usuario(UserMixin, db.Model):
     whatsapp      = db.Column(db.String(20))
     foto_perfil   = db.Column(db.String(200))   # filename em static/uploads/perfis/
     ativo         = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     # Dados pessoais
     cpf            = db.Column(db.String(14))

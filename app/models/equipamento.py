@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 STATUS_EQUIPAMENTO = ['ativo', 'em_manutencao', 'baixado']
@@ -54,8 +55,8 @@ class TipoEquipamento(db.Model):
     # No padrão de salas, equipamentos deste tipo contam como o tipo indicado
     # (ex.: All-in-One atende ao item "Computador").
     conta_como_id    = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='SET NULL'))
-    criado_em      = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em  = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em      = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em  = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     campos = db.relationship('CampoTipoEquipamento', back_populates='tipo_equipamento',
                              order_by='CampoTipoEquipamento.ordem', lazy='dynamic',
@@ -89,7 +90,7 @@ class CampoTipoEquipamento(db.Model):
     # Quando True, o valor deste campo compõe o nome de exibição do equipamento
     # Ex: Ar-condicionado + "18.000 BTU" → "Ar-condicionado 18.000 BTU"
     campo_destaque = db.Column(db.Boolean, nullable=False, default=False)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     tipo_equipamento = db.relationship('TipoEquipamento', back_populates='campos')
     valores = db.relationship('EquipamentoCampoValor', back_populates='campo', lazy='dynamic',
@@ -112,8 +113,8 @@ class Marca(db.Model):
 
     id            = db.Column(db.Integer, primary_key=True)
     nome          = db.Column(db.String(100), nullable=False, unique=True)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     modelos      = db.relationship('Modelo', back_populates='marca', lazy='dynamic')
     equipamentos = db.relationship('Equipamento', back_populates='marca', lazy='dynamic')
@@ -134,8 +135,8 @@ class Modelo(db.Model):
     tipo_equipamento_id = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='SET NULL'))
     marca_id            = db.Column(db.Integer, db.ForeignKey('marcas.id', ondelete='SET NULL'))
     nome                = db.Column(db.String(150), nullable=False)
-    criado_em           = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em       = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em           = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em       = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     tipo_equipamento = db.relationship('TipoEquipamento', foreign_keys=[tipo_equipamento_id])
     marca            = db.relationship('Marca', back_populates='modelos')
@@ -165,8 +166,8 @@ class Equipamento(db.Model):
     observacoes = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     sala = db.relationship('Sala', back_populates='equipamentos')
     tipo_equipamento = db.relationship('TipoEquipamento', back_populates='equipamentos')
@@ -271,7 +272,7 @@ class EquipamentoUsuario(db.Model):
     equipamento_id = db.Column(db.Integer, db.ForeignKey('equipamentos.id', ondelete='CASCADE'), nullable=False)
     usuario_id     = db.Column(db.Integer, db.ForeignKey('usuarios.id',     ondelete='CASCADE'), nullable=False)
     observacao     = db.Column(db.String(200))
-    vinculado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    vinculado_em   = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     equipamento = db.relationship('Equipamento', back_populates='usuarios_vinculados')
     usuario     = db.relationship('Usuario')

@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -27,7 +28,7 @@ class FaltaAbonada(db.Model):
     cancelado_em    = db.Column(db.DateTime)
     cancelado_por   = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
 
-    criado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em   = db.Column(db.DateTime, nullable=False, default=agora_local)
     criado_por  = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
 
     usuario          = db.relationship('Usuario', foreign_keys=[usuario_id], backref=db.backref('faltas_abonadas', lazy='dynamic'))

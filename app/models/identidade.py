@@ -2,6 +2,7 @@
 """Identidade da instalação: município, secretaria, domínio de e-mail e assets."""
 import time
 from datetime import datetime
+from app.utils import agora_local
 from types import SimpleNamespace
 from flask import url_for
 from app import db
@@ -65,7 +66,7 @@ class IdentidadeSistema(db.Model):
     slogan = db.Column(db.String(200), nullable=False)
     dominio_email = db.Column(db.String(120), nullable=False)
     cidade_padrao = db.Column(db.String(120), nullable=False)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     @classmethod
     def garantir(cls):
@@ -89,8 +90,8 @@ class SistemaAsset(db.Model):
     filename = db.Column(db.String(200), nullable=False)
     mime = db.Column(db.String(80))
     nome_original = db.Column(db.String(255))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
 
 class IdentidadeView:

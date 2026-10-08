@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 # Categorias do form de bem permanente (espelha o Google Form)
 CATEGORIAS_BP = [
@@ -116,7 +116,7 @@ class Divisao(db.Model):
     tipos_chamado = db.Column(db.JSON, default=list)   # ex: ['predial', 'equipamento']
     tipos_unidade_ids = db.Column(db.JSON, default=list)  # ex: [1, 2] (ids de TipoUnidade)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     setores = db.relationship('SetorManutencao', back_populates='divisao', lazy='dynamic')
 
@@ -132,7 +132,7 @@ class SetorManutencao(db.Model):
     nome = db.Column(db.String(150), nullable=False)
     descricao = db.Column(db.Text)
     tipos_chamado = db.Column(db.JSON, default=list)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     divisao = db.relationship('Divisao', back_populates='setores')
     usuarios = db.relationship('UsuarioSetor', back_populates='setor', lazy='dynamic')
@@ -203,8 +203,8 @@ class Chamado(db.Model):
     gut_exec_urgencia = db.Column(db.Integer)
     gut_exec_tendencia = db.Column(db.Integer)
 
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
     fechado_em = db.Column(db.DateTime)
 
     unidade = db.relationship('Unidade', back_populates='chamados', foreign_keys=[unidade_id])
@@ -427,7 +427,7 @@ class ChamadoFoto(db.Model):
     filename    = db.Column(db.String(200), nullable=False)   # nome salvo em disco
     original    = db.Column(db.String(200))                   # nome original do upload
     mime_type   = db.Column(db.String(80))
-    criado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em   = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     chamado = db.relationship('Chamado', back_populates='fotos')
 
@@ -501,7 +501,7 @@ class ChamadoHistorico(db.Model):
     requer_resposta = db.Column(db.Boolean, nullable=False, default=False)
     respondido_em  = db.Column(db.DateTime)
     contrato_id   = db.Column(db.Integer, db.ForeignKey('contratos.id', ondelete='SET NULL'))
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     chamado  = db.relationship('Chamado', back_populates='historico')
     usuario  = db.relationship('Usuario')
@@ -535,7 +535,7 @@ class AnexoAndamento(db.Model):
     original      = db.Column(db.String(200))
     mime_type     = db.Column(db.String(80))
     tamanho_bytes = db.Column(db.Integer)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     andamento = db.relationship('ChamadoHistorico', back_populates='anexos')
 
@@ -582,7 +582,7 @@ class ChamadoAtribuido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     chamado_id = db.Column(db.Integer, db.ForeignKey('chamados.id', ondelete='CASCADE'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False)
-    atribuido_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    atribuido_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     chamado = db.relationship('Chamado', back_populates='atribuidos_rel')
     usuario = db.relationship('Usuario')

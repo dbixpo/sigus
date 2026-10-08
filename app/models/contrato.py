@@ -1,6 +1,6 @@
 from datetime import datetime, date
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 MODALIDADE_OPCOES = [
     'Compra Eletrônica', 'Comunicados', 'Concorrência', 'Concurso', 'Convite',
@@ -55,8 +55,8 @@ class Contrato(db.Model):
     empenhos = db.Column(db.Text)
     mandado_judicial = db.Column(db.Boolean, nullable=False, default=False)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     tipos_equipamento = db.relationship('ContratoTipoEquipamento', back_populates='contrato',
                                         lazy='dynamic', cascade='all, delete-orphan')
@@ -226,7 +226,7 @@ class ContratoAcao(db.Model):
     # Notificação: anexo
     anexo_filename = db.Column(db.String(200))
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     contrato = db.relationship('Contrato', back_populates='acoes')
     criador = db.relationship('Usuario')

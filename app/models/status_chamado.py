@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 # Cores Bootstrap disponíveis para badge
@@ -25,7 +26,7 @@ class StatusChamado(db.Model):
     # indica se este status encerra o chamado (define fechado_em)
     encerra_chamado  = db.Column(db.Boolean, nullable=False, default=False)
     ordem            = db.Column(db.Integer, nullable=False, default=0)
-    criado_em        = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em        = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     def __repr__(self):
         return f'<StatusChamado {self.slug}>'

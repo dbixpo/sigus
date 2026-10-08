@@ -20,7 +20,7 @@ from flask import Blueprint, render_template, request, abort, Response, url_for
 from flask_login import login_required, current_user
 
 from app import db
-from app.utils import formatar_brasilia
+from app.utils import formatar_brasilia, agora_local
 from app.models.equipamento import Equipamento, TipoEquipamento, STATUS_LABELS, CONDICAO_LABELS
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.tipo_unidade import TipoUnidade
@@ -956,7 +956,7 @@ def _obter_geojson_bairros_sorocaba():
 
 def _obter_geojson_bairros_sorocaba_cached():
     """Mesmo GeoJSON que `/mapa-saude/bairros`: cache em memória ~24h."""
-    now = datetime.utcnow()
+    now = agora_local()
     cached = _SOROCABA_BAIRROS_CACHE.get('geojson')
     cached_at = _SOROCABA_BAIRROS_CACHE.get('cached_at')
     if cached and cached_at and (now - cached_at).total_seconds() < 24 * 3600:
@@ -1834,7 +1834,7 @@ def mapa_saude_contorno():
         abort(403)
 
     # Cache em memória por 24h (suficiente p/ reduzir chamadas externas)
-    now = datetime.utcnow()
+    now = agora_local()
     cached = _SOROCABA_BOUNDARY_CACHE.get('geojson')
     cached_at = _SOROCABA_BOUNDARY_CACHE.get('cached_at')
     if cached and cached_at and (now - cached_at).total_seconds() < 24 * 3600:
@@ -1852,7 +1852,7 @@ def mapa_saude_contorno():
 
 
 def mapa_saude_publico_contorno():
-    now = datetime.utcnow()
+    now = agora_local()
     cached = _SOROCABA_BOUNDARY_CACHE.get('geojson')
     cached_at = _SOROCABA_BOUNDARY_CACHE.get('cached_at')
     if cached and cached_at and (now - cached_at).total_seconds() < 24 * 3600:

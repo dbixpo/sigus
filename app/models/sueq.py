@@ -2,6 +2,7 @@
 """Tabelas do dashboard-emendas (Patrick) no schema PostgreSQL `sueq`."""
 import uuid
 from datetime import datetime
+from app.utils import agora_local
 from sqlalchemy.dialects.postgresql import UUID
 from app import db
 
@@ -14,7 +15,7 @@ class SueqParlamentar(db.Model):
     id = db.Column(db.BigInteger, primary_key=True)
     nome = db.Column(db.Text, nullable=False)
     ativo = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=agora_local)
 
 
 class SueqUnidade(db.Model):
@@ -26,7 +27,7 @@ class SueqUnidade(db.Model):
     endereco = db.Column(db.Text)
     telefone = db.Column(db.Text)
     ativo = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=agora_local)
 
 
 class SueqProcesso(db.Model):
@@ -44,7 +45,7 @@ class SueqProcesso(db.Model):
     observacao = db.Column(db.Text)
     sc = db.Column(db.Text)
     link_publico_sei = db.Column(db.Text)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=agora_local)
 
     @property
     def link_sei_url(self):
@@ -66,7 +67,7 @@ class SueqEmenda(db.Model):
     link_sei = db.Column(db.Text)
     valor_cedido = db.Column(db.Numeric)
     unidade = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=agora_local)
     ano = db.Column(db.Integer)
     numero = db.Column(db.Text)
     objeto = db.Column(db.Text)
@@ -127,7 +128,7 @@ class SueqEmendaItem(db.Model):
     unidade_entrega = db.Column(db.Text)
     data_entrega = db.Column(db.Text)
     ordem_pagamento = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=agora_local)
     unidade_beneficiada = db.Column(db.Text)
     item_cadastrado = db.Column(db.Text)
     qtde_cadastrada = db.Column(db.Numeric)
@@ -161,7 +162,7 @@ class SueqChamado(db.Model):
     descricao = db.Column(db.Text)
     rechamado = db.Column(db.Text)
     observacao = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=agora_local)
     data_rechamado = db.Column(db.Text)
     endereco = db.Column(db.Text)
     telefone = db.Column(db.Text)
@@ -197,7 +198,7 @@ class SueqChamadoControle(db.Model):
     os = db.Column(db.Text)
     feito = db.Column(db.Text)
     obs = db.Column(db.Text)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=agora_local)
     chamado_protocolo = db.Column(db.Text)
     motivo_invalido = db.Column(db.Text)
     cpl_contrato = db.Column(db.Text)

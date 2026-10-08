@@ -3,7 +3,7 @@
 from datetime import datetime
 import json
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 
 DESCRICAO_ACAO_MAX = 400
@@ -59,9 +59,9 @@ class TipoAcao(db.Model):
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     ordem = db.Column(db.Integer, nullable=False, default=0)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
     atualizado_em = db.Column(
-        db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, nullable=False, default=agora_local, onupdate=agora_local
     )
 
     acoes = db.relationship('AcaoLocal', back_populates='tipo', lazy='dynamic')
@@ -86,7 +86,7 @@ class Comunicado(db.Model):
     ciencia_perfis = db.Column(db.Text)
     ciencia_cbos = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
     versao = db.Column(db.Integer, nullable=False, default=1)
     editado_em = db.Column(db.DateTime)
     editado_por_id = db.Column(
@@ -201,7 +201,7 @@ class ComunicadoAnexo(db.Model):
     original = db.Column(db.String(255))
     mime_type = db.Column(db.String(80))
     tamanho_bytes = db.Column(db.Integer)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     comunicado = db.relationship('Comunicado', back_populates='anexos')
 
@@ -246,7 +246,7 @@ class ComunicadoCiencia(db.Model):
         db.ForeignKey('usuarios.id', ondelete='CASCADE'),
         nullable=False,
     )
-    ciencia_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    ciencia_em = db.Column(db.DateTime, nullable=False, default=agora_local)
     ip = db.Column(db.String(45))
     user_agent = db.Column(db.String(400))
     unidade_id = db.Column(db.Integer, db.ForeignKey('unidades.id', ondelete='SET NULL'))
@@ -297,7 +297,7 @@ class AcaoLocal(db.Model):
     )
     descricao = db.Column(db.String(DESCRICAO_ACAO_MAX), nullable=False)
     data_acao = db.Column(db.Date, nullable=False)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     unidade = db.relationship('Unidade', foreign_keys=[unidade_id])
     autor = db.relationship('Usuario', foreign_keys=[autor_id])
@@ -348,7 +348,7 @@ class AcaoLocalFoto(db.Model):
     original = db.Column(db.String(255))
     mime_type = db.Column(db.String(80))
     ordem = db.Column(db.Integer, nullable=False, default=0)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     acao = db.relationship('AcaoLocal', back_populates='fotos')
 
@@ -370,7 +370,7 @@ class AcaoLocalCurtida(db.Model):
     usuario_id = db.Column(
         db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False
     )
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     acao = db.relationship('AcaoLocal', back_populates='curtidas')
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
@@ -387,7 +387,7 @@ class AcaoLocalComentario(db.Model):
         db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), nullable=False
     )
     texto = db.Column(db.String(COMENTARIO_ACAO_MAX), nullable=False)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     acao = db.relationship('AcaoLocal', back_populates='comentarios')
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])

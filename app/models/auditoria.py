@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Registro de auditoria de requisições HTTP."""
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -22,7 +23,7 @@ class Auditoria(db.Model):
     __tablename__ = 'auditoria'
 
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     acao = db.Column(db.String(50))

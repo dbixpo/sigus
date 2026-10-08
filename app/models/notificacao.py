@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 TIPOS_NOTIFICACAO = {
     'chamado_aberto':      ('Chamado aberto na sua unidade',          'bi-wrench-adjustable',      'primary'),
@@ -33,7 +33,7 @@ class Notificacao(db.Model):
     nsp_ocorrencia_id = db.Column(db.Integer, db.ForeignKey('nsp_ocorrencias.id', ondelete='CASCADE'))
     comunicado_id = db.Column(db.Integer, db.ForeignKey('comunicados.id', ondelete='CASCADE'))
     lida        = db.Column(db.Boolean, nullable=False, default=False)
-    criado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em   = db.Column(db.DateTime, nullable=False, default=agora_local)
 
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
     chamado = db.relationship('Chamado', foreign_keys=[chamado_id])

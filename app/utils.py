@@ -40,13 +40,25 @@ def recortar_assinatura_png(data_url, padding=12, alpha_min=12):
     return _ASSINATURA_PNG_PREFIXO + base64.b64encode(buf.getvalue()).decode('ascii')
 
 
+def agora_brasilia():
+    """Relógio de parede em Brasília (naive). Use em agenda/expediente, não para gravar timestamp.
+
+    O servidor de produção tem o Windows no fuso do Pacífico com o relógio
+    acertado à mão na hora de Brasília (o SAMU depende disso; não mexer).
+    Por isso a hora de parede é a fonte confiável e o UTC do sistema não:
+    ele sai horas adiantado.
+    """
+    return datetime.now()
+
+
 def agora_local():
     """Instante atual em UTC (naive) para gravar no banco.
 
-    Independente do fuso do servidor. Na tela, use ``br_datetime`` /
-    ``formatar_brasilia`` — nunca ``strftime`` cru.
+    Derivado da hora de parede de Brasília, não do UTC do sistema. Na tela,
+    use ``br_datetime`` / ``formatar_brasilia`` — nunca ``strftime`` cru.
     """
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return (agora_brasilia().replace(tzinfo=TZ_BRASILIA)
+            .astimezone(timezone.utc).replace(tzinfo=None))
 
 
 def agora_local_callable():
@@ -55,13 +67,8 @@ def agora_local_callable():
 
 
 def hoje_brasilia():
-    """Data de calendário em Brasília (não a do servidor)."""
-    return datetime.now(TZ_BRASILIA).date()
-
-
-def agora_brasilia():
-    """Relógio de parede em Brasília (naive). Use em agenda/expediente, não para gravar timestamp."""
-    return datetime.now(TZ_BRASILIA).replace(tzinfo=None)
+    """Data de calendário em Brasília."""
+    return agora_brasilia().date()
 
 
 def para_brasilia(value):

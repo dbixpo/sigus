@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 from app.models.usuario import CBOS, VINCULOS, TIPOS_VINCULO
 
@@ -65,7 +66,7 @@ class SolicitacaoVinculo(db.Model):
     dt_entrada       = db.Column(db.Date)
 
     # Controle
-    criado_em        = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    criado_em        = db.Column(db.DateTime, nullable=False, default=agora_local)
     aprovado_por     = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     aprovado_em      = db.Column(db.DateTime)
     usuario_criado   = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))

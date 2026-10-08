@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -17,8 +18,8 @@ class TipoSala(db.Model):
     ordem     = db.Column(db.Integer)
     # Salas deste tipo podem ser reservadas na agenda (sala de reunião, auditório).
     reservavel = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     salas = db.relationship('Sala', back_populates='tipo_sala', lazy='dynamic')
     kit = db.relationship('KitPadraoSala', back_populates='tipo_sala', lazy='dynamic',
@@ -43,8 +44,8 @@ class KitPadraoSala(db.Model):
     # Quantidade por profissional: multiplica pelo "máx. profissionais simultâneos" da sala (0 = espera 0).
     por_profissional    = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     observacao          = db.Column(db.String(300))
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     tipo_sala        = db.relationship('TipoSala', back_populates='kit')
     tipo_equipamento = db.relationship('TipoEquipamento')

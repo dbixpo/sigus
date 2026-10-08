@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 from app.models.usuario import VINCULOS, TIPOS_VINCULO, CBOS
 from app.models.cbo import CBO
@@ -21,9 +22,9 @@ class MatriculaProfissional(db.Model):
     reg_conselho    = db.Column(db.String(30))
     orgao_emissor   = db.Column(db.String(50))
     ativo           = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em       = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
-                                onupdate=datetime.utcnow)
+    criado_em       = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em   = db.Column(db.DateTime, nullable=False, default=agora_local,
+                                onupdate=agora_local)
 
     usuario         = db.relationship('Usuario', back_populates='matriculas')
 

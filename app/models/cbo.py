@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Código Brasileiro de Ocupação (CBO)."""
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -12,8 +13,8 @@ class CBO(db.Model):
     codigo      = db.Column(db.String(10), nullable=False, unique=True)
     descricao   = db.Column(db.String(200), nullable=False)
     ativo       = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em   = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em   = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     def __repr__(self):
         return f'<CBO {self.codigo} - {self.descricao}>'

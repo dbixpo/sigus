@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -28,8 +29,8 @@ class Predio(db.Model):
     responsavel_predial_id = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
     observacoes            = db.Column(db.Text)
     ativo                  = db.Column(db.Boolean, nullable=False, default=True)
-    criado_em              = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em          = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em              = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em          = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     unidades             = db.relationship('Unidade', back_populates='predio', lazy='dynamic')
     responsavel_predial  = db.relationship('Usuario', foreign_keys=[responsavel_predial_id])

@@ -2,7 +2,7 @@
 """Empresas Contratadas — para vincular às ações e contratos."""
 from datetime import datetime
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 
 
 class EmpresaContratada(db.Model):
@@ -32,8 +32,8 @@ class EmpresaContratada(db.Model):
     cnpj_estagio = db.Column(db.Boolean, nullable=False, default=False)
     cnpj_residencia = db.Column(db.Boolean, nullable=False, default=False)
     cnpj_vinculo_empregaticio_cpd = db.Column(db.Boolean, nullable=False, default=False)
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     contratos = db.relationship('Contrato', back_populates='empresa_contratada',
                                 foreign_keys='Contrato.empresa_id', lazy='dynamic')

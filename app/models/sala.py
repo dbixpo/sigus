@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 
@@ -17,8 +18,8 @@ class Sala(db.Model):
     # Sala reservável que qualquer unidade pode agendar (não só a dona).
     uso_compartilhado = db.Column(db.Boolean, nullable=False, default=False, server_default='false')
     observacoes   = db.Column(db.Text)
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     unidade      = db.relationship('Unidade', back_populates='salas')
     tipo_sala    = db.relationship('TipoSala', back_populates='salas')

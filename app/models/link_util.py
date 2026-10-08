@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db
-from app.utils import prefixed_static_url
+from app.utils import prefixed_static_url, agora_local
 from app.models.tipo_link import _icone_para_fontawesome
 
 # Perfis que podem ver links
@@ -40,9 +40,9 @@ class LinkUtil(db.Model):
     perfis_acesso = db.Column(db.JSON, nullable=False, default=lambda: ['todos'])
 
     criado_por    = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
-    criado_em     = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow,
-                              onupdate=datetime.utcnow)
+    criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local,
+                              onupdate=agora_local)
 
     criador = db.relationship('Usuario', foreign_keys=[criado_por])
 

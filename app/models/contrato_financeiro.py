@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Empenhos, fontes e notas (planilha FINANCEIRO - DAG)."""
 from datetime import datetime
+from app.utils import agora_local
 from app import db
 
 TIPO_OPCOES = [
@@ -46,8 +47,8 @@ class ContratoFinanceiro(db.Model):
     data_envio_fms = db.Column(db.Date)
     data_devolucao_setor = db.Column(db.Date)
     reservas = db.Column(db.String(200))
-    criado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    atualizado_em = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
     contrato = db.relationship('Contrato', backref='empenhos_financeiros', foreign_keys=[contrato_id])
 
