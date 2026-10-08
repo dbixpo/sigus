@@ -77,12 +77,13 @@ body { font-family: Arial, sans-serif; font-size: 13px; color: #000; background:
 .campo.w-data { flex: 0 0 140px; }
 .campo.w-endereco { flex: 1 1 auto; min-width: 120px; }
 .c-label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #333; margin-bottom: 1px; line-height: 1.2; }
-.c-valor { min-height: 16px; padding: 0 1px 2px; font-size: 12px; line-height: 1.3; }
+.c-valor { min-height: 16px; padding: 0 1px 2px; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
 .c-valor.destaque { font-weight: bold; font-size: 13px; }
 
 .bloco-unidade-linha {
     display: flex; gap: 6px; align-items: stretch; margin-bottom: 0;
 }
+.bloco-unidade-linha.qr-esquerda { flex-direction: row-reverse; gap: 10px; }
 .bloco-unidade-campos { flex: 1; min-width: 0; }
 .bloco-unidade-qr {
     flex: 0 0 90px; width: 90px; min-height: 90px; display: flex; align-items: center; justify-content: center; align-self: stretch;
@@ -221,7 +222,7 @@ a { color: #0d6efd; text-decoration: none; }
     {% else %}
     <div class="secao secao-unidade">
         <div class="secao-titulo">Unidade de Destino</div>
-        <div class="bloco-unidade-linha">
+        <div class="bloco-unidade-linha qr-esquerda">
             <div class="bloco-unidade-campos">
                 <div class="campos-grid">
                     <div class="linha1">
