@@ -51,4 +51,7 @@ if __name__ == '__main__':
     else:
         # Produção: Waitress (já em requirements.txt)
         from waitress import serve
-        serve(app, host='0.0.0.0', port=port, url_scheme='https', threads=4)
+        # Waitress 2+ apaga X-Forwarded-* por padrão; sem isso o IP real que o IIS
+        # manda some e auditoria/ciência gravam 127.0.0.1. Quem trata é o ProxyFix acima.
+        serve(app, host='0.0.0.0', port=port, url_scheme='https', threads=4,
+              clear_untrusted_proxy_headers=False)

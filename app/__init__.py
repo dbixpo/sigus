@@ -221,6 +221,7 @@ def create_app(config_name='default'):
         'unidades.sem_vinculo',
         'solicitacoes.formulario', 'solicitacoes.confirmacao',
         'links.publico',
+        'unidades.maps_redirect',
         'nsp.notificar', 'nsp.notificado', 'nsp.acompanhar',
         'notificacoes.recentes', 'notificacoes.contagem',
         'notificacoes.marcar_lida', 'notificacoes.marcar_todas_lidas',

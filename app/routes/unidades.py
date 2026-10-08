@@ -540,9 +540,8 @@ def toggle_matricula(id, matricula_id):
 
 
 @unidades_bp.route('/<int:id>/maps')
-@login_required
 def maps_redirect(id):
-    """Redireciona para o link_maps da unidade — URL curta para QR code."""
+    """Redireciona para o link_maps da unidade. Público: QR codes de termos já impressos apontam para cá."""
     unidade = Unidade.query.get_or_404(id)
     if unidade.link_maps:
         return redirect(unidade.link_maps)

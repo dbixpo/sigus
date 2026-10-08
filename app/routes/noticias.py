@@ -44,10 +44,8 @@ _ASSINATURA_MAX = 400_000
 
 
 def _ip_cliente():
-    for h in ('X-Forwarded-For', 'X-Real-IP'):
-        v = (request.headers.get(h) or '').split(',')[0].strip()
-        if v:
-            return v[:45]
+    # remote_addr já vem do ProxyFix (último salto do IIS); o primeiro valor do
+    # X-Forwarded-For pode ser forjado pelo navegador.
     return (request.remote_addr or '')[:45]
 
 

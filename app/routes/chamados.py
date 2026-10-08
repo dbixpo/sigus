@@ -1237,10 +1237,7 @@ def imprimir(id):
     _verificar_acesso_chamado(chamado)
     historico = chamado.historico.order_by(ChamadoHistorico.criado_em).all()
     now = agora_local()
-    # URL curta para o QR code (evita URLs longas do Google Maps no QR)
-    qr_url = None
-    if chamado.unidade and chamado.unidade.link_maps:
-        qr_url = url_for('unidades.maps_redirect', id=chamado.unidade.id, _external=True)
+    qr_url = ((chamado.unidade.link_maps or '').strip() or None) if chamado.unidade else None
     return render_template('chamados/imprimir.html',
                            chamado=chamado, historico=historico,
                            now=now, qr_url=qr_url)

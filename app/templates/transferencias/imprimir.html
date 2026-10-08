@@ -6,7 +6,7 @@
 <title>Termo de {{ doc.tipo_label }}</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background: #fff; padding: 20px; }
+body { font-family: Arial, sans-serif; font-size: 13px; color: #000; background: #fff; padding: 20px; }
 .no-print {
     display: flex; gap: 12px; align-items: center; margin-bottom: 16px;
     padding: 12px; background: #f8f9fa; border-radius: 8px;
@@ -31,35 +31,35 @@ body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background:
 .cab-logo img { height: 58px; width: auto; }
 .cab-titulo {
     flex: 1; text-align: center;
-    font-size: 13px; font-weight: bold;
+    font-size: 15px; font-weight: bold;
     text-transform: uppercase; letter-spacing: .5px; line-height: 1.5;
 }
 .cab-titulo .subtitulo {
-    font-size: 11px; font-weight: 600; text-transform: none; color: #333; margin-top: 2px;
+    font-size: 13px; font-weight: 600; text-transform: none; color: #333; margin-top: 2px;
     display: block; letter-spacing: .3px;
 }
 .cab-secretaria {
-    text-align: right; font-size: 11px; line-height: 1.4; white-space: nowrap;
+    text-align: right; font-size: 13px; line-height: 1.4; white-space: nowrap;
 }
-.cab-secretaria strong { font-size: 13px; display: block; }
+.cab-secretaria strong { font-size: 15px; display: block; }
 
 .secao { border-top: 1px solid #aaa; margin-top: 8px; padding-top: 6px; }
 .secao-unidade {
     border: 1px solid #333; padding: 4px 6px; margin-bottom: 12px;
 }
 .secao-unidade .secao-titulo {
-    font-size: 11px; font-weight: bold; text-transform: uppercase;
+    font-size: 13px; font-weight: bold; text-transform: uppercase;
     color: #000; letter-spacing: .8px; margin-bottom: 4px;
     padding-bottom: 3px; border-bottom: 1.5px solid #333;
 }
 .secao-titulo {
-    font-size: 9px; font-weight: bold; text-transform: uppercase;
-    color: #555; letter-spacing: .6px; margin-bottom: 4px;
+    font-size: 11px; font-weight: bold; text-transform: uppercase;
+    color: #333; letter-spacing: .6px; margin-bottom: 4px;
 }
 
 .decreto-texto {
-    font-size: 10px; line-height: 1.4; color: #333;
-    margin: 8px 0; text-align: justify;
+    font-size: 12px; line-height: 1.45; color: #222;
+    margin: 10px 0; text-align: justify;
 }
 
 .campos-grid { display: flex; flex-wrap: wrap; gap: 2px 4px; align-items: stretch; width: 100%; }
@@ -74,40 +74,42 @@ body { font-family: Arial, sans-serif; font-size: 11px; color: #000; background:
 .campo.w-unit { flex: 1 1 50%; min-width: 0; }
 .campo.w-responsavel { flex: 1 1 38%; min-width: 0; }
 .campo.w-matricula { flex: 0 0 12%; min-width: 0; }
-.campo.w-data { flex: 0 0 120px; }
+.campo.w-data { flex: 0 0 140px; }
 .campo.w-endereco { flex: 1 1 auto; min-width: 120px; }
-.c-label { font-size: 7px; font-weight: bold; text-transform: uppercase; color: #444; margin-bottom: 0; line-height: 1.2; }
-.c-valor { min-height: 10px; padding: 0 1px; font-size: 9px; line-height: 1.2; }
-.c-valor.destaque { font-weight: bold; font-size: 10px; }
+.c-label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #333; margin-bottom: 1px; line-height: 1.2; }
+.c-valor { min-height: 16px; padding: 0 1px 2px; font-size: 12px; line-height: 1.3; }
+.c-valor.destaque { font-weight: bold; font-size: 13px; }
 
 .bloco-unidade-linha {
     display: flex; gap: 6px; align-items: stretch; margin-bottom: 0;
 }
 .bloco-unidade-campos { flex: 1; min-width: 0; }
 .bloco-unidade-qr {
-    flex: 0 0 76px; width: 76px; min-height: 76px; display: flex; align-items: center; justify-content: center; align-self: stretch;
+    flex: 0 0 90px; width: 90px; min-height: 90px; display: flex; align-items: center; justify-content: center; align-self: stretch;
 }
-.bloco-unidade-qr a { display: flex; align-items: center; justify-content: center; min-height: 76px; }
-.bloco-unidade-qr div, .bloco-unidade-qr svg { width: 76px; height: 76px; }
+.bloco-unidade-qr a { display: flex; align-items: center; justify-content: center; min-height: 90px; }
+.bloco-unidade-qr div, .bloco-unidade-qr svg { width: 90px; height: 90px; }
 
 .bloco-cancelamento .campos-grid { background: #f8f9fa; padding: 6px; }
 
-.tabela-materiais { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 8px; }
-.tabela-materiais th, .tabela-materiais td { border: 1px solid #666; padding: 4px 6px; text-align: left; }
-.tabela-materiais th { background: #e8ecef; font-weight: 600; font-size: 9px; }
-.tabela-materiais .col-qtd { width: 40px; text-align: center; }
-.tabela-materiais .col-class { width: 36px; text-align: center; }
-.legenda-class { margin-top: 6px; font-size: 8.5px; color: #555; }
+.tabela-materiais { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.tabela-materiais th, .tabela-materiais td { border: 1px solid #666; padding: 5px 7px; text-align: left; }
+.tabela-materiais th { background: #e8ecef; font-weight: 600; font-size: 11px; }
+.tabela-materiais .col-qtd { width: 44px; text-align: center; }
+.tabela-materiais .col-class { width: 44px; text-align: center; }
+.legenda-class { margin-top: 6px; font-size: 10.5px; color: #333; }
 
-.data-sorocaba { text-align: right; font-size: 10px; margin-top: 6px; margin-bottom: 20px; }
-.assinaturas { display: flex; gap: 24px; margin-top: 0; align-items: flex-start; flex-wrap: wrap; }
-.assinatura-bloco { flex: 1; min-width: 200px; text-align: center; }
-.assinatura-bloco .nome { font-size: 10px; font-weight: bold; margin-bottom: 1px; }
-.assinatura-bloco .unidade { font-size: 9px; margin-bottom: 1px; color: #333; }
-.assinatura-bloco .matricula { font-size: 9px; margin-bottom: 1px; color: #333; }
-.assinatura-bloco .data-assinatura { font-size: 9px; margin-bottom: 0; color: #333; }
-.assinatura-bloco .linha-assinatura { border-bottom: 1px solid #333; height: 1px; margin: 0; padding: 0; }
-.assinatura-bloco .titulo { font-size: 8px; font-weight: bold; text-transform: uppercase; color: #333; margin: 1px 0 0 0; }
+.data-sorocaba { text-align: right; font-size: 12px; margin-top: 8px; margin-bottom: 36px; }
+.assinaturas { display: flex; gap: 32px; margin-top: 0; align-items: flex-end; flex-wrap: wrap; }
+.assinatura-bloco { flex: 1; min-width: 220px; text-align: center; }
+.assinatura-bloco .nome { font-size: 12.5px; font-weight: bold; margin-bottom: 2px; }
+.assinatura-bloco .unidade { font-size: 11.5px; margin-bottom: 2px; color: #222; }
+.assinatura-bloco .matricula { font-size: 11.5px; margin-bottom: 2px; color: #222; }
+.assinatura-bloco .data-assinatura { font-size: 11.5px; margin-bottom: 2px; color: #222; }
+.assinatura-bloco .em-branco-inline { display: inline-block; width: 62%; border-bottom: 1px dotted #666; height: 14px; vertical-align: bottom; }
+.assinatura-bloco .nome .em-branco-inline { width: 80%; }
+.assinatura-bloco .linha-assinatura { border-bottom: 1px solid #333; height: 1px; margin: 26px 0 0; padding: 0; }
+.assinatura-bloco .titulo { font-size: 10.5px; font-weight: bold; text-transform: uppercase; color: #222; margin: 3px 0 0 0; }
 
 a { color: #0d6efd; text-decoration: none; }
 </style>
@@ -144,15 +146,15 @@ a { color: #0d6efd; text-decoration: none; }
                     <div class="linha1">
                         <div class="campo w-unit">
                             <div class="c-label">Unidade</div>
-                            <div class="c-valor destaque" style="font-size:9px;">{{ doc.unidade_origem.nome }}</div>
+                            <div class="c-valor destaque">{{ doc.unidade_origem.nome }}</div>
                         </div>
                         <div class="campo w-responsavel">
                             <div class="c-label">Responsável</div>
-                            <div class="c-valor" style="font-size:9px;">{{ doc.criador.nome if doc.criador else '—' }}</div>
+                            <div class="c-valor">{{ doc.criador.nome if doc.criador else '—' }}</div>
                         </div>
                         <div class="campo w-matricula">
                             <div class="c-label">Matrícula</div>
-                            <div class="c-valor" style="font-size:9px;">
+                            <div class="c-valor">
                                 {% if doc.criador %}
                                     {% set _m_orig = doc.criador.matriculas.filter_by(ativo=True).first() %}
                                     {{ _m_orig.numero if _m_orig else (doc.criador.matricula or '—') }}
@@ -225,25 +227,25 @@ a { color: #0d6efd; text-decoration: none; }
                     <div class="linha1">
                         <div class="campo w-unit">
                             <div class="c-label">Unidade</div>
-                            <div class="c-valor destaque" style="font-size:9px;">{{ doc.unidade_destino.nome }}</div>
+                            <div class="c-valor destaque">{{ doc.unidade_destino.nome }}</div>
                         </div>
                         <div class="campo w-responsavel">
                             <div class="c-label">Responsável</div>
-                            <div class="c-valor" style="font-size:9px;">{{ doc.aceitador.nome if doc.aceitador else 'A definir no aceite' }}</div>
+                            <div class="c-valor">{{ doc.aceitador.nome if doc.aceitador else '' }}</div>
                         </div>
                         <div class="campo w-matricula">
                             <div class="c-label">Matrícula</div>
-                            <div class="c-valor" style="font-size:9px;">
+                            <div class="c-valor">
                                 {% if doc.aceitador %}
                                     {% set _m_dest = doc.aceitador.matriculas.filter_by(ativo=True).first() %}
                                     {{ _m_dest.numero if _m_dest else (doc.aceitador.matricula or '—') }}
-                                {% else %}—{% endif %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                     <div class="campo w-data">
                         <div class="c-label">Aceito em</div>
-                        <div class="c-valor">{{ doc.resolvido_em | br_datetime if doc.resolvido_em and doc.status == 'aceita' else 'Aguardando aceite' }}</div>
+                        <div class="c-valor">{{ doc.resolvido_em | br_datetime if doc.resolvido_em and doc.status == 'aceita' else '' }}</div>
                     </div>
                     <div class="campo w-endereco">
                         <div class="c-label">Endereço</div>
@@ -272,7 +274,7 @@ a { color: #0d6efd; text-decoration: none; }
                             {% if _cel2 %}
                             {% set _wd2 = _cel2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') | replace('+','') %}
                             <a href="https://wa.me/55{{ _wd2 }}" target="_blank">{{ _cel2 | br_fone }}</a>
-                            {% else %}—{% endif %}
+                            {% elif doc.aceitador %}—{% endif %}
                         </div>
                     </div>
                 </div>
@@ -329,10 +331,17 @@ a { color: #0d6efd; text-decoration: none; }
             <div class="titulo">Responsável pela Unidade Origem</div>
         </div>
         <div class="assinatura-bloco">
-            <div class="nome">{{ doc.aceitador.nome if doc.aceitador else 'A definir no aceite' }}</div>
+            {% if doc.aceitador %}
+            <div class="nome">{{ doc.aceitador.nome }}</div>
             <div class="unidade">{{ doc.unidade_destino.nome }}</div>
-            <div class="matricula">Matrícula {% if doc.aceitador %}{% set _m_dest = doc.aceitador.matriculas.filter_by(ativo=True).first() %}{{ _m_dest.numero if _m_dest else (doc.aceitador.matricula or '—') }}{% else %}—{% endif %}</div>
-            <div class="data-assinatura">{% if doc.status == 'aceita' and doc.resolvido_em %}{{ doc.resolvido_em | br_datetime }}{% elif doc.status == 'recusada' and doc.resolvido_em %}{{ doc.resolvido_em | br_datetime }}{% else %}Aguardando aceite{% endif %}</div>
+            <div class="matricula">Matrícula {% set _m_dest = doc.aceitador.matriculas.filter_by(ativo=True).first() %}{{ _m_dest.numero if _m_dest else (doc.aceitador.matricula or '—') }}</div>
+            <div class="data-assinatura">{{ doc.resolvido_em | br_datetime if doc.resolvido_em else '' }}</div>
+            {% else %}
+            <div class="nome">Nome: <span class="em-branco-inline"></span></div>
+            <div class="unidade">{{ doc.unidade_destino.nome }}</div>
+            <div class="matricula">Matrícula: <span class="em-branco-inline"></span></div>
+            <div class="data-assinatura">Data: ____/____/________</div>
+            {% endif %}
             <div class="linha-assinatura"></div>
             <div class="titulo">Responsável pela Unidade Destino</div>
         </div>
@@ -346,10 +355,10 @@ a { color: #0d6efd; text-decoration: none; }
 <script>
 (function () {
     function renderQr(elId, url, size) {
-        size = size || 76;
+        size = size || 90;
         var el = document.getElementById(elId);
         if (!el || !url || typeof qrcode === 'undefined') return;
-        var qr = qrcode(4, 'L');
+        var qr = qrcode(0, 'M');
         qr.addData(url);
         qr.make();
         el.innerHTML = qr.createSvgTag({ scalable: true, margin: 1 });

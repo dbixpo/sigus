@@ -377,7 +377,7 @@ def chamado_imprimir(id):
     if chamado.unidade:
         unidade_sigus = Unidade.query.filter(Unidade.nome.ilike(chamado.unidade)).first()
         if unidade_sigus and unidade_sigus.link_maps:
-            qr_url = url_for('unidades.maps_redirect', id=unidade_sigus.id, _external=True)
+            qr_url = unidade_sigus.link_maps.strip() or None
     return render_template(
         'sueq/chamado_imprimir.html',
         chamado=chamado, now=agora_local(), qr_url=qr_url,
