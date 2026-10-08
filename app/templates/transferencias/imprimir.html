@@ -77,7 +77,11 @@ body { font-family: Arial, sans-serif; font-size: 13px; color: #000; background:
 .campo.w-data { flex: 0 0 140px; }
 .campo.w-endereco { flex: 1 1 auto; min-width: 120px; }
 .c-label { font-size: 9px; font-weight: bold; text-transform: uppercase; color: #333; margin-bottom: 1px; line-height: 1.2; }
-.c-valor { min-height: 16px; padding: 0 1px 2px; font-size: 12px; line-height: 1.3; overflow-wrap: anywhere; }
+.c-valor { min-height: 16px; padding: 0 1px 2px; font-size: 12px; line-height: 1.3; overflow-wrap: break-word; }
+.c-valor.c-ajustar { white-space: nowrap; overflow: hidden; overflow-wrap: normal; }
+.campo.w-fone { flex: 0 0 120px; }
+.campo.w-email { flex: 1 1 0; min-width: 0; }
+.campo.w-cel { flex: 0 0 150px; }
 .c-valor.destaque { font-weight: bold; font-size: 13px; }
 
 .bloco-unidade-linha {
@@ -177,17 +181,17 @@ a { color: #0d6efd; text-decoration: none; }
                             {% if not u.endereco and not u.bairro %}—{% endif %}
                         </div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-fone">
                         <div class="c-label">Telefone</div>
                         <div class="c-valor">{{ doc.unidade_origem.telefone | br_fone if doc.unidade_origem.telefone else '—' }}</div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-email">
                         <div class="c-label">E-mail</div>
-                        <div class="c-valor">
+                        <div class="c-valor c-ajustar">
                             {% if doc.unidade_origem.email %}<a href="mailto:{{ doc.unidade_origem.email }}">{{ doc.unidade_origem.email }}</a>{% else %}—{% endif %}
                         </div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-cel">
                         <div class="c-label">Celular Responsável</div>
                         <div class="c-valor">
                             {% set _cel = doc.criador.whatsapp or doc.criador.telefone if doc.criador else '' %}
@@ -258,17 +262,17 @@ a { color: #0d6efd; text-decoration: none; }
                             {% if not u.endereco and not u.bairro %}—{% endif %}
                         </div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-fone">
                         <div class="c-label">Telefone</div>
                         <div class="c-valor">{{ doc.unidade_destino.telefone | br_fone if doc.unidade_destino.telefone else '—' }}</div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-email">
                         <div class="c-label">E-mail</div>
-                        <div class="c-valor">
+                        <div class="c-valor c-ajustar">
                             {% if doc.unidade_destino.email %}<a href="mailto:{{ doc.unidade_destino.email }}">{{ doc.unidade_destino.email }}</a>{% else %}—{% endif %}
                         </div>
                     </div>
-                    <div class="campo w-third">
+                    <div class="campo w-cel">
                         <div class="c-label">Celular Responsável</div>
                         <div class="c-valor">
                             {% set _cel2 = doc.aceitador.whatsapp or doc.aceitador.telefone if doc.aceitador else '' %}
@@ -351,6 +355,16 @@ a { color: #0d6efd; text-decoration: none; }
 
 </div>
 
+<script>
+// E-mail longo encolhe a letra até caber no campo, em vez de quebrar no meio.
+document.querySelectorAll('.c-ajustar').forEach(function (el) {
+    var tam = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && tam > 8) {
+        tam -= 0.5;
+        el.style.fontSize = tam + 'px';
+    }
+});
+</script>
 {% if qr_url_origem or qr_url_destino %}
 <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
 <script>
