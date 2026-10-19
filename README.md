@@ -6,9 +6,8 @@ O SIGUS é a “gestão da casa”: patrimônio, chamados, planejamentos, agenda
 
 | | |
 |---|---|
-| Referência em produção | https://saudedigital.sorocaba.sp.gov.br/sigus |
 | Código | https://github.com/dbixpo/sigus |
-| Licença | [MIT](LICENSE) — Prefeitura Municipal de Sorocaba / Secretaria da Saúde |
+| Licença | [MIT](LICENSE)                        |
 | Manuais da ponta (Sorocaba) | [Estante SES](https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sigus) |
 | Stack | Python 3.10/3.11, Flask, PostgreSQL, IIS + HttpPlatformHandler |
 | Entrada | `run.py` (Waitress em produção, Flask debug em desenvolvimento) |
