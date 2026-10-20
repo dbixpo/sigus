@@ -33,7 +33,8 @@
                         <label class="form-label fw-semibold">
                             Sala <span class="text-danger">*</span>
                         </label>
-                        <select name="sala_id" class="form-select" required>
+                        <select name="sala_id" class="form-select" {% if pode_editar_cadastro %}required{% endif %}
+                                {% if not pode_editar_cadastro %}disabled{% endif %}>
                             {% if not equipamento %}
                             <option value="">— Selecione a sala —</option>
                             {% endif %}
@@ -69,8 +70,9 @@
                     <div class="col-md-6">
                         <label class="form-label">Tipo de Equipamento *</label>
                         {% set tipo_bloqueado = equipamento and not pode_alterar_tipo %}
-                        <select name="tipo_equipamento_id" id="tipo_equipamento_id" class="form-select" required
-                                {% if tipo_bloqueado %}disabled{% endif %}>
+                        <select name="tipo_equipamento_id" id="tipo_equipamento_id" class="form-select"
+                                {% if pode_editar_cadastro %}required{% endif %}
+                                {% if tipo_bloqueado or not pode_editar_cadastro %}disabled{% endif %}>
                             <option value="">Selecione o tipo...</option>
                             {% for classificacao, lista in tipos|agrupar_tipos_equipamento %}
                             <optgroup label="{{ classificacao }}">
@@ -100,21 +102,31 @@
                                    class="form-control"
                                    value="{{ equipamento.numero_patrimonio | replace('PMS-', '') if equipamento and equipamento.numero_patrimonio else '' }}"
                                    placeholder="00000"
-                                   inputmode="numeric">
+                                   inputmode="numeric"
+                                   {% if not pode_editar_cadastro %}disabled{% endif %}>
                         </div>
                         <div class="form-text text-muted">Digite apenas os números — o prefixo <strong>PMS-</strong> é adicionado automaticamente.</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Nº de Série</label>
                         <input type="text" name="numero_serie" class="form-control"
-                               value="{{ equipamento.numero_serie if equipamento else '' }}">
+                               value="{{ equipamento.numero_serie if equipamento else '' }}"
+                               {% if not pode_editar_cadastro %}disabled{% endif %}>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Ano de Fabricação</label>
+                        <input type="number" name="ano_fabricacao" class="form-control"
+                               min="1900" max="2100" step="1" inputmode="numeric"
+                               placeholder="Ex.: 2019"
+                               value="{{ equipamento.ano_fabricacao if equipamento and equipamento.ano_fabricacao else '' }}"
+                               {% if not pode_editar_cadastro %}disabled{% endif %}>
                     </div>
 
                     {# ── Marca encadeada com o Tipo ── #}
                     <div class="col-md-6">
                         <label class="form-label">Marca</label>
                         <select name="marca_id" id="marca_id" class="form-select"
-                                {% if not equipamento %}disabled{% endif %}>
+                                {% if not equipamento or not pode_editar_cadastro %}disabled{% endif %}>
                             <option value="">
                                 {% if equipamento %}Selecione a marca...{% else %}Selecione o tipo primeiro{% endif %}
                             </option>
@@ -127,23 +139,43 @@
                         </select>
                         <div id="aviso-marca-sem-tipo" class="form-text text-warning d-none">
                             <i class="fas fa-exclamation-triangle me-1"></i>Nenhuma marca cadastrada para este tipo.
-                            <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar marca</a>
                         </div>
+                        {% if pode_editar_cadastro %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="chk_nova_marca">
+                            <label class="form-check-label small" for="chk_nova_marca">Não encontrei a marca — informar outra</label>
+                        </div>
+                        <input type="text" name="nova_marca" id="nova_marca" class="form-control form-control-sm mt-1 d-none" maxlength="100" placeholder="Nome da marca">
+                        {% if marca_pendente %}
+                        <div id="aviso-marca-pendente" class="form-text d-none">A SUEQ valida essa marca depois.</div>
+                        {% endif %}
+                        {% endif %}
                     </div>
 
                     {# ── Modelo encadeado com a Marca ── #}
                     <div class="col-md-6">
                         <label class="form-label">Modelo</label>
                         <select name="modelo_id" id="modelo_id" class="form-select"
-                                {% if not equipamento or not equipamento.marca_id %}disabled{% endif %}>
+                                {% if not pode_editar_cadastro or not equipamento or not equipamento.marca_id %}disabled{% endif %}>
                             <option value="">
                                 {% if equipamento and equipamento.marca_id %}Selecione o modelo...{% else %}Selecione a marca primeiro{% endif %}
                             </option>
                         </select>
                         <div id="aviso-modelo-sem-marca" class="form-text text-warning d-none">
                             <i class="fas fa-exclamation-triangle me-1"></i>Nenhum modelo para esta marca.
-                            <a href="{{ url_for('configuracoes.marcas') }}" target="_blank">Cadastrar modelo</a>
                         </div>
+                        {% if pode_editar_cadastro %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="chk_novo_modelo">
+                            <label class="form-check-label small" for="chk_novo_modelo">Não encontrei o modelo — informar outro</label>
+                        </div>
+                        <input type="text" name="novo_modelo" id="novo_modelo" class="form-control form-control-sm mt-1 d-none" maxlength="150" placeholder="Nome do modelo">
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="2"
+                                  {% if not pode_editar_cadastro %}disabled{% endif %}>{{ equipamento.observacoes if equipamento else '' }}</textarea>
                     </div>
                 </div>
             </div>
@@ -213,50 +245,119 @@
         <div class="col-lg-4">
             <div class="form-section">
                 <div class="form-section-title">Estado e Condição</div>
+                {% if somente_estado %}
+                <p class="small text-muted">Nesta unidade o inventário inicial já foi encerrado. Dá para alterar o estado e a condição, e transferir o item.</p>
+                {% endif %}
                 <div class="mb-3">
                     <label class="form-label">Status *</label>
-                    <select name="status" class="form-select" required>
+                    <select name="status" id="status" class="form-select" required>
                         {% for s in status_opts %}
                         <option value="{{ s }}" {% if equipamento and equipamento.status == s %}selected{% elif s == 'ativo' and not equipamento %}selected{% endif %}>
-                            {{ {'ativo':'Ativo','em_manutencao':'Em Manutenção','baixado':'Baixado'}[s] }}
+                            {{ status_labels[s] }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3" id="bloco-condicao">
                     <label class="form-label">Condição *</label>
-                    <select name="condicao" class="form-select" required>
-                        {% for c in condicao_opts %}
-                        <option value="{{ c }}" {% if equipamento and equipamento.condicao == c %}selected{% elif c == 'boa' and not equipamento %}selected{% endif %}>
-                            {{ {'excelente':'Excelente','boa':'Boa','regular':'Regular','ruim':'Ruim','inservivel':'Inservível'}[c] }}
+                    <select name="condicao" id="condicao" class="form-select">
+                        {% for status, condicoes in condicao_por_status.items() %}
+                        {% for c in condicoes %}
+                        <option value="{{ c }}" data-status="{{ status }}"
+                            {% if equipamento and equipamento.condicao == c %}selected{% elif c == 'boa' and not equipamento %}selected{% endif %}>
+                            {{ condicao_labels[c] }}
                         </option>
                         {% endfor %}
+                        {% endfor %}
                     </select>
+                    <div class="form-text">Boa, Regular ou Ruim em Ativo e Sobressalente/Reserva. Em Disponível/Transferência: Em Condições de Uso ou Necessita Manutenção.</div>
                 </div>
             </div>
             <div class="form-section">
                 <div class="form-section-title">Informações Adicionais</div>
+                {% if pode_info_adicional %}
                 <div class="mb-3">
-                    <label class="form-label">Ano de Aquisição</label>
-                    <input type="number" name="ano_aquisicao" class="form-control"
-                           min="1900" max="2100" step="1" inputmode="numeric"
-                           placeholder="Ex.: 2026"
-                           value="{{ equipamento.data_aquisicao.year if equipamento and equipamento.data_aquisicao else '' }}">
+                    <label class="form-label">Próprio</label>
+                    <select name="proprio" class="form-select">
+                        <option value="">—</option>
+                        <option value="sim" {% if equipamento and equipamento.proprio is sameas true %}selected{% endif %}>Sim</option>
+                        <option value="nao" {% if equipamento and equipamento.proprio is sameas false %}selected{% endif %}>Não</option>
+                    </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Valor Estimado (R$)</label>
-                    <input type="number" name="valor_estimado" class="form-control" step="0.01"
-                           value="{{ equipamento.valor_estimado if equipamento else '' }}">
+                    <label class="form-label">Forma de Incorporação</label>
+                    <select name="forma_incorporacao" class="form-select">
+                        <option value="">—</option>
+                        {% for valor, rotulo in formas_incorporacao %}
+                        <option value="{{ valor }}" {% if equipamento and equipamento.forma_incorporacao == valor %}selected{% endif %}>{{ rotulo }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tempo de Uso (anos estimado)</label>
-                    <input type="number" name="tempo_uso_anos" class="form-control" step="0.5" min="0"
-                           value="{{ equipamento.tempo_uso_anos if equipamento else '' }}">
+                    <label class="form-label">Data da aquisição</label>
+                    <input type="date" name="data_aquisicao" class="form-control"
+                           value="{{ equipamento.data_aquisicao.isoformat() if equipamento and equipamento.data_aquisicao else '' }}">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Observações</label>
-                    <textarea name="observacoes" class="form-control" rows="3">{{ equipamento.observacoes if equipamento else '' }}</textarea>
+                    <label class="form-label">Valor (R$)</label>
+                    <input type="number" name="valor_estimado" class="form-control" step="0.01" min="0"
+                           value="{{ equipamento.valor_estimado if equipamento and equipamento.valor_estimado is not none else '' }}">
                 </div>
+                <div class="mb-3">
+                    <label class="form-label">Nº Nota Fiscal</label>
+                    <input type="text" name="numero_nota_fiscal" class="form-control" maxlength="60"
+                           value="{{ equipamento.numero_nota_fiscal if equipamento and equipamento.numero_nota_fiscal else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nº Empenho</label>
+                    <input type="text" name="numero_empenho" class="form-control" maxlength="60"
+                           value="{{ equipamento.numero_empenho if equipamento and equipamento.numero_empenho else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fonte de Recurso</label>
+                    <input type="text" name="fonte_recurso" class="form-control" maxlength="150"
+                           value="{{ equipamento.fonte_recurso if equipamento and equipamento.fonte_recurso else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nº Processo</label>
+                    <input type="text" name="numero_processo" class="form-control" maxlength="80"
+                           value="{{ equipamento.numero_processo if equipamento and equipamento.numero_processo else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nº Contrato/AF</label>
+                    <input type="text" name="numero_contrato_af" class="form-control" maxlength="80"
+                           value="{{ equipamento.numero_contrato_af if equipamento and equipamento.numero_contrato_af else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Fornecedor</label>
+                    <input type="text" name="fornecedor" class="form-control" maxlength="200"
+                           value="{{ equipamento.fornecedor if equipamento and equipamento.fornecedor else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data da Entrega na Unidade</label>
+                    <input type="date" name="data_entrega_unidade" class="form-control"
+                           value="{{ equipamento.data_entrega_unidade.isoformat() if equipamento and equipamento.data_entrega_unidade else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Garantia</label>
+                    <input type="text" name="garantia" class="form-control" maxlength="120"
+                           placeholder="Ex.: 12 meses ou até 03/2028"
+                           value="{{ equipamento.garantia if equipamento and equipamento.garantia else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Vida Útil Estimada</label>
+                    <input type="text" name="vida_util_estimada" class="form-control" maxlength="80"
+                           placeholder="Ex.: 10 anos"
+                           value="{{ equipamento.vida_util_estimada if equipamento and equipamento.vida_util_estimada else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Data da Desativação</label>
+                    <input type="date" name="data_desativacao" class="form-control"
+                           value="{{ equipamento.data_desativacao.isoformat() if equipamento and equipamento.data_desativacao else '' }}">
+                </div>
+                {% else %}
+                <p class="small text-muted mb-0">Esses dados (incorporação, nota, empenho, garantia) são preenchidos pela SUEQ.</p>
+                {% endif %}
 
                 {# Vincular usuário já no cadastro (apenas quando vindo da tela da unidade) #}
                 {% if unidade and not equipamento and usuarios_disponiveis is defined and current_user.pode('editar_equipamento') %}
@@ -303,6 +404,54 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+(function () {
+    const selStatus = document.getElementById('status');
+    const selCond = document.getElementById('condicao');
+    const blocoCond = document.getElementById('bloco-condicao');
+    function filtrarCondicao() {
+        if (!selStatus || !selCond) return;
+        const status = selStatus.value;
+        let visiveis = 0;
+        let algumSelecionado = false;
+        Array.from(selCond.options).forEach(function (op) {
+            const ok = op.getAttribute('data-status') === status;
+            op.hidden = !ok;
+            op.disabled = !ok;
+            if (ok) {
+                visiveis += 1;
+                if (op.selected) algumSelecionado = true;
+            }
+        });
+        if (blocoCond) blocoCond.classList.toggle('d-none', visiveis === 0);
+        selCond.required = visiveis > 0;
+        if (visiveis && !algumSelecionado) {
+            const primeira = Array.from(selCond.options).find(function (op) { return !op.disabled; });
+            if (primeira) selCond.value = primeira.value;
+        }
+    }
+    if (selStatus) {
+        selStatus.addEventListener('change', filtrarCondicao);
+        filtrarCondicao();
+    }
+
+    function ligarOutro(chkId, inputId, selectId, avisoId) {
+        const chk = document.getElementById(chkId);
+        const inp = document.getElementById(inputId);
+        const sel = document.getElementById(selectId);
+        const aviso = avisoId ? document.getElementById(avisoId) : null;
+        if (!chk || !inp) return;
+        chk.addEventListener('change', function () {
+            inp.classList.toggle('d-none', !chk.checked);
+            if (aviso) aviso.classList.toggle('d-none', !chk.checked);
+            if (sel) sel.disabled = chk.checked;
+            if (!chk.checked) inp.value = '';
+        });
+    }
+    ligarOutro('chk_nova_marca', 'nova_marca', 'marca_id', 'aviso-marca-pendente');
+    ligarOutro('chk_novo_modelo', 'novo_modelo', 'modelo_id', null);
+})();
+</script>
 <script>
 (function () {
     const selTipo   = document.getElementById('tipo_equipamento_id');

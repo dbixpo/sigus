@@ -26,7 +26,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente no fluxo do Núcleo (notificação pública, qualificação, comissões, relatórios). Ver [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) |
 | `relatorios` | `/relatorios` | `app/routes/relatorios.py` | Inventário, salas, NSP, mapa, aniversariantes… |
 | `rh` | `/rh` | `app/routes/rh.py` | Faltas abonadas |
-| `frequencia` | `/rh` | `app/routes/frequencia.py` | Importar planilha de frequência, Meus apontamentos, apontamentos da unidade, base de servidores, locais do RH. Ver [FREQUENCIA_RH.md](FREQUENCIA_RH.md) |
+| `frequencia` | `/rh` | `app/routes/frequencia.py` | Importar planilha de frequência, Meus apontamentos, apontamentos da unidade, locais do RH. Ver [FREQUENCIA_RH.md](FREQUENCIA_RH.md) |
 | `solicitacoes` | `/solicitar-vinculo-profissional` | `app/routes/solicitacoes.py` | Cadastro público de vínculo |
 | `usuarios` | `/usuarios` | `app/routes/usuarios.py` | Usuários (quem tem permissão) |
 | `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos (sala com kit padrão, equipamento com catálogo ITEM), marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
@@ -58,7 +58,7 @@ Padrão para divulgar uma tela pública. Na versão interna, um grupo de três b
 
 - O endereço vem de `url_publica('endpoint')` (context processor em `app/__init__.py`): usa `SIGUS_HOST_PUBLICO` do `.env`, para o QR nunca sair com `127.0.0.1` ou `localhost`.
 - Script: `app/static/js/acesso-publico.js`, carregado no `base.html` com `qrcode.min.js`. Botões com `.js-qr-baixar` (`data-url`, `data-titulo`, `data-arquivo` opcional) e `.js-copiar-url` (`data-url`). Também expõe `window.SigusAcessoPublico`.
-- O cartão PNG segue a identidade visual: faixa vermelha/amarela/azul, título (quebra em até 2 linhas, ou no ` · `), QR em `#0D3B5E`, endereço quebrado nas barras e rodapé "SIGUS · Saúde Digital". Endereço relativo vira absoluto; sem `data-arquivo`, o nome do arquivo sai do título.
+- O cartão PNG segue a identidade visual: faixa vermelha/amarela/azul, título (quebra em até 2 linhas, ou no ` · `), QR em `#0D3B5E`, endereço quebrado nas barras e rodapé "SIGUS". Endereço relativo vira absoluto; sem `data-arquivo`, o nome do arquivo sai do título.
 - Modal com prévia do QR: `.js-acesso-publico` abre `#modalAcessoPublico` (no `base.html`), usado em Cadastro Público e Segurança do Paciente.
 - Ao mudar o script, aumente o `?v=` no `base.html` e em `links/publico.html`.
 

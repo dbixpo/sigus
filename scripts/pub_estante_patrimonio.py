@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Publica o capítulo especial de patrimônio (salas, equipamentos, transferências e lojinha)
-no livro Manuais de utilização do SIGUS (Estante SES / BookStack).
+"""Publica o capítulo de patrimônio (salas, equipamentos, transferências e lojinha)
+no livro de manuais do SIGUS (BookStack).
 
-Credenciais só por variável de ambiente. Não versionar senha.
-  ESTANTE_EMAIL  ESTANTE_SENHA
+Credenciais e endereço só por variável de ambiente. Não versionar senha nem URL.
+  ESTANTE_BASE  ESTANTE_EMAIL  ESTANTE_SENHA  SIGUS_PUBLIC_URL
 """
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
-BASE = 'https://estante-ses.sorocaba.sp.gov.br'
-BOOK_ID = 45
-SIGUS_URL = 'https://saudedigital.sorocaba.sp.gov.br/sigus'
+BASE = (os.environ.get('ESTANTE_BASE') or '').rstrip('/')
+BOOK_ID = int(os.environ.get('ESTANTE_BOOK_ID') or '45')
+SIGUS_URL = (os.environ.get('SIGUS_PUBLIC_URL') or '').rstrip('/')
 SHOT = Path(__file__).resolve().parents[1] / 'app' / 'static' / 'uploads' / 'manuais_tmp'
 CHAPTER_NAME = 'Patrimônio: salas, equipamentos, transferências e lojinha'
 
@@ -190,7 +190,7 @@ def pages():
 <p>Existe uma tela <strong>fora do menu logado</strong> para cadastrar salas em lote, unidade por unidade: <strong>Cadastro Externo de Salas</strong>. Serve para mutirão de inventário (apoio no próprio serviço, sem precisar de perfil completo no SIGUS).</p>
 <h2>Como usar</h2>
 <ol>
-<li>Abra o endereço do cadastro externo (a coordenação ou a Saúde Digital envia o link).</li>
+<li>Abra o endereço do cadastro externo (a coordenação envia o link).</li>
 <li>Em <strong>Unidade de Saúde</strong>, busque e selecione a unidade. A lista é grande: digite parte do nome.</li>
 <li>Preencha nome *, tipo, responsável, máximo de profissionais *, ramal e observações — iguais ao cadastro interno.</li>
 <li>Clique em <strong>Salvar e Adicionar outro</strong>. A sala entra na lista de baixo e o formulário fica pronto para a próxima.</li>
@@ -661,6 +661,8 @@ PAGINAS_TRANSFERENCIA = {
 
 
 def main():
+    if not BASE or not SIGUS_URL:
+        sys.exit('Defina ESTANTE_BASE e SIGUS_PUBLIC_URL no ambiente. Não ficam no código.')
     only = None
     if '--somente-transferencias' in sys.argv:
         only = PAGINAS_TRANSFERENCIA

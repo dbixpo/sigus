@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Marcas e modelos pendentes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-stamp"></i> Marcas e modelos para validar</h1>
+</div>
+<p class="text-muted">A unidade pode informar uma marca ou um modelo que ainda não está no catálogo. A SUEQ confirma ou recusa.</p>
+
+<div class="card mb-3">
+    <div class="card-header">Marcas</div>
+    <div class="card-body p-0">
+        {% if marcas %}
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Marca</th><th></th></tr></thead>
+            <tbody>
+                {% for m in marcas %}
+                <tr>
+                    <td>{{ m.nome }}</td>
+                    <td class="text-end">
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="tipo" value="marca">
+                            <input type="hidden" name="item_id" value="{{ m.id }}">
+                            <button name="acao" value="validar" class="btn btn-sm btn-primary">Validar</button>
+                            <button name="acao" value="recusar" class="btn btn-sm btn-outline-danger">Recusar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small p-3 mb-0">Nenhuma marca pendente.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Modelos</div>
+    <div class="card-body p-0">
+        {% if modelos %}
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Modelo</th><th>Marca</th><th>Tipo</th><th></th></tr></thead>
+            <tbody>
+                {% for m in modelos %}
+                <tr>
+                    <td>{{ m.nome }}</td>
+                    <td>{{ m.marca.nome if m.marca else '—' }}</td>
+                    <td>{{ m.tipo_equipamento.nome if m.tipo_equipamento else '—' }}</td>
+                    <td class="text-end">
+                        <form method="POST" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="tipo" value="modelo">
+                            <input type="hidden" name="item_id" value="{{ m.id }}">
+                            <button name="acao" value="validar" class="btn btn-sm btn-primary">Validar</button>
+                            <button name="acao" value="recusar" class="btn btn-sm btn-outline-danger">Recusar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small p-3 mb-0">Nenhum modelo pendente.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

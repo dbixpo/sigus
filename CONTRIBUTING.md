@@ -1,6 +1,6 @@
 # Como alterar o SIGUS
 
-Código aberto (MIT) da Secretaria da Saúde de Sorocaba. Quem mantém a instância da casa: equipe de TI da SES / Saúde Digital (ou a TI do município que implantou).
+Código aberto (MIT) de Diego Bispo Fernandes ([dbixpo](https://github.com/dbixpo)). Quem recebe uma instalação mantém o servidor e o banco dela. O desenvolvimento do dia a dia fica numa cópia local, com PostgreSQL local.
 
 ## Fluxo
 
@@ -9,7 +9,7 @@ Código aberto (MIT) da Secretaria da Saúde de Sorocaba. Quem mantém a instân
 3. Schema: arquivo **novo** em `migrations/add_….py`, idempotente. Não edite migration antiga já rodada em produção.
 4. Permissão nova: entrada em `SECOES` / `ACAO_PARA_SECAO_TIPO` e tela Gestão de Perfis.
 5. Teste local em `http://localhost:5001/sigus/` com perfil de ponta **e** administrador (o menu muda).
-6. PR ou revisão interna. Depois: `git pull` no servidor + script de migration da entrega + reciclar o pool. Playbook: [ATUALIZACAO-SERVIDOR.md](ATUALIZACAO-SERVIDOR.md).
+6. Revisão. Publicar numa instalação que já roda: [ATUALIZACAO-SERVIDOR.md](ATUALIZACAO-SERVIDOR.md). O `.env` e o banco dessa instalação não saem da máquina dela.
 
 ## Não faça
 

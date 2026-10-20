@@ -59,7 +59,7 @@ Não rode a pasta `migrations\` inteira “por garantia”.
 
 ## 5. Reinício
 
-**Em Sorocaba, nunca rode `iisreset`, não recicle o `DefaultAppPool` nem mate `w3wp.exe`:** o mesmo IIS atende o esussamu, que não pode parar. Reinicie só o processo do SIGUS (`python run.py` na porta 5001) com `python scripts\_reiniciar_sigus.py`: ele confere que o PID da porta é mesmo o `run.py`, sobe o servidor em segundo plano sem abrir janela e grava o resultado em `scripts\_reiniciar.log`. Passo a passo: `ATUALIZACAO-SERVIDOR.md`, seção 4. Peça autorização antes de reiniciar.
+**Se o IIS dessa máquina atende outro site, nunca rode `iisreset`, não recicle o pool padrão nem mate `w3wp.exe`.** Reinicie só o processo do SIGUS (`python run.py`) com `python scripts\_reiniciar_sigus.py`: ele confere que o PID da porta é mesmo o `run.py`, sobe o servidor em segundo plano sem abrir janela e grava o resultado em `scripts\_reiniciar.log`. Passo a passo: `ATUALIZACAO-SERVIDOR.md`, seção 4. Peça autorização antes de reiniciar.
 
 Em outra instalação com app pool próprio do SIGUS, recicle só esse pool. Abra `/sigus/login`.
 
@@ -68,7 +68,7 @@ Em outra instalação com app pool próprio do SIGUS, recicle só esse pool. Abr
 1. Login e seletor de unidade.
 2. Relógio no navbar = horário de Brasília.
 3. Dashboard → **Novo comunicado**. Ordem: título → texto → anexo → unidade → cobrar ciência → quem (toda a equipe **ou** perfil **ou** CBO) → publicar.
-4. Com a unidade da Secretaria / Saúde Digital selecionada, modo **Por CBO**: a lista deve trazer CBO de **cadastro e matrícula** (enfermeiro, fisioterapeuta etc.), não só quem tem CBO preenchido no cadastro SIGUS.
+4. Com uma unidade selecionada, modo **Por CBO**: a lista deve trazer CBO de **cadastro e matrícula** (enfermeiro, fisioterapeuta etc.), não só quem tem CBO preenchido no cadastro SIGUS.
 5. Um comunicado antigo com ciência continua abrindo; impresso no modal padrão.
 6. Log: `.\logs\python.log` — se aparecer `ZoneInfoNotFoundError`, o `tzdata` não instalou no venv do IIS.
 

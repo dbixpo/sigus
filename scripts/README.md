@@ -7,22 +7,22 @@ Rode na **raiz** do repositório, com venv e `.env`. Nenhum script deve receber 
 | `scripts/clone_banco.py` | `pg_dump` → `database/sigus_backup_*.sql` (gitignore) |
 | `scripts/restaura_banco.py` | Restaura ZIP ou SQL em `database/` no banco do `.env` |
 | `scripts/reset_usuario_sigus.py` | Troca senha e/ou perfil. Ferramenta correta para admin perdido |
-| `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais na Estante SES (capítulos gerais). `--somente-noticias` atualiza dashboard, comunicados e mural. |
+| `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais no BookStack (capítulos gerais). `--somente-noticias` atualiza dashboard, comunicados e mural. |
 | `scripts/pub_estante_patrimonio.py` | Capítulo patrimônio (salas, equipamentos, transferências, lojinha) |
 | `scripts/importar_schema_sueq.py` | Importa schema/dados SUEQ para o schema `sueq` (não mexe no `public`) |
-| `scripts/_reiniciar_sigus.py` | Reinicia só o `run.py` da porta 5001 (Sorocaba), em segundo plano e sem janela. Aborta se o processo da porta não for o `run.py`. Ver [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md), seção 4 |
+| `scripts/_reiniciar_sigus.py` | Reinicia só o `run.py` da porta 5001, em segundo plano e sem janela. Aborta se o processo da porta não for o `run.py`. Ver [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md), seção 4 |
 
 ## Reset de senha
 
 ```powershell
-.\venv\Scripts\python.exe scripts\reset_usuario_sigus.py --email alguem@sorocaba.sp.gov.br --nova-senha "SenhaForteAqui"
+.\venv\Scripts\python.exe scripts\reset_usuario_sigus.py --email usuario@exemplo.local --nova-senha "SenhaForteAqui"
 ```
 
 Não cole a senha em issue, chat ou commit.
 
-## Estante SES
+## Manuais (BookStack)
 
-Credenciais só no ambiente: `ESTANTE_EMAIL`, `ESTANTE_SENHA`. Prints: pasta temporária `app/static/uploads/manuais_tmp/` (gitignore). Ver [docs/MANUAIS_ESTANTE.md](../docs/MANUAIS_ESTANTE.md).
+No ambiente, nunca no Git: `ESTANTE_BASE`, `SIGUS_PUBLIC_URL`, `ESTANTE_EMAIL`, `ESTANTE_SENHA`. Prints: pasta temporária `app/static/uploads/manuais_tmp/` (gitignore). Ver [docs/MANUAIS_ESTANTE.md](../docs/MANUAIS_ESTANTE.md).
 
 ## SUEQ
 

@@ -129,7 +129,7 @@
 
         ctx.fillStyle = '#1A82B8';
         ctx.font = '700 28px ' + FONTE;
-        ctx.fillText('SIGUS · Saúde Digital', W / 2, yRodape);
+        ctx.fillText('SIGUS', W / 2, yRodape);
         return canvas;
     }
 

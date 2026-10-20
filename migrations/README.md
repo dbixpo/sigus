@@ -53,7 +53,7 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 
 **Identidade da instalação**
 
-- `add_identidade_sistema.py` — textos (município, secretaria, domínio de e-mail) e galeria de assets; seed Sorocaba se a linha 1 não existir
+- `add_identidade_sistema.py` — textos (município, secretaria, domínio de e-mail) e galeria de assets; texto neutro se a linha 1 não existir (não sobrescreve instalação que já tem identidade)
 
 Lista completa: os arquivos `add_*.py` nesta pasta. O nome descreve o que entra no banco.
 

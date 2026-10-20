@@ -1,10 +1,10 @@
-# SIGUS — Produção no IIS (referência Sorocaba)
+# SIGUS — publicar no IIS
 
-Objetivo na casa: a aplicação responder em **https://saudedigital.sorocaba.sp.gov.br/sigus** num Windows Server com IIS.
+A aplicação responde em `https://seu-dominio/sigus` num Windows Server com IIS. O domínio real fica no `.env` daquela máquina (`SIGUS_PUBLIC_HOST`), não neste arquivo.
 
-**Outro município / servidor do zero:** o passo a passo completo (clone, banco vazio, primeiro admin, identidade) está em [INSTALACAO.md](INSTALACAO.md). Este arquivo detalha o IIS no padrão da SES de Sorocaba.
+Instalação do zero (clone, banco vazio, primeiro admin, identidade): [INSTALACAO.md](INSTALACAO.md). Este arquivo é só o IIS.
 
-Caminhos abaixo usam `C:\inetpub\wwwroot\sigus` como **exemplo**. No servidor real, use o caminho físico do aplicativo no IIS.
+Caminhos abaixo usam `C:\inetpub\wwwroot\sigus` como **exemplo**. No servidor, use o caminho físico do aplicativo no IIS.
 
 Para **atualizar** um SIGUS que já roda, não use este arquivo: use [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md).
 
@@ -70,7 +70,7 @@ FLASK_ENV=production
 SECRET_KEY=<chave gerada>
 DATABASE_URL=postgresql://usuario:senha@host:5432/sigus
 APPLICATION_ROOT=/sigus
-SIGUS_PUBLIC_HOST=saudedigital.sorocaba.sp.gov.br
+SIGUS_PUBLIC_HOST=seu-dominio.exemplo
 ```
 
 Senha com `@` na URL: encode como `%40`. Lista completa: `.env.example` e [SEGREDOS_E_INTEGRACOES.md](SEGREDOS_E_INTEGRACOES.md).
@@ -109,7 +109,7 @@ Se o dump for antigo (tabelas `planos` / `acoes_plano`):
 
 ## 6. IIS
 
-1. Gerenciador do IIS → site `saudedigital.sorocaba.sp.gov.br` → **Adicionar Aplicativo**
+1. Gerenciador do IIS → site do domínio desta instalação → **Adicionar Aplicativo**
 2. Alias: `sigus`
 3. Caminho físico: pasta do repositório
 4. Pool dedicado, se possível:
@@ -125,7 +125,7 @@ Se o dump for antigo (tabelas `planos` / `acoes_plano`):
 iisreset
 ```
 
-Abrir https://saudedigital.sorocaba.sp.gov.br/sigus/login
+Abrir `https://seu-dominio/sigus/login`
 
 ## Se falhar
 

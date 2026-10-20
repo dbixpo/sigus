@@ -1,6 +1,6 @@
 # Frequência do RH, apontamentos e base de servidores
 
-Todo mês cada unidade preenche a planilha de frequência (`.xls`/`.xlsx`) e manda ao RH. O SIGUS lê essa planilha, guarda os dados no banco e **descarta o arquivo**. Cada profissional passa a consultar os próprios apontamentos: justificativas do mês, banco de horas e horas extras, com quem lançou.
+Todo mês cada unidade preenche a planilha de frequência (`.xls`, `.xlsx` ou `.ods`) e manda ao RH. O SIGUS lê essa planilha, guarda os dados no banco e **descarta o arquivo**. Cada profissional passa a consultar os próprios apontamentos: justificativas do mês, banco de horas e horas extras, com quem lançou.
 
 Código:
 
@@ -8,9 +8,10 @@ Código:
 - Base do RH e CBO: `app/services/base_rh.py`
 - Modelos e siglas: `app/models/frequencia.py`
 - Rotas: `app/routes/frequencia.py` (blueprint `frequencia`, prefixo `/rh`)
-- Telas: `app/templates/rh/apontamentos*.html`, `rh/frequencia_*.html`, `rh/servidores.html`, `configuracoes/cbos/funcoes_rh.html`
+- Telas: `app/templates/rh/apontamentos*.html`, `rh/frequencia_*.html`, `configuracoes/cbos/funcoes_rh.html`
 - CSS: `app/static/css/frequencia.css`
-- Migration: `migrations/add_frequencia_rh.py`. Dependência: `xlrd` (lê `.xls`); `.xlsx` usa `openpyxl`.
+- Migration: `migrations/add_frequencia_rh.py`. Dependência: `xlrd` (lê `.xls`); `.xlsx` usa `openpyxl`; `.ods` é lido direto do XML do LibreOffice.
+- Falta abonada: cada dia `FA` da aba Justificativas (ou o total da Capa, se o dia não vier marcado) aparece na prévia e, depois de importar, na tela **Faltas abonadas**. Data igual à do perfil fica como lançada na frequência. Data que ainda não existe no perfil entra na conta do ano (limite de 6), sem criar o registro sozinha.
 
 ## Quem faz o quê
 
@@ -19,7 +20,7 @@ Código:
 | Qualquer usuário logado | **Meus apontamentos** (`/rh/apontamentos`): só as próprias matrículas |
 | Gestor local: perfil Gestor de Área, ou papel `gestor_principal`/`gestor_secundario` na unidade | Importar planilhas e ver **Apontamentos da unidade** das suas unidades. Também abre os apontamentos de quem aparece nelas |
 | Gestor central (`gestor_secretaria`) e administrador | Tudo, de todas as unidades. Também o de-para de locais |
-| Quem cadastra usuários | **Base de servidores** e a sugestão de matrícula/CBO no cadastro |
+| Quem cadastra usuários | Sugestão de matrícula/CBO no cadastro, a partir da aba oculta da planilha |
 
 Regra em `unidades_gestao_rh(usuario)` (`None` = todas) e `Usuario.pode_importar_frequencia`.
 
@@ -64,7 +65,7 @@ Excluir uma importação (histórico na mesma tela) tira os apontamentos dela da
 
 ## Base de servidores e CBO
 
-- **Base de servidores** (`/rh/servidores`): busca por nome ou matrícula, mostra função, local, CBO sugerido e se já tem cadastro no SIGUS.
+- A listagem **Base de servidores** não faz parte do sistema. A aba oculta da planilha continua alimentando a sugestão de matrícula no cadastro de usuário (`GET /rh/servidores/buscar`).
 - **Funções do RH × CBO** (Configurações → CBOs → aba): de-para `rh_funcao_cbo`. Sugestão automática pelo nome (`sugerir_cbo`); nada é gravado sem clicar em **Salvar de-para**.
 - **Cadastro de usuário**: ao digitar o nome (ou importar pelo CPF), aparecem as matrículas da base com esse nome. As marcadas são criadas ao salvar (`cadastrar_matriculas_rh`): vínculo empregatício, estatutário, CBO do de-para. Matrícula que já é de outra pessoa não pode ser marcada.
 - **Modal de matrícula**: ao digitar o número, mostra nome, função e local da base e preenche o CBO se estiver vazio.
@@ -81,5 +82,5 @@ Excluir uma importação (histórico na mesma tela) tira os apontamentos dela da
 ## Armadilhas
 
 - Abas e cabeçalhos são achados pelo nome sem acento (`_norm`); a aba "Instruções" é ignorada.
-- `xlrd` 2.x só lê `.xls`. Se alguém salvar como `.xlsx`, quem lê é o `openpyxl` (`data_only`).
+- `xlrd` 2.x só lê `.xls`. `.xlsx` usa o `openpyxl` (`data_only`). `.ods` usa o valor já calculado pelo LibreOffice (`office:value`); se a planilha foi salva sem recalcular, os totais da Capa podem vir vazios.
 - Fórmulas sem valor salvo chegam como `0`: por isso `_txt` descarta números em campos de texto.

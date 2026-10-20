@@ -4,6 +4,8 @@ from flask_login import login_required, current_user
 
 from app import db
 from app.models.falta_abonada import FaltaAbonada
+from app.models.frequencia import competencia_label
+from app.services.faltas_planilha import painel_faltas
 from app.utils import agora_local, hoje_brasilia
 
 rh_bp = Blueprint('rh', __name__, url_prefix='/rh')
@@ -59,19 +61,24 @@ def faltas_abonadas():
     if hoje_brasilia().year not in anos_disponiveis:
         anos_disponiveis.insert(0, hoje_brasilia().year)
 
-    usadas    = len(faltas_ativas)
-    restantes = _LIMITE_ANO - usadas
-    meses_usados = {f.mes for f in faltas_ativas}
-
-    # Todos os pares (ano, mês) com abonada ativa — para o JS bloquear no datepicker
-    todas_ativas = FaltaAbonada.query.filter_by(usuario_id=usuario_id, status='ativa').all()
-    meses_ocupados = [{'ano': f.ano, 'mes': f.mes} for f in todas_ativas]
-
-    # Matrículas e unidades do usuário atual (para o modal de nova abonada)
     from app.models.usuario import Usuario
     usuario_atual = Usuario.query.get(usuario_id)
     matriculas_usuario = [m for m in list(usuario_atual.matriculas) if m.ativo]
     unidades_usuario   = usuario_atual.unidades_ativas
+
+    painel = painel_faltas(usuario_atual, ano)
+    usadas = painel['usadas']
+    restantes = _LIMITE_ANO - usadas
+    n_confirmadas = sum(1 for f in faltas_ativas if f.data_falta in painel['datas_planilha'])
+    meses_usados = {f.mes for f in faltas_ativas}
+    meses_ocupados = [
+        {'ano': a, 'mes': m, 'origem': origem}
+        for (a, m), origem in sorted(painel['meses'].items())
+    ]
+    for a_plan in {a for (a, _mes) in painel['meses']}:
+        if a_plan not in anos_disponiveis:
+            anos_disponiveis.append(a_plan)
+    anos_disponiveis.sort(reverse=True)
 
     return render_template(
         'rh/faltas_abonadas.html',
@@ -89,6 +96,11 @@ def faltas_abonadas():
         usuario_atual=usuario_atual,
         matriculas_usuario=matriculas_usuario,
         unidades_usuario=unidades_usuario,
+        fa_planilha=painel['datas_planilha'],
+        fa_so_planilha=painel['so_planilha'],
+        fa_pode_formalizar=painel['tem_planilha_sem_registro'],
+        n_confirmadas=n_confirmadas,
+        competencia_label=competencia_label,
     )
 
 
@@ -112,21 +124,17 @@ def nova_falta():
     ano = data_falta.year
     mes = data_falta.month
 
-    # Regra 1: máximo 6 ativas por ano
-    total_ano = FaltaAbonada.query.filter_by(usuario_id=current_user.id, status='ativa').filter(
-        db.extract('year', FaltaAbonada.data_falta) == ano
-    ).count()
-    if total_ano >= _LIMITE_ANO:
-        flash(f'Você já atingiu o limite de {_LIMITE_ANO} abonadas ativas em {ano}.', 'danger')
-        return redirect(url_for('rh.faltas_abonadas', ano=ano))
-
-    # Regra 2: no máximo 1 ativa por mês
-    total_mes = FaltaAbonada.query.filter_by(usuario_id=current_user.id, status='ativa').filter(
-        db.extract('year', FaltaAbonada.data_falta) == ano,
-        db.extract('month', FaltaAbonada.data_falta) == mes,
-    ).count()
-    if total_mes >= _LIMITE_MES:
+    painel = painel_faltas(current_user, ano)
+    origem_mes = painel['meses'].get((ano, mes))
+    if origem_mes in ('registro', 'ambos'):
         flash('Já existe uma abonada ativa registrada neste mês.', 'danger')
+        return redirect(url_for('rh.faltas_abonadas', ano=ano))
+    if painel['usadas'] >= _LIMITE_ANO and origem_mes != 'planilha':
+        flash(
+            f'Você já atingiu o limite de {_LIMITE_ANO} faltas abonadas em {ano}, '
+            'contando o que já foi lançado na frequência.',
+            'danger',
+        )
         return redirect(url_for('rh.faltas_abonadas', ano=ano))
 
     # Unidade: usa a selecionada no modal; fallback para principal
@@ -184,20 +192,17 @@ def reativar_falta(id):
     ano = falta.ano
     mes = falta.mes
 
-    # Revalida limites antes de reativar
-    total_ano = FaltaAbonada.query.filter_by(usuario_id=falta.usuario_id, status='ativa').filter(
-        db.extract('year', FaltaAbonada.data_falta) == ano
-    ).count()
-    if total_ano >= _LIMITE_ANO:
-        flash(f'Não é possível reativar: limite de {_LIMITE_ANO} abonadas ativas em {ano} já foi atingido.', 'danger')
-        return redirect(url_for('rh.faltas_abonadas', ano=ano, historico='1'))
-
-    total_mes = FaltaAbonada.query.filter_by(usuario_id=falta.usuario_id, status='ativa').filter(
-        db.extract('year', FaltaAbonada.data_falta) == ano,
-        db.extract('month', FaltaAbonada.data_falta) == mes,
-    ).count()
-    if total_mes >= _LIMITE_MES:
+    painel = painel_faltas(falta.usuario, ano)
+    origem_mes = painel['meses'].get((ano, mes))
+    if origem_mes in ('registro', 'ambos'):
         flash('Não é possível reativar: já existe uma abonada ativa neste mês.', 'danger')
+        return redirect(url_for('rh.faltas_abonadas', ano=ano, historico='1'))
+    if painel['usadas'] >= _LIMITE_ANO and origem_mes != 'planilha':
+        flash(
+            f'Não é possível reativar: limite de {_LIMITE_ANO} faltas abonadas em {ano} já foi atingido, '
+            'contando o que já foi lançado na frequência.',
+            'danger',
+        )
         return redirect(url_for('rh.faltas_abonadas', ano=ano, historico='1'))
 
     falta.status              = 'ativa'

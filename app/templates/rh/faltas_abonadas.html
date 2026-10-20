@@ -5,7 +5,7 @@
 <div class="page-header">
     <h1><i class="fas fa-calendar-check"></i> Faltas Abonadas</h1>
     <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNovaAbonada"
-            {% if restantes <= 0 %}disabled title="Limite de {{ limite }} abonadas ativas atingido para {{ ano }}"{% endif %}>
+            {% if restantes <= 0 and not fa_pode_formalizar %}disabled title="Limite de {{ limite }} faltas abonadas atingido para {{ ano }}"{% endif %}>
         <i class="fas fa-plus-circle me-1"></i>Nova Falta Abonada
     </button>
 </div>
@@ -21,7 +21,12 @@
 
 {# ── Mini-cards ── #}
 <div class="mini-stats mb-3">
-    <span class="mini-stat">Ativas em {{ ano }}: <strong>{{ usadas }}</strong></span>
+    <span class="mini-stat">Usadas em {{ ano }}: <strong>{{ usadas }}</strong></span>
+    <span class="mini-stat">No perfil: <strong>{{ faltas_ativas | length }}</strong></span>
+    <span class="mini-stat">Confirmadas na frequência: <strong>{{ n_confirmadas }}</strong></span>
+    {% if fa_so_planilha %}
+    <span class="mini-stat">Só na planilha: <strong>{{ fa_so_planilha | length }}</strong></span>
+    {% endif %}
     <span class="mini-stat">Restantes:
         <strong style="color:{{ 'var(--bs-danger)' if restantes <= 0 else 'var(--bs-success)' }}">
             {{ restantes }}
@@ -36,7 +41,7 @@
 {# ── Barra de progresso ── #}
 <div class="mb-3">
     <div class="d-flex justify-content-between mb-1">
-        <small class="text-muted">{{ usadas }} de {{ limite }} abonadas ativas em {{ ano }}</small>
+        <small class="text-muted">{{ usadas }} de {{ limite }} em {{ ano }}, somando o perfil e a frequência importada</small>
         <small class="text-muted fw-semibold">{{ (usadas / limite * 100) | int }}%</small>
     </div>
     <div class="progress" style="height:8px;">
@@ -89,6 +94,7 @@
                         <th>Unidade</th>
                         <th>Função Declarada</th>
                         <th>Registrado em</th>
+                        <th>Frequência</th>
                         <th style="width:110px"></th>
                     </tr>
                 </thead>
@@ -109,6 +115,28 @@
                         <td class="small text-muted">{{ f.unidade.nome if f.unidade else '—' }}</td>
                         <td class="small">{{ f.funcao }}</td>
                         <td class="small text-muted">{{ f.criado_em | br_datetime }}</td>
+                        <td class="small">
+                            {% set conf = fa_planilha.get(f.data_falta) %}
+                            {% if conf %}
+                            <span class="badge bg-success">Lançada na frequência</span>
+                            <span class="d-block text-muted">{{ conf.local }} · {{ competencia_label(conf.competencia) }}</span>
+                            {% else %}
+                            {% set outras = [] %}
+                            {% for item in fa_so_planilha %}
+                                {% if item.data and item.data.year == f.data_falta.year and item.data.month == f.data_falta.month %}
+                                    {% set _ = outras.append(item) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if outras %}
+                            <span class="badge bg-warning text-dark">Data diferente da planilha</span>
+                            {% for item in outras %}
+                            <span class="d-block text-muted">Planilha: {{ item.data.strftime('%d/%m/%Y') }} · {{ item.local }}</span>
+                            {% endfor %}
+                            {% else %}
+                            <span class="text-muted">Ainda não apareceu na planilha importada</span>
+                            {% endif %}
+                            {% endif %}
+                        </td>
                         <td>
                             <div class="d-flex gap-1">
                                 <button type="button"
@@ -132,7 +160,42 @@
                 </tbody>
             </table>
         </div>
-        {% else %}
+        {% endif %}
+
+        {% if fa_so_planilha %}
+        <div class="px-3 py-2 border-top bg-light small fw-semibold">
+            Lançadas na frequência e ainda sem este registro no perfil
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Matrícula</th>
+                        <th>Nome na planilha</th>
+                        <th>Local</th>
+                        <th>Competência</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in fa_so_planilha %}
+                    <tr>
+                        <td class="fw-semibold">
+                            {% if item.data %}{{ item.data.strftime('%d/%m/%Y') }}
+                            {% else %}{{ item.quantidade }} dia(s), sem o dia marcado{% endif %}
+                        </td>
+                        <td class="small text-muted">{{ item.matricula }}</td>
+                        <td class="small">{{ item.nome or '—' }}</td>
+                        <td class="small text-muted">{{ item.local }}</td>
+                        <td class="small text-muted">{{ competencia_label(item.competencia) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if not faltas_ativas and not fa_so_planilha %}
         <div class="empty-state py-5 text-center text-muted">
             <i class="fas fa-calendar-x fs-1 d-block mb-3 opacity-25"></i>
             <h6>Nenhuma falta abonada ativa em {{ ano }}.</h6>
@@ -342,12 +405,24 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnSubmit  = document.querySelector('#modalNovaAbonada button[type="submit"]');
 
     function mesOcupado(ano, mes) {
-        return MESES_OCUPADOS.some(function (m) { return m.ano === ano && m.mes === mes; });
+        return MESES_OCUPADOS.some(function (m) {
+            return m.ano === ano && m.mes === mes && m.origem !== 'planilha';
+        });
     }
 
-    function anoLotado(ano) {
-        var count = MESES_OCUPADOS.filter(function (m) { return m.ano === ano; }).length;
-        return count >= LIMITE_ANO;
+    function mesNaPlanilha(ano, mes) {
+        return MESES_OCUPADOS.some(function (m) {
+            return m.ano === ano && m.mes === mes && m.origem === 'planilha';
+        });
+    }
+
+    function anoLotado(ano, mes) {
+        var chaves = {};
+        MESES_OCUPADOS.forEach(function (m) {
+            if (m.ano === ano) chaves[m.mes] = true;
+        });
+        if (Object.keys(chaves).length < LIMITE_ANO) return false;
+        return !(mesNaPlanilha(ano, mes) && !mesOcupado(ano, mes));
     }
 
     function atualizarLegenda(ano) {
@@ -380,7 +455,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 '. Escolha outro mês ou cancele a existente para registrar uma nova.';
             aviso.style.display = '';
             if (btnSubmit) btnSubmit.disabled = true;
-        } else if (anoLotado(ano)) {
+        } else if (anoLotado(ano, mes)) {
             avisoTexto.textContent =
                 'Você já atingiu o limite de ' + LIMITE_ANO + ' abonadas ativas em ' + ano + '.';
             aviso.style.display = '';

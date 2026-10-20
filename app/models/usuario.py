@@ -479,6 +479,30 @@ class Usuario(UserMixin, db.Model):
         
         return False
 
+    def pode_gerir_patrimonio(self):
+        from app.services.inventario_acesso import gestor_patrimonio
+        return gestor_patrimonio(self)
+
+    def pode_informacoes_sueq(self):
+        from app.services.inventario_acesso import pode_informacoes_adicionais
+        return pode_informacoes_adicionais(self)
+
+    def pode_lancar_inventario(self, unidade):
+        from app.services.inventario_acesso import pode_incluir
+        return pode_incluir(self, unidade)
+
+    def pode_corrigir_inventario(self, unidade):
+        from app.services.inventario_acesso import pode_corrigir_cadastro
+        return pode_corrigir_cadastro(self, unidade)
+
+    def pode_alterar_estado_equipamento(self, unidade):
+        from app.services.inventario_acesso import pode_alterar_estado
+        return pode_alterar_estado(self, unidade)
+
+    def pode_anexar_prontuario(self, unidade):
+        from app.services.inventario_acesso import pode_anexar_documento
+        return pode_anexar_documento(self, unidade)
+
     def __repr__(self):
         return f'<Usuario {self.email} [{self.perfil}]>'
 

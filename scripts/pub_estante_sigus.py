@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Publica o manual de utilização do SIGUS na Estante SES (BookStack).
+"""Publica o manual de utilização do SIGUS num BookStack.
 
-Credenciais só por variável de ambiente. Não versionar senha.
-  ESTANTE_EMAIL  ESTANTE_SENHA
+Credenciais e endereço só por variável de ambiente. Não versionar senha nem URL.
+  ESTANTE_BASE  ESTANTE_EMAIL  ESTANTE_SENHA  SIGUS_PUBLIC_URL
 """
 from __future__ import annotations
 
@@ -16,9 +16,9 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parents[1] / '.env')
 
-BASE = 'https://estante-ses.sorocaba.sp.gov.br'
-BOOK_ID = 45
-SIGUS_URL = 'https://saudedigital.sorocaba.sp.gov.br/sigus'
+BASE = (os.environ.get('ESTANTE_BASE') or '').rstrip('/')
+BOOK_ID = int(os.environ.get('ESTANTE_BOOK_ID') or '45')
+SIGUS_URL = (os.environ.get('SIGUS_PUBLIC_URL') or '').rstrip('/')
 SHOT = Path(__file__).resolve().parents[1] / 'app' / 'static' / 'uploads' / 'manuais_tmp'
 
 
@@ -92,8 +92,8 @@ def strip_shot_placeholders(html: str) -> str:
 
 BOOK_DESC = (
     '<p>Aqui você encontra os manuais operacionais do <strong>SIGUS</strong> — '
-    'Sistema Integrado de Gestão das Unidades de Saúde da Secretaria da Saúde de Sorocaba.</p>'
-    '<p>O SIGUS é a ferramenta da Saúde Digital para a gestão da unidade: patrimônio, '
+    'Sistema Integrado de Gestão das Unidades de Saúde.</p>'
+    '<p>O SIGUS é a ferramenta de gestão da unidade: patrimônio, '
     'chamados, planejamentos, agenda, segurança do paciente, pessoas, contratos, '
     'comunicados com ciência e o mural de ações da rede. '
     'Ele <strong>não substitui o SISWEB</strong> (prontuário e atendimento). Os dois sistemas se complementam.</p>'
@@ -112,7 +112,7 @@ CHAPTERS = [
                 'name': 'O que é o SIGUS',
                 'shots': [('dash', 'Dashboard do SIGUS depois do login, com os cartões da rede')],
                 'html': f'''
-<p>O <strong>SIGUS</strong> (Sistema Integrado de Gestão das Unidades de Saúde) é o sistema da Saúde Digital para organizar o dia a dia das unidades da rede municipal de Sorocaba: o prédio, as salas, os equipamentos, os chamados de manutenção, os planejamentos, a agenda, as pessoas e a segurança do paciente.</p>
+<p>O <strong>SIGUS</strong> (Sistema Integrado de Gestão das Unidades de Saúde) organiza o dia a dia das unidades: o prédio, as salas, os equipamentos, os chamados de manutenção, os planejamentos, a agenda, as pessoas e a segurança do paciente.</p>
 <p>Pense nele como a “gestão da casa”. O atendimento clínico do cidadão continua no <strong>SISWEB</strong>. O SIGUS cuida do que faz a unidade funcionar.</p>
 {{SHOT0}}
 <h2>O que você encontra no sistema</h2>
@@ -152,7 +152,7 @@ CHAPTERS = [
 <h2>Passo a passo do login</h2>
 <ol>
 <li>Acesse <a href="{SIGUS_URL}">{SIGUS_URL}</a>.</li>
-<li>No campo <strong>E-mail</strong>, digite seu usuário. Pode ser o endereço completo (<em>nome@sorocaba.sp.gov.br</em>) ou só a parte antes do @ — o sistema completa o domínio da Prefeitura.</li>
+<li>No campo <strong>E-mail</strong>, digite seu usuário. Pode ser o endereço completo ou só a parte antes do @ — o sistema completa o domínio cadastrado na instalação.</li>
 <li>Digite sua <strong>senha</strong>. O ícone do olho mostra ou esconde o que você digitou.</li>
 <li>Se estiver no seu computador de trabalho, pode marcar <strong>Lembrar-me</strong>.</li>
 <li>Clique em <strong>Entrar</strong>.</li>
@@ -163,7 +163,7 @@ CHAPTERS = [
 <ul>
 <li>Confira se o e-mail está certo e se o teclado não está em maiúsculas (Caps Lock).</li>
 <li>Se a senha foi redefinida recentemente, use a nova senha — a antiga deixa de valer.</li>
-<li>Se a tela disser que o usuário está inativo, a coordenação ou a Saúde Digital precisa reativar o cadastro.</li>
+<li>Se a tela disser que o usuário está inativo, a coordenação ou quem administra o sistema precisa reativar o cadastro.</li>
 </ul>
 {c('warning', 'ATENÇÃO:', 'O login é pessoal e intransferível. Tudo o que você registra (chamado, notificação, falta abonada) fica auditado no seu usuário.')}
 <h2>Primeiro acesso e vínculo com a unidade</h2>
@@ -291,7 +291,7 @@ CHAPTERS = [
 <p class="callout warning"><strong>IMPORTANTE:</strong> Sem CPF no seu cadastro o SIGUS não registra a ciência. Peça à coordenação para completar o perfil. CPF de outra pessoa é recusado.</p>
 <p>Ficam gravados: data e hora, IP, unidade em que você estava logado, origem (assinatura na tela) e a imagem da assinatura.</p>
 <h2>Quem já assinou e o impresso</h2>
-<p>Quem publica (e o autor) vê, à direita, quem ainda falta e quem já cientificou — com a assinatura. O botão <strong>Imprimir</strong> abre o modal padrão do SIGUS (logo da Prefeitura, termo de ciência).</p>
+<p>Quem publica (e o autor) vê, à direita, quem ainda falta e quem já cientificou — com a assinatura. O botão <strong>Imprimir</strong> abre o modal padrão do SIGUS (logo da instalação, termo de ciência).</p>
 {SHOT2}
 <p>No impresso, o <strong>CPF aparece anonimizado</strong> embaixo do nome, no formato da LGPD: <em>000.***.**0-00</em> (só o começo, o 9º dígito e os dois finais). A coluna <strong>Origem</strong> continua (assinatura na tela, autor na publicação etc.).</p>
 <p class="callout info"><strong>LGPD:</strong> o CPF completo fica só no registro interno de auditoria. Papel e PDF da equipe não levam o número inteiro.</p>
@@ -382,7 +382,7 @@ CHAPTERS = [
 {SHOT1}
 <p class="callout info"><strong>Dica:</strong> Equipamento sem sala certa vira chamado e transferência confusos. Mantenha a aba de salas e a de equipamentos alinhadas com o que existe de verdade no prédio.</p>
 <h2>Impressos do SIGUS</h2>
-<p>Várias telas têm o botão <strong>Imprimir</strong>. No SIGUS o padrão é abrir um <strong>quadro (modal)</strong> com a pré-visualização do documento institucional (logo da Prefeitura, Secretaria da Saúde, campos e espaço para assinatura). De lá você escolhe <strong>Imprimir / Salvar PDF</strong>.</p>
+<p>Várias telas têm o botão <strong>Imprimir</strong>. No SIGUS o padrão é abrir um <strong>quadro (modal)</strong> com a pré-visualização do documento (logo da instalação, campos e espaço para assinatura). De lá você escolhe <strong>Imprimir / Salvar PDF</strong>.</p>
 {SHOT2}
 <p class="callout success"><strong>Vale para:</strong> chamado, segurança do paciente, falta abonada, termo de transferência, planejamento, contrato e <strong>termo de ciência de comunicado</strong> — o visual é o mesmo padrão da casa.</p>
 '''
@@ -696,7 +696,7 @@ CHAPTERS = [
                     ('cfg-tipos', 'Tipos de ação do mural, no padrão dos temas para saúde do e-SUS APS'),
                 ],
                 'html': '''
-<p>Área sensível. Em geral é da Saúde Digital / administração do sistema, com apoio da coordenação.</p>
+<p>Área sensível. Em geral é de quem administra o sistema, com apoio da coordenação.</p>
 {SHOT0}
 <h2>Gestão de perfis</h2>
 <p>Em <strong>Configurações → Gestão de Perfis</strong> cada perfil ganha Ver / Editar / Adicionar por seção. Mudar aqui altera o menu de todo mundo daquele perfil.</p>
@@ -706,7 +706,7 @@ CHAPTERS = [
 <p>Os selects da notificação (status, classificação, tipo de incidente, setor, destino…) não estão fixos no código. Inclua, desative ou marque “pede texto Outro” e “jamais deveria ocorrer” em <strong>Configurações → Segurança do Paciente</strong>. Item desativado some dos formulários novos e permanece no histórico antigo.</p>
 {SHOT2}
 <h2>Identidade da instalação</h2>
-<p>Em <strong>Configurações → Identidade e assets</strong> (só administrador) ficam município, secretaria, domínio de e-mail e as imagens do login, da barra lateral e dos impressos (logo, favicon, brasão). Sem arquivo enviado, vale o padrão de Sorocaba. A paleta de cores do SIGUS não muda nesta tela.</p>
+<p>Em <strong>Configurações → Identidade e assets</strong> (só administrador) ficam município, secretaria, domínio de e-mail e as imagens do login, da barra lateral e dos impressos (logo, favicon, brasão). Sem arquivo enviado, o texto fica neutro até alguém preencher. A paleta de cores do SIGUS não muda nesta tela.</p>
 {SHOT3}
 <h2>Tipos de ação (mural)</h2>
 <p>Os temas do mural seguem a Ficha de Atividade Coletiva do e-SUS APS e podem ganhar item novo ou ser desativados em <strong>Configurações → Tipos de ação (mural)</strong>.</p>
@@ -866,6 +866,8 @@ def publish(s: requests.Session, chapters=None) -> None:
 
 
 def main():
+    if not BASE or not SIGUS_URL:
+        sys.exit('Defina ESTANTE_BASE e SIGUS_PUBLIC_URL no ambiente. Não ficam no código.')
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument(

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Leitura da planilha de frequência mensal enviada ao RH (.xls ou .xlsx).
+"""Leitura da planilha de frequência mensal enviada ao RH (.xls, .xlsx ou .ods).
 
 Tudo é ligado pela matrícula: nas abas fora da Capa o nome e a função são fórmulas
 que o arquivo nem sempre traz calculadas.
@@ -158,7 +158,7 @@ def _local(linhas, nome_arquivo):
             return c.upper()
     if candidatos:
         return max(candidatos, key=len).upper()
-    base = re.sub(r'\.(xlsx?|xlsm)$', '', nome_arquivo or '', flags=re.I).strip()
+    base = re.sub(r'\.(xlsx?|xlsm|ods)$', '', nome_arquivo or '', flags=re.I).strip()
     return base.upper() or None
 
 
@@ -177,6 +177,108 @@ _TOTAIS_CAPA = {
 }
 
 
+_ODS_TABLE = '{urn:oasis:names:tc:opendocument:xmlns:table:1.0}'
+_ODS_OFFICE = '{urn:oasis:names:tc:opendocument:xmlns:office:1.0}'
+_ODS_TEXT = '{urn:oasis:names:tc:opendocument:xmlns:text:1.0}'
+_ODS_LARGURA = 64
+
+
+def _valor_celula_ods(cell):
+    """Número calculado quando o LibreOffice gravou office:value; senão o texto visível."""
+    tipo = cell.get(f'{_ODS_OFFICE}value-type')
+    bruto = cell.get(f'{_ODS_OFFICE}value')
+    if tipo == 'float' and bruto not in (None, ''):
+        try:
+            return float(bruto)
+        except ValueError:
+            pass
+    if tipo == 'date':
+        bruto_data = cell.get(f'{_ODS_OFFICE}date-value')
+        if bruto_data:
+            try:
+                return datetime.fromisoformat(bruto_data[:19])
+            except ValueError:
+                pass
+    textos = []
+    for no in cell.iter(f'{_ODS_TEXT}p'):
+        if no.text:
+            textos.append(no.text)
+        for filho in no:
+            if filho.tail:
+                textos.append(filho.tail)
+    txt = re.sub(r'\s+', ' ', ''.join(textos)).strip()
+    return txt or None
+
+
+def _ler_ods(conteudo):
+    import zipfile
+    from xml.etree import ElementTree as ET
+    try:
+        with zipfile.ZipFile(io.BytesIO(conteudo)) as pacote:
+            raiz = ET.fromstring(pacote.read('content.xml'))
+    except Exception:
+        raise PlanilhaInvalida('Não consegui abrir o arquivo .ods. Confira se é a planilha de frequência do RH.')
+
+    abas = {}
+    for tabela in raiz.iter(f'{_ODS_TABLE}table'):
+        linhas = []
+        for row in tabela.iter(f'{_ODS_TABLE}table-row'):
+            linha = []
+            for cell in list(row):
+                tag = cell.tag
+                if tag not in (f'{_ODS_TABLE}table-cell', f'{_ODS_TABLE}covered-table-cell'):
+                    continue
+                repetidas = int(cell.get(f'{_ODS_TABLE}number-columns-repeated') or 1)
+                valor = None if tag.endswith('covered-table-cell') else _valor_celula_ods(cell)
+                falta = _ODS_LARGURA - len(linha)
+                if falta <= 0:
+                    break
+                linha.extend([valor] * min(repetidas, falta))
+            vezes = int(row.get(f'{_ODS_TABLE}number-rows-repeated') or 1)
+            if not any(v is not None and v != '' for v in linha):
+                vezes = 1
+            else:
+                vezes = min(vezes, 20)
+            for _ in range(vezes):
+                linhas.append(list(linha))
+        abas[_norm(tabela.get(f'{_ODS_TABLE}name'))] = linhas
+    return abas
+
+
+def faltas_abonadas_nos_lancamentos(lancamentos, competencia):
+    """Dias marcados FA na planilha. Sem o dia na aba Justificativas, fica só a quantidade da Capa."""
+    if isinstance(competencia, str):
+        competencia = date.fromisoformat(competencia)
+    saida = []
+    for lanc in lancamentos or []:
+        datas = []
+        for dia, sigla in (lanc.get('dias') or {}).items():
+            if _norm(sigla) != 'FA':
+                continue
+            try:
+                datas.append(date(competencia.year, competencia.month, int(dia)))
+            except (TypeError, ValueError):
+                continue
+        if datas:
+            for dt in sorted(datas):
+                saida.append({
+                    'matricula': lanc.get('matricula'),
+                    'nome': lanc.get('nome'),
+                    'data': dt,
+                    'quantidade': 1,
+                })
+            continue
+        qtd = _num((lanc.get('totais') or {}).get('FA')) or 0
+        if qtd > 0:
+            saida.append({
+                'matricula': lanc.get('matricula'),
+                'nome': lanc.get('nome'),
+                'data': None,
+                'quantidade': int(round(qtd)),
+            })
+    return saida
+
+
 def ler_planilha(conteudo, nome_arquivo):
     """Converte a planilha em dados. Levanta PlanilhaInvalida com mensagem amigável."""
     ext = (nome_arquivo or '').lower().rsplit('.', 1)[-1]
@@ -185,8 +287,10 @@ def ler_planilha(conteudo, nome_arquivo):
             abas = _ler_xls(conteudo)
         elif ext in ('xlsx', 'xlsm'):
             abas = _ler_xlsx(conteudo)
+        elif ext == 'ods':
+            abas = _ler_ods(conteudo)
         else:
-            raise PlanilhaInvalida('Envie a planilha no formato .xls ou .xlsx.')
+            raise PlanilhaInvalida('Envie a planilha no formato .xls, .xlsx ou .ods.')
     except PlanilhaInvalida:
         raise
     except Exception:

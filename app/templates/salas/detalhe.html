@@ -20,7 +20,7 @@
         {% endif %}
     </h1>
     <div class="d-flex gap-2">
-        {% if current_user.pode('cadastrar_equipamento') %}
+        {% if current_user.pode_lancar_inventario(sala.unidade) %}
         <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary btn-sm">
             <i class="fas fa-plus-circle me-1"></i>Novo Equipamento
         </a>
@@ -119,7 +119,7 @@
         <div class="empty-state">
             <i class="fas fa-desktop"></i>
             <h6>Nenhum equipamento cadastrado nesta sala</h6>
-            {% if current_user.pode('cadastrar_equipamento') %}
+            {% if current_user.pode_lancar_inventario(sala.unidade) %}
             <a href="{{ url_for('equipamentos.novo', sala_id=sala.id) }}" class="btn btn-primary mt-2">Cadastrar Equipamento</a>
             {% endif %}
         </div>
@@ -256,7 +256,7 @@
             </table>
         </div>
         <div class="px-3 py-2 text-muted small border-top">
-            Conta os equipamentos ativos desta sala, exceto os baixados. O custo usa o valor de referência do catálogo de itens.
+            Conta os equipamentos ativos desta sala, exceto os inservíveis. O custo usa o valor de referência do catálogo de itens.
             {% if aderencia.sem_profissionais %}
             <div class="text-warning-emphasis mt-1"><i class="fas fa-exclamation-triangle me-1"></i>
                 Esta sala está com 0 profissionais simultâneos, então os itens "por profissional" esperam 0.

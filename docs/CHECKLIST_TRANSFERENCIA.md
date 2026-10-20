@@ -1,36 +1,39 @@
 # Checklist — assumir o SIGUS
 
-Use no primeiro dia em que a TI receber o repositório. Marque o que já estiver resolvido; o que faltar, resolva **antes** de mexer em produção.
+Use no primeiro dia em que outra pessoa for manter uma instalação. O repositório é o código (MIT, Diego Bispo Fernandes / [dbixpo](https://github.com/dbixpo)). Servidor, senha e banco **não** estão aqui. Anote o que falta num caderno da equipe, não neste arquivo.
 
-## Acesso
+## Acesso (fora do Git)
 
-- [ ] Clone de https://github.com/dbixpo/sigus (público) ou o remoto que a SES definir
-- [ ] Acesso RDP / console no Windows Server onde o IIS responde `saudedigital.sorocaba.sp.gov.br`
-- [ ] Caminho físico da aplicação no servidor (hoje, em geral sob `inetpub` ou pasta equivalente — **confira no IIS**, não neste arquivo)
-- [ ] Conta PostgreSQL de produção (host, porta, banco `sigus`, usuário). A URL fica só no `.env` do servidor
-- [ ] Pool IIS da aplicação `sigus` (CLR = Nenhum código gerenciado)
-- [ ] Pasta de logs da aplicação e permissão de escrita da conta do pool
-- [ ] Acesso à [Estante SES](https://estante-ses.sorocaba.sp.gov.br) se for atualizar manuais
-- [ ] Se for manter a busca de paciente no NSP: caminho e credenciais do robô SIS (`SIS_CONSULTA_PATH`, `SIS_USUARIO`, `SIS_SENHA`) — **nunca no Git**
+- [ ] Clone de https://github.com/dbixpo/sigus
+- [ ] Acesso ao Windows Server onde o IIS publica o aplicativo `/sigus` (caminho físico: olhar no IIS, não neste repositório)
+- [ ] Conta PostgreSQL daquela instalação (host, porta, banco, usuário). A URL fica só no `.env` do servidor
+- [ ] Nome do pool IIS (CLR = Nenhum código gerenciado) e permissão de escrita em `logs\` e `app\static\uploads\`
+- [ ] Se a busca de paciente no NSP estiver ligada: caminho e credenciais do robô (`SIS_CONSULTA_PATH`, `SIS_USUARIO`, `SIS_SENHA`) — **nunca no Git**
 
 ## Conferir no servidor (sem alterar ainda)
 
-1. `git status` e `git log -1` na pasta da aplicação — deve estar no `main` (ou no branch que a casa usar).
-2. Existe `.env`? Tem `SECRET_KEY` forte, `DATABASE_URL`, `FLASK_ENV=production`, `APPLICATION_ROOT=/sigus`?
-3. `web.config` aponta para o `python.exe` certo (venv ou global)?
-4. Pasta `logs\` existe e o `logs\python.log` gira?
-5. `app\static\uploads\nsp` e demais pastas de upload existem (gitignore; o IIS precisa gravar)?
-6. Abrir https://saudedigital.sorocaba.sp.gov.br/sigus/login — login, seletor de unidade, um chamado, uma ficha de unidade.
+1. `git status` e `git log -1` na pasta da aplicação.
+2. Existe `.env`? Tem `SECRET_KEY` forte, `DATABASE_URL` **dessa** máquina, `FLASK_ENV=production`, `APPLICATION_ROOT=/sigus`?
+3. `SIGUS_BEHIND_PROXY=1` e `SIGUS_PUBLIC_HOST` com o host público **dessa** instalação?
+4. `web.config` aponta para o `python.exe` do venv desta pasta?
+5. `logs\python.log` gira?
+6. Pastas de upload existem (gitignore; o processo precisa gravar)?
+7. Abrir o login no host da instalação: entrar, escolher unidade, abrir um chamado e uma ficha de unidade.
 
 ## Rotina depois de assumir
 
 - Atualização de código: [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md)
-- Schema novo: criar `migrations/add_….py` **idempotente** e documentar no PR / no playbook
-- Senha de usuário: `scripts/reset_usuario_sigus.py` — **não** use `migrations/recriar_admin.py` em produção (ele apaga todos os administradores)
+- Schema novo: `migrations/add_….py` idempotente, citado no que for entregue
+- Senha de usuário: `scripts/reset_usuario_sigus.py`
+- **Não** rode `migrations/recriar_admin.py` num banco que já tem gente (ele apaga todos os administradores)
 
-## Troca de guarda (obrigatório)
+## Troca de guarda
 
-- [ ] Rotacionar a senha do administrador de aplicação (não reutilizar senha que já tenha aparecido em script, chat ou máquina de desenvolvimento)
-- [ ] Confirmar que o `.env` de produção **não** está no Git (`git check-ignore -v .env`)
-- [ ] Confirmar que dumps e uploads de produção **não** estão no Git
-- [ ] Anotar neste checklist (ou na wiki da TI) o caminho real do site no IIS e o nome do Application Pool
+- [ ] Trocar a senha do administrador da aplicação (não reutilizar senha que tenha aparecido em script, chat ou notebook)
+- [ ] `git check-ignore -v .env` no servidor — o `.env` não pode estar no Git
+- [ ] Dumps e uploads dessa instalação não estão no Git
+- [ ] Anotar, fora deste repositório, o caminho do site no IIS e o nome do pool
+
+## Desenvolvimento em outro computador
+
+Quem mexe no código usa PostgreSQL **local** e o `.env` de [`.env.example`](../.env.example). A `DATABASE_URL` do notebook não é a do servidor. Passo a passo: [BANCO.md](BANCO.md) e o README.

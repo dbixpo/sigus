@@ -6,7 +6,7 @@ from app.models.tipo_sala import TipoSala, KitPadraoSala
 from app.models.sala import Sala
 from app.models.equipamento import (
     TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,
-    Equipamento, EquipamentoCampoValor, EquipamentoUsuario
+    Equipamento, EquipamentoCampoValor, EquipamentoUsuario, EquipamentoDocumento,
 )
 from app.models.chamado import Divisao, SetorManutencao, UsuarioSetor, Chamado, ChamadoHistorico, ChamadoFoto, ChamadoSolicitacaoItem, AnexoAndamento, ChamadoAtribuido
 from app.models.status_chamado import StatusChamado

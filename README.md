@@ -1,26 +1,24 @@
 # SIGUS
 
-**Sistema Integrado de Gestão das Unidades de Saúde** — software livre da Secretaria da Saúde de Sorocaba (Saúde Digital), para outras prefeituras usarem e adaptarem.
+**Sistema Integrado de Gestão das Unidades de Saúde.** Software livre de **Diego Bispo Fernandes** ([dbixpo](https://github.com/dbixpo)), licença [MIT](LICENSE).
 
-O SIGUS é a “gestão da casa”: patrimônio, chamados, planejamentos, agenda, pessoas, contratos, emendas e Segurança do Paciente. **Não é prontuário.** O atendimento clínico continua no sistema da casa (em Sorocaba, o **SISWEB**).
+O SIGUS é a gestão da unidade: patrimônio, chamados, planejamentos, agenda, pessoas, contratos, emendas e Segurança do Paciente. **Não é prontuário.** O atendimento clínico continua no sistema clínico da rede.
 
 | | |
 |---|---|
 | Código | https://github.com/dbixpo/sigus |
-| Licença | [MIT](LICENSE)                        |
-| Manuais da ponta (Sorocaba) | [Estante SES](https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sigus) |
+| Licença | [MIT](LICENSE) — Diego Bispo Fernandes |
 | Stack | Python 3.10/3.11, Flask, PostgreSQL, IIS + HttpPlatformHandler |
-| Entrada | `run.py` (Waitress em produção, Flask debug em desenvolvimento) |
-| Prefixo | Sempre `/sigus` (`APPLICATION_ROOT`) |
+| Entrada | `run.py` (Flask em desenvolvimento, Waitress atrás do IIS) |
+| Prefixo | `/sigus` (`APPLICATION_ROOT`) |
 
-**Município novo:** comece por [docs/INSTALACAO.md](docs/INSTALACAO.md) (banco vazio, primeiro admin, identidade).  
-**TI assumindo a instância de Sorocaba:** [docs/00_INDICE.md](docs/00_INDICE.md) e [checklist de transferência](docs/CHECKLIST_TRANSFERENCIA.md).
+Quem for assumir a manutenção começa por [docs/00_INDICE.md](docs/00_INDICE.md). Para subir uma cópia neste computador, sem falar com nenhum servidor que já esteja no ar, siga a seção abaixo e [docs/BANCO.md](docs/BANCO.md).
 
 ---
 
-## Desenvolvimento local (Windows)
+## Cópia local (neste computador)
 
-Python 3.10 ou 3.11, PostgreSQL local, `psql` no PATH.
+Python 3.10 ou 3.11 e PostgreSQL **nesta máquina**. O `psql` precisa estar no PATH.
 
 ```powershell
 git clone https://github.com/dbixpo/sigus.git
@@ -31,62 +29,73 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Edite o `.env`: `SECRET_KEY`, `DATABASE_URL`, `SIGUS_PORT=5001`, `SIGUS_BEHIND_PROXY=0` no notebook sem IIS.
+No `.env` desta máquina:
 
-**Banco vazio (recomendado para outro município):**
+- `DATABASE_URL` aponta para `localhost` (banco `sigus` local).
+- `FLASK_ENV=development`
+- `SIGUS_BEHIND_PROXY=0`
+- `SIGUS_PUBLIC_HOST` fica vazio.
+- `SECRET_KEY` pode ser qualquer texto longo. Não reutilize a chave de um servidor.
+
+**Não** copie o `.env` de um servidor para cá. **Não** coloque na `DATABASE_URL` o host, a senha ou o nome do banco de uma instalação que já atende gente. Este computador fala só com o PostgreSQL local.
+
+Banco vazio:
 
 ```powershell
 psql -U postgres -c "CREATE DATABASE sigus;"
 .\venv\Scripts\python.exe migrations\bootstrap_nova_instalacao.py
 ```
 
-Crie o primeiro administrador só nesse banco novo (`migrations/recriar_admin.py` com `SIGUS_ADMIN_EMAIL` e `SIGUS_ADMIN_SENHA`). Detalhes: [docs/INSTALACAO.md](docs/INSTALACAO.md).
-
-**Quem já tem dump da própria rede:**
+O primeiro administrador sai de `migrations/recriar_admin.py`, com `SIGUS_ADMIN_EMAIL` e `SIGUS_ADMIN_SENHA` definidos só nesta sessão do terminal. Esse script **apaga todos os administradores** do banco para o qual o `.env` aponta. Por isso ele só roda no banco local novo.
 
 ```powershell
-.\venv\Scripts\python.exe scripts\restaura_banco.py
+$env:SIGUS_ADMIN_EMAIL = "voce@localhost"
+$env:SIGUS_ADMIN_SENHA = "uma-senha-longa"
+.\venv\Scripts\python.exe migrations\recriar_admin.py
 .\venv\Scripts\python.exe run.py
 ```
 
-Abra **http://localhost:5001/sigus/** (o prefixo `/sigus` também vale no localhost).
+Abra **http://localhost:5001/sigus/**.
 
-Produção no IIS: [docs/SETUP.md](docs/SETUP.md). Atualização: [ATUALIZACAO-SERVIDOR.md](ATUALIZACAO-SERVIDOR.md).
+Identidade da instalação (nome da secretaria, município, logos) fica em Configurações, gravada no banco local. O código não traz uma instalação pronta.
+
+Se você tiver um dump **seu**, feito de propósito para desenvolvimento e sem obrigação de sigilo que impeça tê-lo nesta máquina:
+
+```powershell
+.\venv\Scripts\python.exe scripts\restaura_banco.py
+```
+
+O script lê `database/sigus_backup.zip` ou o `.sql` mais recente e restaura no banco da `DATABASE_URL` — de novo, a local.
 
 ---
 
 ## Documentação
 
-A pasta [docs/](docs/00_INDICE.md) é o manual técnico para a TI.
+A pasta [docs/](docs/00_INDICE.md) é o manual para quem for manter o sistema.
 
 | Preciso… | Leia |
 |---|---|
-| Instalar do zero (qualquer município) | [docs/INSTALACAO.md](docs/INSTALACAO.md) |
+| Instalar do zero | [docs/INSTALACAO.md](docs/INSTALACAO.md) |
 | Entender o que o sistema faz | [docs/01_VISÃO_GERAL.md](docs/01_VISÃO_GERAL.md) |
-| Mexer no código / blueprints | [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MAPA_DO_CODIGO.md](docs/MAPA_DO_CODIGO.md) |
-| Entender perfil e menu | [docs/PERMISSOES.md](docs/PERMISSOES.md) |
-| Banco, dump, migrations | [docs/BANCO.md](docs/BANCO.md), [migrations/README.md](migrations/README.md) |
-| Comunicados e ciência | [docs/COMUNICADOS.md](docs/COMUNICADOS.md) |
-| Subir ou atualizar o servidor | [docs/SETUP.md](docs/SETUP.md), [ATUALIZACAO-SERVIDOR.md](ATUALIZACAO-SERVIDOR.md) |
-| Cores, logo, padrão visual | [docs/IDENTIDADE_VISUAL.md](docs/IDENTIDADE_VISUAL.md) |
-| Senhas, SIS, Estante | [docs/SEGREDOS_E_INTEGRACOES.md](docs/SEGREDOS_E_INTEGRACOES.md) |
-| Manuais para o usuário final | [docs/MANUAIS_ESTANTE.md](docs/MANUAIS_ESTANTE.md) |
+| Banco, dump, migrations, cópia de casa | [docs/BANCO.md](docs/BANCO.md) |
+| Mexer no código | [docs/ARQUITETURA.md](docs/ARQUITETURA.md), [docs/MAPA_DO_CODIGO.md](docs/MAPA_DO_CODIGO.md) |
+| Perfil e menu | [docs/PERMISSOES.md](docs/PERMISSOES.md) |
+| Publicar num IIS | [docs/SETUP.md](docs/SETUP.md) |
+| Atualizar um servidor que já roda | [ATUALIZACAO-SERVIDOR.md](ATUALIZACAO-SERVIDOR.md) |
+| Receber o sistema (checklist) | [docs/CHECKLIST_TRANSFERENCIA.md](docs/CHECKLIST_TRANSFERENCIA.md) |
+| Senhas e integrações | [docs/SEGREDOS_E_INTEGRACOES.md](docs/SEGREDOS_E_INTEGRACOES.md) |
+| Cores e logo | [docs/IDENTIDADE_VISUAL.md](docs/IDENTIDADE_VISUAL.md) |
 
-Como contribuir: [CONTRIBUTING.md](CONTRIBUTING.md).
+Como alterar o código: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## O que nunca vai para o Git
 
-- `.env`, senhas, `SECRET_KEY`
-- Dumps `database/sigus_backup*.sql` / `*.zip` com dado real
+- `.env`, senhas, `SECRET_KEY` de qualquer instalação
+- Dumps `database/sigus_backup*.sql` / `*.zip`
 - Uploads (`app/static/uploads/…`)
+- Endereço, caminho de pasta ou nome de pool de um servidor que já está no ar
 - `venv/`, `__pycache__/`, logs
 
-Não publique dump de produção nem cadastro de profissionais. LGPD vale para o código **e** para o banco.
-
----
-
-## Origem
-
-Sistema da **Secretaria da Saúde de Sorocaba / Saúde Digital**, licenciado em MIT para que outras prefeituras possam implantar e adaptar. Mantenha o aviso de copyright. A paleta e a marca SIGUS estão em [docs/IDENTIDADE_VISUAL.md](docs/IDENTIDADE_VISUAL.md).
+Dado de pessoa não entra no repositório. O Git é o código. O banco de cada instalação fica na máquina dela.

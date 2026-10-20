@@ -1,8 +1,8 @@
 # Atualização do SIGUS no servidor
 
-Playbook **recorrente**. Instalação do zero: [docs/INSTALACAO.md](docs/INSTALACAO.md). IIS de Sorocaba: [docs/SETUP.md](docs/SETUP.md).
+Playbook **recorrente**. Instalação do zero: [docs/INSTALACAO.md](docs/INSTALACAO.md). IIS: [docs/SETUP.md](docs/SETUP.md).
 
-Ambiente: Windows, Flask + PostgreSQL, IIS + HttpPlatformHandler, prefixo `/sigus`. Produção: https://saudedigital.sorocaba.sp.gov.br/sigus
+Ambiente: Windows, Flask + PostgreSQL, IIS + HttpPlatformHandler, prefixo `/sigus`. O endereço público fica no `.env` do servidor (`SIGUS_PUBLIC_HOST`).
 
 **Não** inventar dados de teste em produção (NSP, chamado, transferência, comunicado). **Não** commitar `.env`, dump nem upload. **Não** fazer `git push --force` no `main`.
 
@@ -12,7 +12,7 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 ---
 
-> **Servidor de Sorocaba: nunca rode `iisreset` nem recicle o `DefaultAppPool`.** O mesmo IIS atende o **esussamu**, que não pode parar. Lá o IIS só faz proxy de `/sigus` para o processo `python run.py` na porta 5001; para publicar, reinicie **só esse processo** (seção 4).
+> Se o IIS dessa máquina também atende outro site, **não** rode `iisreset` nem recicle o pool padrão. Reinicie **só** o processo do SIGUS (seção 4). O caminho da pasta e o nome do pool ficam no caderno da equipe, não neste arquivo.
 
 ## Entrega mais recente (empréstimo e transferência de veículos)
 
@@ -102,7 +102,7 @@ O que mudou:
 
 **Depois de publicar:** cadastre os membros do Núcleo em **Configurações → Segurança do Paciente**. Sem ninguém na lista, as notificações chegam mas ninguém as vê.
 
-Conferência: abrir `/sigus/seguranca-paciente/notificar` numa aba anônima e notificar um caso fictício **só em ambiente de teste**; em produção, apenas abrir a tela. Baixar o QR em `/sigus/links/` e em `/sigus/relatorios/mapa-saude` e conferir o endereço `https://saudedigital.sorocaba.sp.gov.br/...` no cartão.
+Conferência: abrir `/sigus/seguranca-paciente/notificar` numa aba anônima e notificar um caso fictício **só em ambiente de teste**; numa instalação que já atende gente, apenas abrir a tela. Baixar o QR em `/sigus/links/` e em `/sigus/relatorios/mapa-saude` e conferir se o endereço do cartão é o `SIGUS_PUBLIC_HOST` daquela máquina.
 
 ---
 
@@ -261,7 +261,7 @@ SIS_SSL_VERIFY=true
 
 Sem isso, o NSP continua abrindo: os campos de paciente ficam manuais.
 
-Reinicie o processo do SIGUS depois de editar `.env` (seção 4; em Sorocaba, nunca o IIS).
+Reinicie o processo do SIGUS depois de editar `.env` (seção 4; se o IIS for compartilhado, nunca o IIS inteiro).
 
 ---
 
@@ -269,7 +269,7 @@ Reinicie o processo do SIGUS depois de editar `.env` (seção 4; em Sorocaba, nu
 
 Templates e Python ficam em cache em produção: só aparecem depois de reiniciar. CSS/JS estáticos valem na hora (aumente o `?v=` no template).
 
-**Sorocaba (IIS compartilhado com o esussamu):** não toque no IIS. Reinicie só o processo do SIGUS.
+**IIS compartilhado com outro site:** não toque no IIS. Reinicie só o processo do SIGUS.
 
 Jeito recomendado, na raiz do projeto e com o mesmo Python que roda a produção:
 
@@ -296,7 +296,7 @@ Depois:
 2. Confira o módulo da entrega (ex.: Segurança do Paciente, Transferências, Relatórios).
 3. Impressos devem abrir no **modal** padrão do SIGUS, não numa página crua.
 
-Log: `.\logs\sigus_5001.log` (Sorocaba, pelo script de reinício) ou `.\logs\python.log` (HttpPlatformHandler).
+Log: `.\logs\sigus_5001.log` (script de reinício) ou `.\logs\python.log` (HttpPlatformHandler).
 
 ---
 

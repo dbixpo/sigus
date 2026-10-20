@@ -13,7 +13,7 @@
 <div class="page-header">
     <h1>
         <i class="{{ equipamento.tipo_equipamento.icone }}"></i>
-        {{ equipamento.nome_display }}
+        Prontuário — {{ equipamento.nome_display }}
         <small class="text-muted fs-6 fw-normal">
             {% if equipamento.numero_patrimonio %}
             <i class="fas fa-tag ms-2 me-1"></i>{{ equipamento.numero_patrimonio }}
@@ -26,9 +26,10 @@
         </small>
     </h1>
     <div class="d-flex flex-wrap gap-2">
-        {% if current_user.pode('editar_equipamento') %}
+        {% if current_user.pode_corrigir_inventario(equipamento.sala.unidade) or current_user.pode_alterar_estado_equipamento(equipamento.sala.unidade) %}
         <a href="{{ url_for('equipamentos.editar', id=equipamento.id) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-pencil-alt me-1"></i>Editar
+            <i class="fas fa-pencil-alt me-1"></i>
+            {{ 'Editar' if current_user.pode_corrigir_inventario(equipamento.sala.unidade) else 'Estado e condição' }}
         </a>
         {% endif %}
         {% if current_user.pode('abrir_chamado') %}
@@ -36,17 +37,17 @@
             <i class="fas fa-wrench me-1"></i>Abrir Chamado
         </a>
         {% endif %}
-        {% if current_user.pode('solicitar_transferencia') and equipamento.status == 'ativo' %}
+        {% if current_user.pode('solicitar_transferencia') and equipamento.pode_transferir %}
         <a href="{{ url_for('transferencias.solicitar', equipamento_id=equipamento.id) }}" class="btn btn-outline-primary btn-sm">
             <i class="fas fa-arrow-right-circle me-1"></i>Transferir
         </a>
         {% endif %}
-        {% if current_user.pode('dar_baixa_equipamento') and equipamento.status != 'baixado' %}
+        {% if current_user.pode_alterar_estado_equipamento(equipamento.sala.unidade) and equipamento.status != 'inservivel' %}
         <form method="POST" action="{{ url_for('equipamentos.dar_baixa', id=equipamento.id) }}" class="d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-dark btn-sm"
-                    data-confirm="Confirma dar baixa neste equipamento?">
-                <i class="fas fa-archive me-1"></i>Dar Baixa
+                    data-confirm="Marcar este equipamento como inservível/sem recuperação?">
+                <i class="fas fa-archive me-1"></i>Inservível
             </button>
         </form>
         {% endif %}
@@ -81,16 +82,20 @@
                         <div class="fw-semibold">{{ equipamento.modelo.nome if equipamento.modelo else '—' }}</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Ano de Aquisição</div>
-                        <div class="fw-semibold">{{ equipamento.data_aquisicao.year if equipamento and equipamento.data_aquisicao else '—' }}</div>
+                        <div class="text-muted small">Ano de Fabricação</div>
+                        <div class="fw-semibold">{{ equipamento.ano_fabricacao or '—' }}</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Valor Estimado</div>
+                        <div class="text-muted small">Classificação</div>
+                        <div class="fw-semibold">{{ equipamento.tipo_equipamento.classificacao or '—' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-muted small">Valor (R$)</div>
                         <div class="fw-semibold">{{ equipamento.valor_estimado | br_currency if equipamento.valor_estimado else '—' }}</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Tempo de Uso</div>
-                        <div class="fw-semibold">{{ equipamento.tempo_uso_anos ~ ' anos' if equipamento.tempo_uso_anos else '—' }}</div>
+                        <div class="text-muted small">Data da aquisição</div>
+                        <div class="fw-semibold">{{ equipamento.data_aquisicao | br_date if equipamento.data_aquisicao else '—' }}</div>
                     </div>
                     <div class="col-md-4">
                         <div class="text-muted small">Localização</div>
@@ -106,6 +111,31 @@
                     <div>{{ equipamento.observacoes }}</div>
                 </div>
                 {% endif %}
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Informações adicionais</div>
+            <div class="card-body">
+                {% if current_user.pode_informacoes_sueq() %}
+                <p class="small text-muted">Preenchimento da SUEQ. A unidade vê os dados e não altera.</p>
+                {% else %}
+                <p class="small text-muted">Dados patrimoniais registrados pela SUEQ.</p>
+                {% endif %}
+                <div class="row g-3">
+                    <div class="col-md-4"><div class="text-muted small">Próprio</div><div class="fw-semibold">{% if equipamento.proprio is sameas true %}Sim{% elif equipamento.proprio is sameas false %}Não{% else %}—{% endif %}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Forma de Incorporação</div><div class="fw-semibold">{{ equipamento.forma_incorporacao_label }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Nº Nota Fiscal</div><div class="fw-semibold">{{ equipamento.numero_nota_fiscal or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Nº Empenho</div><div class="fw-semibold">{{ equipamento.numero_empenho or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Fonte de Recurso</div><div class="fw-semibold">{{ equipamento.fonte_recurso or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Nº Processo</div><div class="fw-semibold">{{ equipamento.numero_processo or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Nº Contrato/AF</div><div class="fw-semibold">{{ equipamento.numero_contrato_af or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Fornecedor</div><div class="fw-semibold">{{ equipamento.fornecedor or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Entrega na unidade</div><div class="fw-semibold">{{ equipamento.data_entrega_unidade | br_date if equipamento.data_entrega_unidade else '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Garantia</div><div class="fw-semibold">{{ equipamento.garantia or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Vida Útil Estimada</div><div class="fw-semibold">{{ equipamento.vida_util_estimada or '—' }}</div></div>
+                    <div class="col-md-4"><div class="text-muted small">Data da Desativação</div><div class="fw-semibold">{{ equipamento.data_desativacao | br_date if equipamento.data_desativacao else '—' }}</div></div>
+                </div>
             </div>
         </div>
 
@@ -143,6 +173,12 @@
             <li class="nav-item">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-transf">
                     <i class="fas fa-exchange-alt me-1"></i>Transferências
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-documentos">
+                    <i class="fas fa-paperclip me-1"></i>Documentos
+                    {% if documentos %}<span class="badge bg-secondary ms-1">{{ documentos | length }}</span>{% endif %}
                 </button>
             </li>
             <li class="nav-item" id="tab-usuarios-nav">
@@ -225,6 +261,41 @@
                 </div>
                 {% else %}
                 <div class="empty-state py-3"><i class="fas fa-exchange-alt"></i><p class="small">Nenhuma transferência registrada.</p></div>
+                {% endif %}
+            </div>
+
+            <div class="tab-pane fade p-3" id="tab-documentos">
+                {% if pode_anexar %}
+                <form method="POST" action="{{ url_for('equipamentos.enviar_documento', id=equipamento.id) }}"
+                      enctype="multipart/form-data" class="row g-2 align-items-end mb-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="col-sm-8">
+                        <label class="form-label small fw-semibold">Nota fiscal, certificado ou outro documento</label>
+                        <input type="file" name="arquivo" class="form-control form-control-sm" required
+                               accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx">
+                    </div>
+                    <div class="col-sm-4">
+                        <button type="submit" class="btn btn-primary btn-sm">Incluir no prontuário</button>
+                    </div>
+                </form>
+                {% endif %}
+                {% if documentos %}
+                <ul class="list-group list-group-flush">
+                    {% for doc in documentos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <a href="{{ doc.url }}" target="_blank" rel="noopener">{{ doc.original or doc.filename }}</a>
+                        <span class="text-muted small">{{ doc.tamanho_label }}</span>
+                        {% if pode_anexar %}
+                        <form method="POST" action="{{ url_for('equipamentos.excluir_documento', id=equipamento.id, doc_id=doc.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Remover</button>
+                        </form>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state py-3"><i class="fas fa-paperclip"></i><p class="small">Nenhum documento no prontuário.</p></div>
                 {% endif %}
             </div>
 
@@ -330,10 +401,12 @@
                 <div class="mb-3">
                     <span class="badge bg-{{ equipamento.status_badge }} fs-6 px-3 py-2">{{ equipamento.status_label }}</span>
                 </div>
+                {% if equipamento.condicao %}
                 <div>
                     <div class="text-muted small mb-1">Condição</div>
                     <span class="badge bg-{{ equipamento.condicao_badge }} fs-6 px-3 py-2">{{ equipamento.condicao_label }}</span>
                 </div>
+                {% endif %}
             </div>
         </div>
 

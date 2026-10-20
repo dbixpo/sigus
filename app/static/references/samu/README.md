@@ -57,7 +57,7 @@ Conforme manual de padronização do SAMU:
 
 ## Deploy atrás de proxy reverso (IIS em subpath)
 
-Para servir em `https://saudedigital.sorocaba.sp.gov.br/samu`:
+Para servir em `https://seu-dominio/samu`:
 
 1. **Configure o IIS** para fazer proxy reverso de `/samu` para `http://localhost:5192`
 2. **Defina a variável de ambiente** no servidor:

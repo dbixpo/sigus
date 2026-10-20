@@ -17,7 +17,7 @@ from flask_login import current_user, login_required
 
 from app import db
 from app.models.frequencia import (
-    FreqHoraExtra, FreqImportacao, FreqLancamento, GRUPOS_JUSTIFICATIVA, RhFuncaoCbo, RhLocal, RhServidor,
+    FreqHoraExtra, FreqImportacao, FreqLancamento, GRUPOS_JUSTIFICATIVA, RhLocal, RhServidor,
     SIGLAS_JUSTIFICATIVA, TIPOS_HORA_EXTRA, TOTAIS_CAPA, competencia_label, matriculas_do_usuario,
     normalizar_matricula, unidades_gestao_rh,
 )
@@ -25,12 +25,13 @@ from app.models.matricula import MatriculaProfissional
 from app.models.notificacao import Notificacao
 from app.models.unidade import Unidade
 from app.services.base_rh import buscar_servidores, servidores_json
+from app.services.faltas_planilha import classificar_fa_previa, painel_faltas, _usuarios_das_matriculas
 from app.services.frequencia_planilha import PlanilhaInvalida, ler_planilha
 from app.utils import agora_local
 
 frequencia_bp = Blueprint('frequencia', __name__, url_prefix='/rh')
 
-_EXTENSOES = ('.xls', '.xlsx')
+_EXTENSOES = ('.xls', '.xlsx', '.ods')
 _TAMANHO_MAX = 15 * 1024 * 1024
 _VALIDADE_PREVIA = 2 * 3600
 _STOP_LOCAL = {'SES', 'UBS', 'USF', 'PA', 'E', 'DE', 'DO', 'DA', 'DOS', 'DAS', 'ADM', 'REC',
@@ -161,11 +162,11 @@ def importar():
 
     arq = request.files.get('planilha')
     if not arq or not arq.filename:
-        flash('Escolha a planilha de frequência (.xls ou .xlsx).', 'warning')
+        flash('Escolha a planilha de frequência (.xls, .xlsx ou .ods).', 'warning')
         return redirect(url_for('frequencia.importar'))
     nome = os.path.basename(arq.filename)
     if not nome.lower().endswith(_EXTENSOES):
-        flash('Formato não aceito. Envie a planilha .xls ou .xlsx que vai para o RH.', 'warning')
+        flash('Formato não aceito. Envie a planilha .xls, .xlsx ou .ods que vai para o RH.', 'warning')
         return redirect(url_for('frequencia.importar'))
     conteudo = arq.read(_TAMANHO_MAX + 1)
     if len(conteudo) > _TAMANHO_MAX:
@@ -236,6 +237,7 @@ def previa(token):
         sem_cadastro=sem_cadastro, divergencias=divergencias,
         mes_anterior_label=competencia_label(mes_ant), siglas=SIGLAS_JUSTIFICATIVA,
         totais_capa=TOTAIS_CAPA,
+        fa_previa=classificar_fa_previa(dados['lancamentos'], competencia),
     )
 
 
@@ -301,6 +303,16 @@ def confirmar(token):
         msg += f' Base do RH: {novos_srv} novos e {atual_srv} atualizados.'
     if n_avisados:
         msg += f' {n_avisados} profissionais foram avisados.'
+    fa = classificar_fa_previa(dados['lancamentos'], competencia)
+    if fa:
+        confirmadas = sum(1 for i in fa if i['situacao'] == 'confirmada')
+        sem = sum(1 for i in fa if i['situacao'] == 'sem_registro')
+        msg += f' Faltas abonadas na planilha: {len(fa)}'
+        if confirmadas:
+            msg += f', {confirmadas} já registradas no perfil'
+        if sem:
+            msg += f', {sem} ainda sem registro no perfil'
+        msg += '.'
     flash(msg, 'success')
     return redirect(url_for('frequencia.unidade', unidade_id=unidade_id,
                             competencia=competencia.strftime('%Y-%m')))
@@ -493,12 +505,20 @@ def apontamentos():
             or next((h.funcao for h in he_mes if h.funcao), None),
         })
 
+    ano_fa = comp.year if comp else date.today().year
+    if de_outro:
+        dono_fa = _usuarios_das_matriculas([mat_param]).get(mat_param)
+    else:
+        dono_fa = current_user
+    fa_total = painel_faltas(dono_fa, ano_fa)['usadas'] if dono_fa else 0
+
     return render_template(
         'rh/apontamentos.html', abas=abas, competencias=competencias, comp=comp,
         competencia_label=competencia_label, mats=mats, de_outro=de_outro, nome_outro=nome,
         matricula_outro=mat_param if de_outro else None, siglas=SIGLAS_JUSTIFICATIVA,
         grupos=GRUPOS_JUSTIFICATIVA, tipos_he=TIPOS_HORA_EXTRA, totais_capa=TOTAIS_CAPA,
         dias_semana=['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+        ano_fa=ano_fa, fa_total=fa_total, fa_limite=6,
     )
 
 
@@ -545,25 +565,6 @@ def unidade():
 def _pode_consultar_base():
     return (current_user.pode('cadastrar_usuario') or current_user.pode('gerenciar_usuarios')
             or current_user.pode_importar_frequencia)
-
-
-@frequencia_bp.route('/servidores')
-@login_required
-def servidores():
-    if not _pode_consultar_base():
-        abort(403)
-    q = (request.args.get('q') or '').strip()
-    itens = servidores_json(buscar_servidores(q, limite=100)) if q else []
-    total = RhServidor.query.count()
-    ultima = db.session.query(db.func.max(RhServidor.competencia)).scalar()
-    n_funcoes = db.session.query(db.func.count(db.distinct(RhServidor.funcao))).scalar() or 0
-    n_funcoes_cbo = (db.session.query(db.func.count(db.distinct(RhServidor.funcao)))
-                     .join(RhFuncaoCbo, RhFuncaoCbo.funcao == RhServidor.funcao)
-                     .filter(RhFuncaoCbo.cbo.isnot(None)).scalar() or 0)
-    return render_template('rh/servidores.html', q=q, itens=itens, total=total,
-                           ultima=competencia_label(ultima) if ultima else None,
-                           n_funcoes=n_funcoes, n_funcoes_cbo=n_funcoes_cbo,
-                           pode_cbo=current_user.pode('ver_configuracoes'))
 
 
 @frequencia_bp.route('/servidores/buscar')

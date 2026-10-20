@@ -367,6 +367,19 @@
          ABA EQUIPAMENTOS
     ══════════════════════════════════════════════ -->
     <div class="tab-pane fade" id="tab-equipamentos">
+        {% if unidade.inventario_inicial_concluido %}
+        <div class="alert alert-info py-2 small">Inventário inicial encerrado. Gestor de área e apoio administrativo transferem o equipamento e alteram estado e condição. Inclusão e correção ficam com a SUEQ e a TI.</div>
+        {% else %}
+        <div class="alert alert-warning py-2 small">Inventário inicial aberto. Gestor de área e apoio administrativo cadastram os equipamentos. Informações adicionais (nota, empenho, incorporação) são da SUEQ.</div>
+        {% endif %}
+        {% if current_user.pode_gerir_patrimonio() %}
+        <form method="POST" action="{{ url_for('equipamentos.alternar_inventario_inicial', unidade_id=unidade.id) }}" class="mb-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+                {{ 'Reabrir inventário inicial' if unidade.inventario_inicial_concluido else 'Encerrar inventário inicial' }}
+            </button>
+        </form>
+        {% endif %}
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <span><i class="fas fa-desktop me-2"></i>Equipamentos da Unidade</span>
@@ -374,7 +387,7 @@
                     <button class="btn btn-sm btn-outline-success" id="btnExportarEquipamentos" title="Exportar CSV">
                         <i class="fas fa-download me-1"></i>Exportar CSV
                     </button>
-                    {% if current_user.pode('cadastrar_equipamento') %}
+                    {% if current_user.pode_lancar_inventario(unidade) %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
                        class="btn btn-sm btn-primary">
                         <i class="fas fa-plus-circle me-1"></i>Novo Equipamento
@@ -464,7 +477,7 @@
                 <div class="empty-state">
                     <i class="fas fa-desktop"></i>
                     <h6>Nenhum equipamento cadastrado nesta unidade</h6>
-                    {% if current_user.pode('cadastrar_equipamento') %}
+                    {% if current_user.pode_lancar_inventario(unidade) %}
                     {% if salas %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
                        class="btn btn-primary mt-2">

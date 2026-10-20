@@ -618,7 +618,7 @@ def padrao_salas():
     catalogo = (TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None))
                 .order_by(TipoEquipamento.codigo).all())
     contagem = dict(db.session.query(Equipamento.tipo_equipamento_id, db.func.count(Equipamento.id))
-                    .filter(Equipamento.ativo.is_(True), Equipamento.status != 'baixado')
+                    .filter(Equipamento.ativo.is_(True), Equipamento.status != 'inservivel')
                     .group_by(Equipamento.tipo_equipamento_id).all())
     fora = []
     for t in TipoEquipamento.query.filter(TipoEquipamento.codigo.is_(None)).order_by(TipoEquipamento.nome).all():

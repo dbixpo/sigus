@@ -1,10 +1,8 @@
-# Instalar o SIGUS (município novo ou servidor do zero)
+# Instalar o SIGUS
 
-Guia para **primeira instalação**. Se o SIGUS **já roda** e você só vai atualizar código, use [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md).
+Guia para **primeira instalação** (neste computador ou num servidor novo). Se o SIGUS **já roda** e você só vai atualizar código, use [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md).
 
-Instância de referência (Sorocaba): https://saudedigital.sorocaba.sp.gov.br/sigus
-
-O SIGUS **não é prontuário**. Atendimento clínico continua no sistema da casa (em Sorocaba, o SISWEB).
+O SIGUS **não é prontuário**. Atendimento clínico continua no sistema clínico da rede. Autor do software: Diego Bispo Fernandes ([dbixpo](https://github.com/dbixpo)), licença MIT.
 
 ---
 
@@ -88,13 +86,13 @@ Depois do login:
 3. Vincule o administrador à unidade (seletor do topo).
 4. Cadastre tipos de sala/equipamento conforme a rede, ou comece pelo essencial e evolua.
 
-Feriados: a seed traz o calendário usado em Sorocaba; ajuste em Configurações.
+Feriados: a seed traz um calendário inicial; ajuste em Configurações.
 
 ---
 
 ## 4. Produção no IIS (Windows)
 
-Detalhe do `web.config`, pool e pastas: [SETUP.md](SETUP.md) (escrito para o servidor de Sorocaba; troque hostname, caminho físico e `SIGUS_PUBLIC_HOST`).
+Detalhe do `web.config`, pool e pastas: [SETUP.md](SETUP.md). Troque hostname, caminho físico e `SIGUS_PUBLIC_HOST` para a máquina desta instalação.
 
 Resumo:
 
@@ -112,7 +110,7 @@ Resumo:
 - Restaurar dump de homologação em cima de produção
 - Rodar `migrations/recriar_admin.py` em produção povoada
 - Remover o prefixo `/sigus` sem mudar IIS, PWA e manuais
-- Copiar dump da Prefeitura de Sorocaba para “acelerar” outro município
+- Copiar dump de outra instalação para “acelerar” a sua
 
 ---
 
@@ -123,4 +121,4 @@ Resumo:
 - Manuais da ponta (BookStack, se a casa tiver): [MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md)
 - Comunicados / ciência: [COMUNICADOS.md](COMUNICADOS.md)
 
-Licença: [LICENSE](../LICENSE) (MIT). Mantenha o aviso de copyright da Secretaria da Saúde de Sorocaba.
+Licença: [LICENSE](../LICENSE) (MIT). Mantenha o aviso de copyright de Diego Bispo Fernandes.

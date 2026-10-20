@@ -49,6 +49,29 @@
     </ul>
 </div></div>
 {% endif %}
+{% if fa_previa %}
+<div class="fq-aviso info"><i class="fas fa-calendar-check"></i><div>
+    <strong>Faltas abonadas (FA)</strong> nesta planilha. Ao confirmar, o perfil de cada pessoa passa a mostrar
+    se o dia já estava registrado ou se a FA só existe na frequência.
+    <ul class="mb-0 mt-1">
+        {% for f in fa_previa %}
+        <li>
+            {{ f.nome or f.pessoa or f.matricula }} ({{ f.matricula }}) —
+            {% if f.data %}{{ f.data.strftime('%d/%m/%Y') }}{% else %}{{ f.quantidade }} dia(s), sem o dia marcado{% endif %}:
+            {% if f.situacao == 'confirmada' %}
+            já registrada no perfil nesta data.
+            {% elif f.situacao == 'outra_data' %}
+            o perfil tem abonada em {{ f.registro.strftime('%d/%m/%Y') }}, data diferente da planilha.
+            {% elif f.situacao == 'sem_cadastro' %}
+            matrícula ainda sem cadastro no SIGUS.
+            {% else %}
+            ainda não está no perfil. A tela de faltas abonadas vai contar este lançamento.
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</div></div>
+{% endif %}
 {% if sem_cadastro %}
 <div class="fq-aviso info"><i class="fas fa-id-badge"></i><div>
     <strong>{{ sem_cadastro | length }}</strong> matrícula{{ 's' if sem_cadastro | length != 1 }} desta planilha ainda não

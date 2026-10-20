@@ -1,6 +1,6 @@
 """Reinicia só o SIGUS (run.py na porta 5001), em segundo plano e sem janela.
 
-Em Sorocaba o IIS é compartilhado com o esussamu: nunca iisreset nem reciclar pool.
+Se o IIS for compartilhado com outro site: nunca iisreset nem reciclar o pool padrão.
 Aborta se o processo da porta 5001 não for o run.py.
 Resultado em scripts/_reiniciar.log; saída do servidor em logs/sigus_5001.log.
 """

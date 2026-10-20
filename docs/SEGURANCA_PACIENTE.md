@@ -69,6 +69,6 @@ Na aba Paciente, o Núcleo consulta CPF, prontuário ou CNS no SISWEB (robô `ap
 
 ## Atualizar o servidor
 
-Seguir [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md): rodar `add_nsp_fluxo_nucleo.py` e reiniciar **só o processo do SIGUS** (em Sorocaba, nunca o IIS). Depois, cadastrar os membros do Núcleo em **Configurações → Segurança do Paciente**: sem ninguém na lista, as notificações chegam mas ninguém as vê.
+Seguir [ATUALIZACAO-SERVIDOR.md](../ATUALIZACAO-SERVIDOR.md): rodar `add_nsp_fluxo_nucleo.py` e reiniciar **só o processo do SIGUS** (se o IIS for compartilhado, nunca o IIS inteiro). Depois, cadastrar os membros do Núcleo em **Configurações → Segurança do Paciente**: sem ninguém na lista, as notificações chegam mas ninguém as vê.
 
 Manual da ponta: livro na Estante SES ([MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md)).

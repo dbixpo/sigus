@@ -3,7 +3,7 @@
 Código: `app/routes/transferencias.py`, `app/models/transferencia.py`.  
 Telas: `app/templates/transferencias/`.  
 Menu: **Operações → Transferências**.  
-Manual da ponta: capítulo [Patrimônio…](https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sigus/chapter/patrimonio-salas-equipamentos-transferencias-e-lojinha) na Estante.
+Manual da ponta, se a instalação publicar um BookStack: ver [MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md).
 
 ## Regra
 

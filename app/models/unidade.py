@@ -27,6 +27,8 @@ class Unidade(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
     status = db.Column(db.String(10), nullable=False, default='ativa')
+    # Enquanto falso, gestor de área e apoio administrativo fazem o 1º inventário.
+    inventario_inicial_concluido = db.Column(db.Boolean, nullable=False, default=False)
     observacoes = db.Column(db.Text)
     # Tipos de chamado que esta unidade/setor recebe e trata na fila de gestão
     tipos_chamado_recebe = db.Column(db.JSON, default=list)

@@ -7,15 +7,17 @@ from types import SimpleNamespace
 from flask import url_for
 from app import db
 
+# Texto neutro até alguém gravar a identidade em Configurações.
+# Cada instalação guarda município, secretaria e domínio no banco dela.
 IDENTIDADE_PADRAO = {
-    'municipio': 'Sorocaba',
-    'uf': 'SP',
-    'secretaria': 'Secretaria da Saúde de Sorocaba',
-    'orgao_curto': 'Saúde Digital',
+    'municipio': 'Município',
+    'uf': 'UF',
+    'secretaria': 'Secretaria',
+    'orgao_curto': 'SIGUS',
     'nome_sistema': 'SIGUS',
     'slogan': 'Sistema Integrado de Gestão das Unidades de Saúde',
-    'dominio_email': 'sorocaba.sp.gov.br',
-    'cidade_padrao': 'Sorocaba',
+    'dominio_email': 'exemplo.local',
+    'cidade_padrao': '',
 }
 
 ASSET_SLOTS = {
@@ -70,7 +72,7 @@ class IdentidadeSistema(db.Model):
 
     @classmethod
     def garantir(cls):
-        """Devolve a linha 1, criando-a com o padrão de Sorocaba se faltar."""
+        """Devolve a linha 1, criando um texto neutro se a instalação ainda não configurou."""
         row = db.session.get(cls, 1)
         if row:
             return row

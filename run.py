@@ -22,7 +22,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 # IIS faz rewrite para localhost sem repassar Host — CSRF falha no POST.
 # Desative com SIGUS_BEHIND_PROXY=0 ao rodar só em localhost (sem proxy).
 if os.environ.get('SIGUS_BEHIND_PROXY', '1') != '0':
-    _public_host = os.environ.get('SIGUS_PUBLIC_HOST', 'saudedigital.sorocaba.sp.gov.br').strip()
+    _public_host = (os.environ.get('SIGUS_PUBLIC_HOST') or '').strip()
     if _public_host:
         _orig_wsgi = app.wsgi_app
 

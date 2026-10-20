@@ -1,13 +1,10 @@
 # Visão Geral do SIGUS
 
-O **SIGUS** (Sistema Integrado de Gestão das Unidades de Saúde) é a aplicação web da **Saúde Digital** (Secretaria da Saúde de Sorocaba) para a gestão das unidades da rede municipal: patrimônio, chamados, pessoas, contratos, agenda, planejamentos e Segurança do Paciente.
+O **SIGUS** (Sistema Integrado de Gestão das Unidades de Saúde) é o software livre de **Diego Bispo Fernandes** ([dbixpo](https://github.com/dbixpo)), licença MIT. Cobre patrimônio, chamados, pessoas, contratos, agenda, planejamentos e Segurança do Paciente.
 
-Ele **não substitui o SISWEB**. Prontuário, consulta, SOAP, vacina e guia continuam lá. O SIGUS cuida do que faz a unidade funcionar.
+Ele **não é prontuário**. Consulta, vacina e guia continuam no sistema clínico da rede. O SIGUS cuida do que faz a unidade funcionar. Nome da secretaria, município e logos ficam na identidade da instalação (banco), não no código.
 
-Produção: https://saudedigital.sorocaba.sp.gov.br/sigus  
-Manuais da ponta: [Estante SES](https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sigus)
-
-Documentação técnica (TI): [00_INDICE.md](00_INDICE.md).
+Documentação técnica: [00_INDICE.md](00_INDICE.md). Licença: [LICENSE](../LICENSE).
 
 ---
 

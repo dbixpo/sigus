@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Feriados e pontos facultativos da Prefeitura (expediente da agenda)."""
+"""Feriados e pontos facultativos (expediente da agenda)."""
 from datetime import date, time, datetime
 
 from app import db

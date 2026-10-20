@@ -16,7 +16,7 @@ Modelo versionado: `.env.example`. Cópia real: `.env` (gitignore).
 | `SIGUS_PORT` | Dev | Padrão `5001` (evitar 5000) |
 | `HTTP_PLATFORM_PORT` | IIS | Injetada pelo HttpPlatformHandler |
 | `SIGUS_BEHIND_PROXY` | Produção | Padrão `1`. Use `0` só em localhost sem IIS |
-| `SIGUS_PUBLIC_HOST` | Produção | Padrão `saudedigital.sorocaba.sp.gov.br` (CSRF) |
+| `SIGUS_PUBLIC_HOST` | No servidor | Host público daquela instalação (CSRF e links). Vazio no notebook. Não versionar |
 | `SIS_CONSULTA_PATH` | NSP com busca | Pasta do robô `api-consulta-usuario-sis` **neste** servidor |
 | `SIS_USUARIO` / `SIS_SENHA` | NSP com busca | Credencial SISWEB |
 | `SIS_AMBIENTE` | NSP | `producao` ou o que o robô esperar |
@@ -31,9 +31,9 @@ Repositório à parte, em geral irmão deste na pasta GitHub da casa: `api-consu
 
 Não commitar `SIS_SENHA`. Não logar CPF/CNS em texto corrido.
 
-## Estante SES (manuais)
+## Manuais (BookStack, opcional)
 
-https://estante-ses.sorocaba.sp.gov.br — BookStack. Livro **Manuais de utilização do SIGUS** (`book_id = 45`). Scripts: `scripts/pub_estante_sigus.py` e `scripts/pub_estante_patrimonio.py`. Ver [MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md).
+Se a instalação publicar manuais num BookStack, a URL e o login ficam no ambiente da máquina que publica (`ESTANTE_BASE`, `ESTANTE_EMAIL`, `ESTANTE_SENHA`, `SIGUS_PUBLIC_URL`). Scripts: `scripts/pub_estante_sigus.py` e `scripts/pub_estante_patrimonio.py`. Ver [MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md). Nada disso entra no Git.
 
 ## Admin da aplicação
 

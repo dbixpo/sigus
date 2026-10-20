@@ -6,7 +6,7 @@ Aplicação **Flask** monolítica, templates **Jinja2**, banco **PostgreSQL**, a
 
 ```
 Navegador
-    → IIS (HTTPS, site saudedigital.sorocaba.sp.gov.br)
+    → IIS (HTTPS, no domínio configurado em SIGUS_PUBLIC_HOST)
         → aplicativo /sigus  (web.config → python run.py)
             → Waitress  (porta HTTP_PLATFORM_PORT)
                 → PrefixMiddleware (/sigus)
@@ -29,7 +29,7 @@ Navegador
 
 `APPLICATION_ROOT=/sigus` está no `web.config` e no `run.py` (`setdefault`). O `PrefixMiddleware` corta o prefixo do `PATH_INFO` e preenche `SCRIPT_NAME`. Por isso:
 
-- URL pública: `https://saudedigital.sorocaba.sp.gov.br/sigus/login`
+- URL no servidor: `https://<SIGUS_PUBLIC_HOST>/sigus/login` (o host não fica no Git)
 - URL local: `http://localhost:5001/sigus/login`
 - `url_for` e estáticos já nascem com `/sigus`
 
@@ -47,13 +47,13 @@ app/
 └── sis_consulta.py  # Ponte com o robô do SISWEB (NSP)
 ```
 
-Padrão de tela autenticada: `templates/base.html` (navbar `#0D3B5E`, Inter, paleta Saúde Digital). Telas **públicas** (cadastro externo, chamado externo, mapa) têm HTML próprio.
+Padrão de tela autenticada: `templates/base.html` (navbar `#0D3B5E`, Inter, paleta do SIGUS). Telas **públicas** (cadastro externo, chamado externo, mapa) têm HTML próprio. O rodapé da sidebar e o login mostram a licença MIT (Diego Bispo Fernandes / dbixpo).
 
 ## Autenticação e CSRF
 
-- Login: e-mail (completa `@sorocaba.sp.gov.br` se o usuário omitir o domínio) + senha.
+- Login: e-mail (completa o domínio gravado na identidade da instalação, se o usuário omitir) + senha.
 - Sessão Flask-Login; “Lembrar-me” usa cookie persistente.
-- CSRF em todos os POST autenticados. Em produção, se o IIS mandar `Host: localhost`, o `run.py` injeta `X-Forwarded-Host` = `SIGUS_PUBLIC_HOST` (padrão `saudedigital.sorocaba.sp.gov.br`) para o token não quebrar. Desligue só em dev puro: `SIGUS_BEHIND_PROXY=0`.
+- CSRF em todos os POST autenticados. Se o IIS mandar `Host: localhost`, o `run.py` injeta `X-Forwarded-Host` = `SIGUS_PUBLIC_HOST` **somente quando essa variável está no `.env` do servidor**. No notebook: `SIGUS_BEHIND_PROXY=0`.
 
 ## Unidade de trabalho
 
@@ -66,5 +66,5 @@ Arquivos de usuário ficam em `app/static/uploads/` (chamados, NSP, fotos de per
 ## O que não está neste repo
 
 - **SISWEB** (prontuário) — sistema à parte; o SIGUS só consulta paciente via robô opcional.
-- **Estante SES** (BookStack) — manuais; scripts em `scripts/pub_estante_*.py`.
+- **BookStack** opcional para manuais; scripts em `scripts/pub_estante_*.py` (URL só por variável de ambiente).
 - **Referência SAMU** em `app/static/references/samu/` — código de outro sistema, **não** é executado pelo SIGUS. Não trate como módulo ativo.

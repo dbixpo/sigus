@@ -32,14 +32,14 @@ with app.app_context():
             )
             SELECT
                 1,
-                'Sorocaba',
-                'SP',
-                'Secretaria da Saúde de Sorocaba',
-                'Saúde Digital',
+                'Município',
+                'UF',
+                'Secretaria',
+                'SIGUS',
                 'SIGUS',
                 'Sistema Integrado de Gestão das Unidades de Saúde',
-                'sorocaba.sp.gov.br',
-                'Sorocaba'
+                'exemplo.local',
+                ''
             WHERE NOT EXISTS (
                 SELECT 1 FROM identidade_sistema WHERE id = 1
             )
@@ -57,4 +57,4 @@ with app.app_context():
             )
         """))
         conn.commit()
-    print('OK: identidade_sistema (seed Sorocaba) e sistema_assets.')
+    print('OK: identidade_sistema (texto neutro, se a linha 1 não existir) e sistema_assets.')

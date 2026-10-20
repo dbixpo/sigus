@@ -26,10 +26,10 @@
                 <form method="post" enctype="multipart/form-data" id="fqForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <label class="fq-drop d-block" id="fqDrop">
-                        <input type="file" name="planilha" id="fqArquivo" accept=".xls,.xlsx" class="d-none" required>
+                        <input type="file" name="planilha" id="fqArquivo" accept=".xls,.xlsx,.ods" class="d-none" required>
                         <i class="fas fa-cloud-upload-alt"></i>
                         <div class="mt-2">Arraste a planilha aqui ou <strong class="text-primary">clique para escolher</strong></div>
-                        <div class="small text-muted">.xls ou .xlsx, até 15 MB</div>
+                        <div class="small text-muted">.xls, .xlsx ou .ods, até 15 MB</div>
                         <div class="fq-drop-nome" id="fqNome"></div>
                     </label>
                     <div class="text-end mt-3">

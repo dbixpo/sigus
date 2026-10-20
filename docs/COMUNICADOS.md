@@ -77,5 +77,5 @@ Idempotente. Adiciona `versao`, `editado_em`/`editado_por_id`, `excluido_em`/`ex
 
 ## Conferência
 
-- `/sigus/comunicados/novo` com a unidade Saúde Digital (ou a que tiver Lina/Camila): modo **Por CBO** deve listar enfermagem (223505) e fisioterapia (223605), não só o CBO de quem preencheu o cadastro SIGUS.
+- `/sigus/comunicados/novo` com uma unidade que tenha esses vínculos: modo **Por CBO** deve listar enfermagem (223505) e fisioterapia (223605), não só o CBO de quem preencheu o cadastro SIGUS.
 - AJAX: `/sigus/comunicados/opcoes-ciencia?unidades=<id>`

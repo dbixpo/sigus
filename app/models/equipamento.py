@@ -2,33 +2,70 @@ from datetime import datetime
 from app.utils import agora_local
 from app import db
 
-STATUS_EQUIPAMENTO = ['ativo', 'em_manutencao', 'baixado']
+# RDC / inventário SUEQ. Inservível e aguardando instalação não têm condição.
+STATUS_EQUIPAMENTO = [
+    'ativo',
+    'inservivel',
+    'aguardando_instalacao',
+    'disponivel_transferencia',
+    'sobressalente',
+]
 STATUS_LABELS = {
     'ativo': 'Ativo',
+    'inservivel': 'Inservível/Sem Recuperação',
+    'aguardando_instalacao': 'Aguardando Instalação',
+    'disponivel_transferencia': 'Disponível/Transferência',
+    'sobressalente': 'Sobressalente/Reserva',
     'em_manutencao': 'Em Manutenção',
     'baixado': 'Baixado',
 }
 STATUS_BADGE = {
     'ativo': 'success',
+    'inservivel': 'dark',
+    'aguardando_instalacao': 'info',
+    'disponivel_transferencia': 'primary',
+    'sobressalente': 'secondary',
     'em_manutencao': 'warning',
     'baixado': 'secondary',
 }
+STATUS_PODE_TRANSFERIR = ('ativo', 'disponivel_transferencia', 'sobressalente', 'aguardando_instalacao')
 
-CONDICAO_EQUIPAMENTO = ['excelente', 'boa', 'regular', 'ruim', 'inservivel']
+CONDICAO_POR_STATUS = {
+    'ativo': ('boa', 'regular', 'ruim'),
+    'sobressalente': ('boa', 'regular', 'ruim'),
+    'disponivel_transferencia': ('em_condicoes_uso', 'necessita_manutencao'),
+}
+CONDICAO_EQUIPAMENTO = [
+    'boa', 'regular', 'ruim', 'em_condicoes_uso', 'necessita_manutencao',
+]
 CONDICAO_LABELS = {
-    'excelente': 'Excelente',
     'boa': 'Boa',
     'regular': 'Regular',
     'ruim': 'Ruim',
+    'em_condicoes_uso': 'Em Condições de Uso',
+    'necessita_manutencao': 'Necessita Manutenção',
+    'excelente': 'Excelente',
     'inservivel': 'Inservível',
 }
 CONDICAO_BADGE = {
-    'excelente': 'success',
-    'boa': 'info',
+    'boa': 'success',
     'regular': 'primary',
     'ruim': 'warning',
+    'em_condicoes_uso': 'success',
+    'necessita_manutencao': 'warning',
+    'excelente': 'success',
     'inservivel': 'danger',
 }
+
+FORMAS_INCORPORACAO = [
+    ('aquisicao', 'Aquisição'),
+    ('doacao', 'Doação'),
+    ('cessao_uso', 'Cessão de Uso'),
+    ('comodato', 'Comodato'),
+    ('locacao', 'Locação'),
+    ('emprestimo', 'Empréstimo'),
+]
+FORMA_INCORPORACAO_LABELS = dict(FORMAS_INCORPORACAO)
 
 # BASE: pertence à sala física (móvel, informática, eletrodoméstico).
 # FUNÇÃO: pertence ao serviço prestado ali (colposcópio, câmara de vacina).
@@ -113,6 +150,7 @@ class Marca(db.Model):
 
     id            = db.Column(db.Integer, primary_key=True)
     nome          = db.Column(db.String(100), nullable=False, unique=True)
+    pendente      = db.Column(db.Boolean, nullable=False, default=False)
     criado_em     = db.Column(db.DateTime, nullable=False, default=agora_local)
     atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
@@ -135,6 +173,7 @@ class Modelo(db.Model):
     tipo_equipamento_id = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='SET NULL'))
     marca_id            = db.Column(db.Integer, db.ForeignKey('marcas.id', ondelete='SET NULL'))
     nome                = db.Column(db.String(150), nullable=False)
+    pendente            = db.Column(db.Boolean, nullable=False, default=False)
     criado_em           = db.Column(db.DateTime, nullable=False, default=agora_local)
     atualizado_em       = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
@@ -158,11 +197,24 @@ class Equipamento(db.Model):
     numero_serie = db.Column(db.String(150))
     marca_id = db.Column(db.Integer, db.ForeignKey('marcas.id', ondelete='SET NULL'))
     modelo_id = db.Column(db.Integer, db.ForeignKey('modelos.id', ondelete='SET NULL'))
+    ano_fabricacao = db.Column(db.Integer)
     data_aquisicao = db.Column(db.Date)
     valor_estimado = db.Column(db.Numeric(12, 2))
     tempo_uso_anos = db.Column(db.Numeric(5, 1))
-    status = db.Column(db.String(20), nullable=False, default='ativo')
-    condicao = db.Column(db.String(20), nullable=False, default='boa')
+    proprio = db.Column(db.Boolean)
+    forma_incorporacao = db.Column(db.String(30))
+    numero_nota_fiscal = db.Column(db.String(60))
+    numero_empenho = db.Column(db.String(60))
+    fonte_recurso = db.Column(db.String(150))
+    numero_processo = db.Column(db.String(80))
+    numero_contrato_af = db.Column(db.String(80))
+    fornecedor = db.Column(db.String(200))
+    data_entrega_unidade = db.Column(db.Date)
+    garantia = db.Column(db.String(120))
+    vida_util_estimada = db.Column(db.String(80))
+    data_desativacao = db.Column(db.Date)
+    status = db.Column(db.String(40), nullable=False, default='ativo')
+    condicao = db.Column(db.String(40))
     observacoes = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
@@ -189,6 +241,9 @@ class Equipamento(db.Model):
     usuarios_vinculados = db.relationship('EquipamentoUsuario', back_populates='equipamento',
                                           lazy='dynamic', cascade='all, delete-orphan',
                                           order_by='EquipamentoUsuario.vinculado_em')
+    documentos = db.relationship('EquipamentoDocumento', back_populates='equipamento',
+                                 lazy='dynamic', cascade='all, delete-orphan',
+                                 order_by='EquipamentoDocumento.criado_em.desc()')
 
     @property
     def status_label(self):
@@ -200,7 +255,17 @@ class Equipamento(db.Model):
 
     @property
     def condicao_label(self):
+        if not self.condicao:
+            return '—'
         return CONDICAO_LABELS.get(self.condicao, self.condicao)
+
+    @property
+    def forma_incorporacao_label(self):
+        return FORMA_INCORPORACAO_LABELS.get(self.forma_incorporacao, self.forma_incorporacao or '—')
+
+    @property
+    def pode_transferir(self):
+        return bool(self.ativo and self.status in STATUS_PODE_TRANSFERIR)
 
     @property
     def condicao_badge(self):
@@ -295,3 +360,38 @@ class EquipamentoCampoValor(db.Model):
     campo = db.relationship('CampoTipoEquipamento', back_populates='valores')
 
     __table_args__ = (db.UniqueConstraint('equipamento_id', 'campo_id'),)
+
+
+class EquipamentoDocumento(db.Model):
+    """Documento do prontuário: nota fiscal, certificado, laudo, foto."""
+    __tablename__ = 'equipamento_documentos'
+
+    id = db.Column(db.Integer, primary_key=True)
+    equipamento_id = db.Column(db.Integer, db.ForeignKey('equipamentos.id', ondelete='CASCADE'), nullable=False)
+    filename = db.Column(db.String(80), nullable=False)
+    original = db.Column(db.String(200))
+    mime_type = db.Column(db.String(100))
+    tamanho_bytes = db.Column(db.Integer)
+    criado_por = db.Column(db.Integer, db.ForeignKey('usuarios.id', ondelete='SET NULL'))
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+
+    equipamento = db.relationship('Equipamento', back_populates='documentos')
+    autor = db.relationship('Usuario', foreign_keys=[criado_por])
+
+    @property
+    def url(self):
+        from app.utils import prefixed_static_url
+        return prefixed_static_url(f'/static/uploads/equipamentos/{self.filename}')
+
+    @property
+    def is_image(self):
+        return (self.mime_type or '').startswith('image/')
+
+    @property
+    def tamanho_label(self):
+        n = self.tamanho_bytes or 0
+        if n < 1024:
+            return f'{n} B'
+        if n < 1024 * 1024:
+            return f'{n / 1024:.0f} KB'
+        return f'{n / (1024 * 1024):.1f} MB'

@@ -23,8 +23,10 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
-    # Host dos links e QR codes de acesso externo (o caminho /sigus vem do url_for); mesmo env do run.py.
-    SIGUS_HOST_PUBLICO = 'https://' + (os.environ.get('SIGUS_PUBLIC_HOST') or 'saudedigital.sorocaba.sp.gov.br').strip()
+    # Host dos links e QR codes de acesso externo (o caminho /sigus vem do url_for).
+    # Vazio no notebook. No servidor, SIGUS_PUBLIC_HOST fica só no .env daquela máquina.
+    _host_publico = (os.environ.get('SIGUS_PUBLIC_HOST') or '').strip()
+    SIGUS_HOST_PUBLICO = ('https://' + _host_publico) if _host_publico else ''
 
 class DevelopmentConfig(Config):
     DEBUG = True

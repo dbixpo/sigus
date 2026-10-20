@@ -3,8 +3,8 @@
 Ajuste de senha e/ou perfil direto no banco (use na raiz do projeto; .env com DATABASE_URL).
 
 Exemplos (PowerShell):
-  python scripts/reset_usuario_sigus.py --email administrador.sigus@sorocaba.sp.gov.br --nova-senha "NovaSenhaForte123"
-  python scripts/reset_usuario_sigus.py --email nicolly.lemos@sorocaba.sp.gov.br --perfil profissional
+  python scripts/reset_usuario_sigus.py --email admin@exemplo.local --nova-senha "NovaSenhaForte123"
+  python scripts/reset_usuario_sigus.py --email usuario@exemplo.local --perfil profissional
 
 ATENÇÃO: não versionar senhas em comando ou histórico.
 Não use migrations/recriar_admin.py em produção sem backup — ele remove TODOS os usuários com perfil administrador.

@@ -29,12 +29,22 @@ def agrupar_tipos_sala(tipos):
     return list(grupos.items())
 
 
+ORDEM_CLASSIFICACAO = (
+    'Médico-Assistencial',
+    'Apoio',
+    'Infraestrutura',
+    'Geral',
+)
+
+
 def agrupar_tipos_equipamento(tipos):
-    """[(classificação, [tipos])] em ordem alfabética; sem classificação no fim."""
+    """[(classificação RDC 509, [tipos])]; grupos fora da RDC e sem classe vão ao fim."""
     grupos = defaultdict(list)
     for t in tipos:
         grupos[t.classificacao or CLASSIFICACAO_SEM].append(t)
-    ordem = sorted((g for g in grupos if g != CLASSIFICACAO_SEM), key=str.lower)
+    ordem = [g for g in ORDEM_CLASSIFICACAO if g in grupos]
+    resto = sorted((g for g in grupos if g not in ordem and g != CLASSIFICACAO_SEM), key=str.lower)
+    ordem.extend(resto)
     if CLASSIFICACAO_SEM in grupos:
         ordem.append(CLASSIFICACAO_SEM)
     return [(g, sorted(grupos[g], key=lambda t: t.nome.lower())) for g in ordem]
@@ -132,7 +142,7 @@ def resumo_padrao():
     no_catalogo = db.or_(TipoEquipamento.codigo.isnot(None), TipoEquipamento.conta_como_id.isnot(None))
     equip = dict(db.session.query(no_catalogo, db.func.count(Equipamento.id))
                  .select_from(Equipamento).join(TipoEquipamento, TipoEquipamento.id == Equipamento.tipo_equipamento_id)
-                 .filter(Equipamento.ativo.is_(True), Equipamento.status != 'baixado')
+                 .filter(Equipamento.ativo.is_(True), Equipamento.status != 'inservivel')
                  .group_by(no_catalogo).all())
     return {
         'ambientes': ambientes, 'ambientes_com_kit': com_kit, 'ambientes_sem_kit': ambientes - com_kit,
@@ -163,7 +173,7 @@ def _contagem_equipamentos(sala_ids):
                        .filter(TipoEquipamento.conta_como_id.isnot(None)).all())
     linhas = (db.session.query(Equipamento.sala_id, Equipamento.tipo_equipamento_id, db.func.count(Equipamento.id))
               .filter(Equipamento.sala_id.in_(sala_ids), Equipamento.ativo.is_(True),
-                      Equipamento.status != 'baixado')
+                      Equipamento.status != 'inservivel')
               .group_by(Equipamento.sala_id, Equipamento.tipo_equipamento_id).all())
     for sala_id, tipo_id, n in linhas:
         contagem[sala_id][equivalente.get(tipo_id, tipo_id)] += n
