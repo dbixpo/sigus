@@ -106,11 +106,12 @@
                         </td>
                         <td class="d-none d-md-table-cell small text-muted text-nowrap" data-col="2">{{ r.cpf }}</td>
                         <td class="small text-nowrap" data-col="3">
-                            {% if r.whatsapp != '—' %}
+                            {% if r.whatsapp != '—' and '*' not in r.whatsapp %}
                             {% set _wdig = r.whatsapp | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ _wdig }}" target="_blank" class="text-success text-decoration-none">
                                 <i class="fab fa-whatsapp me-1"></i>{{ r.whatsapp | br_fone }}
                             </a>
+                            {% elif r.whatsapp != '—' %}{{ r.whatsapp }}
                             {% else %}<span class="text-muted">—</span>{% endif %}
                         </td>
                         <td class="d-none d-lg-table-cell small text-muted" data-col="4">

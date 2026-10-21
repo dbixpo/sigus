@@ -47,6 +47,9 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 
 **Patrimônio**
 
+- `add_inventario_catalogo.py` — colunas de incorporação, classificação RENEM (incluindo Veículos), status em `status_de_equipamento` e itens de veículo da RENEM. O bootstrap de banco vazio já chama este arquivo. Não carrega a planilha da Flávia.
+- `add_categorias_equipamento.py` — mesma classificação, para banco que já tinha tipos com o texto antigo em `classificacao`
+- `aplicar_catalogo_flavia.py` / `importar_itens_flavia.py` — carga da planilha desta rede (caminho local, fora do Git). Não rode num município novo.
 - `add_capacidade_maxima_salas.py`
 - `add_padrao_salas.py` — código/grupo nos tipos de sala, catálogo nos tipos de equipamento, `kit_padrao_sala`, código do imóvel da unidade
 - `importar_padrao_salas.py` — carrega a planilha do Planejamento (`dados/padrao_salas_ubs.xlsx`, fora do Git, ou `--planilha`); simula sem `--aplicar`. Ver [docs/PADRAO_SALAS_EQUIPAMENTOS.md](../docs/PADRAO_SALAS_EQUIPAMENTOS.md)

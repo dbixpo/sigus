@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect, filtro_rapido %}
+{% block title %}Mural da Saúde{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-newspaper"></i> Mural da Saúde</h1>
+    <a href="{{ url_for('relatorios.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i>Relatórios
+    </a>
+</div>
+
+<div class="filter-bar mb-3">
+    <form method="GET" id="formMural" action="{{ url_for('relatorios.mural') }}" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold" for="muralDe">De</label>
+            <input type="date" class="form-control form-control-sm" id="muralDe" name="de" value="{{ de }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold" for="muralAte">Até</label>
+            <input type="date" class="form-control form-control-sm" id="muralAte" name="ate" value="{{ ate }}">
+        </div>
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de ação', 'tipo_acao', tipos_acao, filtro_tipos_acao, 'Todos os tipos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Tipo de unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-2">
+            <label class="form-label mb-1 small fw-semibold" for="muralQ">Texto</label>
+            <input type="search" class="form-control form-control-sm" id="muralQ" name="q" value="{{ termo }}" placeholder="Descrição, unidade ou tipo">
+        </div>
+        <div class="col-12 d-flex flex-wrap gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-search me-1"></i>Filtrar
+            </button>
+            <a href="{{ url_for('relatorios.mural') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+            <button type="button" class="btn btn-sm text-white ms-md-auto" id="btnBoletim"
+                    style="background:#0D3B5E;">
+                <i class="fas fa-newspaper me-1"></i>Gerar Boletim da Rede
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="mini-stats mb-2">
+    <span class="mini-stat">Período: <strong>{{ periodo }}</strong></span>
+    <span class="mini-stat">Publicações: <strong>{{ total }}</strong></span>
+    <span class="mini-stat">Curtidas: <strong>{{ total_curtidas }}</strong></span>
+</div>
+
+<p class="text-muted small">A lista segue a data da ação. No boletim, a publicação com mais curtidas vai para a capa. Datas em branco trazem todo o período; Limpar volta aos últimos 30 dias.</p>
+
+{% if linhas %}
+<div class="row g-2 mb-2">
+    {{ filtro_rapido('Data', 0, 'data') }}
+    {{ filtro_rapido('Tipo de ação', 1, 'tipo') }}
+    {{ filtro_rapido('Unidade', 2, 'unidade') }}
+    {{ filtro_rapido('Descrição', 3, 'descricao') }}
+    {{ filtro_rapido('Autor', 6, 'autor') }}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if linhas %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="tblMural">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo de ação</th>
+                        <th>Unidade</th>
+                        <th>Descrição</th>
+                        <th class="text-end">Curtidas</th>
+                        <th class="text-end">Comentários</th>
+                        <th>Autor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in linhas %}
+                    <tr>
+                        <td class="small text-nowrap" data-col="0">{{ item.data | br_date }}</td>
+                        <td class="small" data-col="1">{{ item.tipo }}</td>
+                        <td class="small" data-col="2">{{ item.unidade }}</td>
+                        <td class="small" data-col="3">{{ item.descricao }}</td>
+                        <td class="small text-end" data-col="4">{{ item.curtidas }}</td>
+                        <td class="small text-end" data-col="5">{{ item.comentarios }}</td>
+                        <td class="small text-muted" data-col="6">{{ item.autor }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-newspaper"></i>
+            <h6>Nenhuma publicação do mural nesse filtro.</h6>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+initFiltrosRapidos('tblMural');
+document.getElementById('btnBoletim')?.addEventListener('click', function () {
+    var dados = new FormData(document.getElementById('formMural'));
+    var params = new URLSearchParams();
+    dados.forEach(function (valor, chave) {
+        if (String(valor).trim()) params.append(chave, valor);
+    });
+    var url = '{{ url_for("relatorios.boletim_mural") }}';
+    var qs = params.toString();
+    abrirImpresso(qs ? url + '?' + qs : url, 'Boletim da Rede');
+});
+</script>
+{% endblock %}

@@ -6,9 +6,15 @@
     <h1><i class="fas fa-chart-line"></i> Relatórios e Inventários</h1>
 </div>
 
-<div class="row g-3">
+<div class="mb-3" style="max-width: 28rem;">
+    <label class="form-label small fw-semibold" for="buscaRelatorio">Buscar relatório</label>
+    <input type="search" id="buscaRelatorio" class="form-control" autocomplete="off"
+           placeholder="Digite para filtrar, por exemplo mural ou chamados">
+</div>
+
+<div class="row g-3" id="gradeRelatorios">
     {# ── Aniversariantes primeiro, sempre especial ── #}
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100 border-0" style="background:linear-gradient(135deg,#fff8e1,#fde68a);">
             <div class="card-body text-center py-4">
                 <i class="fas fa-balloon-heart-fill fs-1 d-block mb-3" style="color:#d97706;"></i>
@@ -20,7 +26,19 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-newspaper fs-1 d-block mb-3" style="color:#0D3B5E;"></i>
+                <h5 class="fw-bold">Mural da Saúde</h5>
+                <p class="text-muted small">Publicações do mural por período, tipo de ação e unidade. A mais curtida abre o Boletim da Rede, em página A4.</p>
+                <a href="{{ url_for('relatorios.mural') }}" class="btn text-white" style="background:#0D3B5E;">
+                    <i class="fas fa-search me-1"></i>Abrir Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-desktop fs-1 text-primary d-block mb-3"></i>
@@ -33,7 +51,7 @@
         </div>
     </div>
     {% if nsp_acesso().relatorios %}
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-user-shield fs-1 text-danger d-block mb-3"></i>
@@ -46,7 +64,7 @@
         </div>
     </div>
     {% endif %}
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-wrench fs-1 text-danger d-block mb-3"></i>
@@ -58,7 +76,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-file-contract fs-1 text-success d-block mb-3"></i>
@@ -70,7 +88,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-door-open fs-1 text-warning d-block mb-3"></i>
@@ -82,7 +100,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-clipboard-check fs-1 text-primary d-block mb-3"></i>
@@ -94,7 +112,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-users fs-1 text-info d-block mb-3"></i>
@@ -106,7 +124,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-user-lines-fill fs-1 text-secondary d-block mb-3"></i>
@@ -118,7 +136,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-calendar-check fs-1 text-primary d-block mb-3"></i>
@@ -130,7 +148,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-hospital fs-1 text-info d-block mb-3"></i>
@@ -142,7 +160,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
                 <i class="fas fa-map-location-dot fs-1 text-primary d-block mb-3"></i>
@@ -154,5 +172,35 @@
             </div>
         </div>
     </div>
+    <div class="col-12 d-none" id="relatorioNenhum">
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h6>Nenhum relatório com esse texto.</h6>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var campo = document.getElementById('buscaRelatorio');
+    var cards = document.querySelectorAll('#gradeRelatorios .relatorio-card');
+    var vazio = document.getElementById('relatorioNenhum');
+    if (!campo) return;
+    function semAcento(texto) {
+        return (texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    }
+    campo.addEventListener('input', function () {
+        var q = semAcento(campo.value.trim());
+        var visiveis = 0;
+        cards.forEach(function (card) {
+            var ok = !q || semAcento(card.innerText).indexOf(q) !== -1;
+            card.style.display = ok ? '' : 'none';
+            if (ok) visiveis += 1;
+        });
+        if (vazio) vazio.classList.toggle('d-none', visiveis > 0);
+    });
+})();
+</script>
 {% endblock %}

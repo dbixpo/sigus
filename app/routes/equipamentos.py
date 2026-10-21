@@ -8,8 +8,7 @@ from app import db
 from app.models.equipamento import (
     Equipamento, TipoEquipamento, CampoTipoEquipamento,
     Marca, Modelo, EquipamentoCampoValor, EquipamentoUsuario, EquipamentoDocumento,
-    STATUS_EQUIPAMENTO, STATUS_LABELS,
-    CONDICAO_POR_STATUS, CONDICAO_LABELS, FORMAS_INCORPORACAO,
+    FORMAS_INCORPORACAO,
 )
 from datetime import date, datetime
 from app.services.inventario_acesso import (
@@ -108,17 +107,24 @@ def _parse_ano(valor):
     return None
 
 
+def _rotulo_estado(status, condicao):
+    from app.models.status_equipamento import CONDICAO_LABELS, mapa_status
+    item = mapa_status().get(status)
+    nome = item.nome if item else status
+    return f'{nome} / {CONDICAO_LABELS.get(condicao, "—")}'
+
+
 def _status_condicao_do_form():
-    status = request.form.get('status') or 'ativo'
-    if status not in STATUS_EQUIPAMENTO:
-        status = 'ativo'
-    permitidas = CONDICAO_POR_STATUS.get(status) or ()
-    condicao = request.form.get('condicao') or None
-    if not permitidas:
-        return status, None
-    if condicao not in permitidas:
-        condicao = permitidas[0]
-    return status, condicao
+    from app.models.status_equipamento import (
+        StatusEquipamento, normalizar_condicao, opcoes_status,
+    )
+    codigo = request.form.get('status') or 'ativo'
+    status = StatusEquipamento.query.filter_by(codigo=codigo).first()
+    if not status or status.codigo not in {s.codigo for s in opcoes_status(codigo)}:
+        status = StatusEquipamento.query.filter_by(codigo='ativo').first()
+    if not status or not status.pede_condicao:
+        return (status.codigo if status else 'ativo'), None
+    return status.codigo, normalizar_condicao(request.form.get('condicao')) or 'boa'
 
 
 def _resolver_marca_modelo(tipo):
@@ -208,17 +214,18 @@ def _aplicar_info_sueq(equipamento):
     equipamento.data_desativacao = _parse_data(request.form.get('data_desativacao'))
 
 
-def _ctx_form(unidade):
+def _ctx_form(unidade, equipamento=None):
+    from app.models.status_equipamento import CONDICAO_LABELS as CONDICOES, opcoes_status
     corrigir = pode_corrigir_cadastro(current_user, unidade)
+    atual = equipamento.status if equipamento else None
+    status = opcoes_status(atual)
     return {
         'pode_editar_cadastro': corrigir,
         'pode_info_adicional': pode_informacoes_adicionais(current_user),
         'somente_estado': not corrigir,
         'marca_pendente': marca_nova_fica_pendente(current_user),
-        'status_opts': STATUS_EQUIPAMENTO,
-        'status_labels': STATUS_LABELS,
-        'condicao_por_status': CONDICAO_POR_STATUS,
-        'condicao_labels': CONDICAO_LABELS,
+        'status_itens': status,
+        'condicoes': CONDICOES,
         'formas_incorporacao': FORMAS_INCORPORACAO,
     }
 
@@ -267,6 +274,7 @@ def listar():
     if filtro_condicao_list:
         query = query.filter(Equipamento.condicao.in_(filtro_condicao_list))
 
+    from app.models.status_equipamento import opcoes_status
     equipamentos  = query.order_by(Equipamento.id.desc()).all()
     tipos         = TipoEquipamento.query.filter_by(ativo=True).order_by(TipoEquipamento.nome).all()
     tipos_unidade = TipoUnidade.query.filter_by(ativo=True).order_by(TipoUnidade.nome).all()
@@ -277,9 +285,8 @@ def listar():
                            tipos=tipos,
                            tipos_unidade=tipos_unidade,
                            unidades=unidades,
-                           status_opts={k: STATUS_LABELS[k] for k in STATUS_EQUIPAMENTO},
-                           condicao_opts={k: CONDICAO_LABELS[k] for k in (
-                               'boa', 'regular', 'ruim', 'em_condicoes_uso', 'necessita_manutencao')},
+                           status_opts={s.codigo: s.nome for s in opcoes_status()},
+                           condicao_opts={'boa': 'Boa', 'regular': 'Regular', 'ruim': 'Ruim'},
                            filtro_tipos=filtro_tipos,
                            filtro_tipo_unidades=filtro_tipo_unidades,
                            filtro_unidades=filtro_unidades,
@@ -515,7 +522,7 @@ def editar(id):
     if equipamento.tipo_equipamento and equipamento.tipo_equipamento not in tipos:
         tipos = [equipamento.tipo_equipamento] + tipos
     campos_valores = {cv.campo_id: cv.valor for cv in equipamento.campos_valores.all()}
-    ctx = _ctx_form(unidade)
+    ctx = _ctx_form(unidade, equipamento)
 
     def _render_editar():
         return render_template('equipamentos/form.html',
@@ -534,7 +541,7 @@ def editar(id):
                     equipamento_id=equipamento.id,
                     usuario_id=current_user.id,
                     acao='Estado e condição atualizados',
-                    observacao=f'{STATUS_LABELS.get(status, status)} / {CONDICAO_LABELS.get(condicao, "—")}',
+                    observacao=_rotulo_estado(status, condicao),
                 ))
             equipamento.status = status
             equipamento.condicao = condicao
@@ -582,7 +589,7 @@ def editar(id):
                 equipamento_id=equipamento.id,
                 usuario_id=current_user.id,
                 acao='Estado e condição atualizados',
-                observacao=f'{STATUS_LABELS.get(status, status)} / {CONDICAO_LABELS.get(condicao, "—")}',
+                observacao=_rotulo_estado(status, condicao),
             ))
         equipamento.status = status
         equipamento.condicao = condicao

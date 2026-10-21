@@ -1,0 +1,210 @@
+<style>
+.sei-modal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px rgba(13, 59, 94, .28);
+}
+.sei-modal .modal-header {
+    background: #0D3B5E;
+    color: #fff;
+    border-bottom: 3px solid #1A82B8;
+    padding: 16px 20px;
+    align-items: center;
+}
+.sei-modal .sei-kicker {
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #9fd0ea;
+    margin-bottom: 2px;
+}
+.sei-modal .modal-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 0;
+}
+.sei-modal .modal-body {
+    background: #F4F6F9;
+    padding: 16px 20px 24px;
+}
+.sei-modal .sei-dica {
+    color: #718096;
+    font-size: .82rem;
+    margin: 0 0 12px;
+}
+.sei-modal .sei-folha {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(13, 59, 94, .05), 0 10px 28px rgba(13, 59, 94, .07);
+    padding: 28px 32px 32px;
+    overflow-x: auto;
+    font-family: Calibri, "Segoe UI", sans-serif;
+    color: #000;
+    font-size: 12pt;
+}
+.sei-modal .sei-folha p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.sei-modal .sei-folha table {
+    color: #000;
+    font-family: Calibri, "Segoe UI", sans-serif;
+    margin-left: auto;
+    margin-right: auto;
+}
+.sei-modal .modal-footer {
+    background: #fff;
+    border-top: 1px solid #e6edf3;
+    padding: 12px 20px;
+}
+.sei-modal .sei-aviso {
+    margin-right: auto;
+    color: #19A88B;
+    font-size: .85rem;
+    font-weight: 600;
+}
+@media (max-width: 768px) {
+    .sei-modal .sei-folha { padding: 16px; }
+}
+</style>
+
+<div class="px-3 py-2 border-bottom bg-light">
+    <div class="small text-muted mb-2">
+        Inventário {{ inventario_sei.ano }} no padrão do SEI! Cidades.
+        A planilha abre no LibreOffice Calc. Os textos abrem preenchidos para copiar e colar no processo.
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener"
+           href="{{ url_for('static', filename='docs/manual-inventario-sei-2025.pdf') }}">
+            <i class="fas fa-book me-1"></i>Manual
+        </a>
+        <a class="btn btn-sm btn-outline-success" href="{{ url_for('unidades.inventario_sei_ods', id=unidade.id) }}">
+            <i class="fas fa-file-excel me-1"></i>Planilha ODS
+        </a>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSeiSucataCom">
+            <i class="fas fa-file-alt me-1"></i>Sucata com patrimônio
+            <span class="badge text-bg-light">{{ inventario_sei.n_sucata_com }}</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSeiSucataSem">
+            <i class="fas fa-file-alt me-1"></i>Sucata sem patrimônio
+            <span class="badge text-bg-light">{{ inventario_sei.n_sucata_sem }}</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSeiDisp">
+            <i class="fas fa-file-alt me-1"></i>Disponibilização
+            <span class="badge text-bg-light">{{ inventario_sei.n_disp }}</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSeiRelatorio">
+            <i class="fas fa-file-alt me-1"></i>Relatório
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalSeiEquipe">
+            <i class="fas fa-users me-1"></i>Equipe
+            <span class="badge text-bg-light">{{ inventario_sei.n_equipe }}</span>
+        </button>
+    </div>
+</div>
+
+{% macro modal_sei(mid, titulo, dica, alvo, conteudo) %}
+<div class="modal fade sei-modal" id="{{ mid }}" tabindex="-1" aria-labelledby="{{ mid }}Titulo" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="sei-kicker">Texto para colar no SEI</div>
+                    <h5 class="modal-title" id="{{ mid }}Titulo">{{ titulo }}</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="sei-dica">{{ dica }}</p>
+                <div class="sei-folha" id="{{ alvo }}">{{ conteudo }}</div>
+            </div>
+            <div class="modal-footer">
+                <span class="sei-aviso" data-sei-aviso></span>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" onclick="copiarDocumentoSei('{{ alvo }}', this)">
+                    <i class="fas fa-copy me-1"></i>Copiar para o SEI
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endmacro %}
+
+{{ modal_sei(
+    'modalSeiSucataCom',
+    'Sucata com número de patrimônio',
+    'Inservíveis com chapinha: ' ~ inventario_sei.n_sucata_com ~ '. O timbre o SEI já coloca.',
+    'seiSucataCom',
+    inventario_sei.html_sucata_com
+) }}
+{{ modal_sei(
+    'modalSeiSucataSem',
+    'Sucata sem número de patrimônio',
+    'Inservíveis sem chapinha: ' ~ inventario_sei.n_sucata_sem ~ '. O aviso amarelo pede a foto por e-mail.',
+    'seiSucataSem',
+    inventario_sei.html_sucata_sem
+) }}
+{{ modal_sei(
+    'modalSeiDisp',
+    'Disponibilização de materiais',
+    'Disponíveis para transferência ou sobressalentes: ' ~ inventario_sei.n_disp ~ '. Condição boa fica A; as demais, B.',
+    'seiDisp',
+    inventario_sei.html_disponibilizacao
+) }}
+{{ modal_sei(
+    'modalSeiRelatorio',
+    'Relatório sintético de inventário patrimonial',
+    'Cada bem entra numa linha só, e a soma fecha com o total da unidade. As datas e os números do SEI ficam em branco.',
+    'seiRelatorio',
+    inventario_sei.html_relatorio
+) }}
+{{ modal_sei(
+    'modalSeiEquipe',
+    'Relação da equipe de inventário local',
+    'Gerentes da unidade e auxiliares de escritório (CBO 411005). O responsável é o primeiro gerente.',
+    'seiEquipe',
+    inventario_sei.html_equipe
+) }}
+
+<script>
+['modalSeiSucataCom', 'modalSeiSucataSem', 'modalSeiDisp', 'modalSeiRelatorio', 'modalSeiEquipe'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el && el.parentNode !== document.body) document.body.appendChild(el);
+});
+function copiarDocumentoSei(id, botao) {
+    var el = document.getElementById(id);
+    var modal = botao.closest('.modal');
+    var aviso = modal ? modal.querySelector('[data-sei-aviso]') : null;
+    var html = '<!DOCTYPE html><html><body>' + el.innerHTML + '</body></html>';
+    var texto = el.innerText;
+    var original = botao.innerHTML;
+    function ok() {
+        botao.innerHTML = '<i class="fas fa-check me-1"></i>Copiado';
+        if (aviso) aviso.textContent = 'Copiado. No SEI, cole com Ctrl+V.';
+        setTimeout(function () {
+            botao.innerHTML = original;
+            if (aviso) aviso.textContent = '';
+        }, 2500);
+    }
+    function selecionar() {
+        var faixa = document.createRange();
+        faixa.selectNodeContents(el);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(faixa);
+        try { document.execCommand('copy'); ok(); }
+        catch (e) { if (aviso) aviso.textContent = 'Selecione o texto e copie.'; }
+    }
+    if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([
+            new ClipboardItem({
+                'text/html': new Blob([html], {type: 'text/html'}),
+                'text/plain': new Blob([texto], {type: 'text/plain'})
+            })
+        ]).then(ok).catch(selecionar);
+    } else {
+        selecionar();
+    }
+}
+</script>

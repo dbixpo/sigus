@@ -21,20 +21,6 @@
     O que a unidade enviou ao RH na planilha de frequência: justificativas, banco de horas e horas extras.
 </p>
 
-<div class="fq-stats">
-    <div class="fq-stat {{ 'vermelho' if fa_total >= fa_limite else '' }}">
-        <i class="fas fa-calendar-check fq-stat-ico"></i>
-        <div class="fq-stat-rot">Faltas abonadas em {{ ano_fa }}</div>
-        <div class="fq-stat-val">{{ fa_total }} <span style="font-size:1rem;font-weight:600;color:#718096">/ {{ fa_limite }}</span></div>
-        <div class="fq-stat-det">
-            Soma do que está no perfil e do que já veio na frequência.
-            {% if not de_outro and current_user.pode('ver_faltas_abonadas') %}
-            <a href="{{ url_for('rh.faltas_abonadas', ano=ano_fa) }}">Abrir faltas abonadas</a>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
 {% if not mats %}
 <div class="fq-card"><div class="fq-vazio">
     <i class="fas fa-id-badge"></i>
@@ -107,6 +93,17 @@
             <div class="fq-stat-val">—</div>
             <div class="fq-stat-det">Nenhum saldo informado até {{ competencia_label(comp) }}</div>
             {% endif %}
+        </div>
+        <div class="fq-stat {{ 'vermelho' if fa_total >= fa_limite else '' }}">
+            <i class="fas fa-calendar-check fq-stat-ico"></i>
+            <div class="fq-stat-rot">Faltas abonadas em {{ ano_fa }}</div>
+            <div class="fq-stat-val">{{ fa_total }} <span style="font-size:1rem;font-weight:600;color:#718096">/ {{ fa_limite }}</span></div>
+            <div class="fq-stat-det">
+                Soma do perfil e da frequência.
+                {% if not de_outro and current_user.pode('ver_faltas_abonadas') %}
+                <a href="{{ url_for('rh.faltas_abonadas', ano=ano_fa) }}">Abrir</a>
+                {% endif %}
+            </div>
         </div>
         <div class="fq-stat {{ 'amarelo' if n_ocorr.v else '' }}">
             <i class="fas fa-calendar-day fq-stat-ico"></i>

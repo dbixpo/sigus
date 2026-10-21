@@ -12,8 +12,9 @@ Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
 
 | Relatório | Rota | Descrição |
 |-----------|------|-----------|
-| Índice | `/relatorios/` | Hub com cards |
-| Inventário | `/relatorios/inventario` | Equipamentos por unidade/sala |
+| Índice | `/relatorios/` | Hub com cards e busca pelo nome do relatório |
+| Inventário | `/relatorios/inventario` | Equipamentos por unidade/sala, com filtro e coluna RENEM |
+| Mural da Saúde | `/relatorios/mural` | Postagens do mural; período padrão dos últimos 30 dias. O botão gera o Boletim da Rede no modal de impressão (A4): a mais curtida na capa, as demais em duas colunas |
 | Salas | `/relatorios/salas` | Salas por unidade; filtro de chamado aberto |
 | Padrão de salas e equipamentos | `/relatorios/padrao-salas` | Aderência de cada sala ao kit do seu ambiente padrão: falta, sobra e custo estimado. Abas por unidade, necessidade por item, sala a sala (até 5 unidades) e a reclassificar. Excel com 4 abas. Ver [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md) |
 | Contratos | `/relatorios/contratos` | Contratos vigentes |
@@ -69,6 +70,12 @@ return _xlsx_response(wb, "inventario")
 - Quoting em todos os campos
 
 ---
+
+## LGPD
+
+Operador Padrão e Apoio Administrativo recebem CPF e telefone mascarados nos relatórios, na listagem de usuários, na ficha de falta abonada e no celular de quem criou ou aceitou uma transferência. A máscara do CPF guarda os três primeiros dígitos, o nono e os dois últimos. O telefone guarda o DDD e os dois últimos dígitos. Com a máscara, o link de WhatsApp não é montado.
+
+Gestor de Área, Gestor Central e Administrador veem o dado completo. A ficha CNES e o e-mail CNES também saem completos, para qualquer perfil que possa emiti-los. Telefone institucional da unidade e o telefone do mapa público não entram nessa regra.
 
 ## Permissões
 

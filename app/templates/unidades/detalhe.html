@@ -47,34 +47,6 @@
     <span><i class="fas fa-clock-history me-1"></i>Última atualização: <strong>{{ unidade.atualizado_em | br_datetime }}</strong></span>
 </div>
 
-<!-- STATS -->
-<div class="row g-3 mb-3">
-    <div class="col-md-3 col-6">
-        <div class="stat-card">
-            <div class="stat-icon bg-primary-soft"><i class="fas fa-door-open"></i></div>
-            <div><div class="stat-value">{{ unidade.total_salas }}</div><div class="stat-label">Salas Ativas</div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="stat-card">
-            <div class="stat-icon bg-success-soft"><i class="fas fa-desktop"></i></div>
-            <div><div class="stat-value">{{ unidade.total_equipamentos }}</div><div class="stat-label">Equipamentos</div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="stat-card">
-            <div class="stat-icon bg-danger-soft"><i class="fas fa-wrench"></i></div>
-            <div><div class="stat-value">{{ chamados_abertos_count }}</div><div class="stat-label">Chamados em Aberto</div></div>
-        </div>
-    </div>
-    <div class="col-md-3 col-6">
-        <div class="stat-card">
-            <div class="stat-icon bg-info-soft"><i class="fas fa-users"></i></div>
-            <div><div class="stat-value">{{ vinculos | length }}</div><div class="stat-label">Profissionais Ativos</div></div>
-        </div>
-    </div>
-</div>
-
 <!-- ABAS PRINCIPAIS -->
 <ul class="nav nav-tabs mb-3" id="tabsUnidade" role="tablist">
     <li class="nav-item">
@@ -210,12 +182,13 @@
                                 </td>
                                 <td class="d-none d-md-table-cell small text-nowrap">
                                     {% set _fone = v.usuario.whatsapp or v.usuario.telefone %}
-                                    {% if _fone %}
+                                    {% if _fone and dados_pessoais_completos %}
                                     {% set _wdig = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                                     <a href="https://wa.me/55{{ _wdig }}" target="_blank"
                                        class="text-success text-decoration-none">
                                         <i class="fab fa-whatsapp me-1"></i>{{ _fone | br_fone }}
                                     </a>
+                                    {% elif _fone %}<span class="text-muted">{{ _fone | fone_visivel }}</span>
                                     {% else %}<span class="text-muted">—</span>{% endif %}
                                 </td>
                                 <td class="d-none d-lg-table-cell text-muted small">
@@ -395,6 +368,7 @@
                     {% endif %}
                 </div>
             </div>
+            {% include 'unidades/_inventario_sei.html' %}
             <div class="card-body p-0">
                 {% if total_equipamentos_unidade > 0 %}
 
@@ -532,6 +506,9 @@
                                         <span class="veic-placa">{{ v.placa_exibicao }}</span>
                                     </div>
                                     <div class="veic-modelo">{{ v.marca_modelo or v.categoria }}</div>
+                                    {% if v.tipo_renem %}
+                                    <div class="small text-muted">RENEM: {{ v.tipo_renem.nome }}</div>
+                                    {% endif %}
                                     <div class="small text-muted">
                                         {{ [v.categoria if v.marca_modelo else None, v.ano, v.cor, v.combustivel] | select | join(' · ') }}
                                     </div>
@@ -996,12 +973,14 @@
                                 </div>
                             </div>
                             {% set _fone2 = v.usuario.whatsapp or v.usuario.telefone %}
-                            {% if _fone2 %}
+                            {% if _fone2 and dados_pessoais_completos %}
                             {% set _wdig2 = _fone2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ _wdig2 }}"
                                target="_blank" class="text-success" style="font-size:0.75rem;">
                                 <i class="fab fa-whatsapp me-1"></i>{{ _fone2 | br_fone }}
                             </a>
+                            {% elif _fone2 %}
+                            <span class="text-muted" style="font-size:0.75rem;">{{ _fone2 | fone_visivel }}</span>
                             {% endif %}
                         </li>
                         {% endfor %}
@@ -1047,9 +1026,9 @@
                 <div class="row g-2 small">
                     <div class="col-md-6"><strong>Nome:</strong> {{ s.nome }}</div>
                     <div class="col-md-6"><strong>E-mail:</strong> {{ s.email }}</div>
-                    <div class="col-md-4"><strong>CPF:</strong> {{ s.cpf or '—' }}</div>
+                    <div class="col-md-4"><strong>CPF:</strong> {{ s.cpf | cpf_visivel }}</div>
                     <div class="col-md-4"><strong>CNS:</strong> {{ s.cns or '—' }}</div>
-                    <div class="col-md-4"><strong>Telefone:</strong> {{ s.telefone | br_fone if s.telefone else '—' }}</div>
+                    <div class="col-md-4"><strong>Telefone:</strong> {{ s.telefone | fone_visivel }}</div>
                     <div class="col-md-4"><strong>Nascimento:</strong> {{ s.data_nasc | br_date if s.data_nasc else '—' }}</div>
                     <div class="col-md-4"><strong>Sexo:</strong> {{ 'Masculino' if s.sexo == 'M' else ('Feminino' if s.sexo == 'F' else '—') }}</div>
                     <div class="col-md-4"><strong>Escolaridade:</strong> {{ s.escolaridade or '—' }}</div>
@@ -1134,20 +1113,16 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Profissional <span class="text-danger">*</span></label>
-                        <select name="usuario_id" class="form-select" required id="selectProfissional">
-                            <option value="">Selecione...</option>
-                            {% for u in usuarios_disponiveis %}
-                            <option value="{{ u.id }}"
-                                    data-cns="{{ u.cns or '' }}"
-                                    data-cbo="{{ u.cbo or '' }}"
-                                    data-vinculo="{{ u.vinculo or '' }}"
-                                    data-tipo="{{ u.tipo_vinculo or '' }}"
-                                    data-ch="{{ u.carga_horaria or '' }}"
-                                    data-matricula="{{ u.matricula or '' }}">
-                                {{ u.nome }} — {{ u.perfil_label }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <div class="position-relative">
+                            <input type="search" id="buscaProfissional" class="form-control"
+                                   placeholder="Digite o nome do profissional"
+                                   autocomplete="off" required
+                                   data-url="{{ url_for('unidades.buscar_profissionais', id=unidade.id) }}">
+                            <input type="hidden" name="usuario_id" id="usuarioIdVinculo">
+                            <div id="listaBuscaProfissional" class="list-group position-absolute w-100 shadow"
+                                 style="z-index:30; display:none; max-height:240px; overflow:auto;"></div>
+                        </div>
+                        <div class="form-text">Digite pelo menos 2 letras. Os cadastros só aparecem depois da busca.</div>
                     </div>
                     <hr>
                     <p class="text-muted small mb-3">
@@ -2314,12 +2289,8 @@ function selecionarOpcao(sel, val) {
     }
 }
 
-// ── Modal Vincular: pré-preencher com dados do profissional ───────────
-const selectProfissional = document.getElementById('selectProfissional');
-if (selectProfissional) {
-    selectProfissional.addEventListener('change', async function () {
-        const opt      = this.options[this.selectedIndex];
-        const uid      = this.value;
+// ── Modal Vincular: busca e pré-preenchimento do profissional ─────────
+async function carregarProfissionalVinculo(uid, cns, ch) {
         const selMat   = document.getElementById('selectMatricula');
         const infoMat  = document.getElementById('infoMatricula');
 
@@ -2395,15 +2366,84 @@ if (selectProfissional) {
         selMat.disabled = false;
     }
 
-    // Preenche apenas CNS e Carga Horária (dados únicos do profissional)
-    document.getElementById('inputCNS').value = opt.dataset.cns || '';
-    document.getElementById('inputCH').value  = opt.dataset.ch  || '';
-    
-    // Vínculo e Tipo devem sempre ficar como "Selecione..." para o usuário escolher
-    // Não preenche automaticamente
+    document.getElementById('inputCNS').value = cns || '';
+    document.getElementById('inputCH').value  = ch  || '';
     atualizarBlocosModal();
-    });
 }
+
+(function () {
+    const input = document.getElementById('buscaProfissional');
+    const hidden = document.getElementById('usuarioIdVinculo');
+    const lista = document.getElementById('listaBuscaProfissional');
+    if (!input || !hidden || !lista) return;
+    let timer = null;
+    let seq = 0;
+
+    function fechar() {
+        lista.style.display = 'none';
+        lista.innerHTML = '';
+    }
+
+    input.addEventListener('input', function () {
+        input.setCustomValidity('');
+        hidden.value = '';
+        const q = input.value.trim();
+        clearTimeout(timer);
+        if (q.length < 2) { fechar(); return; }
+        timer = setTimeout(async function () {
+            const meu = ++seq;
+            try {
+                const resp = await fetch(input.dataset.url + '?q=' + encodeURIComponent(q));
+                if (!resp.ok || meu !== seq) return;
+                const data = await resp.json();
+                if (meu !== seq) return;
+                lista.innerHTML = '';
+                const itens = data.resultados || [];
+                if (!itens.length) {
+                    const vazio = document.createElement('div');
+                    vazio.className = 'list-group-item text-muted small';
+                    vazio.textContent = 'Nenhum profissional com esse nome.';
+                    lista.appendChild(vazio);
+                } else {
+                    itens.forEach(function (p) {
+                        const botao = document.createElement('button');
+                        botao.type = 'button';
+                        botao.className = 'list-group-item list-group-item-action py-2';
+                        botao.textContent = p.nome + (p.perfil ? ' — ' + p.perfil : '');
+                        botao.addEventListener('click', function () {
+                            hidden.value = String(p.id);
+                            input.value = p.nome;
+                            fechar();
+                            carregarProfissionalVinculo(p.id, p.cns || '', p.ch || '');
+                        });
+                        lista.appendChild(botao);
+                    });
+                }
+                lista.style.display = 'block';
+            } catch (erro) {
+                fechar();
+            }
+        }, 250);
+    });
+
+    document.addEventListener('click', function (ev) {
+        if (!input.contains(ev.target) && !lista.contains(ev.target)) fechar();
+    });
+
+    const form = input.closest('form');
+    if (form) {
+        form.addEventListener('submit', function (ev) {
+            if (!hidden.value) {
+                ev.preventDefault();
+                input.focus();
+                input.setCustomValidity('Escolha um profissional na lista da busca.');
+                input.reportValidity();
+            } else {
+                input.setCustomValidity('');
+            }
+        });
+    }
+})();
 
 // Ao selecionar matrícula, restringe CBO às duas opções permitidas
 document.getElementById('selectMatricula')?.addEventListener('change', function () {
@@ -2754,7 +2794,9 @@ if (modalVincular) {
         // Reseta campos para valores padrão quando o modal é aberto
         const selectVinculo = document.getElementById('selectVinculo');
         const selectTipoVinculo = document.getElementById('selectTipoVinculo');
-        const selectProfissional = document.getElementById('selectProfissional');
+        const buscaProfissional = document.getElementById('buscaProfissional');
+        const usuarioIdVinculo = document.getElementById('usuarioIdVinculo');
+        const listaBuscaProfissional = document.getElementById('listaBuscaProfissional');
         const selectMatricula = document.getElementById('selectMatricula');
         const selectCBO = document.getElementById('selectCBO');
         const inputCNS = document.getElementById('inputCNS');
@@ -2774,7 +2816,12 @@ if (modalVincular) {
         }
         const inputTipoVinculoHidden = document.getElementById('inputTipoVinculoHidden');
         if (inputTipoVinculoHidden) inputTipoVinculoHidden.value = '';
-        if (selectProfissional) selectProfissional.value = '';
+        if (buscaProfissional) buscaProfissional.value = '';
+        if (usuarioIdVinculo) usuarioIdVinculo.value = '';
+        if (listaBuscaProfissional) {
+            listaBuscaProfissional.style.display = 'none';
+            listaBuscaProfissional.innerHTML = '';
+        }
         if (selectMatricula) {
             selectMatricula.innerHTML = '<option value="">— Selecione o profissional primeiro —</option>';
             selectMatricula.required = false;

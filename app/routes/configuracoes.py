@@ -10,7 +10,8 @@ from app import db
 from app.models.tipo_unidade import TipoUnidade
 from app.models.tipo_sala import TipoSala, KitPadraoSala
 from app.models.equipamento import (
-    TipoEquipamento, CampoTipoEquipamento, Marca, Modelo, Equipamento, NATUREZA_KIT_LABELS,
+    CategoriaEquipamento, TipoEquipamento, CampoTipoEquipamento, Marca, Modelo, Equipamento,
+    NATUREZA_KIT_LABELS, vincular_categoria,
 )
 from app.models.sala import Sala
 from app.services.padrao_salas import agrupar_tipos_sala, agrupar_tipos_equipamento
@@ -29,6 +30,9 @@ from app.models.feriado import (
 )
 from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
 from app.models.noticias import TipoAcao
+from app.models.veiculo import (
+    CLASSIFICACAO_VEICULOS, DESCRICAO_VEICULOS, TipoVeiculo, Veiculo, icone_tipo_veiculo,
+)
 
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
@@ -107,6 +111,11 @@ def index():
     total_tipos_unidade  = TipoUnidade.query.count()
     total_tipos_sala     = TipoSala.query.count()
     total_tipos_equip    = TipoEquipamento.query.count()
+    total_categorias_equip = CategoriaEquipamento.query.count()
+    from app.models.status_equipamento import StatusEquipamento, garantir_status_equipamento
+    garantir_status_equipamento()
+    total_status_equipamento = StatusEquipamento.query.filter_by(ativo=True).count()
+    total_tipos_veiculo = TipoVeiculo.query.count()
     total_perfis         = len(PERFIS)
     total_marcas         = Marca.query.count()
     total_modelos        = Modelo.query.count()
@@ -125,6 +134,9 @@ def index():
                            total_tipos_unidade=total_tipos_unidade,
                            total_tipos_sala=total_tipos_sala,
                            total_tipos_equip=total_tipos_equip,
+                           total_categorias_equip=total_categorias_equip,
+                           total_tipos_veiculo=total_tipos_veiculo,
+                           total_status_equipamento=total_status_equipamento,
                            total_perfis=total_perfis,
                            total_marcas=total_marcas,
                            total_modelos=total_modelos,
@@ -720,6 +732,212 @@ def reclassificar_salas():
 
 
 # ══════════════════════════════════════════════════════════
+#  CATEGORIAS DE EQUIPAMENTO
+# ══════════════════════════════════════════════════════════
+
+@configuracoes_bp.route('/categorias-equipamento')
+@login_required
+def categorias_equipamento():
+    _exigir_admin()
+    categorias = CategoriaEquipamento.query.order_by(
+        CategoriaEquipamento.ordem, CategoriaEquipamento.nome
+    ).all()
+    return render_template('configuracoes/categorias_equipamento/listar.html', categorias=categorias)
+
+
+def _form_categoria_equipamento(categoria=None):
+    return render_template('configuracoes/categorias_equipamento/form.html', categoria=categoria)
+
+
+@configuracoes_bp.route('/categorias-equipamento/nova', methods=['GET', 'POST'])
+@login_required
+def nova_categoria_equipamento():
+    _exigir_admin()
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome da classificação.', 'danger')
+            return _form_categoria_equipamento()
+        if CategoriaEquipamento.query.filter(db.func.lower(CategoriaEquipamento.nome) == nome.lower()).first():
+            flash(f'Já existe uma classificação chamada "{nome}".', 'danger')
+            return _form_categoria_equipamento()
+        ultima = db.session.query(db.func.max(CategoriaEquipamento.ordem)).scalar() or 0
+        ordem = request.form.get('ordem', type=int)
+        categoria = CategoriaEquipamento(
+            nome=nome,
+            descricao=(request.form.get('descricao') or '').strip() or None,
+            ordem=ordem if ordem is not None else ultima + 1,
+            ativo=request.form.get('ativo') == 'on',
+        )
+        db.session.add(categoria)
+        db.session.commit()
+        flash(f'Classificação "{categoria.nome}" cadastrada.', 'success')
+        return redirect(url_for('configuracoes.categorias_equipamento'))
+    return _form_categoria_equipamento()
+
+
+@configuracoes_bp.route('/categorias-equipamento/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_categoria_equipamento(id):
+    _exigir_admin()
+    categoria = CategoriaEquipamento.query.get_or_404(id)
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome da classificação.', 'danger')
+            return _form_categoria_equipamento(categoria)
+        conflito = CategoriaEquipamento.query.filter(
+            db.func.lower(CategoriaEquipamento.nome) == nome.lower(),
+            CategoriaEquipamento.id != id,
+        ).first()
+        if conflito:
+            flash(f'Já existe outra classificação chamada "{nome}".', 'danger')
+            return _form_categoria_equipamento(categoria)
+        categoria.nome = nome
+        categoria.descricao = (request.form.get('descricao') or '').strip() or None
+        ordem = request.form.get('ordem', type=int)
+        if ordem is not None:
+            categoria.ordem = ordem
+        categoria.ativo = request.form.get('ativo') == 'on'
+        TipoEquipamento.query.filter_by(categoria_id=categoria.id).update(
+            {TipoEquipamento.classificacao: nome}, synchronize_session=False
+        )
+        db.session.commit()
+        flash(f'Classificação "{categoria.nome}" atualizada.', 'success')
+        return redirect(url_for('configuracoes.categorias_equipamento'))
+    return _form_categoria_equipamento(categoria)
+
+
+@configuracoes_bp.route('/categorias-equipamento/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_categoria_equipamento(id):
+    _exigir_admin()
+    categoria = CategoriaEquipamento.query.get_or_404(id)
+    if categoria.tipos.count() or categoria.tipos_veiculo.count():
+        flash(f'"{categoria.nome}" ainda tem itens. Mude a classificação deles antes de excluir.', 'warning')
+        return redirect(url_for('configuracoes.categorias_equipamento'))
+    nome = categoria.nome
+    db.session.delete(categoria)
+    db.session.commit()
+    flash(f'Classificação "{nome}" excluída.', 'success')
+    return redirect(url_for('configuracoes.categorias_equipamento'))
+
+
+# ══════════════════════════════════════════════════════════
+#  TIPOS DE VEÍCULO (RENEM)
+# ══════════════════════════════════════════════════════════
+
+def _categoria_veiculos():
+    categoria = CategoriaEquipamento.query.filter(
+        db.func.lower(CategoriaEquipamento.nome) == CLASSIFICACAO_VEICULOS.lower()
+    ).first()
+    if categoria:
+        return categoria
+    ultima = db.session.query(db.func.max(CategoriaEquipamento.ordem)).scalar() or 0
+    categoria = CategoriaEquipamento(
+        nome=CLASSIFICACAO_VEICULOS, descricao=DESCRICAO_VEICULOS, ordem=ultima + 1, ativo=True,
+    )
+    db.session.add(categoria)
+    db.session.flush()
+    return categoria
+
+
+def _nome_tipo_veiculo_existe(nome, ignorar_id=None):
+    consulta = TipoVeiculo.query.filter(db.func.lower(TipoVeiculo.nome) == nome.lower())
+    if ignorar_id:
+        consulta = consulta.filter(TipoVeiculo.id != ignorar_id)
+    return consulta.first()
+
+
+@configuracoes_bp.route('/tipos-veiculo')
+@login_required
+def tipos_veiculo():
+    _exigir_admin()
+    tipos = TipoVeiculo.query.order_by(TipoVeiculo.nome).all()
+    uso = dict(db.session.query(Veiculo.tipo_veiculo_id, db.func.count(Veiculo.id))
+               .filter(Veiculo.tipo_veiculo_id.isnot(None))
+               .group_by(Veiculo.tipo_veiculo_id).all())
+    return render_template('configuracoes/tipos_veiculo/listar.html', tipos=tipos, uso=uso)
+
+
+@configuracoes_bp.route('/tipos-veiculo/novo', methods=['GET', 'POST'])
+@login_required
+def novo_tipo_veiculo():
+    _exigir_admin()
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome do veículo.', 'danger')
+            return render_template('configuracoes/tipos_veiculo/form.html', tipo=None)
+        if _nome_tipo_veiculo_existe(nome):
+            flash(f'Já existe um veículo chamado "{nome}".', 'danger')
+            return render_template('configuracoes/tipos_veiculo/form.html', tipo=None)
+        tipo = TipoVeiculo(
+            nome=nome[:180],
+            descricao=(request.form.get('descricao') or '').strip() or None,
+            icone=icone_tipo_veiculo(nome),
+            categoria_id=_categoria_veiculos().id,
+            ativo=request.form.get('ativo') == 'on',
+        )
+        db.session.add(tipo)
+        db.session.commit()
+        flash(f'Veículo "{tipo.nome}" cadastrado.', 'success')
+        return redirect(url_for('configuracoes.tipos_veiculo'))
+    return render_template('configuracoes/tipos_veiculo/form.html', tipo=None)
+
+
+@configuracoes_bp.route('/tipos-veiculo/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_tipo_veiculo(id):
+    _exigir_admin()
+    tipo = TipoVeiculo.query.get_or_404(id)
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        if not nome:
+            flash('Informe o nome do veículo.', 'danger')
+            return render_template('configuracoes/tipos_veiculo/form.html', tipo=tipo)
+        if _nome_tipo_veiculo_existe(nome, tipo.id):
+            flash(f'Já existe outro veículo chamado "{nome}".', 'danger')
+            return render_template('configuracoes/tipos_veiculo/form.html', tipo=tipo)
+        tipo.nome = nome[:180]
+        tipo.descricao = (request.form.get('descricao') or '').strip() or None
+        tipo.icone = icone_tipo_veiculo(nome)
+        tipo.ativo = request.form.get('ativo') == 'on'
+        if not tipo.categoria_id:
+            tipo.categoria_id = _categoria_veiculos().id
+        db.session.commit()
+        flash(f'Veículo "{tipo.nome}" atualizado.', 'success')
+        return redirect(url_for('configuracoes.tipos_veiculo'))
+    return render_template('configuracoes/tipos_veiculo/form.html', tipo=tipo)
+
+
+@configuracoes_bp.route('/tipos-veiculo/<int:id>/status', methods=['POST'])
+@login_required
+def alternar_status_tipo_veiculo(id):
+    _exigir_admin()
+    tipo = TipoVeiculo.query.get_or_404(id)
+    tipo.ativo = not tipo.ativo
+    db.session.commit()
+    flash(f'"{tipo.nome}" {"ativado" if tipo.ativo else "desativado"}.', 'success')
+    return redirect(url_for('configuracoes.tipos_veiculo'))
+
+
+@configuracoes_bp.route('/tipos-veiculo/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_tipo_veiculo(id):
+    _exigir_admin()
+    tipo = TipoVeiculo.query.get_or_404(id)
+    if Veiculo.query.filter_by(tipo_veiculo_id=tipo.id).count():
+        flash(f'"{tipo.nome}" já está em algum carro da unidade. Desative em vez de excluir.', 'warning')
+        return redirect(url_for('configuracoes.tipos_veiculo'))
+    nome = tipo.nome
+    db.session.delete(tipo)
+    db.session.commit()
+    flash(f'Veículo "{nome}" excluído.', 'success')
+    return redirect(url_for('configuracoes.tipos_veiculo'))
+
+
+# ══════════════════════════════════════════════════════════
 #  TIPOS DE EQUIPAMENTO
 # ══════════════════════════════════════════════════════════
 
@@ -738,44 +956,27 @@ def tipos_equipamento():
 
 
 def _form_tipo_equipamento(tipo, campos):
-    classificacoes = [c for (c,) in db.session.query(TipoEquipamento.classificacao)
-                      .filter(TipoEquipamento.classificacao.isnot(None)).distinct()
-                      .order_by(TipoEquipamento.classificacao).all()]
-    candidatos = TipoEquipamento.query.filter(TipoEquipamento.codigo.isnot(None))
-    if tipo and tipo.id:
-        candidatos = candidatos.filter(TipoEquipamento.id != tipo.id)
+    categorias = CategoriaEquipamento.query.filter(
+        CategoriaEquipamento.ativo.is_(True),
+        db.func.lower(CategoriaEquipamento.nome) != CLASSIFICACAO_VEICULOS.lower(),
+    ).order_by(
+        CategoriaEquipamento.ordem, CategoriaEquipamento.nome
+    ).all()
+    if tipo and tipo.categoria_id and tipo.categoria and not tipo.categoria.ativo:
+        categorias.append(tipo.categoria)
     return render_template('configuracoes/tipos_equipamento/form.html', tipo=tipo, campos=campos,
-                           classificacoes=classificacoes, natureza_labels=NATUREZA_KIT_LABELS,
-                           tipos_conta_como=agrupar_tipos_equipamento(candidatos.all()))
+                           categorias=categorias)
 
 
 def _dados_padrao_tipo_equipamento(tipo, form):
-    """Preenche os campos do catálogo de itens; devolve mensagem de erro ou None."""
-    from decimal import Decimal, InvalidOperation
-    codigo = (form.get('codigo') or '').strip().upper() or None
-    if codigo:
-        conflito = TipoEquipamento.query.filter(
-            TipoEquipamento.codigo == codigo, TipoEquipamento.id != (tipo.id or 0)).first()
-        if conflito:
-            return f'O código {codigo} já é usado pelo tipo "{conflito.nome}".'
-    valor_txt = (form.get('valor_referencia') or '').strip().replace('R$', '').replace(' ', '')
-    valor = None
-    if valor_txt:
-        if ',' in valor_txt:
-            valor_txt = valor_txt.replace('.', '').replace(',', '.')
-        try:
-            valor = Decimal(valor_txt).quantize(Decimal('0.01'))
-        except InvalidOperation:
-            return 'Valor de referência inválido. Use, por exemplo, 1.250,00.'
-    conta_como_id = form.get('conta_como_id', type=int)
-    if conta_como_id and conta_como_id == tipo.id:
-        conta_como_id = None
-    natureza = form.get('natureza_kit') or None
-    tipo.codigo = codigo
-    tipo.classificacao = (form.get('classificacao') or '').strip() or None
-    tipo.valor_referencia = valor
-    tipo.natureza_kit = natureza if natureza in NATUREZA_KIT_LABELS else None
-    tipo.conta_como_id = conta_como_id
+    """Grava a categoria do equipamento. Devolve mensagem de erro ou None."""
+    categoria = None
+    categoria_id = form.get('categoria_id', type=int)
+    if categoria_id:
+        categoria = CategoriaEquipamento.query.get(categoria_id)
+        if not categoria:
+            return 'Classificação RENEM inválida.'
+    vincular_categoria(tipo, categoria.nome if categoria else None)
     return None
 
 
@@ -1619,6 +1820,103 @@ def funcoes_cbo():
 # ══════════════════════════════════════════════════════════
 #  STATUS DE CHAMADOS
 # ══════════════════════════════════════════════════════════
+
+@configuracoes_bp.route('/status-equipamento')
+@login_required
+def status_equipamento():
+    _exigir_admin()
+    from app.models.status_equipamento import StatusEquipamento, garantir_status_equipamento
+    garantir_status_equipamento()
+    status = StatusEquipamento.query.order_by(StatusEquipamento.ordem, StatusEquipamento.nome).all()
+    usos = dict(
+        db.session.query(Equipamento.status, db.func.count(Equipamento.id))
+        .group_by(Equipamento.status).all()
+    )
+    return render_template('configuracoes/status_equipamento/listar.html',
+                           status=status, usos=usos)
+
+
+@configuracoes_bp.route('/status-equipamento/novo', methods=['GET', 'POST'])
+@login_required
+def novo_status_equipamento():
+    _exigir_admin()
+    from app.models.status_equipamento import (
+        BADGE_CORES, StatusEquipamento, codigo_status, garantir_status_equipamento, limpar_cache_status,
+    )
+    garantir_status_equipamento()
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        cor = request.form.get('badge_cor') or 'secondary'
+        if cor not in dict(BADGE_CORES):
+            cor = 'secondary'
+        if not nome:
+            flash('O nome é obrigatório.', 'danger')
+        else:
+            db.session.add(StatusEquipamento(
+                codigo=codigo_status(nome),
+                nome=nome,
+                badge_cor=cor,
+                pede_condicao=request.form.get('pede_condicao') == '1',
+                pode_transferir=request.form.get('pode_transferir') == '1',
+                ativo=True,
+                ordem=request.form.get('ordem', type=int) or 99,
+            ))
+            db.session.commit()
+            limpar_cache_status()
+            flash(f'Status "{nome}" criado.', 'success')
+            return redirect(url_for('configuracoes.status_equipamento'))
+    proximo = db.session.query(db.func.max(StatusEquipamento.ordem)).scalar() or 0
+    return render_template('configuracoes/status_equipamento/form.html',
+                           status=None, badge_cores=BADGE_CORES, proximo_ordem=proximo + 1)
+
+
+@configuracoes_bp.route('/status-equipamento/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_status_equipamento(id):
+    _exigir_admin()
+    from app.models.status_equipamento import BADGE_CORES, StatusEquipamento, limpar_cache_status
+    s = StatusEquipamento.query.get_or_404(id)
+    if request.method == 'POST':
+        nome = (request.form.get('nome') or '').strip()
+        cor = request.form.get('badge_cor') or 'secondary'
+        if not nome:
+            flash('O nome é obrigatório.', 'danger')
+        else:
+            s.nome = nome
+            s.badge_cor = cor if cor in dict(BADGE_CORES) else s.badge_cor
+            s.pede_condicao = request.form.get('pede_condicao') == '1'
+            s.pode_transferir = request.form.get('pode_transferir') == '1'
+            s.ordem = request.form.get('ordem', type=int) if request.form.get('ordem') else s.ordem
+            if s.codigo == 'ativo':
+                s.ativo = True
+            else:
+                s.ativo = request.form.get('ativo') == '1'
+            db.session.commit()
+            limpar_cache_status()
+            flash(f'Status "{s.nome}" atualizado.', 'success')
+            return redirect(url_for('configuracoes.status_equipamento'))
+    return render_template('configuracoes/status_equipamento/form.html',
+                           status=s, badge_cores=BADGE_CORES, proximo_ordem=s.ordem)
+
+
+@configuracoes_bp.route('/status-equipamento/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_status_equipamento(id):
+    _exigir_admin()
+    from app.models.status_equipamento import StatusEquipamento, limpar_cache_status
+    s = StatusEquipamento.query.get_or_404(id)
+    em_uso = Equipamento.query.filter_by(status=s.codigo).count()
+    if s.codigo == 'ativo':
+        flash('O status Ativo não sai do cadastro.', 'warning')
+    elif em_uso:
+        flash(f'{em_uso} equipamento(s) usam "{s.nome}". Desative em vez de excluir.', 'warning')
+    else:
+        db.session.delete(s)
+        db.session.commit()
+        limpar_cache_status()
+        flash(f'Status "{s.nome}" excluído.', 'success')
+    return redirect(url_for('configuracoes.status_equipamento'))
+
 
 @configuracoes_bp.route('/status-chamados')
 @login_required

@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from urllib.parse import quote
 import re
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, make_response
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort, jsonify, make_response, send_file
 from flask_login import login_required, current_user
 from app import db
 from app.models.unidade import Unidade, UsuarioUnidade
@@ -182,12 +182,6 @@ def detalhe(id):
     chamados_recentes = q_chamados.order_by(Chamado.atualizado_em.desc()).limit(10).all()
     chamados_abertos_count = q_chamados.count()
 
-    usuarios_disponiveis = Usuario.query.filter(
-        Usuario.ativo == True,
-        Usuario.perfil != 'administrador',
-        ~Usuario.id.in_(ids_vinculados)
-    ).order_by(Usuario.nome).all()
-
     # Equipamentos agrupados por sala
     from app.models.equipamento import Equipamento
     equipamentos_por_sala = {}
@@ -195,6 +189,12 @@ def detalhe(id):
         equips = sala.equipamentos.filter_by(ativo=True).order_by('id').all()
         equipamentos_por_sala[sala.id] = equips
     total_equipamentos_unidade = sum(len(v) for v in equipamentos_por_sala.values())
+    from app.services.inventario_sei import montar_inventario_sei
+    inventario_sei = montar_inventario_sei(
+        unidade,
+        [e for lista in equipamentos_por_sala.values() for e in lista if e.status != 'baixado'],
+        ultima_ficha_por_usuario,
+    )
 
     from app.services import reservas
     from app.utils import agora_brasilia
@@ -228,7 +228,6 @@ def detalhe(id):
                            vinculos=vinculos_ativos,
                            chamados_recentes=chamados_recentes,
                            chamados_abertos_count=chamados_abertos_count,
-                           usuarios_disponiveis=usuarios_disponiveis,
                            fichas=fichas_ultimas,
                            ultima_ficha_por_usuario=ultima_ficha_por_usuario,
                            links_email_vinculo=links_email_vinculo,
@@ -240,7 +239,25 @@ def detalhe(id):
                            solicitacoes_pendentes=solicitacoes_pendentes,
                            solicitacoes_historico=solicitacoes_historico,
                            veiculos_info=veiculos_info,
-                           mes_atual=agora_veiculos.strftime('%Y-%m'))
+                           mes_atual=agora_veiculos.strftime('%Y-%m'),
+                           inventario_sei=inventario_sei)
+
+
+@unidades_bp.route('/<int:id>/inventario-sei.ods')
+@login_required
+def inventario_sei_ods(id):
+    """Planilha do inventário da unidade, no padrão do SEI! Cidades."""
+    unidade = Unidade.query.get_or_404(id)
+    _verificar_acesso(unidade)
+    from app.services.inventario_sei import gerar_ods_inventario
+    ano = request.args.get('ano', type=int) or agora_local().year
+    buf, nome = gerar_ods_inventario(unidade, ano)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=nome,
+        mimetype='application/vnd.oasis.opendocument.spreadsheet',
+    )
 
 
 @unidades_bp.route('/<int:id>/gestores-principais', methods=['POST'])
@@ -356,6 +373,36 @@ def editar(id):
                            gerentes_disponiveis=gerentes_disponiveis,
                            gerentes_atuais=gerentes_atuais,
                            tipos_chamado_labels=TIPOS_CHAMADO_LABELS)
+
+
+@unidades_bp.route('/<int:id>/profissionais-busca')
+@login_required
+def buscar_profissionais(id):
+    unidade = Unidade.query.get_or_404(id)
+    _verificar_acesso(unidade)
+    if not current_user.pode('vincular_profissionais'):
+        abort(403)
+    termo = (request.args.get('q') or '').strip()
+    if len(termo) < 2:
+        return jsonify(resultados=[])
+    ids_vinculados = [v.usuario_id for v in unidade.usuarios.filter_by(ativo=True).all()]
+    consulta = Usuario.query.filter(
+        Usuario.ativo == True,
+        Usuario.perfil != 'administrador',
+    )
+    if ids_vinculados:
+        consulta = consulta.filter(~Usuario.id.in_(ids_vinculados))
+    for pedaco in termo.split():
+        seguro = pedaco.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        consulta = consulta.filter(Usuario.nome.ilike(f'%{seguro}%', escape='\\'))
+    pessoas = consulta.order_by(Usuario.nome).limit(15).all()
+    return jsonify(resultados=[{
+        'id': u.id,
+        'nome': u.nome,
+        'perfil': u.perfil_label,
+        'cns': u.cns or '',
+        'ch': u.carga_horaria or '',
+    } for u in pessoas])
 
 
 @unidades_bp.route('/<int:id>/vincular', methods=['POST'])

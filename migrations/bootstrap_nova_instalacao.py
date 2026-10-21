@@ -42,6 +42,7 @@ SEEDS = [
     'add_agenda_reunioes.py',
     'add_feriados.py',
     'add_status_chamado.py',
+    'add_inventario_catalogo.py',
 ]
 
 UPLOADS = [
@@ -51,6 +52,8 @@ UPLOADS = [
     os.path.join('app', 'static', 'uploads', 'chamados'),
     os.path.join('app', 'static', 'uploads', 'identidade'),
     os.path.join('app', 'static', 'uploads', 'perfis'),
+    os.path.join('app', 'static', 'uploads', 'equipamentos'),
+    os.path.join('app', 'static', 'uploads', 'planos'),
 ]
 
 

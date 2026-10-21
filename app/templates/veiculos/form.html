@@ -62,6 +62,22 @@
             <div class="form-section">
                 <div class="form-section-title">Veículo</div>
                 <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label" for="tipo_veiculo_id">Item RENEM <span class="text-danger">*</span></label>
+                        {% set tipo_id = valor('tipo_veiculo_id', veiculo.tipo_veiculo_id)|string %}
+                        <select name="tipo_veiculo_id" id="tipo_veiculo_id" class="form-select" required>
+                            <option value="">Selecione…</option>
+                            {% for t in tipos_renem %}
+                            <option value="{{ t.id }}" {% if tipo_id == t.id|string %}selected{% endif %}>{{ t.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Nome do veículo na Relação Nacional. Prefixo e placa continuam neste cadastro da unidade.
+                            {% if current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento') %}
+                            <a href="{{ url_for('configuracoes.tipos_veiculo') }}">Cadastrar item RENEM</a>
+                            {% endif %}
+                        </div>
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label" for="marca">Marca</label>
                         <input type="text" name="marca" id="marca" class="form-control" list="listaMarcas" maxlength="60"

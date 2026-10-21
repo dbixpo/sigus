@@ -147,14 +147,47 @@
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 
+    <a class="cfg-row" href="{{ url_for('configuracoes.categorias_equipamento') }}"
+       data-busca="classificação renem categoria equipamento médico-assistencial apoio infraestrutura geral veículos">
+        <span class="cfg-row-icone"><i class="fas fa-layer-group"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Classificação RENEM</div>
+            <div class="cfg-row-desc">Médico-Assistencial, Apoio, Infraestrutura, Geral, Veículos e as classificações que você criar.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_categorias_equip }}</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
     <a class="cfg-row" href="{{ url_for('configuracoes.tipos_equipamento') }}"
-       data-busca="tipos de equipamento catálogo itens item computador maca ar-condicionado patrimônio valor">
+       data-busca="equipamento computador monitor notebook impressora patrimônio">
         <span class="cfg-row-icone"><i class="fas fa-desktop"></i></span>
         <div class="flex-grow-1 min-w-0">
-            <div class="cfg-row-titulo">Tipos de Equipamento (catálogo de itens)</div>
-            <div class="cfg-row-desc">Itens ITEM com valor de referência e Base/Função, e os demais tipos do inventário (Monitor, Impressora etc.).</div>
+            <div class="cfg-row-titulo">Equipamento</div>
+            <div class="cfg-row-desc">Computador, monitor, impressora e os demais equipamentos do inventário.</div>
         </div>
-        <span class="cfg-row-meta">{{ total_tipos_equip }} tipo(s)</span>
+        <span class="cfg-row-meta">{{ total_tipos_equip }}</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
+    <a class="cfg-row" href="{{ url_for('configuracoes.status_equipamento') }}"
+       data-busca="status equipamento ativo inservível condição boa regular ruim">
+        <span class="cfg-row-icone"><i class="fas fa-toggle-on"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Status de equipamento</div>
+            <div class="cfg-row-desc">Ativo, inservível e os status que a equipe cadastrar. A condição continua Boa, Regular ou Ruim.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_status_equipamento }} ativo(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+
+    <a class="cfg-row" href="{{ url_for('configuracoes.tipos_veiculo') }}"
+       data-busca="veículos veiculos carros ambulância renem frota passeio van">
+        <span class="cfg-row-icone"><i class="fas fa-car-side"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Veículos</div>
+            <div class="cfg-row-desc">Ambulância, veículo de passeio e os demais itens da classificação RENEM. O carro de cada unidade continua na aba da unidade.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_tipos_veiculo }}</span>
         <i class="fas fa-chevron-right text-muted small"></i>
     </a>
 

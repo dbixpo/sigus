@@ -88,12 +88,13 @@
                         </td>
                         <td class="small">
                             {% set _fone = u.whatsapp or u.telefone %}
-                            {% if _fone %}
+                            {% if _fone and dados_pessoais_completos %}
                             {% set wnum = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ wnum }}" target="_blank"
                                class="text-success text-decoration-none d-flex align-items-center gap-1">
                                 <i class="fab fa-whatsapp"></i>{{ _fone | br_fone }}
                             </a>
+                            {% elif _fone %}{{ _fone | fone_visivel }}
                             {% else %}<span class="text-muted">—</span>{% endif %}
                         </td>
                         <td><span class="badge bg-secondary">{{ u.perfil_label }}</span></td>

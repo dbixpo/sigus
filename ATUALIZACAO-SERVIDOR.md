@@ -14,7 +14,30 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > Se o IIS dessa máquina também atende outro site, **não** rode `iisreset` nem recicle o pool padrão. Reinicie **só** o processo do SIGUS (seção 4). O caminho da pasta e o nome do pool ficam no caderno da equipe, não neste arquivo.
 
-## Entrega mais recente (empréstimo e transferência de veículos)
+## Entrega de 20/10/2026 (inventário SEI, LGPD, mural e relatório)
+
+O banco **desta** instalação já está neste ponto. Não rode de novo aqui só por atualizar o código. Em outro computador: restaure um dump feito depois desta data, **ou** banco vazio com `migrations/bootstrap_nova_instalacao.py`. Se o dump for anterior, rode só:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_inventario_catalogo.py
+```
+
+Idempotente. Cria colunas de incorporação, classificação RENEM, status de equipamento e os itens de veículo da RENEM. Não apaga patrimônio e não lê planilha. A planilha da Flávia (`aplicar_catalogo_flavia.py` / `importar_itens_flavia.py`) é carga desta rede e **não** entra no bootstrap.
+
+O que entrou no sistema:
+
+- **Nomes.** Cadastro e importação gravam nome, nome da mãe e nome do pai com a primeira letra maiúscula. Partículas `de`, `da`, `do`, `das`, `dos` e `e` ficam minúsculas. Hífen e apóstrofo são respeitados (`D'Avila`).
+- **LGPD nos relatórios.** Operador Padrão e Apoio Administrativo veem CPF e telefone mascarados (CPF `000.***.**0-00`, telefone com DDD e os dois últimos dígitos). Gestor de Área, Gestor Central e Administrador veem o dado completo. A ficha CNES e o e-mail CNES saem completos. Telefone da unidade e do mapa público não são mascarados. O formulário de cadastro do próprio usuário não é mascarado.
+- **Unidade.** Os quatro cards do topo (salas, equipamentos, chamados, profissionais) saíram; as abas já mostram a contagem. Vincular profissional é busca: digitar ao menos 2 letras, no máximo 15 pessoas, sem CPF na lista.
+- **Relatórios.** O índice tem busca. Novo relatório **Mural da Saúde** (últimos 30 dias; dá para filtrar período, tipo de ação, tipo de unidade, unidade e texto). O **Boletim da Rede** abre no modal de impressão em A4: a postagem mais curtida é a capa e as demais vão em duas colunas, com as fotos inteiras.
+- **Inventário.** A listagem deixou de consultar o banco uma vez por equipamento. Filtro e coluna **RENEM**.
+- **Inventário para o SEI.** Planilha ODS com duas abas (com chapinha e sem chapinha), cabeçalho índigo `#333399` e fonte branca, faixas branca e `#FFCC99`. Veículo não entra nessa planilha. Modais de cópia (sucata com e sem patrimônio, quantitativo, equipe local, disponibilização) seguem o extrato do SEI, com as tabelas centralizadas. Manual em `app/static/docs/manual-inventario-sei-2025.pdf`. Datas e números de documento do SEI ficam em branco para preencher lá. Condição do equipamento: só Boa, Regular e Ruim. Status novos cadastram-se em Configurações (`status_de_equipamento`). O código `ativo` não se desativa nem se apaga. Inservível e Aguardando Instalação não pedem condição.
+
+Conferência, no computador local (não em produção): relatório de inventário com filtro RENEM; boletim do mural no modal; unidade → profissionais → busca; um relatório de usuários com perfil Operador Padrão, conferindo a máscara.
+
+---
+
+## Entrega anterior (empréstimo e transferência de veículos)
 
 Depois do `git pull`, com backup do banco feito antes:
 

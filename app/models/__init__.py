@@ -5,11 +5,12 @@ from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.tipo_sala import TipoSala, KitPadraoSala
 from app.models.sala import Sala
 from app.models.equipamento import (
-    TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,
+    CategoriaEquipamento, TipoEquipamento, CampoTipoEquipamento, Marca, Modelo,
     Equipamento, EquipamentoCampoValor, EquipamentoUsuario, EquipamentoDocumento,
 )
 from app.models.chamado import Divisao, SetorManutencao, UsuarioSetor, Chamado, ChamadoHistorico, ChamadoFoto, ChamadoSolicitacaoItem, AnexoAndamento, ChamadoAtribuido
 from app.models.status_chamado import StatusChamado
+from app.models.status_equipamento import StatusEquipamento
 from app.models.notificacao import Notificacao
 from app.models.contrato import Contrato, ContratoTipoEquipamento, ContratoAcao
 from app.models.transferencia import (
@@ -24,7 +25,7 @@ from app.models.matricula import MatriculaProfissional
 from app.models.tipo_link import TipoLink
 from app.models.link_util import LinkUtil
 from app.models.empresa import EmpresaContratada
-from app.models.veiculo import Veiculo, ModeloVeiculo
+from app.models.veiculo import Veiculo, ModeloVeiculo, TipoVeiculo
 from app.models.agenda import AgendaEvento
 from app.models.feriado import Feriado
 from app.models.cbo import CBO

@@ -36,4 +36,4 @@ Use no primeiro dia em que outra pessoa for manter uma instalação. O repositó
 
 ## Desenvolvimento em outro computador
 
-Quem mexe no código usa PostgreSQL **local** e o `.env` de [`.env.example`](../.env.example). A `DATABASE_URL` do notebook não é a do servidor. Passo a passo: [BANCO.md](BANCO.md) e o README.
+Quem mexe no código usa PostgreSQL **local** e o `.env` de [`.env.example`](../.env.example). A `DATABASE_URL` do notebook não é a do servidor. Passo a passo: [BANCO.md](BANCO.md) (seção "Levar esta instalação para outro computador") e o README. Banco vazio: `migrations/bootstrap_nova_instalacao.py`. Cópia dos dados: dump local com `scripts/clone_banco.py` e restore com `scripts/restaura_banco.py` — o arquivo do dump fica de fora do Git.

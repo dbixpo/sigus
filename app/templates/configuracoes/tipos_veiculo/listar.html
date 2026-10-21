@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Veículos{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Veículos</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-car-side"></i> Veículos</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('configuracoes.categorias_equipamento') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-layer-group me-1"></i>Classificação RENEM
+        </a>
+        <a href="{{ url_for('configuracoes.novo_tipo_veiculo') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i>Novo veículo
+        </a>
+    </div>
+</div>
+
+<p class="text-muted small mb-3">
+    Itens da classificação RENEM <strong>Veículos</strong>. O carro de cada unidade, com prefixo e placa, continua na aba Veículos da unidade.
+</p>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="input-group input-group-sm" style="max-width:420px">
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <input type="search" id="busca-veiculos" class="form-control" placeholder="Buscar por nome...">
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if tipos %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:50px">Ícone</th>
+                        <th>Nome</th>
+                        <th>Classificação RENEM</th>
+                        <th class="text-center" style="width:120px">Na unidade</th>
+                        <th class="text-center" style="width:90px">Status</th>
+                        <th class="text-end" style="width:140px">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tipos %}
+                    <tr class="linha-veiculo" data-busca="{{ t.nome|lower }}">
+                        <td class="text-center"><i class="{{ t.icone }} fs-5 text-primary"></i></td>
+                        <td>
+                            <div class="fw-semibold">{{ t.nome }}</div>
+                            {% if t.descricao %}
+                            <div class="small text-muted">{{ t.descricao }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ t.categoria.nome if t.categoria else 'Veículos' }}</td>
+                        <td class="text-center"><span class="badge bg-light text-dark border">{{ uso.get(t.id, 0) }}</span></td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">{{ 'Ativo' if t.ativo else 'Inativo' }}</span>
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a href="{{ url_for('configuracoes.editar_tipo_veiculo', id=t.id) }}"
+                               class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('configuracoes.alternar_status_tipo_veiculo', id=t.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
+                                        title="{{ 'Desativar' if t.ativo else 'Ativar' }}">
+                                    <i class="{{ 'fas fa-pause-circle' if t.ativo else 'fas fa-play-circle' }}"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('configuracoes.excluir_tipo_veiculo', id=t.id) }}" class="d-inline"
+                                  onsubmit='return confirm("Excluir " + {{ t.nome|tojson }} + "?");'>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">Nenhum veículo cadastrado.</div>
+        {% endif %}
+    </div>
+</div>
+<p class="text-muted small mt-2 mb-0">
+    Lista inicial: itens de veículo da RENEM publicados pelo Fundo Nacional de Saúde em agosto de 2019.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('busca-veiculos').addEventListener('input', function () {
+    const q = this.value.trim().toLowerCase();
+    document.querySelectorAll('.linha-veiculo').forEach(function (tr) {
+        tr.hidden = q && !tr.dataset.busca.includes(q);
+    });
+});
+</script>
+{% endblock %}

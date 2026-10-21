@@ -195,9 +195,10 @@ a { color: #0d6efd; text-decoration: none; }
                         <div class="c-label">Celular Responsável</div>
                         <div class="c-valor">
                             {% set _cel = doc.criador.whatsapp or doc.criador.telefone if doc.criador else '' %}
-                            {% if _cel %}
+                            {% if _cel and dados_pessoais_completos %}
                             {% set _wd = _cel | replace('(','') | replace(')','') | replace(' ','') | replace('-','') | replace('+','') %}
                             <a href="https://wa.me/55{{ _wd }}" target="_blank">{{ _cel | br_fone }}</a>
+                            {% elif _cel %}{{ _cel | fone_visivel }}
                             {% else %}—{% endif %}
                         </div>
                     </div>
@@ -276,9 +277,10 @@ a { color: #0d6efd; text-decoration: none; }
                         <div class="c-label">Celular Responsável</div>
                         <div class="c-valor">
                             {% set _cel2 = doc.aceitador.whatsapp or doc.aceitador.telefone if doc.aceitador else '' %}
-                            {% if _cel2 %}
+                            {% if _cel2 and dados_pessoais_completos %}
                             {% set _wd2 = _cel2 | replace('(','') | replace(')','') | replace(' ','') | replace('-','') | replace('+','') %}
                             <a href="https://wa.me/55{{ _wd2 }}" target="_blank">{{ _cel2 | br_fone }}</a>
+                            {% elif _cel2 %}{{ _cel2 | fone_visivel }}
                             {% elif doc.aceitador %}—{% endif %}
                         </div>
                     </div>

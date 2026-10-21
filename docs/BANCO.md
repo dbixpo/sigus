@@ -17,6 +17,16 @@ Dumps **não** entram no Git. Backup de cada instalação é da equipe que opera
 
 Instalação nova, sem dado de outra rede: [INSTALACAO.md](INSTALACAO.md) (`migrations/bootstrap_nova_instalacao.py`).
 
+## Levar esta instalação para outro computador
+
+O código vem do Git. O banco **não**. No notebook:
+
+1. Clone ou `git pull` deste repositório.
+2. PostgreSQL local e um `.env` **novo**, com `DATABASE_URL` em `localhost`. `SIGUS_BEHIND_PROXY=0` e `SIGUS_PUBLIC_HOST` vazio. Não copie o `.env` do servidor.
+3. Banco vazio: `python migrations/bootstrap_nova_instalacao.py` (cria as tabelas e, no fim, `add_inventario_catalogo.py`: RENEM, status de equipamento e itens de veículo).
+4. Quer os dados de uma rede que já usa o SIGUS: faça o dump **naquela** máquina (`python scripts/clone_banco.py`) e restaure **aqui** (`python scripts/restaura_banco.py`). O dump não vai para o Git. Se o dump for anterior a 20/10/2026, rode `python migrations/add_inventario_catalogo.py` depois do restore.
+5. Suba com `python run.py` em `http://localhost:5001/sigus/`. Não aponte este `.env` para o servidor.
+
 ## Trabalhar neste computador sem mexer numa instalação que já roda
 
 O SIGUS lê **só** a `DATABASE_URL` do `.env` da pasta em que você está.

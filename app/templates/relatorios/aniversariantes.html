@@ -92,8 +92,8 @@
                     data-unidade="{{ r.unidade }}"
                     data-cbos="{{ r.cbos | join(' · ') if r.cbos else '—' }}"
                     data-email="{{ r.email }}"
-                    data-wa="{{ r.wa | br_fone }}"
-                    data-wa-link="{{ r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}"
+                    data-wa="{{ r.wa if '*' in (r.wa or '') else (r.wa | br_fone) }}"
+                    data-wa-link="{{ '' if '*' in (r.wa or '') else (r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','')) }}"
                     data-foto="{{ r.foto_url or '' }}"
                     data-inicial="{{ r.inicial }}"
                     data-aniv="{{ '1' if aniv_hoje else '0' }}">
@@ -133,11 +133,12 @@
                         {% else %}—{% endif %}
                     </td>
                     <td>
-                        {% if r.wa %}
+                        {% if r.wa and '*' not in r.wa %}
                         <a href="https://wa.me/{{ r.wa | replace('(','') | replace(')','') | replace(' ','') | replace('-','') }}"
                            target="_blank" class="text-decoration-none small" onclick="event.stopPropagation()">
                             <i class="fab fa-whatsapp text-success me-1"></i>{{ r.wa | br_fone }}
                         </a>
+                        {% elif r.wa %}{{ r.wa }}
                         {% else %}—{% endif %}
                     </td>
                 </tr>

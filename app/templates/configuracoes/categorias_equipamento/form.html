@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if categoria else 'Nova' }} Classificação RENEM{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item">
+            <a href="{{ url_for('configuracoes.categorias_equipamento') }}">Classificação RENEM</a>
+        </li>
+        <li class="breadcrumb-item active">{{ categoria.nome if categoria else 'Nova' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>
+        <i class="fas fa-layer-group"></i>
+        {{ 'Editar Classificação RENEM' if categoria else 'Nova Classificação RENEM' }}
+    </h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="form-section">
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Nome *</label>
+                        <input type="text" name="nome" class="form-control" required maxlength="120"
+                               value="{{ categoria.nome if categoria else '' }}"
+                               placeholder="Ex.: Médico-Assistencial">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ordem</label>
+                        <input type="number" name="ordem" class="form-control" min="0"
+                               value="{{ categoria.ordem if categoria else '' }}"
+                               placeholder="1">
+                        <div class="form-text">Define a ordem nas listas de tipos.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descrição</label>
+                        <textarea name="descricao" class="form-control" rows="3"
+                                  placeholder="Para que serve este grupo.">{{ categoria.descricao if categoria and categoria.descricao else '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input type="checkbox" name="ativo" class="form-check-input" id="ativo"
+                                   {% if not categoria or categoria.ativo %}checked{% endif %}>
+                            <label class="form-check-label" for="ativo">
+                                Classificação ativa (aparece ao cadastrar um equipamento)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check-circle me-1"></i>
+                        {{ 'Salvar' if categoria else 'Cadastrar' }}
+                    </button>
+                    <a href="{{ url_for('configuracoes.categorias_equipamento') }}" class="btn btn-outline-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

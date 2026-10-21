@@ -33,11 +33,9 @@ STATUS_PODE_TRANSFERIR = ('ativo', 'disponivel_transferencia', 'sobressalente', 
 CONDICAO_POR_STATUS = {
     'ativo': ('boa', 'regular', 'ruim'),
     'sobressalente': ('boa', 'regular', 'ruim'),
-    'disponivel_transferencia': ('em_condicoes_uso', 'necessita_manutencao'),
+    'disponivel_transferencia': ('boa', 'regular', 'ruim'),
 }
-CONDICAO_EQUIPAMENTO = [
-    'boa', 'regular', 'ruim', 'em_condicoes_uso', 'necessita_manutencao',
-]
+CONDICAO_EQUIPAMENTO = ['boa', 'regular', 'ruim']
 CONDICAO_LABELS = {
     'boa': 'Boa',
     'regular': 'Regular',
@@ -75,6 +73,44 @@ NATUREZA_KIT_LABELS = {
 }
 
 
+class CategoriaEquipamento(db.Model):
+    """Agrupa os tipos de equipamento (Médico-Assistencial, Apoio, Infraestrutura, Geral…)."""
+    __tablename__ = 'categorias_equipamento'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(120), nullable=False)
+    descricao = db.Column(db.Text)
+    ordem = db.Column(db.Integer, nullable=False, default=0)
+    ativo = db.Column(db.Boolean, nullable=False, default=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
+
+    tipos = db.relationship('TipoEquipamento', back_populates='categoria', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<CategoriaEquipamento {self.nome}>'
+
+
+def vincular_categoria(tipo, nome):
+    """Aponta o tipo para a categoria com esse nome, criando a categoria se ela ainda não existe."""
+    nome = (nome or '').strip()
+    if not nome:
+        tipo.categoria_id = None
+        tipo.classificacao = None
+        return None
+    categoria = CategoriaEquipamento.query.filter(
+        db.func.lower(CategoriaEquipamento.nome) == nome.lower()
+    ).first()
+    if not categoria:
+        ultima = db.session.query(db.func.max(CategoriaEquipamento.ordem)).scalar() or 0
+        categoria = CategoriaEquipamento(nome=nome, ordem=ultima + 1, ativo=True)
+        db.session.add(categoria)
+        db.session.flush()
+    tipo.categoria_id = categoria.id
+    tipo.classificacao = categoria.nome
+    return categoria
+
+
 class TipoEquipamento(db.Model):
     __tablename__ = 'tipos_equipamento'
 
@@ -87,6 +123,7 @@ class TipoEquipamento(db.Model):
     # Item do catálogo padrão (ITEM-xxx). Sem código = tipo fora do catálogo.
     codigo           = db.Column(db.String(20), unique=True)
     classificacao    = db.Column(db.String(120))
+    categoria_id     = db.Column(db.Integer, db.ForeignKey('categorias_equipamento.id', ondelete='SET NULL'))
     valor_referencia = db.Column(db.Numeric(12, 2))
     natureza_kit     = db.Column(db.String(10))
     # No padrão de salas, equipamentos deste tipo contam como o tipo indicado
@@ -95,6 +132,7 @@ class TipoEquipamento(db.Model):
     criado_em      = db.Column(db.DateTime, nullable=False, default=agora_local)
     atualizado_em  = db.Column(db.DateTime, nullable=False, default=agora_local, onupdate=agora_local)
 
+    categoria = db.relationship('CategoriaEquipamento', back_populates='tipos')
     campos = db.relationship('CampoTipoEquipamento', back_populates='tipo_equipamento',
                              order_by='CampoTipoEquipamento.ordem', lazy='dynamic',
                              cascade='all, delete-orphan')
@@ -247,10 +285,18 @@ class Equipamento(db.Model):
 
     @property
     def status_label(self):
+        from app.models.status_equipamento import mapa_status
+        item = mapa_status().get(self.status)
+        if item:
+            return item.nome
         return STATUS_LABELS.get(self.status, self.status)
 
     @property
     def status_badge(self):
+        from app.models.status_equipamento import mapa_status
+        item = mapa_status().get(self.status)
+        if item:
+            return item.badge_cor
         return STATUS_BADGE.get(self.status, 'secondary')
 
     @property
@@ -265,6 +311,10 @@ class Equipamento(db.Model):
 
     @property
     def pode_transferir(self):
+        from app.models.status_equipamento import mapa_status
+        item = mapa_status().get(self.status)
+        if item:
+            return bool(self.ativo and item.pode_transferir)
         return bool(self.ativo and self.status in STATUS_PODE_TRANSFERIR)
 
     @property

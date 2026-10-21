@@ -38,11 +38,20 @@ ORDEM_CLASSIFICACAO = (
 
 
 def agrupar_tipos_equipamento(tipos):
-    """[(classificação RDC 509, [tipos])]; grupos fora da RDC e sem classe vão ao fim."""
+    """[(categoria, [tipos])], na ordem cadastrada em Categorias de Equipamento."""
+    from app.models.equipamento import CategoriaEquipamento
     grupos = defaultdict(list)
     for t in tipos:
         grupos[t.classificacao or CLASSIFICACAO_SEM].append(t)
-    ordem = [g for g in ORDEM_CLASSIFICACAO if g in grupos]
+    cadastradas = [
+        c.nome for c in CategoriaEquipamento.query.order_by(
+            CategoriaEquipamento.ordem, CategoriaEquipamento.nome
+        ).all()
+    ]
+    ordem = [g for g in cadastradas if g in grupos]
+    for g in ORDEM_CLASSIFICACAO:
+        if g in grupos and g not in ordem:
+            ordem.append(g)
     resto = sorted((g for g in grupos if g not in ordem and g != CLASSIFICACAO_SEM), key=str.lower)
     ordem.extend(resto)
     if CLASSIFICACAO_SEM in grupos:

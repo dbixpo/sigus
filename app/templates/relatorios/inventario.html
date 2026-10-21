@@ -31,9 +31,10 @@
     <form method="GET" action="{{ url_for('relatorios.inventario') }}" class="row g-2 align-items-end mb-2" id="filtroForm">
         <div class="col-md-2">{{ filtro_multiselect('Tipo de Unidade', 'tipo_unidade', tipos_unidade, filtro_tipo_unidades, 'Todos os tipos') }}</div>
         <div class="col-md-3">{{ filtro_multiselect('Unidade', 'unidade', unidades, filtro_unidades, 'Todas as unidades') }}</div>
+        <div class="col-md-2">{{ filtro_multiselect('RENEM', 'renem', categorias, filtro_renem, 'Todas') }}</div>
         <div class="col-md-2">{{ filtro_multiselect('Status', 'status', status_labels, filtro_status_list, 'Todos') }}</div>
         <div class="col-md-2">{{ filtro_multiselect('Condição', 'condicao', condicao_labels, filtro_condicao_list, 'Todas') }}</div>
-        <div class="col-md-3 d-flex gap-1 align-items-end">
+        <div class="col-md-1 d-flex gap-1 align-items-end">
             <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search me-1"></i>Buscar</button>
             <a href="{{ url_for('relatorios.inventario') }}" class="btn btn-outline-secondary btn-sm" title="Limpar"><i class="fas fa-times-circle"></i></a>
         </div>
@@ -41,11 +42,12 @@
     <div class="row g-2">
         {{ filtro_rapido('Patrimônio',         0, 'patrimonio') }}
         {{ filtro_rapido('Tipo de Equipamento',1, 'tipo_equip') }}
-        {{ filtro_rapido('Marca',              2, 'marca') }}
-        {{ filtro_rapido('Modelo',             3, 'modelo') }}
-        {{ filtro_rapido('Nº Série',           4, 'serie') }}
-        {{ filtro_rapido('Sala',               6, 'sala') }}
-        {{ filtro_rapido('Contrato',           9, 'contrato') }}
+        {{ filtro_rapido('RENEM',              2, 'renem') }}
+        {{ filtro_rapido('Marca',              3, 'marca') }}
+        {{ filtro_rapido('Modelo',             4, 'modelo') }}
+        {{ filtro_rapido('Nº Série',           5, 'serie') }}
+        {{ filtro_rapido('Sala',               7, 'sala') }}
+        {{ filtro_rapido('Contrato',          10, 'contrato') }}
     </div>
 </div>
 
@@ -53,39 +55,40 @@
 <div class="mini-stats mb-2" id="miniStatsInv">
     <span class="mini-stat">Total: <strong data-stat-col="-1">{{ total }}</strong></span>
     <span class="mini-stat">Tipos: <strong data-stat-col="1">{{ por_status.values() | sum }}</strong></span>
-    <span class="mini-stat">Marcas: <strong data-stat-col="2">—</strong></span>
-    <span class="mini-stat">Unidades: <strong data-stat-col="5">—</strong></span>
-    <span class="mini-stat">Status: <strong data-stat-col="7">—</strong></span>
-    <span class="mini-stat">Condição: <strong data-stat-col="8">—</strong></span>
+    <span class="mini-stat">RENEM: <strong data-stat-col="2">—</strong></span>
+    <span class="mini-stat">Marcas: <strong data-stat-col="3">—</strong></span>
+    <span class="mini-stat">Unidades: <strong data-stat-col="6">—</strong></span>
+    <span class="mini-stat">Status: <strong data-stat-col="8">—</strong></span>
+    <span class="mini-stat">Condição: <strong data-stat-col="9">—</strong></span>
 </div>
 
 <div class="card">
     <div class="card-body p-0">
-        {% if equipamentos %}
+        {% if itens %}
         <div class="table-responsive">
             <table class="table table-sm table-hover mb-0" id="tblInventario">
                 <thead>
                     <tr>
-                        <th>Patrimônio</th><th>Tipo de Equipamento</th><th>Marca</th><th>Modelo</th>
+                        <th>Patrimônio</th><th>Tipo de Equipamento</th><th>RENEM</th><th>Marca</th><th>Modelo</th>
                         <th>Nº Série</th><th>Unidade</th><th>Sala</th>
                         <th>Status</th><th>Condição</th><th>Contrato</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for e in equipamentos %}
+                    {% for e in itens %}
                     <tr>
-                        <td class="small">{{ e.numero_patrimonio or '—' }}</td>
-                        <td class="small fw-semibold">{{ e.tipo_equipamento.nome if e.tipo_equipamento else '—' }}</td>
-                        <td class="small">{{ e.marca.nome if e.marca else '—' }}</td>
-                        <td class="small">{{ e.modelo.nome if e.modelo else '—' }}</td>
-                        <td class="small text-muted">{{ e.numero_serie or '—' }}</td>
-                        <td class="small">{{ e.sala.unidade.nome | truncate(22) }}</td>
-                        <td class="small text-muted">{{ e.sala.nome }}</td>
-                        <td><span class="badge bg-{{ e.status_badge }}">{{ e.status_label }}</span></td>
-                        <td><span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao_label }}</span></td>
+                        <td class="small">{{ e.patrimonio or '—' }}</td>
+                        <td class="small fw-semibold">{{ e.tipo or '—' }}</td>
+                        <td class="small">{{ e.renem or '—' }}</td>
+                        <td class="small">{{ e.marca or '—' }}</td>
+                        <td class="small">{{ e.modelo or '—' }}</td>
+                        <td class="small text-muted">{{ e.serie or '—' }}</td>
+                        <td class="small">{{ e.unidade | truncate(22) }}</td>
+                        <td class="small text-muted">{{ e.sala or '—' }}</td>
+                        <td><span class="badge bg-{{ e.status_badge }}">{{ e.status or '—' }}</span></td>
+                        <td>{% if e.condicao %}<span class="badge bg-{{ e.condicao_badge }}">{{ e.condicao }}</span>{% else %}<span class="text-muted small">—</span>{% endif %}</td>
                         <td>
-                            {% set c = e.contrato_vigente %}
-                            {% if c %}<span class="badge bg-success" style="font-size:.68rem">{{ c.identificador | truncate(15) }}</span>
+                            {% if e.contrato %}<span class="badge bg-success" style="font-size:.68rem">{{ e.contrato | truncate(15) }}</span>
                             {% else %}<span class="text-muted small">—</span>{% endif %}
                         </td>
                     </tr>

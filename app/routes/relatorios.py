@@ -12,7 +12,7 @@ from threading import Lock
 from urllib.parse import quote_plus
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -20,8 +20,14 @@ from flask import Blueprint, render_template, request, abort, Response, url_for
 from flask_login import login_required, current_user
 
 from app import db
-from app.utils import formatar_brasilia, agora_local
-from app.models.equipamento import Equipamento, TipoEquipamento, STATUS_LABELS, CONDICAO_LABELS
+from app.utils import (
+    formatar_brasilia, agora_local, ve_dados_pessoais_completos,
+    cpf_anonimizado, telefone_anonimizado,
+)
+from app.models.equipamento import (
+    Equipamento, EquipamentoUsuario, TipoEquipamento, CategoriaEquipamento,
+    STATUS_LABELS, STATUS_BADGE, CONDICAO_LABELS, CONDICAO_BADGE,
+)
 from app.models.unidade import Unidade, UsuarioUnidade
 from app.models.tipo_unidade import TipoUnidade
 from app.models.sala import Sala
@@ -33,6 +39,9 @@ from app.models.usuario import Usuario, PERFIS
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.matricula import MatriculaProfissional
 from app.models.falta_abonada import FaltaAbonada
+from app.models.noticias import AcaoLocal, TipoAcao
+from sqlalchemy.orm import joinedload, selectinload
+from collections import defaultdict
 
 relatorios_bp = Blueprint('relatorios', __name__, url_prefix='/relatorios')
 
@@ -104,31 +113,38 @@ def _filtrar_por_tipo_unidade(query, model_unidade_id_col, tipo_unidade_ids):
 
 # ── Query compartilhada ────────────────────────────────────────────────────────
 def _query_inventario():
+    from app.models.status_equipamento import mapa_status
+    mapa_status()
     unidade_ids      = _getlist('unidade')
     tipo_unidade_ids = _getlist('tipo_unidade')
     tipo_ids         = _getlist('tipo')
+    renem_ids        = _getlist('renem')
     status_list      = _getstrlist('status')
     condicao_list    = _getstrlist('condicao')
     sala_ids         = _getlist('sala')
 
-    query = Equipamento.query.filter_by(ativo=True)
+    query = Equipamento.query.options(
+        joinedload(Equipamento.tipo_equipamento).joinedload(TipoEquipamento.categoria),
+        joinedload(Equipamento.marca),
+        joinedload(Equipamento.modelo),
+        joinedload(Equipamento.sala).joinedload(Sala.unidade),
+    ).filter(Equipamento.ativo.is_(True))
 
     permitidas = _ids_unidades_permitidas()
     if permitidas is not None:
-        query = query.join(Sala, Equipamento.sala_id == Sala.id).filter(Sala.unidade_id.in_(permitidas))
-    else:
-        # join condicional para filtros de unidade/tipo_unidade
-        if unidade_ids or tipo_unidade_ids:
-            query = query.join(Sala, Equipamento.sala_id == Sala.id)
-
+        query = query.filter(Equipamento.sala.has(Sala.unidade_id.in_(permitidas or [-1])))
     if unidade_ids:
-        query = query.filter(Sala.unidade_id.in_(unidade_ids))
+        query = query.filter(Equipamento.sala.has(Sala.unidade_id.in_(unidade_ids)))
     if tipo_unidade_ids:
-        query = query.join(Unidade, Sala.unidade_id == Unidade.id).filter(
-            Unidade.tipo_unidade_id.in_(tipo_unidade_ids)
+        query = query.filter(
+            Equipamento.sala.has(Sala.unidade.has(Unidade.tipo_unidade_id.in_(tipo_unidade_ids)))
         )
     if tipo_ids:
         query = query.filter(Equipamento.tipo_equipamento_id.in_(tipo_ids))
+    if renem_ids:
+        query = query.filter(
+            Equipamento.tipo_equipamento.has(TipoEquipamento.categoria_id.in_(renem_ids))
+        )
     if status_list:
         query = query.filter(Equipamento.status.in_(status_list))
     if condicao_list:
@@ -137,6 +153,87 @@ def _query_inventario():
         query = query.filter(Equipamento.sala_id.in_(sala_ids))
 
     return query.order_by(Equipamento.tipo_equipamento_id, Equipamento.id).all()
+
+
+def _coberturas_vigentes():
+    """Contratos vigentes, uma vez, para não consultar a cobertura de cada equipamento."""
+    from app.models.contrato import ContratoTipoEquipamento
+    hoje = date.today()
+    coberturas = (
+        ContratoTipoEquipamento.query
+        .options(joinedload(ContratoTipoEquipamento.contrato))
+        .join(Contrato)
+        .filter(
+            Contrato.status.in_(('vigente', 'a_vencer')),
+            Contrato.data_fim >= hoje,
+        )
+        .order_by(ContratoTipoEquipamento.id)
+        .all()
+    )
+    por_tipo = defaultdict(list)
+    for item in coberturas:
+        por_tipo[item.tipo_equipamento_id].append(item)
+    return por_tipo
+
+
+def _enriquecer_inventario(equipamentos, com_usuarios=False):
+    from app.models.status_equipamento import mapa_status
+    mapa = mapa_status()
+    por_tipo = _coberturas_vigentes()
+    nomes = defaultdict(list)
+    if com_usuarios and equipamentos:
+        ids = [e.id for e in equipamentos]
+        vinculos = (
+            db.session.query(EquipamentoUsuario.equipamento_id, Usuario.nome)
+            .join(Usuario, EquipamentoUsuario.usuario_id == Usuario.id)
+            .filter(EquipamentoUsuario.equipamento_id.in_(ids))
+            .order_by(Usuario.nome)
+            .all()
+        )
+        for equipamento_id, nome in vinculos:
+            nomes[equipamento_id].append(nome)
+
+    linhas = []
+    for e in equipamentos:
+        status = mapa.get(e.status)
+        if status:
+            status_label, status_badge = status.nome, status.badge_cor
+        else:
+            status_label = STATUS_LABELS.get(e.status, e.status)
+            status_badge = STATUS_BADGE.get(e.status, 'secondary')
+        contrato = None
+        for cobertura in por_tipo.get(e.tipo_equipamento_id, ()):
+            if cobertura.cobre_equipamento(e):
+                contrato = cobertura.contrato
+                break
+        tipo = e.tipo_equipamento
+        sala = e.sala
+        unidade = sala.unidade if sala else None
+        categoria = tipo.categoria if tipo else None
+        identificador = ''
+        if contrato:
+            identificador = contrato.numero_sei or contrato.cpl or ''
+        linhas.append({
+            'patrimonio': e.numero_patrimonio or '',
+            'tipo': tipo.nome if tipo else '',
+            'renem': categoria.nome if categoria else (tipo.classificacao if tipo and tipo.classificacao else ''),
+            'marca': e.marca.nome if e.marca else '',
+            'modelo': e.modelo.nome if e.modelo else '',
+            'serie': e.numero_serie or '',
+            'unidade': unidade.nome if unidade else '',
+            'sala': sala.nome if sala else '',
+            'status': status_label,
+            'status_badge': status_badge,
+            'condicao': CONDICAO_LABELS.get(e.condicao, e.condicao or ''),
+            'condicao_badge': CONDICAO_BADGE.get(e.condicao, 'secondary'),
+            'contrato': identificador,
+            'usuarios': '; '.join(nomes.get(e.id, [])),
+            'aquisicao': str(e.data_aquisicao.year) if e.data_aquisicao else '',
+            'valor': str(e.valor_estimado) if e.valor_estimado else '',
+            'status_codigo': e.status,
+            'condicao_codigo': e.condicao or '',
+        })
+    return linhas
 
 
 def _query_chamados():
@@ -179,28 +276,16 @@ def _query_contratos():
 # ── Helpers de linha ──────────────────────────────────────────────────────────
 def _linhas_inventario(equipamentos):
     cabecalho = [
-        'Patrimônio', 'Tipo', 'Marca', 'Modelo', 'Nº Série',
+        'Patrimônio', 'Tipo', 'RENEM', 'Marca', 'Modelo', 'Nº Série',
         'Unidade', 'Sala', 'Status', 'Condição',
         'Usuário(s) Vinculado(s)', 'Contrato (SEI)', 'Data Aquisição', 'Valor Estimado (R$)'
     ]
     linhas = [cabecalho]
-    for e in equipamentos:
-        usuarios = '; '.join(ev.usuario.nome for ev in e.usuarios_vinculados.all())
-        c = e.contrato_vigente
+    for item in _enriquecer_inventario(equipamentos, com_usuarios=True):
         linhas.append([
-            e.numero_patrimonio or '',
-            e.tipo_equipamento.nome if e.tipo_equipamento else '',
-            e.marca.nome if e.marca else '',
-            e.modelo.nome if e.modelo else '',
-            e.numero_serie or '',
-            e.sala.unidade.nome if e.sala else '',
-            e.sala.nome if e.sala else '',
-            STATUS_LABELS.get(e.status, e.status),
-            CONDICAO_LABELS.get(e.condicao, e.condicao),
-            usuarios,
-            (c.identificador if c else ''),
-            (str(e.data_aquisicao.year) if e.data_aquisicao else ''),
-            str(e.valor_estimado) if e.valor_estimado else '',
+            item['patrimonio'], item['tipo'], item['renem'], item['marca'], item['modelo'],
+            item['serie'], item['unidade'], item['sala'], item['status'], item['condicao'],
+            item['usuarios'], item['contrato'], item['aquisicao'], item['valor'],
         ])
     return linhas
 
@@ -412,30 +497,33 @@ def inventario():
 
     filtro_unidades      = _getlist('unidade')
     filtro_tipo_unidades = _getlist('tipo_unidade')
-    filtro_tipos         = _getlist('tipo')
+    filtro_renem         = _getlist('renem')
     filtro_status_list   = _getstrlist('status')
     filtro_condicao_list = _getstrlist('condicao')
 
-    equipamentos = _query_inventario()
+    itens = _enriquecer_inventario(_query_inventario())
     unidades      = Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
     tipos_unidade = TipoUnidade.query.filter_by(ativo=True).order_by(TipoUnidade.nome).all()
-    tipos         = TipoEquipamento.query.order_by(TipoEquipamento.nome).all()
+    categorias    = CategoriaEquipamento.query.order_by(
+        CategoriaEquipamento.ordem, CategoriaEquipamento.nome
+    ).all()
 
-    total        = len(equipamentos)
+    total        = len(itens)
     por_status   = {}
     por_condicao = {}
-    for e in equipamentos:
-        por_status[e.status]   = por_status.get(e.status, 0) + 1
-        por_condicao[e.condicao] = por_condicao.get(e.condicao, 0) + 1
+    for item in itens:
+        por_status[item['status_codigo']] = por_status.get(item['status_codigo'], 0) + 1
+        por_condicao[item['condicao_codigo']] = por_condicao.get(item['condicao_codigo'], 0) + 1
 
     return render_template('relatorios/inventario.html',
-                           equipamentos=equipamentos,
-                           unidades=unidades, tipos_unidade=tipos_unidade, tipos=tipos,
+                           itens=itens,
+                           unidades=unidades, tipos_unidade=tipos_unidade,
+                           categorias=categorias,
                            status_labels=STATUS_LABELS, condicao_labels=CONDICAO_LABELS,
                            total=total, por_status=por_status, por_condicao=por_condicao,
                            filtro_unidades=filtro_unidades,
                            filtro_tipo_unidades=filtro_tipo_unidades,
-                           filtro_tipos=filtro_tipos,
+                           filtro_renem=filtro_renem,
                            filtro_status_list=filtro_status_list,
                            filtro_condicao_list=filtro_condicao_list)
 
@@ -2086,14 +2174,20 @@ def _query_usuarios():
                 else:
                     conselho_formatado = mat.reg_conselho
 
-            # CPF formatado
+            completo = ve_dados_pessoais_completos()
             cpf_formatado = '—'
             if u.cpf:
-                cpf_digits = ''.join(c for c in u.cpf if c.isdigit())
-                if len(cpf_digits) == 11:
-                    cpf_formatado = f'{cpf_digits[:3]}.{cpf_digits[3:6]}.{cpf_digits[6:9]}-{cpf_digits[9:]}'
+                if completo:
+                    cpf_digits = ''.join(c for c in u.cpf if c.isdigit())
+                    if len(cpf_digits) == 11:
+                        cpf_formatado = f'{cpf_digits[:3]}.{cpf_digits[3:6]}.{cpf_digits[6:9]}-{cpf_digits[9:]}'
+                    else:
+                        cpf_formatado = u.cpf
                 else:
-                    cpf_formatado = u.cpf
+                    cpf_formatado = cpf_anonimizado(u.cpf) or '—'
+            whatsapp = u.whatsapp or '—'
+            if whatsapp != '—' and not completo:
+                whatsapp = telefone_anonimizado(u.whatsapp) or '—'
 
             linhas_flat.append({
                 'matricula':     mat.numero or 'Sem Matrícula',
@@ -2101,7 +2195,7 @@ def _query_usuarios():
                 'foto_url':      u.foto_url if hasattr(u, 'foto_url') else None,
                 'inicial':       u.inicial if hasattr(u, 'inicial') else (u.nome[0].upper() if u.nome else '?'),
                 'cpf':           cpf_formatado,
-                'whatsapp':      u.whatsapp or '—',
+                'whatsapp':      whatsapp,
                 'email':         u.email or '—',
                 'cnes':          un.numero_cnes or '—' if un else '—',
                 'unidade':       un.nome if un else '—',
@@ -2304,7 +2398,11 @@ def exportar_usuarios(formato):
         if mats:
             for m in mats:
                 linhas.append([
-                    u.nome, u.email, u.whatsapp or '',
+                    u.nome, u.email, (
+                        u.whatsapp or ''
+                        if ve_dados_pessoais_completos()
+                        else (telefone_anonimizado(u.whatsapp) if u.whatsapp else '')
+                    ),
                     u.perfil_label,
                     m.numero, m.cbo_label, m.reg_conselho or '',
                     m.orgao_emissor or '', 'Sim' if m.ativo else 'Não',
@@ -2312,7 +2410,11 @@ def exportar_usuarios(formato):
                 ])
         else:
             linhas.append([
-                u.nome, u.email, u.whatsapp or '',
+                u.nome, u.email, (
+                    u.whatsapp or ''
+                    if ve_dados_pessoais_completos()
+                    else (telefone_anonimizado(u.whatsapp) if u.whatsapp else '')
+                ),
                 u.perfil_label,
                 '—', '—', '—', '—', '—', situacao,
             ])
@@ -2531,7 +2633,11 @@ def _query_aniversariantes(mes, unidade_ids=None):
             'mes':      int(usuario.data_nasc.month),
             'nome':     usuario.nome,
             'email':    usuario.email or '',
-            'wa':       usuario.whatsapp or '',
+            'wa':       (
+                usuario.whatsapp or ''
+                if ve_dados_pessoais_completos()
+                else (telefone_anonimizado(usuario.whatsapp) if usuario.whatsapp else '')
+            ),
             'unidade':  unidade.nome,
             'foto_url': usuario.foto_url,
             'inicial':  usuario.inicial,
@@ -2909,7 +3015,10 @@ def _query_unidades():
             telefone_gestor = v.usuario.whatsapp or v.usuario.telefone
             foto_gestor = v.usuario.foto_url if hasattr(v.usuario, 'foto_url') else None
             inicial_gestor = v.usuario.inicial if hasattr(v.usuario, 'inicial') else (nome_gestor[0].upper() if nome_gestor else '?')
-            if telefone_gestor:
+            if telefone_gestor and not ve_dados_pessoais_completos():
+                telefone_gestor = telefone_anonimizado(telefone_gestor) or None
+                whatsapp_link = None
+            elif telefone_gestor:
                 telefone_formatado = telefone_gestor.replace('(', '').replace(')', '').replace(' ', '').replace('-', '')
                 whatsapp_link = f'https://wa.me/55{telefone_formatado}'
             else:
@@ -2926,7 +3035,7 @@ def _query_unidades():
         if gestores:
             gestores_parts = []
             for g in gestores:
-                if g['whatsapp_link']:
+                if g['telefone']:
                     gestores_parts.append(f"{g['nome']} — {g['telefone']}")
                 else:
                     gestores_parts.append(g['nome'])
@@ -3075,3 +3184,205 @@ def exportar_unidades(formato):
             headers={'Content-Disposition': f'attachment; filename="{nome}.xls"'}
         )
     return _xlsx_response(wb, nome)
+
+
+_MESES_MURAL = (
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+)
+
+
+def _data_extenso(valor):
+    if not valor:
+        return ''
+    return f'{valor.day} de {_MESES_MURAL[valor.month - 1]} de {valor.year}'
+
+
+def _periodo_mural():
+    """Sem datas na URL, o relatório abre nos últimos 30 dias."""
+    hoje = date.today()
+    if 'de' not in request.args and 'ate' not in request.args:
+        return hoje - timedelta(days=29), hoje
+
+    def ler(nome):
+        bruto = (request.args.get(nome) or '').strip()
+        if not bruto:
+            return None
+        try:
+            return datetime.strptime(bruto, '%Y-%m-%d').date()
+        except ValueError:
+            return None
+
+    return ler('de'), ler('ate')
+
+
+def _like_mural(termo):
+    seguro = termo.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+    return f'%{seguro}%'
+
+
+def _consultar_mural():
+    de, ate = _periodo_mural()
+    unidade_ids = _getlist('unidade')
+    tipo_unidade_ids = _getlist('tipo_unidade')
+    tipo_acao_ids = _getlist('tipo_acao')
+    termo = (request.args.get('q') or '').strip()
+
+    q = AcaoLocal.query.options(
+        joinedload(AcaoLocal.unidade).joinedload(Unidade.tipo_unidade),
+        joinedload(AcaoLocal.tipo),
+        joinedload(AcaoLocal.autor),
+        selectinload(AcaoLocal.fotos),
+    )
+    permitidas = _ids_unidades_permitidas()
+    if permitidas is not None:
+        q = q.filter(AcaoLocal.unidade_id.in_(permitidas or [-1]))
+    if unidade_ids:
+        q = q.filter(AcaoLocal.unidade_id.in_(unidade_ids))
+    if tipo_unidade_ids:
+        q = q.filter(AcaoLocal.unidade.has(Unidade.tipo_unidade_id.in_(tipo_unidade_ids)))
+    if tipo_acao_ids:
+        q = q.filter(AcaoLocal.tipo_acao_id.in_(tipo_acao_ids))
+    if de:
+        q = q.filter(AcaoLocal.data_acao >= de)
+    if ate:
+        q = q.filter(AcaoLocal.data_acao <= ate)
+    if termo:
+        like = _like_mural(termo)
+        q = q.filter(db.or_(
+            AcaoLocal.descricao.ilike(like, escape='\\'),
+            AcaoLocal.unidade.has(Unidade.nome.ilike(like, escape='\\')),
+            AcaoLocal.tipo.has(TipoAcao.nome.ilike(like, escape='\\')),
+        ))
+
+    acoes = q.order_by(AcaoLocal.data_acao.desc(), AcaoLocal.id.desc()).all()
+    ids = [a.id for a in acoes]
+    curtidas = {}
+    comentarios = {}
+    if ids:
+        from app.models.noticias import AcaoLocalCurtida, AcaoLocalComentario
+        curtidas = dict(
+            db.session.query(AcaoLocalCurtida.acao_id, db.func.count(AcaoLocalCurtida.id))
+            .filter(AcaoLocalCurtida.acao_id.in_(ids))
+            .group_by(AcaoLocalCurtida.acao_id)
+            .all()
+        )
+        comentarios = dict(
+            db.session.query(AcaoLocalComentario.acao_id, db.func.count(AcaoLocalComentario.id))
+            .filter(AcaoLocalComentario.acao_id.in_(ids))
+            .group_by(AcaoLocalComentario.acao_id)
+            .all()
+        )
+    return acoes, curtidas, comentarios, de, ate, termo
+
+
+def _montar_mural(acoes, curtidas, comentarios):
+    linhas = []
+    for acao in acoes:
+        unidade = acao.unidade
+        linhas.append({
+            'id': acao.id,
+            'data': acao.data_acao,
+            'tipo': acao.tipo.nome if acao.tipo else 'Ação',
+            'unidade': unidade.nome if unidade else '—',
+            'tipo_unidade': (
+                unidade.tipo_unidade.nome if unidade and unidade.tipo_unidade else '—'
+            ),
+            'descricao': acao.descricao or '',
+            'autor': acao.autor.nome if acao.autor else '—',
+            'curtidas': int(curtidas.get(acao.id) or 0),
+            'comentarios': int(comentarios.get(acao.id) or 0),
+            'fotos': list(acao.fotos or []),
+        })
+    return linhas
+
+
+def _opcoes_mural():
+    permitidas = _ids_unidades_permitidas()
+    unidades = Unidade.query.filter_by(status='ativa')
+    if permitidas is not None:
+        unidades = unidades.filter(Unidade.id.in_(permitidas or [-1]))
+    return (
+        unidades.order_by(Unidade.nome).all(),
+        TipoUnidade.query.filter_by(ativo=True).order_by(TipoUnidade.nome).all(),
+        TipoAcao.query.order_by(TipoAcao.ativo.desc(), TipoAcao.ordem, TipoAcao.nome).all(),
+    )
+
+
+def _texto_periodo_mural(de, ate):
+    if de and ate:
+        return f'{_data_extenso(de)} a {_data_extenso(ate)}'
+    if de:
+        return f'a partir de {_data_extenso(de)}'
+    if ate:
+        return f'até {_data_extenso(ate)}'
+    return 'todas as datas'
+
+
+@relatorios_bp.route('/mural')
+@login_required
+def mural():
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    acoes, curtidas, comentarios, de, ate, termo = _consultar_mural()
+    linhas = _montar_mural(acoes, curtidas, comentarios)
+    unidades, tipos_unidade, tipos_acao = _opcoes_mural()
+    return render_template(
+        'relatorios/mural.html',
+        linhas=linhas,
+        unidades=unidades,
+        tipos_unidade=tipos_unidade,
+        tipos_acao=tipos_acao,
+        filtro_unidades=_getlist('unidade'),
+        filtro_tipo_unidades=_getlist('tipo_unidade'),
+        filtro_tipos_acao=_getlist('tipo_acao'),
+        de=de.isoformat() if de else '',
+        ate=ate.isoformat() if ate else '',
+        termo=termo,
+        periodo=_texto_periodo_mural(de, ate),
+        total=len(linhas),
+        total_curtidas=sum(item['curtidas'] for item in linhas),
+    )
+
+
+@relatorios_bp.route('/mural/boletim')
+@login_required
+def boletim_mural():
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    acoes, curtidas, comentarios, de, ate, termo = _consultar_mural()
+    linhas = _montar_mural(acoes, curtidas, comentarios)
+    edicao = sorted(
+        linhas,
+        key=lambda item: (-item['curtidas'], -(item['data'].toordinal() if item['data'] else 0), -item['id']),
+    )
+    for item in edicao:
+        partes = [
+            p.strip() for p in (item['descricao'] or '').replace('\r\n', '\n').replace('\r', '\n').split('\n')
+            if p.strip()
+        ]
+        if len(partes) > 1 and len(partes[0]) <= 140:
+            item['manchete'] = partes[0]
+            item['corpo'] = ' '.join(partes[1:])
+        else:
+            item['manchete'] = ''
+            item['corpo'] = ' '.join(partes)
+    unidades, tipos_unidade, tipos_acao = _opcoes_mural()
+    nomes_tipo = [t.nome for t in tipos_acao if t.id in set(_getlist('tipo_acao'))]
+    nomes_tipo_unidade = [t.nome for t in tipos_unidade if t.id in set(_getlist('tipo_unidade'))]
+    nomes_unidade = [u.nome for u in unidades if u.id in set(_getlist('unidade'))]
+    return render_template(
+        'relatorios/boletim_mural.html',
+        capa=edicao[0] if edicao else None,
+        demais=edicao[1:],
+        total=len(edicao),
+        total_curtidas=sum(item['curtidas'] for item in edicao),
+        periodo=_texto_periodo_mural(de, ate),
+        hoje=_data_extenso(date.today()),
+        filtros={
+            'tipos': nomes_tipo,
+            'tipos_unidade': nomes_tipo_unidade,
+            'unidades': nomes_unidade,
+            'termo': termo,
+        },
+    )

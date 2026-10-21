@@ -8,7 +8,7 @@ from app.models.cbo import CBO
 from app.models.unidade import Unidade
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.matricula import MatriculaProfissional
-from app.utils import _montar_corpo_email, _montar_corpo_email_ficha
+from app.utils import _montar_corpo_email, _montar_corpo_email_ficha, nome_proprio
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
@@ -88,6 +88,8 @@ def _matriculas_da_base_rh(usuario):
 def _preencher_usuario(u, form):
     for campo in _CAMPOS_PROF:
         val = form.get(campo, '').strip() or None
+        if val and campo in ('nome_mae', 'nome_pai'):
+            val = nome_proprio(val)
         setattr(u, campo, val)
     for form_key, attr in _DATAS.items():
         setattr(u, attr, _parse_date(form.get(form_key, '')))
@@ -168,7 +170,7 @@ def novo():
             perfil_solicitado = list(perfis_disponiveis.keys())[-1]
 
         u = Usuario(
-            nome=request.form['nome'].strip(),
+            nome=nome_proprio(request.form['nome']),
             email=email,
             perfil=perfil_solicitado,
         )
@@ -215,7 +217,7 @@ def editar(id):
 
     if request.method == 'POST':
         try:
-            usuario.nome = request.form['nome'].strip()
+            usuario.nome = nome_proprio(request.form['nome'])
 
             # Apenas administrador pode alterar o e-mail
             if is_admin:
@@ -448,6 +450,13 @@ def importar_cadastro():
         return jsonify(ok=False, erro='Informe o CPF para importar os dados.'), 400
     try:
         dados = _importar(cpf)
+        campos = dados.get('campos') or {}
+        for chave in ('nome', 'nome_mae', 'nome_pai'):
+            if campos.get(chave):
+                campos[chave] = nome_proprio(campos[chave])
+        for item in dados.get('conselho') or []:
+            if item.get('nome'):
+                item['nome'] = nome_proprio(item['nome'])
         if not dados.get('ok'):
             return jsonify(
                 ok=False,

@@ -109,6 +109,8 @@
                                         <a href="{{ g.whatsapp_link }}" target="_blank" class="text-success text-decoration-none" title="Abrir WhatsApp">
                                             <i class="fab fa-whatsapp me-1"></i>{{ g.telefone | br_fone }}
                                         </a>
+                                        {% elif g.telefone %}
+                                        <span class="text-muted">{{ g.telefone }}</span>
                                         {% endif %}
                                     </div>
                                 </div>

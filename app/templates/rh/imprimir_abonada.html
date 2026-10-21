@@ -114,7 +114,8 @@
             <div class="c-label">Matrícula</div>
             <div class="c-valor">
                 {% if matricula %}{{ matricula.numero | upper }}
-                {% else %}{{ usuario.cpf | upper if usuario.cpf else '—' }}{% endif %}
+                {% elif dados_pessoais_completos %}{{ usuario.cpf | upper if usuario.cpf else '—' }}
+                {% else %}{{ usuario.cpf | cpf_visivel }}{% endif %}
             </div>
         </div>
     </div>

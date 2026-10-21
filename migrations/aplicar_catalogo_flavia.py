@@ -24,7 +24,7 @@ from sqlalchemy import text
 
 from app import create_app, db
 from app.models.equipamento import (
-    CONDICAO_POR_STATUS, Marca, Modelo, TipoEquipamento,
+    CONDICAO_POR_STATUS, Marca, Modelo, TipoEquipamento, vincular_categoria,
 )
 
 PLANILHA_PADRAO = r'C:\Users\dbixpo\Desktop\jessica\flavia\Itens SIGUS.xlsx'
@@ -270,11 +270,11 @@ def aplicar(catalogo):
         if not tipo:
             tipo = TipoEquipamento(
                 nome=nome,
-                classificacao=info['clas'],
                 tem_patrimonio=True,
                 ativo=True,
                 icone=ICONES.get(info['clas'], 'fas fa-box'),
             )
+            vincular_categoria(tipo, info['clas'])
             db.session.add(tipo)
             db.session.flush()
             por_norm[norm(nome)] = tipo
@@ -285,14 +285,14 @@ def aplicar(catalogo):
                 por_norm.pop(norm(tipo.nome), None)
                 tipo.nome = nome
                 por_norm[norm(nome)] = tipo
-            tipo.classificacao = info['clas']
+            vincular_categoria(tipo, info['clas'])
             tipo.ativo = True
         vincular_marcas(tipo, info['marcas'], cache_marcas)
     db.session.flush()
 
     for tipo in TipoEquipamento.query.all():
         if tipo.nome in INFORMATICA or tipo.classificacao == 'Equipamentos de informática e telefonia':
-            tipo.classificacao = 'Geral'
+            vincular_categoria(tipo, 'Geral')
     return renomeados, criados
 
 

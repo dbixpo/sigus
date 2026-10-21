@@ -9,7 +9,7 @@ from app import db
 from app.models.agenda import AgendaEvento
 from app.models.unidade import Unidade
 from app.models.veiculo import (CATEGORIAS_VEICULO, COMBUSTIVEIS_VEICULO, PREFIXO_MAX_DIGITOS, ModeloVeiculo,
-                                Veiculo, normalizar_placa, normalizar_prefixo)
+                                TipoVeiculo, Veiculo, normalizar_placa, normalizar_prefixo)
 from app.services import reservas
 from app.utils import agora_brasilia, agora_local
 
@@ -106,6 +106,10 @@ def _preencher(veiculo, form):
     categoria = form.get('categoria') or ''
     if categoria not in CATEGORIAS_VEICULO:
         return 'Escolha a categoria do veículo.'
+    tipo_id = _inteiro(form.get('tipo_veiculo_id'))
+    tipo_renem = TipoVeiculo.query.get(tipo_id) if tipo_id else None
+    if not tipo_renem or (not tipo_renem.ativo and tipo_renem.id != veiculo.tipo_veiculo_id):
+        return 'Escolha o item RENEM do veículo.'
     alugado = digitou_al or form.get('alugado') == 'on'
     erro = _duplicado(veiculo, placa, prefixo, alugado)
     if erro:
@@ -119,6 +123,7 @@ def _preencher(veiculo, form):
     veiculo.marca = (form.get('marca') or '').strip()[:60] or None
     veiculo.modelo = (form.get('modelo') or '').strip()[:80] or None
     veiculo.categoria = categoria
+    veiculo.tipo_veiculo_id = tipo_renem.id
     veiculo.ano = (form.get('ano') or '').strip()[:9] or None
     veiculo.cor = (form.get('cor') or '').strip()[:30] or None
     veiculo.combustivel = combustivel if combustivel in COMBUSTIVEIS_VEICULO else None
@@ -133,10 +138,15 @@ def _preencher(veiculo, form):
 
 def _render_form(unidade, veiculo):
     modelos = ModeloVeiculo.query.order_by(ModeloVeiculo.marca, ModeloVeiculo.nome).all()
+    tipos_renem = TipoVeiculo.query.filter_by(ativo=True).order_by(TipoVeiculo.nome).all()
+    if veiculo.tipo_veiculo_id and veiculo.tipo_renem and not veiculo.tipo_renem.ativo:
+        tipos_renem.append(veiculo.tipo_renem)
+        tipos_renem.sort(key=lambda t: t.nome)
     return render_template(
         'veiculos/form.html', unidade=unidade, veiculo=veiculo, editando=veiculo.id is not None,
         dados_form=request.form if request.method == 'POST' else None,
         categorias=CATEGORIAS_VEICULO, combustiveis=COMBUSTIVEIS_VEICULO,
+        tipos_renem=tipos_renem,
         marcas=sorted({m.marca for m in modelos}),
         modelos=[{'marca': m.marca, 'nome': m.nome, 'categoria': m.categoria} for m in modelos],
     )

@@ -40,6 +40,15 @@ app/static/uploads/identidade/
 app/static/uploads/comunicados/
 app/static/uploads/acoes/
 app/static/uploads/obs_acoes/
+app/static/uploads/planos/
+app/static/uploads/links/
+app/static/uploads/equipamentos/
+
+# Dados locais da instalação (frequência temporária, perfil do LibreOffice, rascunho)
+instance/
+scripts/_lo_profile/
+scripts/_lo_profile2/
+scripts/_tmp_inv.xlsx
 
 # HTML de conferência local (pode ter dado de tela); não vai para o Git
 scripts/_tmp_html/

@@ -51,7 +51,7 @@
                     {% set busca_mats = mats | map(attribute='numero') | select | join(' ') %}
                     {% set busca_cbos = mats | map(attribute='cbo') | select | join(' ') %}
                     <tr class="usuario-row"
-                        data-busca="{{ [u.nome, u.email, u.perfil, u.perfil_label, u.cpf, u.whatsapp, u.telefone, u.cbo, 'ativo' if u.ativo else 'inativo', busca_mats, busca_cbos] | select | join(' ') }}">
+                        data-busca="{{ [u.nome, u.email, u.perfil, u.perfil_label, u.cpf if dados_pessoais_completos else '', u.whatsapp if dados_pessoais_completos else '', u.telefone if dados_pessoais_completos else '', u.cbo, 'ativo' if u.ativo else 'inativo', busca_mats, busca_cbos] | select | join(' ') }}">
                         <td class="fw-semibold small">{{ u.nome }}</td>
 
                         <td class="small text-muted d-none d-md-table-cell">
@@ -64,13 +64,15 @@
 
                         <td class="small d-none d-md-table-cell">
                             {% set _fone = u.whatsapp or u.telefone %}
-                            {% if _fone %}
+                            {% if _fone and dados_pessoais_completos %}
                             {% set wnum = _fone | replace('(','') | replace(')','') | replace(' ','') | replace('-','') %}
                             <a href="https://wa.me/55{{ wnum }}" target="_blank"
                                class="text-success text-decoration-none d-flex align-items-center gap-1">
                                 <i class="fab fa-whatsapp"></i>
                                 <span>{{ _fone | br_fone }}</span>
                             </a>
+                            {% elif _fone %}
+                            <span class="text-muted">{{ _fone | fone_visivel }}</span>
                             {% else %}
                             <span class="text-muted">—</span>
                             {% endif %}

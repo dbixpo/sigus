@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Boletim da Rede — {{ periodo }}</title>
+<style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+        font-family: Georgia, "Times New Roman", serif;
+        color: #1E3A50;
+        background: #fff;
+    }
+    .no-print {
+        display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        background: #f8f9fa; border-bottom: 1px solid #dee2e6;
+        padding: 10px 16px;
+        font-family: Inter, Arial, sans-serif;
+    }
+    .no-print .rotulo { font-weight: 700; color: #1A82B8; margin-right: auto; }
+    .btn-acao {
+        border: 0; border-radius: 6px; padding: 8px 16px;
+        font: 600 13px/1 Inter, Arial, sans-serif;
+        cursor: pointer; text-decoration: none;
+    }
+    .btn-imprimir { background: #1A82B8; color: #fff; }
+    .btn-voltar { background: #6c757d; color: #fff; }
+    .doc { max-width: 190mm; margin: 0 auto; padding: 12px 16px 20px; }
+    .cabecalho {
+        display: flex; align-items: center; gap: 10px;
+        font-family: Inter, Arial, sans-serif;
+    }
+    .cab-logo img { height: 52px; width: auto; display: block; }
+    .cab-meio { flex: 1; text-align: center; }
+    .cab-meio .prefeitura {
+        font-size: 11px; font-weight: 700; letter-spacing: .06em;
+        text-transform: uppercase; color: #0D3B5E;
+    }
+    .cab-meio .secretaria { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .cab-lado { text-align: right; font-size: 11px; line-height: 1.35; font-family: Inter, Arial, sans-serif; }
+    .cab-lado strong { display: block; font-size: 13px; color: #0D3B5E; }
+    .faixa {
+        height: 4px; margin: 8px 0 0;
+        background: linear-gradient(90deg, #E63030 0%, #F5C500 34%, #1A82B8 68%, #19A88B 100%);
+    }
+    .nome-boletim {
+        display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+        border-bottom: 2.5px solid #0D3B5E;
+        padding: 6px 0 5px;
+    }
+    .nome-boletim h1 {
+        margin: 0; font-size: 30px; line-height: 1; color: #0D3B5E; font-weight: 700;
+    }
+    .edicao {
+        margin: 0; text-align: right;
+        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #718096;
+    }
+    .resumo {
+        margin: 6px 0 12px;
+        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #1E3A50;
+    }
+    .kicker {
+        margin: 0 0 4px;
+        font-family: Inter, Arial, sans-serif;
+        font-size: 11px; font-weight: 700; letter-spacing: .12em;
+        text-transform: uppercase; color: #E63030;
+    }
+    .capa { margin-bottom: 14px; }
+    .capa h2 { margin: 8px 0 6px; font-size: 26px; line-height: 1.15; color: #0D3B5E; }
+    .mosaico { display: grid; gap: 6px; align-items: start; justify-items: center; }
+    .mosaico.n1 { grid-template-columns: 1fr; }
+    .mosaico.n2 { grid-template-columns: 1fr 1fr; }
+    .mosaico.n3 { grid-template-columns: 1fr 1fr 1fr; }
+    .mosaico.n4 { grid-template-columns: 1fr 1fr; }
+    .mosaico img {
+        width: auto; max-width: 100%; height: auto;
+        display: block;
+    }
+    .capa .mosaico.n1 img { max-height: 105mm; }
+    .texto {
+        margin: 0;
+        font-family: "Segoe UI", "Segoe UI Emoji", Inter, Arial, sans-serif;
+        font-size: 13.5px; line-height: 1.45;
+    }
+    .linha {
+        margin: 6px 0 0;
+        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #718096;
+    }
+    .curtidas { color: #E63030; font-weight: 700; }
+    .miolo {
+        column-count: 2; column-gap: 7mm;
+        border-top: 3px double #0D3B5E; padding-top: 10px;
+    }
+    .miolo article {
+        break-inside: avoid; page-break-inside: avoid;
+        margin: 0 0 12px; padding-bottom: 10px;
+        border-bottom: 1px solid #d7e0e8;
+    }
+    .miolo h3 { margin: 0 0 4px; font-size: 15px; line-height: 1.2; color: #0D3B5E; }
+    .miolo .mosaico { margin-top: 6px; }
+    .vazio { font-family: Inter, Arial, sans-serif; color: #718096; padding: 18px 0; }
+    @page { size: A4; margin: 12mm; }
+    @media print {
+        .no-print { display: none !important; }
+        .doc { max-width: none; padding: 0; }
+    }
+</style>
+</head>
+<body>
+<div class="no-print" id="barraAcoes">
+    <span class="rotulo">Boletim da Rede</span>
+    <button type="button" class="btn-acao btn-imprimir" onclick="window.print()">Imprimir / Salvar PDF</button>
+    <a class="btn-acao btn-voltar" href="{{ url_for('relatorios.mural') }}{% if request.query_string %}?{{ request.query_string.decode() }}{% endif %}">Voltar</a>
+</div>
+<script>
+if (window.self !== window.top) {
+    var barra = document.getElementById('barraAcoes');
+    if (barra) barra.style.display = 'none';
+}
+</script>
+
+{% macro fotos(item, extra='') %}
+{% if item.fotos %}
+<div class="mosaico n{{ item.fotos|length }} {{ extra }}">
+    {% for foto in item.fotos %}
+    <img src="{{ foto.url }}" alt="">
+    {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
+<div class="doc">
+    <header class="cabecalho">
+        <div class="cab-logo">
+            <img src="{{ identidade.asset_url('brasao') }}" alt="{{ identidade.alt_brasao }}"
+                 onerror="this.style.display='none'">
+        </div>
+        <div class="cab-meio">
+            <div class="prefeitura">Prefeitura Municipal de {{ identidade.municipio }}</div>
+            <div class="secretaria">{{ identidade.secretaria }}</div>
+        </div>
+        <div class="cab-lado">
+            <strong>{{ identidade.nome_sistema }}</strong>
+            {{ identidade.municipio }}/{{ identidade.uf }}<br>
+            {{ hoje }}
+        </div>
+    </header>
+    <div class="faixa"></div>
+    <div class="nome-boletim">
+        <h1>Boletim da Rede</h1>
+        <p class="edicao">{{ periodo }}<br>{{ total }} publicaç{{ 'ão' if total == 1 else 'ões' }} · {{ total_curtidas }} curtida{{ '' if total_curtidas == 1 else 's' }}</p>
+    </div>
+    <p class="resumo">
+        {% if filtros.tipos %}Tipos: {{ filtros.tipos | join(', ') }}.{% else %}Todos os tipos de ação.{% endif %}
+        {% if filtros.tipos_unidade %} Tipos de unidade: {{ filtros.tipos_unidade | join(', ') }}.{% endif %}
+        {% if filtros.unidades %} Unidades: {{ filtros.unidades | join(', ') }}.{% endif %}
+        {% if filtros.termo %} Texto: “{{ filtros.termo }}”.{% endif %}
+    </p>
+
+    {% if not capa %}
+    <p class="vazio">Nenhuma publicação do mural nesse filtro.</p>
+    {% else %}
+    <section class="capa">
+        <p class="kicker">{% if capa.curtidas %}Capa · mais curtida{% else %}Capa{% endif %} · {{ capa.tipo }}</p>
+        {{ fotos(capa) }}
+        <h2>{{ capa.manchete or capa.tipo }}</h2>
+        {% if capa.corpo %}<p class="texto">{{ capa.corpo }}</p>{% endif %}
+        <p class="linha">
+            {{ capa.unidade }} · {{ capa.data | br_date }}
+            {% if capa.autor and capa.autor != '—' %} · {{ capa.autor }}{% endif %}
+            · <span class="curtidas">{{ capa.curtidas }} curtida{{ '' if capa.curtidas == 1 else 's' }}</span>
+            {% if capa.comentarios %} · {{ capa.comentarios }} comentário{{ '' if capa.comentarios == 1 else 's' }}{% endif %}
+        </p>
+    </section>
+
+    {% if demais %}
+    <section class="miolo">
+        {% for item in demais %}
+        <article>
+            <p class="kicker">{{ item.tipo }}</p>
+            {% if item.manchete %}<h3>{{ item.manchete }}</h3>{% endif %}
+            {% if item.corpo %}<p class="texto">{{ item.corpo }}</p>{% endif %}
+            <p class="linha">
+                {{ item.unidade }} · {{ item.data | br_date }}
+                {% if item.autor and item.autor != '—' %} · {{ item.autor }}{% endif %}
+                · <span class="curtidas">{{ item.curtidas }}</span>
+            </p>
+            {{ fotos(item) }}
+        </article>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endif %}
+</div>
+</body>
+</html>

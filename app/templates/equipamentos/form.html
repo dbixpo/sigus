@@ -251,9 +251,10 @@
                 <div class="mb-3">
                     <label class="form-label">Status *</label>
                     <select name="status" id="status" class="form-select" required>
-                        {% for s in status_opts %}
-                        <option value="{{ s }}" {% if equipamento and equipamento.status == s %}selected{% elif s == 'ativo' and not equipamento %}selected{% endif %}>
-                            {{ status_labels[s] }}
+                        {% for s in status_itens %}
+                        <option value="{{ s.codigo }}" data-pede-condicao="{{ '1' if s.pede_condicao else '0' }}"
+                            {% if equipamento and equipamento.status == s.codigo %}selected{% elif s.codigo == 'ativo' and not equipamento %}selected{% endif %}>
+                            {{ s.nome }}
                         </option>
                         {% endfor %}
                     </select>
@@ -261,16 +262,14 @@
                 <div class="mb-3" id="bloco-condicao">
                     <label class="form-label">Condição *</label>
                     <select name="condicao" id="condicao" class="form-select">
-                        {% for status, condicoes in condicao_por_status.items() %}
-                        {% for c in condicoes %}
-                        <option value="{{ c }}" data-status="{{ status }}"
-                            {% if equipamento and equipamento.condicao == c %}selected{% elif c == 'boa' and not equipamento %}selected{% endif %}>
-                            {{ condicao_labels[c] }}
+                        {% for codigo, nome in condicoes.items() %}
+                        <option value="{{ codigo }}"
+                            {% if equipamento and equipamento.condicao == codigo %}selected{% elif codigo == 'boa' and not equipamento %}selected{% endif %}>
+                            {{ nome }}
                         </option>
                         {% endfor %}
-                        {% endfor %}
                     </select>
-                    <div class="form-text">Boa, Regular ou Ruim em Ativo e Sobressalente/Reserva. Em Disponível/Transferência: Em Condições de Uso ou Necessita Manutenção.</div>
+                    <div class="form-text">Boa, Regular ou Ruim.</div>
                 </div>
             </div>
             <div class="form-section">
@@ -411,24 +410,12 @@
     const blocoCond = document.getElementById('bloco-condicao');
     function filtrarCondicao() {
         if (!selStatus || !selCond) return;
-        const status = selStatus.value;
-        let visiveis = 0;
-        let algumSelecionado = false;
-        Array.from(selCond.options).forEach(function (op) {
-            const ok = op.getAttribute('data-status') === status;
-            op.hidden = !ok;
-            op.disabled = !ok;
-            if (ok) {
-                visiveis += 1;
-                if (op.selected) algumSelecionado = true;
-            }
-        });
-        if (blocoCond) blocoCond.classList.toggle('d-none', visiveis === 0);
-        selCond.required = visiveis > 0;
-        if (visiveis && !algumSelecionado) {
-            const primeira = Array.from(selCond.options).find(function (op) { return !op.disabled; });
-            if (primeira) selCond.value = primeira.value;
-        }
+        const escolhido = selStatus.options[selStatus.selectedIndex];
+        const pede = escolhido && escolhido.getAttribute('data-pede-condicao') === '1';
+        if (blocoCond) blocoCond.classList.toggle('d-none', !pede);
+        selCond.required = !!pede;
+        selCond.disabled = !pede;
+        if (pede && !selCond.value) selCond.value = 'boa';
     }
     if (selStatus) {
         selStatus.addEventListener('change', filtrarCondicao);

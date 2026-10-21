@@ -1,36 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}Tipos de Equipamento{% endblock %}
+{% block title %}Equipamento{% endblock %}
 
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
-        <li class="breadcrumb-item active">Tipos de Equipamento</li>
+        <li class="breadcrumb-item active">Equipamento</li>
     </ol>
 </nav>
 
 <div class="page-header">
-    <h1><i class="fas fa-tags"></i> Tipos de Equipamento</h1>
+    <h1><i class="fas fa-desktop"></i> Equipamento</h1>
     <div class="d-flex gap-2">
-        <a href="{{ url_for('configuracoes.padrao_salas') }}#inventario" class="btn btn-outline-secondary">
-            <i class="fas fa-link me-1"></i>Ligar inventário ao catálogo
+        <a href="{{ url_for('configuracoes.categorias_equipamento') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-layer-group me-1"></i>Classificação RENEM
         </a>
         <a href="{{ url_for('configuracoes.novo_tipo_equipamento') }}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-1"></i>Novo Tipo
+            <i class="fas fa-plus-circle me-1"></i>Novo Equipamento
         </a>
     </div>
 </div>
-
-<p class="text-muted small mb-3">
-    Os tipos com código <strong>ITEM</strong> formam o catálogo padronizado usado nos kits dos tipos de sala.
-    O valor de referência entra na estimativa de custo do relatório de aderência.
-</p>
 
 <div class="card mb-3">
     <div class="card-body py-2">
         <div class="input-group input-group-sm" style="max-width:420px">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
-            <input type="search" id="busca-tipos" class="form-control" placeholder="Buscar por nome ou código...">
+            <input type="search" id="busca-tipos" class="form-control" placeholder="Buscar por nome...">
         </div>
     </div>
 </div>
@@ -48,47 +43,27 @@
                 <thead>
                     <tr>
                         <th style="width:50px;">Ícone</th>
-                        <th style="width:100px">Código</th>
                         <th>Nome</th>
-                        <th class="text-end" style="width:120px">Valor ref.</th>
-                        <th class="text-center" style="width:90px">Natureza</th>
-                        <th class="text-center" style="width:90px">Patrimônio</th>
-                        <th class="text-center" style="width:100px">Equipamentos</th>
-                        <th class="text-center" style="width:70px">Kits</th>
+                        <th class="text-center" style="width:110px">Patrimônio</th>
+                        <th class="text-center" style="width:120px">Cadastrados</th>
                         <th class="text-center" style="width:80px">Status</th>
                         <th class="text-end" style="width:120px">Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for t in lista %}
-                    <tr class="linha-tipo" data-busca="{{ ((t.codigo or '') ~ ' ' ~ t.nome ~ ' ' ~ (t.descricao or ''))|lower }}">
+                    <tr class="linha-tipo" data-busca="{{ (t.nome ~ ' ' ~ (t.descricao or ''))|lower }}">
                         <td class="text-center"><i class="{{ t.icone }} fs-5 text-primary"></i></td>
                         <td>
-                            {% if t.codigo %}<span class="badge bg-primary-subtle text-primary-emphasis border">{{ t.codigo }}</span>
-                            {% else %}<span class="text-muted small">—</span>{% endif %}
-                        </td>
-                        <td>
                             <div class="fw-semibold">{{ t.nome }}</div>
-                            {% if t.conta_como %}
-                            <div class="small text-muted"><i class="fas fa-equals me-1"></i>conta como {{ t.conta_como.nome_com_codigo }}</div>
-                            {% elif t.descricao %}
+                            {% if t.descricao %}
                             <div class="small text-muted">{{ t.descricao|truncate(70) }}</div>
                             {% endif %}
-                        </td>
-                        <td class="text-end small text-nowrap">{{ t.valor_referencia|br_currency if t.valor_referencia is not none else '—' }}</td>
-                        <td class="text-center">
-                            {% if t.natureza_kit %}
-                            <span class="badge {{ 'bg-secondary' if t.natureza_kit == 'base' else 'bg-info text-dark' }}">{{ t.natureza_kit_label }}</span>
-                            {% else %}<span class="text-muted small">—</span>{% endif %}
                         </td>
                         <td class="text-center">
                             <span class="badge bg-{{ 'success' if t.tem_patrimonio else 'secondary' }}">{{ 'Sim' if t.tem_patrimonio else 'Não' }}</span>
                         </td>
                         <td class="text-center"><span class="badge bg-light text-dark border">{{ equip_por_tipo.get(t.id, 0) }}</span></td>
-                        <td class="text-center">
-                            {% set n_kits = kits_por_tipo.get(t.id, 0) %}
-                            {% if n_kits %}<span class="badge bg-primary">{{ n_kits }}</span>{% else %}<span class="text-muted small">—</span>{% endif %}
-                        </td>
                         <td class="text-center">
                             <span class="badge bg-{{ 'success' if t.ativo else 'secondary' }}">{{ 'Ativo' if t.ativo else 'Inativo' }}</span>
                         </td>
@@ -100,7 +75,7 @@
                             <form method="POST" action="{{ url_for('configuracoes.alternar_status_tipo_equipamento', id=t.id) }}" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-sm btn-outline-{{ 'warning' if t.ativo else 'success' }}"
-                                        data-confirm="{{ 'Desativar' if t.ativo else 'Ativar' }} o tipo {{ t.nome }}?">
+                                        data-confirm="{{ 'Desativar' if t.ativo else 'Ativar' }} {{ t.nome }}?">
                                     <i class="{{ 'fas fa-pause-circle' if t.ativo else 'fas fa-play-circle' }}"></i>
                                 </button>
                             </form>
@@ -118,7 +93,7 @@
 <div class="card">
     <div class="card-body empty-state">
         <i class="fas fa-tags"></i>
-        <h6>Nenhum tipo de equipamento cadastrado.</h6>
+        <h6>Nenhum equipamento cadastrado.</h6>
     </div>
 </div>
 {% endif %}

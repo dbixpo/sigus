@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Status de equipamento{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Status de equipamento</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-toggle-on"></i> Status de equipamento</h1>
+    <a href="{{ url_for('configuracoes.novo_status_equipamento') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Novo status
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    A condição do bem continua só com Boa, Regular e Ruim. Aqui entra o status: Ativo, Inservível e o que a equipe precisar cadastrar.
+</p>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:70px">Ordem</th>
+                        <th>Nome</th>
+                        <th>Condição</th>
+                        <th>Transferência</th>
+                        <th class="text-center">Em uso</th>
+                        <th class="text-center">Situação</th>
+                        <th class="text-end" style="width:160px">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in status %}
+                    <tr>
+                        <td>{{ s.ordem }}</td>
+                        <td><span class="badge bg-{{ s.badge_cor }}">{{ s.nome }}</span></td>
+                        <td>{{ 'Pede Boa, Regular ou Ruim' if s.pede_condicao else 'Sem condição' }}</td>
+                        <td>{{ 'Pode transferir' if s.pode_transferir else 'Não transfere' }}</td>
+                        <td class="text-center">{{ usos.get(s.codigo, 0) }}</td>
+                        <td class="text-center">
+                            {% if s.ativo %}<span class="badge bg-success">Ativo</span>
+                            {% else %}<span class="badge bg-secondary">Inativo</span>{% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_status_equipamento', id=s.id) }}"
+                               class="btn btn-sm btn-outline-primary">Editar</a>
+                            {% if s.codigo != 'ativo' and not usos.get(s.codigo) %}
+                            <form method="POST" action="{{ url_for('configuracoes.excluir_status_equipamento', id=s.id) }}"
+                                  class="d-inline" onsubmit="return confirm('Excluir este status?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

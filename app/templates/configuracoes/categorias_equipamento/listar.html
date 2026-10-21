@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Classificação RENEM{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Classificação RENEM</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-layer-group"></i> Classificação RENEM</h1>
+    <a href="{{ url_for('configuracoes.nova_categoria_equipamento') }}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i>Nova Classificação
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    Médico-Assistencial, Apoio, Infraestrutura, Geral e Veículos. Os carros da unidade ficam na aba Veículos; aqui fica o grupo da RENEM.
+</p>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if categorias %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:80px">Ordem</th>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th class="text-center" style="width:110px">Tipos</th>
+                        <th class="text-center" style="width:90px">Status</th>
+                        <th class="text-end" style="width:160px">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in categorias %}
+                    <tr>
+                        <td class="text-muted">{{ c.ordem }}</td>
+                        <td class="fw-semibold">{{ c.nome }}</td>
+                        <td class="small text-muted">{{ c.descricao or '—' }}</td>
+                        <td class="text-center">{{ c.tipos.count() + c.tipos_veiculo.count() }}</td>
+                        <td class="text-center">
+                            {% if c.ativo %}
+                            <span class="badge bg-success">Ativa</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inativa</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('configuracoes.editar_categoria_equipamento', id=c.id) }}"
+                               class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="post" action="{{ url_for('configuracoes.excluir_categoria_equipamento', id=c.id) }}"
+                                  class="d-inline" onsubmit='return confirm("Excluir a classificação " + {{ c.nome|tojson }} + "?");'>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">Nenhuma classificação cadastrada.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

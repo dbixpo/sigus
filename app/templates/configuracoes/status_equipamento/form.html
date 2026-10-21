@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if status else 'Novo' }} status de equipamento{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.status_equipamento') }}">Status de equipamento</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if status else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-toggle-on me-2"></i>{{ 'Editar' if status else 'Novo' }} status</h1>
+</div>
+
+<div class="row justify-content-center">
+<div class="col-md-7">
+<div class="card">
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+                <input type="text" name="nome" class="form-control" required maxlength="80"
+                       value="{{ status.nome if status else '' }}" placeholder="Ex.: Em manutenção">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cor</label>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for slug_cor, nome_cor in badge_cores %}
+                    <button type="button"
+                            class="btn btn-sm btn-{{ slug_cor }} cor-btn {% if (status and status.badge_cor == slug_cor) or (not status and slug_cor == 'secondary') %}ring-sel{% endif %}"
+                            data-cor="{{ slug_cor }}">{{ nome_cor }}</button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="badge_cor" id="hiddenBadgeCor"
+                       value="{{ status.badge_cor if status else 'secondary' }}">
+                <div class="mt-2">Prévia: <span class="badge bg-{{ status.badge_cor if status else 'secondary' }}" id="previewBadge">{{ status.nome if status else 'Status' }}</span></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Ordem</label>
+                <input type="number" name="ordem" class="form-control" style="max-width:120px" min="0" max="999"
+                       value="{{ status.ordem if status else proximo_ordem }}">
+            </div>
+
+            <div class="mb-3 border rounded p-3 bg-light">
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="pede_condicao" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="chkCondicao"
+                           name="pede_condicao" value="1"
+                           {{ 'checked' if not status or status.pede_condicao }}>
+                    <label class="form-check-label" for="chkCondicao">
+                        <strong>Pede condição</strong>
+                        <span class="text-muted fw-normal">— Boa, Regular ou Ruim. Não muda de um status para outro.</span>
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input type="hidden" name="pode_transferir" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="chkTransfere"
+                           name="pode_transferir" value="1"
+                           {{ 'checked' if status and status.pode_transferir }}>
+                    <label class="form-check-label" for="chkTransfere">
+                        <strong>Pode transferir</strong>
+                        <span class="text-muted fw-normal">— o equipamento nesse status entra em transferência.</span>
+                    </label>
+                </div>
+                {% if status and status.codigo != 'ativo' %}
+                <div class="form-check form-switch">
+                    <input type="hidden" name="ativo" value="0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="chkAtivo"
+                           name="ativo" value="1" {{ 'checked' if status.ativo }}>
+                    <label class="form-check-label" for="chkAtivo">
+                        <strong>Ativo no cadastro</strong>
+                        <span class="text-muted fw-normal">— inativo some das opções novas e fica no que já foi lançado.</span>
+                    </label>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{{ url_for('configuracoes.status_equipamento') }}" class="btn btn-outline-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check-circle me-1"></i>Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var hidden = document.getElementById('hiddenBadgeCor');
+    var preview = document.getElementById('previewBadge');
+    var nome = document.querySelector('input[name=nome]');
+    document.querySelectorAll('.cor-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.cor-btn').forEach(function (b) { b.classList.remove('ring-sel'); });
+            btn.classList.add('ring-sel');
+            hidden.value = btn.dataset.cor;
+            preview.className = 'badge bg-' + btn.dataset.cor;
+        });
+    });
+    if (nome) {
+        nome.addEventListener('input', function () {
+            preview.textContent = nome.value || 'Status';
+        });
+    }
+})();
+</script>
+<style>.ring-sel { outline: 3px solid #0D3B5E; outline-offset: 2px; }</style>
+{% endblock %}

@@ -258,6 +258,61 @@ def _montar_corpo_email_rede(ficha):
     return '\n'.join(linhas)
 
 
+_PARTICULAS_NOME = {'da', 'de', 'do', 'das', 'dos', 'e'}
+_PERFIS_DADOS_RESTRITOS = ('profissional', 'administrativo')
+
+
+def nome_proprio(texto):
+    """Primeira letra de cada palavra maiúscula. Partículas (de, da, do…) ficam minúsculas."""
+    bruto = ' '.join((texto or '').split())
+    if not bruto:
+        return ''
+
+    def palavra(trecho, inicio):
+        if '-' in trecho:
+            pedacos = trecho.split('-')
+            return '-'.join(palavra(p, inicio and i == 0) for i, p in enumerate(pedacos))
+        baixa = trecho.lower()
+        if not inicio and baixa in _PARTICULAS_NOME:
+            return baixa
+        if "'" in baixa:
+            return "'".join((p[:1].upper() + p[1:]) if p else '' for p in baixa.split("'"))
+        return baixa[:1].upper() + baixa[1:]
+
+    return ' '.join(palavra(p, i == 0) for i, p in enumerate(bruto.split(' ')))
+
+
+def ve_dados_pessoais_completos(usuario=None):
+    """Operador e apoio administrativo veem CPF e telefone anonimizados. Gestores veem o dado inteiro."""
+    if usuario is None:
+        try:
+            from flask_login import current_user
+            usuario = current_user
+        except Exception:
+            return False
+    if not getattr(usuario, 'is_authenticated', False):
+        return False
+    return getattr(usuario, 'perfil', None) not in _PERFIS_DADOS_RESTRITOS
+
+
+def cpf_anonimizado(valor):
+    """000.***.**0-00 — três primeiros, o nono dígito e os dois finais."""
+    digitos = ''.join(c for c in (valor or '') if c.isdigit())[:11]
+    if len(digitos) != 11:
+        return ''
+    return f'{digitos[:3]}.***.**{digitos[8]}-{digitos[9:]}'
+
+
+def telefone_anonimizado(valor):
+    """Mantém o DDD e os dois últimos dígitos."""
+    digitos = ''.join(c for c in (valor or '') if c.isdigit())
+    if len(digitos) < 8:
+        return ''
+    if len(digitos) >= 10:
+        return f'({digitos[:2]}) ****-**{digitos[-2:]}'
+    return f'****-**{digitos[-2:]}'
+
+
 def registrar_filtros(app):
     @app.template_filter('br_date')
     def br_date(value):
@@ -283,6 +338,29 @@ def registrar_filtros(app):
             return '—'
         dt = para_brasilia(value) if isinstance(value, datetime) else value
         return f'{dt.day:02d} de {_MESES[dt.month - 1]} de {dt.year}'
+
+    @app.context_processor
+    def _lgpd_contexto():
+        return {'dados_pessoais_completos': ve_dados_pessoais_completos()}
+
+    @app.template_filter('cpf_visivel')
+    def cpf_visivel(value):
+        if not value:
+            return '—'
+        if ve_dados_pessoais_completos():
+            digitos = ''.join(c for c in str(value) if c.isdigit())
+            if len(digitos) == 11:
+                return f'{digitos[:3]}.{digitos[3:6]}.{digitos[6:9]}-{digitos[9:]}'
+            return value
+        return cpf_anonimizado(value) or '—'
+
+    @app.template_filter('fone_visivel')
+    def fone_visivel(value):
+        if not value:
+            return '—'
+        if ve_dados_pessoais_completos():
+            return br_fone(value)
+        return telefone_anonimizado(value) or '—'
 
     @app.template_filter('br_fone')
     def br_fone(value):

@@ -12,6 +12,52 @@ CATEGORIAS_VEICULO = ['Carro de passeio', 'Utilitário', 'Caminhonete', 'Van', '
                       'Ambulância', 'Motocicleta', 'Caminhão']
 COMBUSTIVEIS_VEICULO = ['Flex', 'Gasolina', 'Etanol', 'Diesel', 'GNV', 'Elétrico', 'Híbrido']
 
+CLASSIFICACAO_VEICULOS = 'Veículos'
+DESCRICAO_VEICULOS = (
+    'Meio de transporte, motorizado ou não, destinado a apoiar as ações, '
+    'os programas e políticas do Ministério da Saúde.'
+)
+
+# Itens de veículo da lista de itens ativos da RENEM (FNS, agosto de 2019).
+ITENS_RENEM_VEICULO = [
+    'Ambulância Tipo A - Simples Remoção Tipo Furgão',
+    'Ambulância Tipo A - Simples Remoção Tipo Furgoneta',
+    'Ambulância Tipo A - Simples Remoção Tipo pick-up 4x4',
+    'Embarcação para Transporte com Motor Popa (até 12 pessoas)',
+    'Micro-ônibus Rural de Transporte Sanitário',
+    'Micro-ônibus Urbano de Transporte Sanitário',
+    'Unidade Móvel de Saúde - SAMU (Suporte Básico e/ou Avançado de Vida)',
+    'Unidade Móvel para controle de zoonoses Tipo 1',
+    'Unidade Móvel para controle de zoonoses Tipo 2',
+    'Unidade Móvel para controle de zoonoses Tipo 3',
+    'Unidade Odontológica Móvel - UOM',
+    'Veículo de Passeio - Transporte de Equipe (5 pessoas, 0 Km)',
+    'Veículo de Transporte Adaptado',
+    'Veículo de Transporte Sanitário (Com Acessibilidade - 1 Cadeirante)',
+    'Veículo Pick-up Cabine Dupla 4x4 (Diesel)',
+    'Veículo Tipo Motocicleta (Cross)',
+    'Veículo Tipo Van',
+]
+
+
+def icone_tipo_veiculo(nome):
+    texto = (nome or '').lower()
+    if 'motocic' in texto:
+        return 'fas fa-motorcycle'
+    if 'embarcat' in texto:
+        return 'fas fa-ship'
+    if 'micro-ônibus' in texto or 'micro-onibus' in texto:
+        return 'fas fa-bus'
+    if any(p in texto for p in ('ambulância', 'ambulancia', 'samu', 'zoonoses', 'odontológica móvel', 'odontologica movel')):
+        return 'fas fa-truck-medical'
+    if 'pick-up' in texto or 'pickup' in texto:
+        return 'fas fa-truck-pickup'
+    if 'van' in texto:
+        return 'fas fa-van-shuttle'
+    if 'adaptado' in texto or 'sanitário' in texto or 'sanitario' in texto:
+        return 'fas fa-wheelchair'
+    return 'fas fa-car-side'
+
 
 def normalizar_prefixo(texto):
     """'al-383' → ('383', True). Quem digita o AL- já diz que é alugado."""
@@ -23,6 +69,25 @@ def normalizar_prefixo(texto):
 
 def normalizar_placa(texto):
     return re.sub(r'[^A-Z0-9]', '', (texto or '').upper())
+
+
+class TipoVeiculo(db.Model):
+    """Item de veículo da RENEM. O carro da unidade (prefixo e placa) continua em Veiculo."""
+    __tablename__ = 'tipos_veiculo'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(180), nullable=False)
+    descricao = db.Column(db.Text)
+    icone = db.Column(db.String(80), nullable=False, default='fas fa-car-side')
+    categoria_id = db.Column(db.Integer, db.ForeignKey('categorias_equipamento.id', ondelete='RESTRICT'))
+    ativo = db.Column(db.Boolean, nullable=False, default=True)
+    criado_em = db.Column(db.DateTime, nullable=False, default=agora_local_callable)
+    atualizado_em = db.Column(db.DateTime, nullable=False, default=agora_local_callable, onupdate=agora_local_callable)
+
+    categoria = db.relationship('CategoriaEquipamento', backref=db.backref('tipos_veiculo', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<TipoVeiculo {self.nome}>'
 
 
 class ModeloVeiculo(db.Model):
@@ -50,6 +115,7 @@ class Veiculo(db.Model):
     marca = db.Column(db.String(60))
     modelo = db.Column(db.String(80))
     categoria = db.Column(db.String(40))
+    tipo_veiculo_id = db.Column(db.Integer, db.ForeignKey('tipos_veiculo.id', ondelete='SET NULL'))
     ano = db.Column(db.String(9))
     cor = db.Column(db.String(30))
     combustivel = db.Column(db.String(20))
@@ -66,6 +132,7 @@ class Veiculo(db.Model):
 
     unidade = db.relationship('Unidade')
     criador = db.relationship('Usuario', foreign_keys=[criado_por])
+    tipo_renem = db.relationship('TipoVeiculo', foreign_keys=[tipo_veiculo_id])
 
     @property
     def prefixo_exibicao(self):
