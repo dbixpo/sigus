@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ identidade.nome_sistema }} — Cadastro externo de equipamentos</title>
+<link rel="icon" type="image/png" href="{{ identidade.asset_url('favicon') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<style>
+:root { --sigus-primary: #1A82B8; --sigus-dark: #0D3B5E; --sigus-text: #1E3A50; }
+body { background: #F4F6F9; color: var(--sigus-text); font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 15px; }
+.faixa { height: 6px; background: linear-gradient(90deg, #E63030, #F5C500, #1A82B8); }
+.topo {
+  background: var(--sigus-dark);
+  border-bottom: 3px solid var(--sigus-primary);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.topo img { height: 44px; }
+.topo-titulo { color: #fff; line-height: 1.2; }
+.topo-titulo strong { font-size: 1.05rem; display: block; }
+.topo-titulo small { font-size: .72rem; opacity: .8; }
+.form-card {
+  max-width: 760px;
+  margin: 24px auto 48px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(13, 59, 94, .08);
+  overflow: hidden;
+}
+.form-card-header { background: var(--sigus-primary); color: #fff; padding: 16px 22px; }
+.form-card-header h1 { margin: 0; font-size: 1.05rem; font-weight: 700; }
+.form-card-header p { margin: 4px 0 0; font-size: .82rem; opacity: .92; }
+.form-body { padding: 20px 22px 24px; }
+.form-label { font-size: .8rem; font-weight: 600; }
+.btn-ler { min-width: 46px; }
+.hp { position: absolute; left: -9999px; height: 0; overflow: hidden; }
+@media (max-width: 767px) {
+  .topo { padding: 12px 14px; }
+  .topo img { height: 34px; }
+  .form-body { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<div class="faixa"></div>
+<header class="topo">
+  <img src="{{ identidade.asset_url('logo_escuro') }}" alt="{{ identidade.orgao_curto }}" onerror="this.style.display='none'">
+  <div class="topo-titulo">
+    <strong>{{ identidade.nome_sistema }} — Cadastro externo de equipamentos</strong>
+    <small>{{ identidade.secretaria }} · {{ identidade.municipio }}/{{ identidade.uf }}</small>
+  </div>
+</header>
+
+<div class="form-card">
+  <div class="form-card-header">
+    <h1><i class="fas fa-barcode me-2"></i>Equipamento da unidade</h1>
+    <p>Sem login. A plaquinha de patrimônio e o número de série podem ser lidos pela câmera.</p>
+  </div>
+  <div class="form-body">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} py-2 small">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if not unidade %}
+    <label class="form-label" for="escolheUnidade">Unidade</label>
+    <select id="escolheUnidade" class="form-select">
+      <option value="">Selecione a unidade…</option>
+      {% for u in unidades %}
+      <option value="{{ u.id }}">{{ u.nome }}</option>
+      {% endfor %}
+    </select>
+    {% elif unidade.inventario_inicial_concluido %}
+    <div class="alert alert-info mb-0">
+      O inventário inicial de <strong>{{ unidade.nome }}</strong> já foi encerrado.
+      Inclusão de equipamento fica com a SUEQ e a TI, dentro do SIGUS.
+    </div>
+    {% elif not salas %}
+    <div class="alert alert-warning mb-0">
+      <strong>{{ unidade.nome }}</strong> ainda não tem sala.
+      <a href="{{ url_for('salas.cadastro_externo', unidade_id=unidade.id) }}">Cadastre os ambientes</a>
+      antes dos equipamentos.
+    </div>
+    {% else %}
+    <form method="POST" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="unidade_id" value="{{ unidade.id }}">
+      <input type="hidden" name="status" value="ativo">
+      <div class="hp" aria-hidden="true">
+        <label>Não preencha<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <p class="mb-3"><span class="text-muted">Unidade</span><br><strong>{{ unidade.nome }}</strong></p>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label" for="sala_id">Sala *</label>
+          <select name="sala_id" id="sala_id" class="form-select" required>
+            <option value="">Selecione a sala…</option>
+            {% for s in salas %}
+            <option value="{{ s.id }}" {% if sala_id == s.id %}selected{% endif %}>{{ s.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="buscaTipoEquipamento">Tipo de equipamento *</label>
+          <div class="position-relative">
+            <input type="search" id="buscaTipoEquipamento" class="form-control"
+                   placeholder="Digite o tipo de equipamento"
+                   autocomplete="off" required
+                   data-busca-tipo
+                   data-url="{{ url_for('equipamentos.buscar_tipos') }}"
+                   data-alvo="tipo_equipamento_id">
+            <input type="hidden" name="tipo_equipamento_id" id="tipo_equipamento_id">
+            <div class="list-group position-absolute w-100 shadow js-lista-tipo"
+                 style="z-index:30; display:none; max-height:240px; overflow:auto;"></div>
+          </div>
+          <div class="form-text">Digite pelo menos 2 letras. Os tipos só aparecem depois da busca.</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="buscaPessoa">Quem usa <span class="text-muted fw-normal">(opcional)</span></label>
+          <div class="position-relative">
+            <input type="search" id="buscaPessoa" class="form-control"
+                   placeholder="Digite o nome de quem já está na unidade"
+                   autocomplete="off">
+            <input type="hidden" name="usuario_id" id="usuario_id">
+            <div class="list-group position-absolute w-100 shadow" id="listaPessoa"
+                 style="z-index:30; display:none; max-height:220px; overflow:auto;"></div>
+          </div>
+          <div class="form-text">Só aparece quem já tem vínculo com esta unidade. Pode deixar em branco.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="numero_patrimonio">Nº de patrimônio</label>
+          <div class="input-group">
+            <span class="input-group-text fw-semibold">PMS-</span>
+            <input type="text" name="numero_patrimonio" id="numero_patrimonio" class="form-control" inputmode="text" placeholder="00000" autocomplete="off">
+            <button type="button" class="btn btn-outline-primary btn-ler js-ler-codigo" data-alvo="numero_patrimonio" data-prefixo="PMS-" title="Ler código de barras do patrimônio">
+              <i class="fas fa-barcode"></i>
+            </button>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="sem_patrimonio" name="sem_patrimonio" value="on">
+            <label class="form-check-label small" for="sem_patrimonio">Sem patrimônio</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="numero_serie">Nº de série</label>
+          <div class="input-group">
+            <input type="text" name="numero_serie" id="numero_serie" class="form-control" autocomplete="off">
+            <button type="button" class="btn btn-outline-primary btn-ler js-ler-codigo" data-alvo="numero_serie" title="Ler código de barras do número de série">
+              <i class="fas fa-barcode"></i>
+            </button>
+          </div>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="sem_serie" name="sem_serie" value="on">
+            <label class="form-check-label small" for="sem_serie">Sem número de série</label>
+          </div>
+        </div>
+        <div class="col-12">
+          {% include 'equipamentos/_foto_identificacao.html' %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="marca_id">Marca</label>
+          <select name="marca_id" id="marca_id" class="form-select" disabled>
+            <option value="">Selecione o tipo primeiro</option>
+          </select>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="chk_nova_marca">
+            <label class="form-check-label small" for="chk_nova_marca">Não encontrei a marca</label>
+          </div>
+          <input type="text" name="nova_marca" id="nova_marca" class="form-control form-control-sm mt-1 d-none" maxlength="100" placeholder="Nome da marca">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="modelo_id">Modelo</label>
+          <select name="modelo_id" id="modelo_id" class="form-select" disabled>
+            <option value="">Selecione a marca primeiro</option>
+          </select>
+          <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="chk_novo_modelo">
+            <label class="form-check-label small" for="chk_novo_modelo">Não encontrei o modelo</label>
+          </div>
+          <input type="text" name="novo_modelo" id="novo_modelo" class="form-control form-control-sm mt-1 d-none" maxlength="150" placeholder="Nome do modelo">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="condicao">Condição</label>
+          <select name="condicao" id="condicao" class="form-select">
+            <option value="boa" selected>Boa</option>
+            <option value="regular">Regular</option>
+            <option value="ruim">Ruim</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label" for="ano_fabricacao">Ano de fabricação</label>
+          <input type="number" name="ano_fabricacao" id="ano_fabricacao" class="form-control" min="1900" max="2100" inputmode="numeric" placeholder="Ex.: 2019">
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="observacoes">Observações</label>
+          <textarea name="observacoes" id="observacoes" class="form-control" rows="2"></textarea>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">
+        <i class="fas fa-check me-1"></i>Cadastrar equipamento
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/ler-codigo.js') }}?v=20261021a"></script>
+<script src="{{ url_for('static', filename='js/busca-tipo-equipamento.js') }}?v=20261021b"></script>
+<script src="{{ url_for('static', filename='js/foto-equipamento.js') }}?v=20261023b"></script>
+<script>
+(function () {
+  var escolhe = document.getElementById('escolheUnidade');
+  if (escolhe) {
+    escolhe.addEventListener('change', function () {
+      if (!this.value) return;
+      window.location.href = '{{ url_for("equipamentos.cadastro_externo") }}?unidade_id=' + encodeURIComponent(this.value);
+    });
+  }
+
+  var tipo = document.getElementById('tipo_equipamento_id');
+  var marca = document.getElementById('marca_id');
+  var modelo = document.getElementById('modelo_id');
+  if (!tipo || !marca || !modelo) return;
+
+  function preencher(sel, itens, vazio, pronto) {
+    sel.innerHTML = '';
+    sel.appendChild(new Option(itens.length ? pronto : vazio, ''));
+    itens.forEach(function (item) { sel.appendChild(new Option(item.nome, item.id)); });
+    sel.disabled = itens.length === 0;
+  }
+
+  tipo.addEventListener('change', function () {
+    preencher(modelo, [], 'Selecione a marca primeiro', '');
+    if (!this.value) {
+      preencher(marca, [], 'Selecione o tipo primeiro', '');
+      return;
+    }
+    fetch('{{ url_for("equipamentos.cadastro_externo_marcas", tipo_id=0) }}'.replace(/\/0$/, '/' + this.value))
+      .then(function (r) { return r.json(); })
+      .then(function (itens) { preencher(marca, itens, 'Nenhuma marca neste tipo', 'Selecione a marca…'); });
+  });
+
+  marca.addEventListener('change', function () {
+    if (!this.value) {
+      preencher(modelo, [], 'Selecione a marca primeiro', '');
+      return;
+    }
+    var url = '{{ url_for("equipamentos.cadastro_externo_modelos", marca_id=0) }}'.replace(/\/0$/, '/' + this.value);
+    url += '?tipo_id=' + encodeURIComponent(tipo.value || '');
+    fetch(url).then(function (r) { return r.json(); })
+      .then(function (itens) { preencher(modelo, itens, 'Nenhum modelo nesta marca', 'Selecione o modelo…'); });
+  });
+
+  function alternar(checkId, campoId) {
+    var check = document.getElementById(checkId);
+    var campo = document.getElementById(campoId);
+    check.addEventListener('change', function () {
+      campo.classList.toggle('d-none', !check.checked);
+      if (check.checked) campo.focus();
+      else campo.value = '';
+    });
+  }
+  alternar('chk_nova_marca', 'nova_marca');
+  alternar('chk_novo_modelo', 'novo_modelo');
+
+  var buscaPessoa = document.getElementById('buscaPessoa');
+  var usuarioId = document.getElementById('usuario_id');
+  var listaPessoa = document.getElementById('listaPessoa');
+  if (buscaPessoa && usuarioId && listaPessoa) {
+    var esperaPessoa = null;
+    function fecharPessoas() { listaPessoa.style.display = 'none'; listaPessoa.innerHTML = ''; }
+    buscaPessoa.addEventListener('input', function () {
+      usuarioId.value = '';
+      var q = buscaPessoa.value.trim();
+      clearTimeout(esperaPessoa);
+      if (q.length < 2) { fecharPessoas(); return; }
+      esperaPessoa = setTimeout(function () {
+        var url = '{{ url_for("equipamentos.cadastro_externo_pessoas") }}?unidade_id={{ unidade.id if unidade else 0 }}&q=' + encodeURIComponent(q);
+        fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+          listaPessoa.innerHTML = '';
+          var itens = (data && data.resultados) || [];
+          if (!itens.length) { fecharPessoas(); return; }
+          itens.forEach(function (item) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'list-group-item list-group-item-action py-2';
+            btn.textContent = item.perfil ? item.nome + ' — ' + item.perfil : item.nome;
+            btn.addEventListener('click', function () {
+              buscaPessoa.value = item.nome;
+              usuarioId.value = item.id;
+              fecharPessoas();
+            });
+            listaPessoa.appendChild(btn);
+          });
+          listaPessoa.style.display = 'block';
+        }).catch(fecharPessoas);
+      }, 250);
+    });
+    document.addEventListener('click', function (ev) {
+      if (!buscaPessoa.contains(ev.target) && !listaPessoa.contains(ev.target)) fecharPessoas();
+    });
+  }
+
+  var pat = document.getElementById('numero_patrimonio');
+  pat.addEventListener('input', function () {
+    this.value = this.value.replace(/^PMS-?/i, '');
+  });
+})();
+</script>
+</body>
+</html>

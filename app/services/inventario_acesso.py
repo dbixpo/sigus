@@ -55,6 +55,8 @@ def pode_informacoes_adicionais(usuario):
 
 
 def pode_incluir(usuario, unidade):
+    if not gestor_patrimonio(usuario) and not usuario.pode('cadastrar_equipamento'):
+        return False
     if gestor_patrimonio(usuario):
         return True
     if usuario.perfil in PERFIS_UNIDADE:
@@ -64,6 +66,8 @@ def pode_incluir(usuario, unidade):
 
 def pode_corrigir_cadastro(usuario, unidade):
     """Identificação, tipo, marca, modelo e sala."""
+    if not gestor_patrimonio(usuario) and not usuario.pode('editar_equipamento'):
+        return False
     if gestor_patrimonio(usuario):
         return True
     if usuario.perfil in PERFIS_UNIDADE:

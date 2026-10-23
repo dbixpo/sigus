@@ -114,6 +114,19 @@ Antes o prazo, uma vez definido, não podia ser alterado. Agora pode ser **defin
 
 Sem migration: usa colunas e tabelas que já existiam (`acoes_planejamento.prazo`, `acoes_planejamento_observacoes`, `notificacoes`).
 
+## Título da ação
+
+O planejamento em si já podia ser editado. O título da ação, depois de criada, não. Agora pode, e a troca fica na auditoria da própria ação.
+
+- Lápis ao lado do título, na lista de planejamentos. Modal com o título novo e o motivo (opcional).
+- Quem pode: `pode('criar_acao')` e acesso ao planejamento.
+- `POST /planejamentos/acoes/<id>/titulo` com `titulo` (obrigatório, até 300 caracteres) e `motivo`. Responde `ok`, `mudou`, `titulo`, `atualizado_em`.
+- `alterar_titulo_acao` grava uma `AcaoObservacao`: "Título alterado de **antes** para **depois**." e o motivo, se houver. O texto anterior e o novo são escapados.
+- Atualiza `atualizado_em/por` da ação e do planejamento.
+- Cada responsável (menos quem alterou) recebe a notificação `acao_alterada`.
+
+Sem migration: usa `acoes_planejamento.titulo` e o histórico de observações.
+
 ## Armadilhas já resolvidas
 
 - `sigus.js` fecha sozinho todo `.alert` depois de 5 s. Alerta usado por JS precisa de `alert-permanent`, senão o elemento some e o modal quebra (era o bug "evento não abre").

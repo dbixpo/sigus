@@ -434,7 +434,17 @@
                             <td class="acao-titulo-cell" data-bs-toggle="collapse" data-bs-target="#acao-detail-{{ acao.id }}" aria-expanded="false" title="Clique para expandir observações">
                                 <span class="acao-titulo-inner">
                                     <span class="btn-toggle-inline"><i class="fas fa-chevron-right acao-chevron"></i></span>
-                                    {{ acao.titulo }}
+                                    <span class="acao-titulo-texto" data-acao-rotulo="{{ acao.id }}">{{ acao.titulo }}</span>
+                                    {% if pode_criar_acao %}
+                                    <button type="button"
+                                            class="btn btn-link btn-sm p-0 text-muted"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-editar-acao-{{ acao.id }}"
+                                            onclick="event.stopPropagation();"
+                                            title="Editar o título da ação">
+                                        <i class="fas fa-pen-to-square"></i>
+                                    </button>
+                                    {% endif %}
                                 </span>
                             </td>
                             <td>
@@ -544,7 +554,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Adicionar observação — {{ acao.titulo[:50] }}{% if acao.titulo|length > 50 %}…{% endif %}</h5>
+                    <h5 class="modal-title" data-acao-rotulo="{{ acao.id }}" data-prefixo="Adicionar observação — ">Adicionar observação — {{ acao.titulo[:50] }}{% if acao.titulo|length > 50 %}…{% endif %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form class="form-add-obs" data-acao-id="{{ acao.id }}" enctype="multipart/form-data">
@@ -581,7 +591,7 @@
         <div class="modal-dialog modal-dialog-centered modal-md modal-fullscreen-sm-down">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h6 class="modal-title">Vincular responsável(eis) — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <h6 class="modal-title" data-acao-rotulo="{{ acao.id }}" data-prefixo="Vincular responsável(eis) — ">Vincular responsável(eis) — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
                     <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
                 </div>
                 <form class="form-edit-resp" data-acao-id="{{ acao.id }}" data-plano-id="{{ p.id }}">
@@ -620,11 +630,44 @@
         </div>
     </div>
     {% if pode_criar_acao %}
+    <div class="modal fade" id="modal-editar-acao-{{ acao.id }}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" style="max-width: 520px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" data-acao-rotulo="{{ acao.id }}" data-prefixo="Editar ação — ">Editar ação — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
+                </div>
+                <form class="form-editar-acao" data-acao-id="{{ acao.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Título da ação</label>
+                            <input type="text" name="titulo" class="form-control form-control-sm" maxlength="300" required value="{{ acao.titulo }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Motivo <span class="text-muted fw-normal">(opcional)</span></label>
+                            <textarea name="motivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="Ex.: o nome da tarefa estava incompleto"></textarea>
+                        </div>
+                        <div class="small text-muted rounded px-2 py-2" style="background:#F4F6F9;">
+                            <i class="fas fa-history me-1"></i>O título anterior fica registrado nas observações da ação, com quem alterou e quando. Os responsáveis são avisados.
+                        </div>
+                        <div class="alert alert-danger alert-permanent py-2 px-3 small mt-3 mb-0 d-none acao-erro" role="alert"></div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-check me-1"></i>Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="modal-prazo-{{ acao.id }}" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" style="max-width: 440px;">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h6 class="modal-title">Prazo — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
+                    <h6 class="modal-title" data-acao-rotulo="{{ acao.id }}" data-prefixo="Prazo — ">Prazo — {{ acao.titulo[:40] }}{% if acao.titulo|length > 40 %}…{% endif %}</h6>
                     <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
                 </div>
                 <form class="form-definir-prazo" data-acao-id="{{ acao.id }}" data-prazo-atual="{{ acao.prazo.isoformat() if acao.prazo else '' }}">
@@ -1140,6 +1183,84 @@
                 form.querySelector('input[name=prazo]').value = form.dataset.prazoAtual || '';
                 form.querySelector('[name=motivo]').value = '';
                 mostrarErro(form, '');
+            });
+        }
+    });
+
+    function erroAcao(form, msg) {
+        var el = form.querySelector('.acao-erro');
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('d-none', !msg);
+    }
+
+    function tituloCurto(titulo, max) {
+        titulo = titulo || '';
+        return titulo.length > max ? titulo.slice(0, max) + '…' : titulo;
+    }
+
+    function aplicarTitulo(acaoId, titulo) {
+        document.querySelectorAll('[data-acao-rotulo="' + acaoId + '"]').forEach(function (el) {
+            var prefixo = el.getAttribute('data-prefixo');
+            if (prefixo) {
+                var max = prefixo.indexOf('observação') !== -1 ? 50 : 40;
+                el.textContent = prefixo + tituloCurto(titulo, max);
+            } else {
+                el.textContent = titulo;
+            }
+        });
+    }
+
+    document.querySelectorAll('.form-editar-acao').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var acaoId = form.dataset.acaoId;
+            var titulo = (form.querySelector('[name=titulo]').value || '').trim();
+            if (!titulo) {
+                erroAcao(form, 'O título da ação é obrigatório.');
+                return;
+            }
+            var fd = new FormData();
+            fd.append('csrf_token', csrf);
+            fd.append('titulo', titulo);
+            fd.append('motivo', (form.querySelector('[name=motivo]').value || '').trim());
+            var botoes = form.querySelectorAll('button');
+            botoes.forEach(function (b) { b.disabled = true; });
+            erroAcao(form, '');
+            fetch(baseUrl + '/planejamentos/acoes/' + acaoId + '/titulo', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrf },
+                body: fd
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.ok) {
+                    erroAcao(form, data.erro || 'Não foi possível salvar a ação.');
+                    return;
+                }
+                aplicarTitulo(acaoId, data.titulo || titulo);
+                form.querySelector('[name=titulo]').value = data.titulo || titulo;
+                form.querySelector('[name=motivo]').value = '';
+                if (data.atualizado_em) {
+                    var atu = document.getElementById('atualizado-' + acaoId);
+                    if (atu) atu.textContent = data.atualizado_em;
+                }
+                if (data.mudou) recarregarHistorico(acaoId);
+                var modal = form.closest('.modal');
+                if (modal && typeof bootstrap !== 'undefined') bootstrap.Modal.getInstance(modal)?.hide();
+            })
+            .catch(function () {
+                erroAcao(form, 'Erro ao salvar a ação. Tente novamente.');
+            })
+            .finally(function () { botoes.forEach(function (b) { b.disabled = false; }); });
+        });
+        var modal = form.closest('.modal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function () {
+                var atual = document.querySelector('.acao-titulo-texto[data-acao-rotulo="' + form.dataset.acaoId + '"]');
+                if (atual) form.querySelector('[name=titulo]').value = atual.textContent;
+                form.querySelector('[name=motivo]').value = '';
+                erroAcao(form, '');
             });
         }
     });

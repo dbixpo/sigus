@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% from '_filtros.html' import filtro_multiselect %}
+{% block title %}Base de servidores do RH{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="fas fa-address-book"></i> Base de servidores do RH</h1>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-print me-1"></i>Imprimir
+        </button>
+        {% set qs = request.query_string.decode() %}
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_base_rh', formato='xlsx') }}{% if qs %}?{{ qs }}{% endif %}">Excel (.xlsx)</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('relatorios.exportar_base_rh', formato='csv') }}{% if qs %}?{{ qs }}{% endif %}">CSV (.csv)</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<p class="text-muted small mb-2">
+    Uma linha por matrícula, com nome, função e local da planilha mais nova que trouxe essa pessoa.
+    {% if ultima_imp %}
+    A última importação com a aba Banco de Dados é
+    <strong>{{ competencia_label(ultima_imp.competencia) }}</strong>
+    ({{ ultima_imp.local }}), gravada em {{ ultima_imp.importado_em | br_datetime }}.
+    {% endif %}
+</p>
+
+<div class="filter-bar mb-3">
+    <form method="GET" action="{{ url_for('relatorios.base_rh') }}" class="row g-2 align-items-end">
+        <div class="col-6 col-md-2">
+            <label class="form-label mb-1 small fw-semibold" for="matricula">Matrícula</label>
+            <input type="text" class="form-control form-control-sm" id="matricula" name="matricula"
+                   value="{{ filtros.matricula }}" inputmode="numeric" autocomplete="off">
+        </div>
+        <div class="col-12 col-md-3">
+            <label class="form-label mb-1 small fw-semibold" for="nome">Nome</label>
+            <input type="search" class="form-control form-control-sm" id="nome" name="nome"
+                   value="{{ filtros.nome }}" autocomplete="off">
+        </div>
+        <div class="col-12 col-md-3">
+            {{ filtro_multiselect('Função', 'funcao', funcoes, filtros.funcoes, 'Todas as funções') }}
+        </div>
+        <div class="col-12 col-md-3">
+            {{ filtro_multiselect('Local', 'local', locais, filtros.locais, 'Todos os locais') }}
+        </div>
+        <div class="col-12 col-md-2">
+            <label class="form-label mb-1 small fw-semibold" for="competencia">Planilha</label>
+            <select class="form-select form-select-sm" id="competencia" name="competencia">
+                <option value="todas" {% if not filtros.competencia %}selected{% endif %}>Todas</option>
+                {% for c in competencias %}
+                <option value="{{ c.isoformat() }}" {% if filtros.competencia == c %}selected{% endif %}>{{ competencia_label(c) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-12 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search me-1"></i>Pesquisar</button>
+            <a href="{{ url_for('relatorios.base_rh') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        </div>
+    </form>
+</div>
+
+<div class="mini-stats mb-2">
+    <span class="mini-stat">Profissionais: <strong>{{ total }}</strong></span>
+    {% if filtros.competencia %}
+    <span class="mini-stat">Planilha: <strong>{{ competencia_label(filtros.competencia) }}</strong></span>
+    {% else %}
+    <span class="mini-stat">Planilha: <strong>todas, cada matrícula na mais nova</strong></span>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Matrícula</th>
+                        <th>Nome</th>
+                        <th>Função</th>
+                        <th>Local</th>
+                        <th>Planilha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in rows %}
+                    <tr>
+                        <td class="text-nowrap">{{ s.matricula }}</td>
+                        <td>{{ s.nome }}</td>
+                        <td>{{ s.funcao or '—' }}</td>
+                        <td>{{ s.local or '—' }}</td>
+                        <td class="text-nowrap">{{ competencia_label(s.competencia) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state py-4">
+            <i class="fas fa-search"></i>
+            <p class="mb-0">Nenhum profissional com esses filtros.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

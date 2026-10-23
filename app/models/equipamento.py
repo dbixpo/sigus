@@ -233,6 +233,7 @@ class Equipamento(db.Model):
     tipo_equipamento_id = db.Column(db.Integer, db.ForeignKey('tipos_equipamento.id', ondelete='RESTRICT'), nullable=False)
     numero_patrimonio = db.Column(db.String(80))
     numero_serie = db.Column(db.String(150))
+    foto_identificacao = db.Column(db.String(80))
     marca_id = db.Column(db.Integer, db.ForeignKey('marcas.id', ondelete='SET NULL'))
     modelo_id = db.Column(db.Integer, db.ForeignKey('modelos.id', ondelete='SET NULL'))
     ano_fabricacao = db.Column(db.Integer)
@@ -348,6 +349,13 @@ class Equipamento(db.Model):
     def identificacao(self):
         """Patrimônio ou, na falta, número de série."""
         return self.numero_patrimonio or self.numero_serie or '—'
+
+    @property
+    def foto_url(self):
+        if not self.foto_identificacao:
+            return None
+        from app.utils import prefixed_static_url
+        return prefixed_static_url(f'/static/uploads/equipamentos_fotos/{self.foto_identificacao}')
 
     @property
     def usuario_vinculado_nome(self):

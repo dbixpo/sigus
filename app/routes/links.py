@@ -20,7 +20,6 @@ _IMG_SIZE   = (200, 200)
 
 def _pode_gerir():
     return current_user.pode('editar_links_uteis') or current_user.pode('adicionar_links_uteis')
-    return current_user.perfil in ('administrador', 'gestor_secretaria')
 
 
 def _normalizar_icone_fontawesome(valor):

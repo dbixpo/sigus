@@ -12,14 +12,13 @@
         <i class="fas fa-file-upload me-1"></i>Importar frequência
     </a>
 </div>
-<p class="fq-sub">Tudo o que foi enviado ao RH nas planilhas de frequência importadas.</p>
+<p class="fq-sub">Só aparecem as planilhas que você mesmo importou. Troque a unidade para olhar outro local.</p>
 
 {% if not unidades %}
 <div class="fq-card"><div class="fq-vazio">
-    <i class="fas fa-file-excel"></i>
-    <h3>Nenhuma planilha importada ainda</h3>
-    <p>Importe a planilha mensal de frequência para ver os apontamentos da equipe.</p>
-    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-primary btn-sm"><i class="fas fa-file-upload me-1"></i>Importar agora</a>
+    <i class="fas fa-building"></i>
+    <h3>Nenhuma unidade no seu alcance</h3>
+    <p>Gestor de área vê as unidades do próprio vínculo. Gestor central e administrador veem a rede.</p>
 </div></div>
 {% else %}
 
@@ -27,12 +26,23 @@
     <select name="unidade_id" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Unidade">
         {% for u in unidades %}<option value="{{ u.id }}" {{ 'selected' if u.id == un_id }}>{{ u.nome }}</option>{% endfor %}
     </select>
+    {% if competencias %}
     <select name="competencia" class="form-select form-select-sm" onchange="this.form.submit()" aria-label="Competência">
         {% for c in competencias %}
         <option value="{{ c.strftime('%Y-%m') }}" {{ 'selected' if c == comp }}>{{ competencia_label(c) }}</option>
         {% endfor %}
     </select>
+    {% endif %}
 </form>
+
+{% if not imps_mes %}
+<div class="fq-card"><div class="fq-vazio">
+    <i class="fas fa-file-excel"></i>
+    <h3>Você não importou planilha nesta unidade</h3>
+    <p>O que outra pessoa enviou não aparece aqui. Se você não subiu arquivo, a lista fica vazia.</p>
+    <a href="{{ url_for('frequencia.importar') }}" class="btn btn-primary btn-sm"><i class="fas fa-file-upload me-1"></i>Importar agora</a>
+</div></div>
+{% else %}
 
 {% for imp in imps_mes %}
 <div class="fq-origem mb-2">
@@ -135,6 +145,7 @@
     <div class="fq-card-b text-muted small">Nenhuma hora extra lançada em {{ competencia_label(comp) }}.</div>
     {% endif %}
 </div>
+{% endif %}
 {% endif %}
 {% endblock %}
 

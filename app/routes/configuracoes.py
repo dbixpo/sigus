@@ -19,9 +19,10 @@ from app.models.usuario import Usuario, PERFIS, HIERARQUIA
 from app.models.link_util import LinkUtil
 from app.models.tipo_link import TipoLink
 from app.models.status_chamado import StatusChamado, BADGE_CORES
-from app.models.auditoria import Auditoria, ACAO_OPCOES, MODULO_OPCOES
+from app.models.auditoria import Auditoria
+from app.services.auditoria_http import ACAO_LABELS, MODULO_LABELS, rotulo_modulo
 from app.models.chamado import Divisao, SetorManutencao, TIPOS_CHAMADO_LABELS
-from app.models.perfil_permissao import PerfilPermissao, SECOES
+from app.models.perfil_permissao import PerfilPermissao, SECOES, SECAO_DICAS
 from app.models.cbo import CBO
 from app.models.unidade import Unidade
 from app.models.predio import Predio
@@ -37,12 +38,67 @@ from app.models.veiculo import (
 configuracoes_bp = Blueprint('configuracoes', __name__, url_prefix='/configuracoes')
 
 
+def _regra_catalogo():
+    """Qual catálogo esta rota configura. None = índice geral."""
+    nome = (request.endpoint or '').split('.')[-1]
+    regras = (
+        (('feriado',), 'feriados'),
+        (('tipo_acao', 'tipos_acao'), 'tipos_acao'),
+        (('tipo_unidade', 'tipos_unidade'), 'tipos_unidade'),
+        (('divisao', 'divisoes', 'setor'), 'divisoes'),
+        (('item_kit', 'tipo_sala', 'tipos_sala'), 'tipos_sala'),
+        (('padrao_sala', 'reclassificar'), 'padrao_salas'),
+        (('categoria_equipamento', 'categorias_equipamento'), 'classificacao'),
+        (('tipo_veiculo', 'tipos_veiculo'), 'tipos_veiculo'),
+        (('status_equipamento',), 'status_equip'),
+        (('tipo_equipamento', 'tipos_equipamento', 'campo_equipamento'), 'catalogo_equip'),
+        (('marca', 'modelo'), 'marcas'),
+        (('status_chamado', 'toggle_status_chamado', 'toggle_padrao_status'), 'status_chamado'),
+        (('cbo', 'funcoes_cbo'), 'cbos'),
+        (('nsp_catalogo',), 'nsp_catalogo'),
+    )
+    for chaves, codigo in regras:
+        if any(chave in nome for chave in chaves):
+            return codigo
+    return None
+
+
+def _pode_catalogo(codigo, escrever=False):
+    ver = f'ver_{codigo}'
+    editar = f'editar_{codigo}'
+    adicionar = f'adicionar_{codigo}'
+    if escrever:
+        return current_user.pode(editar) or current_user.pode(adicionar)
+    return current_user.pode(ver) or current_user.pode(editar) or current_user.pode(adicionar)
+
+
+_CATALOGOS = (
+    'feriados', 'tipos_acao', 'tipos_unidade', 'divisoes', 'tipos_sala',
+    'padrao_salas', 'classificacao', 'tipos_veiculo', 'status_equip',
+    'catalogo_equip', 'marcas', 'status_chamado', 'cbos', 'nsp_catalogo',
+)
+
+
+def _abre_configuracoes():
+    if (current_user.pode('ver_configuracoes') or current_user.pode('gerenciar_tipos_equipamento')
+            or current_user.pode('gerenciar_perfis') or current_user.pode('ver_todas_unidades')
+            or current_user.pode('cadastrar_unidade') or current_user.pode('ver_predios')
+            or current_user.pode('cadastrar_predio') or current_user.pode('ver_identidade')
+            or current_user.pode('editar_identidade')):
+        return True
+    return any(_pode_catalogo(codigo) for codigo in _CATALOGOS)
+
+
 def _exigir_admin():
-    """Acesso à página inicial de configurações (tipos, marcas, unidades, prédios, etc.)."""
-    if (not current_user.pode('ver_configuracoes') and not current_user.pode('gerenciar_tipos_equipamento') 
-        and not current_user.pode('gerenciar_perfis') and not current_user.pode('ver_todas_unidades') 
-        and not current_user.pode('cadastrar_unidade') and not current_user.pode('ver_predios') 
-        and not current_user.pode('cadastrar_predio')):
+    """Catálogo específico segue a linha da matriz. O índice aceita qualquer uma delas."""
+    codigo = _regra_catalogo()
+    if codigo:
+        nome = (request.endpoint or '').split('.')[-1]
+        escrever = request.method != 'GET' or nome.startswith('novo') or nome.startswith('nova')
+        if _pode_catalogo(codigo, escrever=escrever):
+            return
+        abort(403)
+    if not _abre_configuracoes():
         abort(403)
 
 
@@ -93,9 +149,14 @@ def _exigir_gerenciar_perfis():
 
 
 def _exigir_administrador_sistema():
-    """Identidade e assets: só o perfil administrador (não abre na matriz neste corte)."""
-    if current_user.perfil != 'administrador':
-        abort(403)
+    """Identidade e assets: Administrador, ou quem a matriz marcar em Identidade."""
+    if current_user.perfil == 'administrador' or current_user.pode('editar_identidade') or current_user.pode('ver_identidade'):
+        if request.method != 'GET' and not (
+            current_user.perfil == 'administrador' or current_user.pode('editar_identidade')
+        ):
+            abort(403)
+        return
+    abort(403)
 
 
 # ══════════════════════════════════════════════════════════
@@ -1685,6 +1746,7 @@ def editar_perfil(codigo):
                           perfil_codigo=codigo,
                           perfil_label=PERFIS[codigo],
                           secoes=SECOES,
+        dicas=SECAO_DICAS,
                           perm_map=perm_map,
                       )
 
@@ -2048,11 +2110,20 @@ def auditoria():
     query = query.order_by(Auditoria.created_at.desc())
     paginacao = query.paginate(page=page, per_page=per_page, error_out=False)
     usuarios = Usuario.query.order_by(Usuario.nome).all()
+    presentes = {
+        codigo for (codigo,) in db.session.query(Auditoria.modulo).distinct() if codigo
+    }
+    codigos_modulo = sorted(
+        (set(MODULO_LABELS) | presentes) - {'manifest'},
+        key=lambda codigo: rotulo_modulo(codigo).lower(),
+    )
     return render_template('configuracoes/auditoria/listar.html',
                            registros=paginacao.items,
                            paginacao=paginacao,
-                           acao_opcoes=ACAO_OPCOES,
-                           modulo_opcoes=MODULO_OPCOES,
+                           acao_opcoes=list(ACAO_LABELS.items()),
+                           modulo_opcoes=[(codigo, rotulo_modulo(codigo)) for codigo in codigos_modulo],
+                           rotulos_acao=ACAO_LABELS,
+                           rotulos_modulo={codigo: rotulo_modulo(codigo) for codigo in codigos_modulo},
                            usuarios=usuarios,
                            filtros={
                                'acao': filtro_acao,

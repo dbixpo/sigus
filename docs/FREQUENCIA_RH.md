@@ -18,11 +18,11 @@ Código:
 | Quem | Pode |
 |---|---|
 | Qualquer usuário logado | **Meus apontamentos** (`/rh/apontamentos`): só as próprias matrículas |
-| Gestor local: perfil Gestor de Área, ou papel `gestor_principal`/`gestor_secundario` na unidade | Importar planilhas e ver **Apontamentos da unidade** das suas unidades. Também abre os apontamentos de quem aparece nelas |
-| Gestor central (`gestor_secretaria`) e administrador | Tudo, de todas as unidades. Também o de-para de locais |
-| Quem cadastra usuários | Sugestão de matrícula/CBO no cadastro, a partir da aba oculta da planilha |
+| Gestor de Área | Importar planilha e ver **Apontamentos da unidade** das unidades do próprio vínculo. A lista mostra só o arquivo que ele mesmo subiu. Abre o apontamento de quem está nessa planilha |
+| Gestor central e administrador | A mesma tela, com o seletor de qualquer unidade ativa. Também só o arquivo que a própria pessoa importou. O de-para de locais continua com esses dois |
+| Apoio administrativo e operador | Não entram em Apontamentos da unidade nem na importação. Meus apontamentos segue pessoal |
 
-Regra em `unidades_gestao_rh(usuario)` (`None` = todas) e `Usuario.pode_importar_frequencia`.
+A tela usa o perfil efetivo (`administrador`, `gestor_secretaria`, `coordenador`). Trocar de unidade não mostra planilha de outra pessoa. Quem não importou nada vê a lista vazia. A sugestão de matrícula/CBO no cadastro de usuários continua para quem cadastra usuário, a partir da aba oculta da planilha.
 
 ## Planilha: o que é lido
 
@@ -65,7 +65,7 @@ Excluir uma importação (histórico na mesma tela) tira os apontamentos dela da
 
 ## Base de servidores e CBO
 
-- A listagem **Base de servidores** não faz parte do sistema. A aba oculta da planilha continua alimentando a sugestão de matrícula no cadastro de usuário (`GET /rh/servidores/buscar`).
+- A listagem da base fica em **Relatórios → Base de servidores do RH** (`/relatorios/base-rh`): uma matrícula por linha, com nome, função e local da planilha de competência mais nova. Sem competência na URL, abre a última. A aba oculta continua alimentando a sugestão de matrícula no cadastro de usuário (`GET /rh/servidores/buscar`).
 - **Funções do RH × CBO** (Configurações → CBOs → aba): de-para `rh_funcao_cbo`. Sugestão automática pelo nome (`sugerir_cbo`); nada é gravado sem clicar em **Salvar de-para**.
 - **Cadastro de usuário**: ao digitar o nome (ou importar pelo CPF), aparecem as matrículas da base com esse nome. As marcadas são criadas ao salvar (`cadastrar_matriculas_rh`): vínculo empregatício, estatutário, CBO do de-para. Matrícula que já é de outra pessoa não pode ser marcada.
 - **Modal de matrícula**: ao digitar o número, mostra nome, função e local da base e preenche o CBO se estiver vazio.

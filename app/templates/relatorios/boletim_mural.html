@@ -7,15 +7,14 @@
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
-        font-family: Georgia, "Times New Roman", serif;
-        color: #1E3A50;
+        font-family: "Segoe UI", "Segoe UI Emoji", Inter, Arial, sans-serif;
+        color: #000;
         background: #fff;
     }
     .no-print {
         display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
         background: #f8f9fa; border-bottom: 1px solid #dee2e6;
         padding: 10px 16px;
-        font-family: Inter, Arial, sans-serif;
     }
     .no-print .rotulo { font-weight: 700; color: #1A82B8; margin-right: auto; }
     .btn-acao {
@@ -25,81 +24,117 @@
     }
     .btn-imprimir { background: #1A82B8; color: #fff; }
     .btn-voltar { background: #6c757d; color: #fff; }
-    .doc { max-width: 190mm; margin: 0 auto; padding: 12px 16px 20px; }
-    .cabecalho {
-        display: flex; align-items: center; gap: 10px;
-        font-family: Inter, Arial, sans-serif;
-    }
-    .cab-logo img { height: 52px; width: auto; display: block; }
+    .doc { max-width: 190mm; margin: 0 auto; padding: 8px 12px 16px; }
+
+    .cabecalho { display: flex; align-items: center; gap: 8px; }
+    .cab-logo img { height: 40px; width: auto; display: block; }
     .cab-meio { flex: 1; text-align: center; }
     .cab-meio .prefeitura {
-        font-size: 11px; font-weight: 700; letter-spacing: .06em;
-        text-transform: uppercase; color: #0D3B5E;
+        font-size: 10px; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: #000;
     }
-    .cab-meio .secretaria { font-size: 12px; font-weight: 600; margin-top: 2px; }
-    .cab-lado { text-align: right; font-size: 11px; line-height: 1.35; font-family: Inter, Arial, sans-serif; }
-    .cab-lado strong { display: block; font-size: 13px; color: #0D3B5E; }
-    .faixa {
-        height: 4px; margin: 8px 0 0;
-        background: linear-gradient(90deg, #E63030 0%, #F5C500 34%, #1A82B8 68%, #19A88B 100%);
-    }
+    .cab-meio .secretaria { font-size: 11px; font-weight: 600; color: #000; margin-top: 1px; }
+    .cab-lado { text-align: right; font-size: 10px; line-height: 1.3; color: #000; }
+    .cab-lado strong { display: block; font-size: 12px; color: #000; }
+
     .nome-boletim {
-        display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
-        border-bottom: 2.5px solid #0D3B5E;
-        padding: 6px 0 5px;
+        display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+        border-top: 1.5px solid #000;
+        border-bottom: 1.5px solid #000;
+        margin-top: 6px; padding: 4px 0 3px;
     }
     .nome-boletim h1 {
-        margin: 0; font-size: 30px; line-height: 1; color: #0D3B5E; font-weight: 700;
+        margin: 0; font-size: 22px; line-height: 1; color: #000; font-weight: 700;
+        letter-spacing: .01em;
     }
-    .edicao {
-        margin: 0; text-align: right;
-        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #718096;
-    }
-    .resumo {
-        margin: 6px 0 12px;
-        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #1E3A50;
-    }
+    .edicao { margin: 0; text-align: right; font-size: 10px; color: #000; }
+    .resumo { margin: 4px 0 0; font-size: 10px; color: #000; }
+
     .kicker {
-        margin: 0 0 4px;
-        font-family: Inter, Arial, sans-serif;
-        font-size: 11px; font-weight: 700; letter-spacing: .12em;
-        text-transform: uppercase; color: #E63030;
+        margin: 0 0 2px;
+        font-size: 9px; font-weight: 700; letter-spacing: .08em;
+        text-transform: uppercase; color: #000;
     }
-    .capa { margin-bottom: 14px; }
-    .capa h2 { margin: 8px 0 6px; font-size: 26px; line-height: 1.15; color: #0D3B5E; }
-    .mosaico { display: grid; gap: 6px; align-items: start; justify-items: center; }
-    .mosaico.n1 { grid-template-columns: 1fr; }
-    .mosaico.n2 { grid-template-columns: 1fr 1fr; }
-    .mosaico.n3 { grid-template-columns: 1fr 1fr 1fr; }
-    .mosaico.n4 { grid-template-columns: 1fr 1fr; }
+    h2, h3 { color: #000; font-weight: 700; }
+    .texto { margin: 0; font-size: 11.5px; line-height: 1.35; color: #000; }
+    .linha { margin: 3px 0 0; font-size: 10px; color: #000; }
+    .curtidas { color: #000; font-weight: 700; }
+
+    .mosaico { display: flex; flex-wrap: wrap; gap: 2mm; align-items: flex-start; }
     .mosaico img {
         width: auto; max-width: 100%; height: auto;
-        display: block;
+        object-fit: contain; display: block;
     }
-    .capa .mosaico.n1 img { max-height: 105mm; }
-    .texto {
-        margin: 0;
-        font-family: "Segoe UI", "Segoe UI Emoji", Inter, Arial, sans-serif;
-        font-size: 13.5px; line-height: 1.45;
+
+    .capa { margin-top: 4mm; }
+    .lead {
+        display: grid; grid-template-columns: 1.05fr .95fr; gap: 5mm;
+        align-items: stretch;
+        padding-bottom: 3mm;
+        border-bottom: 1px solid #000;
     }
-    .linha {
-        margin: 6px 0 0;
-        font-family: Inter, Arial, sans-serif; font-size: 11px; color: #718096;
+    .lead.sem-foto { grid-template-columns: 1fr; }
+    .lead .coluna-texto {
+        display: flex; flex-direction: column; justify-content: space-between;
+        min-height: 0; height: 100%; overflow: hidden;
     }
-    .curtidas { color: #E63030; font-weight: 700; }
+    .lead .coluna-texto .corpo { min-height: 0; overflow: hidden; }
+    .lead .coluna-texto .linha { margin-top: auto; padding-top: 3mm; }
+    .lead h2 { margin: 0 0 3mm; font-size: 22px; line-height: 1.15; }
+    .lead .texto { font-size: 13px; line-height: 1.45; }
+    .lead .mosaico img { max-height: 105mm; }
+    .lead .mosaico.n2 img,
+    .lead .mosaico.n3 img,
+    .lead .mosaico.n4 img { max-height: 50mm; max-width: calc(50% - 1mm); }
+
+    .chamadas {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 4mm;
+        margin-top: 3mm;
+    }
+    .chamadas:has(> article:only-child) { grid-template-columns: 1fr; }
+    .chamadas article { min-width: 0; }
+    .chamadas h3 { margin: 0 0 1.5mm; font-size: 14px; line-height: 1.2; }
+    .chamadas .texto {
+        display: -webkit-box; -webkit-box-orient: vertical;
+        -webkit-line-clamp: 5; overflow: hidden;
+    }
+    .chamadas .mosaico { margin-top: 2mm; }
+    .chamadas article.foto-antes .mosaico { margin-top: 0; margin-bottom: 2mm; }
+    .chamadas .mosaico img { max-height: 42mm; }
+    .chamadas .mosaico.n2 img,
+    .chamadas .mosaico.n3 img,
+    .chamadas .mosaico.n4 img { max-height: 32mm; max-width: calc(50% - 1mm); }
+
     .miolo {
-        column-count: 2; column-gap: 7mm;
-        border-top: 3px double #0D3B5E; padding-top: 10px;
+        column-count: 2; column-gap: 6mm; column-fill: balance;
+        margin-top: 2mm;
+    }
+    .continua {
+        break-before: page; page-break-before: always;
+        margin: 0 0 3mm; padding-bottom: 1.5mm;
+        border-bottom: 1px solid #000;
+        font-size: 10px; font-weight: 700; color: #000;
+        letter-spacing: .04em;
     }
     .miolo article {
         break-inside: avoid; page-break-inside: avoid;
-        margin: 0 0 12px; padding-bottom: 10px;
-        border-bottom: 1px solid #d7e0e8;
+        margin: 0 0 4mm; padding-bottom: 3mm;
+        border-bottom: 0.6pt solid #000;
     }
-    .miolo h3 { margin: 0 0 4px; font-size: 15px; line-height: 1.2; color: #0D3B5E; }
-    .miolo .mosaico { margin-top: 6px; }
-    .vazio { font-family: Inter, Arial, sans-serif; color: #718096; padding: 18px 0; }
-    @page { size: A4; margin: 12mm; }
+    .miolo h3 { margin: 0 0 1.5mm; font-size: 13px; line-height: 1.2; }
+    .miolo .texto { font-size: 11px; }
+    .miolo .mosaico { margin-top: 2mm; }
+    .miolo article.foto-antes .mosaico { margin-top: 0; margin-bottom: 2mm; }
+    .miolo .mosaico img { max-height: 58mm; }
+    .miolo .mosaico.n2 img,
+    .miolo .mosaico.n3 img,
+    .miolo .mosaico.n4 img { max-height: 30mm; max-width: calc(50% - 1mm); }
+    .miolo.poucos { column-count: 1; }
+    .miolo.poucos .mosaico img { max-height: 90mm; }
+
+    .vazio { color: #000; padding: 12px 0; }
+
+    @page { size: A4; margin: 10mm 12mm; }
     @media print {
         .no-print { display: none !important; }
         .doc { max-width: none; padding: 0; }
@@ -119,14 +154,33 @@ if (window.self !== window.top) {
 }
 </script>
 
-{% macro fotos(item, extra='') %}
+{% macro fotos(item) %}
 {% if item.fotos %}
-<div class="mosaico n{{ item.fotos|length }} {{ extra }}">
+<div class="mosaico n{{ item.fotos|length }}">
     {% for foto in item.fotos %}
     <img src="{{ foto.url }}" alt="">
     {% endfor %}
 </div>
 {% endif %}
+{% endmacro %}
+
+{% macro ficha(item, titulo) %}
+{% if titulo != 'h2' and item.manchete %}
+<p class="kicker">{{ item.tipo }}</p>
+{% endif %}
+{% if titulo == 'h2' %}
+<h2>{{ item.manchete or item.tipo }}</h2>
+{% elif item.manchete %}
+<h3>{{ item.manchete }}</h3>
+{% else %}
+<h3>{{ item.tipo }}</h3>
+{% endif %}
+{% if item.corpo %}<p class="texto">{{ item.corpo }}</p>{% endif %}
+<p class="linha">
+    {{ item.unidade }} · {{ item.data | br_date }}
+    {% if item.autor and item.autor != '—' %} · {{ item.autor }}{% endif %}
+    · <span class="curtidas">{{ item.curtidas }} curtida{{ '' if item.curtidas == 1 else 's' }}</span>
+</p>
 {% endmacro %}
 
 <div class="doc">
@@ -145,47 +199,61 @@ if (window.self !== window.top) {
             {{ hoje }}
         </div>
     </header>
-    <div class="faixa"></div>
     <div class="nome-boletim">
         <h1>Boletim da Rede</h1>
         <p class="edicao">{{ periodo }}<br>{{ total }} publicaç{{ 'ão' if total == 1 else 'ões' }} · {{ total_curtidas }} curtida{{ '' if total_curtidas == 1 else 's' }}</p>
     </div>
+    {% if filtros.tipos or filtros.tipos_unidade or filtros.unidades or filtros.termo %}
     <p class="resumo">
-        {% if filtros.tipos %}Tipos: {{ filtros.tipos | join(', ') }}.{% else %}Todos os tipos de ação.{% endif %}
+        {% if filtros.tipos %}Tipos: {{ filtros.tipos | join(', ') }}.{% endif %}
         {% if filtros.tipos_unidade %} Tipos de unidade: {{ filtros.tipos_unidade | join(', ') }}.{% endif %}
         {% if filtros.unidades %} Unidades: {{ filtros.unidades | join(', ') }}.{% endif %}
         {% if filtros.termo %} Texto: “{{ filtros.termo }}”.{% endif %}
     </p>
+    {% endif %}
 
     {% if not capa %}
     <p class="vazio">Nenhuma publicação do mural nesse filtro.</p>
     {% else %}
+    {% set chamadas = demais[:2] %}
+    {% set resto = demais[2:] %}
     <section class="capa">
-        <p class="kicker">{% if capa.curtidas %}Capa · mais curtida{% else %}Capa{% endif %} · {{ capa.tipo }}</p>
-        {{ fotos(capa) }}
-        <h2>{{ capa.manchete or capa.tipo }}</h2>
-        {% if capa.corpo %}<p class="texto">{{ capa.corpo }}</p>{% endif %}
-        <p class="linha">
-            {{ capa.unidade }} · {{ capa.data | br_date }}
-            {% if capa.autor and capa.autor != '—' %} · {{ capa.autor }}{% endif %}
-            · <span class="curtidas">{{ capa.curtidas }} curtida{{ '' if capa.curtidas == 1 else 's' }}</span>
-            {% if capa.comentarios %} · {{ capa.comentarios }} comentário{{ '' if capa.comentarios == 1 else 's' }}{% endif %}
-        </p>
+        <article class="lead {% if not capa.fotos %}sem-foto{% endif %}">
+            {{ fotos(capa) }}
+            <div class="coluna-texto">
+                <div class="corpo">
+                    <p class="kicker">{% if capa.curtidas %}Destaque · mais curtida{% else %}Destaque{% endif %}{% if capa.manchete %} · {{ capa.tipo }}{% endif %}</p>
+                    <h2>{{ capa.manchete or capa.tipo }}</h2>
+                    {% if capa.corpo %}<p class="texto">{{ capa.corpo }}</p>{% endif %}
+                </div>
+                <p class="linha">
+                    {{ capa.unidade }} · {{ capa.data | br_date }}
+                    {% if capa.autor and capa.autor != '—' %} · {{ capa.autor }}{% endif %}
+                    · <span class="curtidas">{{ capa.curtidas }} curtida{{ '' if capa.curtidas == 1 else 's' }}</span>
+                </p>
+            </div>
+        </article>
+        {% if chamadas %}
+        <div class="chamadas">
+            {% for item in chamadas %}
+            <article class="{{ 'foto-antes' if loop.index0 % 2 else 'texto-antes' }}">
+                {% if loop.index0 % 2 %}{{ fotos(item) }}{% endif %}
+                {{ ficha(item, 'h3') }}
+                {% if loop.index0 % 2 == 0 %}{{ fotos(item) }}{% endif %}
+            </article>
+            {% endfor %}
+        </div>
+        {% endif %}
     </section>
 
-    {% if demais %}
-    <section class="miolo">
-        {% for item in demais %}
-        <article>
-            <p class="kicker">{{ item.tipo }}</p>
-            {% if item.manchete %}<h3>{{ item.manchete }}</h3>{% endif %}
-            {% if item.corpo %}<p class="texto">{{ item.corpo }}</p>{% endif %}
-            <p class="linha">
-                {{ item.unidade }} · {{ item.data | br_date }}
-                {% if item.autor and item.autor != '—' %} · {{ item.autor }}{% endif %}
-                · <span class="curtidas">{{ item.curtidas }}</span>
-            </p>
-            {{ fotos(item) }}
+    {% if resto %}
+    <p class="continua">Boletim da Rede · {{ periodo }}</p>
+    <section class="miolo{% if resto|length < 3 %} poucos{% endif %}">
+        {% for item in resto %}
+        <article class="{{ 'foto-antes' if loop.index0 % 2 else 'texto-antes' }}">
+            {% if loop.index0 % 2 %}{{ fotos(item) }}{% endif %}
+            {{ ficha(item, 'h3') }}
+            {% if loop.index0 % 2 == 0 %}{{ fotos(item) }}{% endif %}
         </article>
         {% endfor %}
     </section>

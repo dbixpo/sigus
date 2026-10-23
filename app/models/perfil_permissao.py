@@ -31,6 +31,7 @@ SECOES = [
     ('Planejamentos',  'Planejamentos',   'kanban', 'GESTÃO'),
     ('SegurancaPaciente', 'Segurança do Paciente', 'heart-pulse', 'GESTÃO'),
     ('Relatórios',     'Relatórios',      'bar-chart-line', 'GESTÃO'),
+    ('Mural',          'Mural e comunicados', 'images', 'GESTÃO'),
     # OUTROS (seção pai)
     ('OUTROS',         'OUTROS',          'three-dots-vertical', None),
     ('OUT_LinksUteis', 'Links Úteis',    'link-45deg', 'OUTROS'),
@@ -38,9 +39,25 @@ SECOES = [
     # RECURSOS HUMANOS (seção pai)
     ('RECURSOS_HUMANOS', 'RECURSOS HUMANOS', 'people-fill', None),
     ('RH_FaltasAbonadas', 'Faltas Abonadas', 'calendar-check', 'RECURSOS_HUMANOS'),
+    ('RH_Apontamentos', 'Apontamentos da unidade', 'calendar-week', 'RECURSOS_HUMANOS'),
     # CONFIGURAÇÕES (seção pai)
     ('CONFIGURAÇÕES',  'CONFIGURAÇÕES',  'gear', None),
     ('CONF_Sistema',   'Configurações do Sistema', 'gear-fill', 'CONFIGURAÇÕES'),
+    ('CONF_Identidade', 'Identidade e assets', 'landmark', 'CONFIGURAÇÕES'),
+    ('CONF_Feriados',  'Feriados',        'calendar-day', 'CONFIGURAÇÕES'),
+    ('CONF_TiposAcao', 'Tipos de ação do mural', 'images', 'CONFIGURAÇÕES'),
+    ('CONF_TiposUnidade', 'Tipos de unidade', 'layer-group', 'CONFIGURAÇÕES'),
+    ('CONF_PadraoSalas', 'Padrão de salas', 'clipboard-check', 'CONFIGURAÇÕES'),
+    ('CONF_TiposSala', 'Tipos de sala',   'door-open', 'CONFIGURAÇÕES'),
+    ('CONF_Classificacao', 'Classificação RENEM', 'layer-group', 'CONFIGURAÇÕES'),
+    ('CONF_CatalogoEquip', 'Catálogo de equipamentos', 'pc-display', 'CONFIGURAÇÕES'),
+    ('CONF_StatusEquip', 'Status de equipamento', 'toggle-on', 'CONFIGURAÇÕES'),
+    ('CONF_TiposVeiculo', 'Catálogo de veículos', 'car-front', 'CONFIGURAÇÕES'),
+    ('CONF_Marcas',    'Marcas e modelos', 'tag', 'CONFIGURAÇÕES'),
+    ('CONF_Divisoes',  'Divisões e setores', 'sitemap', 'CONFIGURAÇÕES'),
+    ('CONF_StatusChamado', 'Status de chamados', 'clipboard-list', 'CONFIGURAÇÕES'),
+    ('CONF_Cbos',      'CBOs',            'briefcase', 'CONFIGURAÇÕES'),
+    ('CONF_NspCatalogo', 'Catálogos da Segurança do Paciente', 'heart-pulse', 'CONFIGURAÇÕES'),
     ('Usuários',       'Usuários',        'people', 'CONFIGURAÇÕES'),
     ('Auditoria',      'Auditoria',       'journal-text', 'CONFIGURAÇÕES'),
 ]
@@ -66,6 +83,7 @@ ACAO_PARA_SECAO_TIPO = {
     'dar_baixa_equipamento':   ('Equipamentos', 'editar'),
     'ver_equipamentos':        ('Equipamentos', 'ver'),
     # PATRIMÔNIO - Veículos
+    'ver_veiculos':            ('Veiculos', 'ver'),
     'cadastrar_veiculo':       ('Veiculos', 'adicionar'),
     'editar_veiculo':          ('Veiculos', 'editar'),
     # OPERAÇÕES - Chamados
@@ -120,6 +138,10 @@ ACAO_PARA_SECAO_TIPO = {
     # GESTÃO - Relatórios
     'emitir_relatorios':   ('Relatórios', 'ver'),
     'ver_dashboard_geral': ('Relatórios', 'ver'),
+    # GESTÃO - Mural e comunicados
+    'ver_mural':           ('Mural', 'ver'),
+    'publicar_mural':      ('Mural', 'adicionar'),
+    'compartilhar_mural':  ('Mural', 'editar'),
     # OUTROS - Links Úteis
     'ver_links_uteis':     ('OUT_LinksUteis', 'ver'),
     'editar_links_uteis':  ('OUT_LinksUteis', 'editar'),
@@ -128,10 +150,57 @@ ACAO_PARA_SECAO_TIPO = {
     'ver_faltas_abonadas': ('RH_FaltasAbonadas', 'ver'),
     'editar_faltas_abonadas': ('RH_FaltasAbonadas', 'editar'),
     'adicionar_faltas_abonadas': ('RH_FaltasAbonadas', 'adicionar'),
+    'ver_apontamentos_unidade': ('RH_Apontamentos', 'ver'),
+    'editar_apontamentos_unidade': ('RH_Apontamentos', 'editar'),
+    'importar_frequencia': ('RH_Apontamentos', 'adicionar'),
     # CONFIGURAÇÕES - Sistema
-    'gerenciar_tipos_equipamento': ('CONF_Sistema', 'editar'),
+    'gerenciar_tipos_equipamento': ('CONF_CatalogoEquip', 'editar'),
     'gerenciar_perfis':    ('CONF_Sistema', 'editar'),
     'ver_configuracoes':   ('CONF_Sistema', 'ver'),
+    'ver_identidade':      ('CONF_Identidade', 'ver'),
+    'editar_identidade':   ('CONF_Identidade', 'editar'),
+    'ver_feriados':        ('CONF_Feriados', 'ver'),
+    'editar_feriados':     ('CONF_Feriados', 'editar'),
+    'adicionar_feriados':  ('CONF_Feriados', 'adicionar'),
+    'ver_tipos_acao':      ('CONF_TiposAcao', 'ver'),
+    'editar_tipos_acao':   ('CONF_TiposAcao', 'editar'),
+    'adicionar_tipos_acao': ('CONF_TiposAcao', 'adicionar'),
+    'ver_tipos_unidade':   ('CONF_TiposUnidade', 'ver'),
+    'editar_tipos_unidade': ('CONF_TiposUnidade', 'editar'),
+    'adicionar_tipos_unidade': ('CONF_TiposUnidade', 'adicionar'),
+    'ver_padrao_salas':    ('CONF_PadraoSalas', 'ver'),
+    'editar_padrao_salas': ('CONF_PadraoSalas', 'editar'),
+    'adicionar_padrao_salas': ('CONF_PadraoSalas', 'adicionar'),
+    'ver_tipos_sala':      ('CONF_TiposSala', 'ver'),
+    'editar_tipos_sala':   ('CONF_TiposSala', 'editar'),
+    'adicionar_tipos_sala': ('CONF_TiposSala', 'adicionar'),
+    'ver_classificacao':   ('CONF_Classificacao', 'ver'),
+    'editar_classificacao': ('CONF_Classificacao', 'editar'),
+    'adicionar_classificacao': ('CONF_Classificacao', 'adicionar'),
+    'ver_catalogo_equip':  ('CONF_CatalogoEquip', 'ver'),
+    'editar_catalogo_equip': ('CONF_CatalogoEquip', 'editar'),
+    'adicionar_catalogo_equip': ('CONF_CatalogoEquip', 'adicionar'),
+    'ver_status_equip':    ('CONF_StatusEquip', 'ver'),
+    'editar_status_equip': ('CONF_StatusEquip', 'editar'),
+    'adicionar_status_equip': ('CONF_StatusEquip', 'adicionar'),
+    'ver_tipos_veiculo':   ('CONF_TiposVeiculo', 'ver'),
+    'editar_tipos_veiculo': ('CONF_TiposVeiculo', 'editar'),
+    'adicionar_tipos_veiculo': ('CONF_TiposVeiculo', 'adicionar'),
+    'ver_marcas':          ('CONF_Marcas', 'ver'),
+    'editar_marcas':       ('CONF_Marcas', 'editar'),
+    'adicionar_marcas':    ('CONF_Marcas', 'adicionar'),
+    'ver_divisoes':        ('CONF_Divisoes', 'ver'),
+    'editar_divisoes':     ('CONF_Divisoes', 'editar'),
+    'adicionar_divisoes':  ('CONF_Divisoes', 'adicionar'),
+    'ver_status_chamado':  ('CONF_StatusChamado', 'ver'),
+    'editar_status_chamado': ('CONF_StatusChamado', 'editar'),
+    'adicionar_status_chamado': ('CONF_StatusChamado', 'adicionar'),
+    'ver_cbos':            ('CONF_Cbos', 'ver'),
+    'editar_cbos':         ('CONF_Cbos', 'editar'),
+    'adicionar_cbos':      ('CONF_Cbos', 'adicionar'),
+    'ver_nsp_catalogo':    ('CONF_NspCatalogo', 'ver'),
+    'editar_nsp_catalogo': ('CONF_NspCatalogo', 'editar'),
+    'adicionar_nsp_catalogo': ('CONF_NspCatalogo', 'adicionar'),
     # CONFIGURAÇÕES - Usuários
     'gerenciar_usuarios':  ('Usuários', 'editar'),
     'cadastrar_usuario':   ('Usuários', 'adicionar'),
@@ -139,17 +208,22 @@ ACAO_PARA_SECAO_TIPO = {
     'vincular_profissionais': ('Usuários', 'editar'),
     # CONFIGURAÇÕES - Auditoria
     'ver_auditoria':       ('Auditoria', 'ver'),
-    # Planejamentos
-    'criar_plano':         ('Planejamentos', 'adicionar'),
-    'editar_plano_gut':    ('Planejamentos', 'editar'),
-    'criar_acao':          ('Planejamentos', 'adicionar'),
-    'alterar_status_acao': ('Planejamentos', 'editar'),
-    # Auditoria
-    'ver_auditoria':       ('Auditoria', 'ver'),
-    # Gestão de perfis (especial — só admin via código)
-    'gerenciar_perfis':    ('Configurações', 'editar'),
     # OUTROS - Cadastro Público
     'ver_cadastro_publico': ('OUT_CadastroPublico', 'ver'),
+    'editar_cadastro_publico': ('OUT_CadastroPublico', 'editar'),
+    'adicionar_cadastro_publico': ('OUT_CadastroPublico', 'adicionar'),
+}
+
+# Texto curto na tela de gestão de perfis.
+SECAO_DICAS = {
+    'Mural': 'Ver mostra o mural. Adicionar publica na própria unidade. Editar permite comunicar para várias unidades.',
+    'RH_Apontamentos': 'A tela Apontamentos da unidade só abre para Gestor de Área, Gestor Central e Administrador. Cada um vê só a planilha que ele mesmo subiu. Meus apontamentos continua pessoal.',
+    'SegurancaPaciente': 'Ver abre o menu. Quem conduz os casos continua sendo a lista de membros do Núcleo e das comissões.',
+    'Relatórios': 'Todos os relatórios do menu, inclusive inventário, mural e base de servidores do RH.',
+    'CONF_Sistema': 'Abre o grupo Configurações. Cada catálogo abaixo tem o próprio interruptor.',
+    'CONF_Identidade': 'Município, logos e domínio de e-mail. O Administrador sempre pode; os demais só se esta linha estiver marcada.',
+    'OUT_CadastroPublico': 'Link e QR code do formulário público de vínculo profissional.',
+    'Veiculos': 'A aba de veículos da unidade. O catálogo de tipos fica em Configurações.',
 }
 
 

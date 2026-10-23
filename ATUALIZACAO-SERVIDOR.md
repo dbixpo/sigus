@@ -14,6 +14,34 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > Se o IIS dessa máquina também atende outro site, **não** rode `iisreset` nem recicle o pool padrão. Reinicie **só** o processo do SIGUS (seção 4). O caminho da pasta e o nome do pool ficam no caderno da equipe, não neste arquivo.
 
+## Entrega de 23/10/2026 (perfis, auditoria, foto do bem, apontamentos e login no celular)
+
+O banco **desta** instalação já está neste ponto. Não rode de novo aqui só por atualizar o código. Em outro computador, depois do `git pull` e com backup feito antes:
+
+```powershell
+.\venv\Scripts\python.exe migrations\add_foto_identificacao_equipamento.py
+.\venv\Scripts\python.exe migrations\seed_permissoes_faltantes.py
+.\venv\Scripts\python.exe migrations\limpar_auditoria_ruido.py
+```
+
+Os três são idempotentes. O primeiro só acrescenta a coluna da foto. O segundo só cria permissão que ainda não existe. O terceiro apaga ruído antigo do sino e do manifesto na auditoria e cria índice; não apaga login nem alteração. Reinicie só o SIGUS (seção 4). Não rode `recuperar_catalogo_apagado.py` nesta atualização: ele é recuperação pontual do catálogo desta rede e exige `--aplicar`.
+
+O que entrou no sistema:
+
+- **Quem cadastra usuário.** Administrador cadastra os cinco perfis. Gestor Central cadastra Gestor de Área, Apoio e Operador. Gestor de Área cadastra Apoio e Operador. Apoio cadastra só Operador. Operador não abre a tela. Vale na inclusão e na edição; o servidor recusa perfil fora da lista.
+- **Testar como outro perfil.** O Administrador escolhe um perfil no menu do próprio nome. A sessão passa a se comportar como esse perfil. O cadastro não muda. A faixa amarela desfaz, e sair do sistema também.
+- **Gestão de perfis.** Cada catálogo de Configurações tem o próprio interruptor. Gestão de Perfis continua só do Administrador. Desmarcar o Ver de um item filho fecha aquele item mesmo com o grupo pai ligado.
+- **Auditoria.** Passa a cobrir as telas (consulta, pesquisa, inclusão, alteração, exclusão, exportação, impressão, login e saída). Senha, token, CSRF e foto não entram no registro. A notificação de Segurança do Paciente continua sem identificar quem notificou.
+- **Foto do equipamento.** Sem patrimônio e sem número de série, o cadastro interno e o externo exigem uma foto. A pessoa enquadra e o sistema grava JPEG 500×500. Na lista da unidade, a foto ocupa o lugar da chapinha quando não há patrimônio nem série.
+- **Apontamentos da unidade.** Só Gestor de Área, Gestor Central e Administrador abrem a tela e podem trocar a unidade. Cada um vê só a planilha que ele mesmo importou. Quem não subiu arquivo vê a lista vazia. Meus apontamentos continua pessoal.
+- **Formulário do equipamento.** Informações adicionais (incorporação, nota, empenho, garantia e os demais) saem da coluna estreita e ficam em grade abaixo da identificação e dos campos do tipo.
+- **Login no celular.** O cartão usa a largura da tela e o crédito da licença fica embaixo. No computador a tela não muda.
+- **Relatório Base do RH** e o título da ação no planejamento (editável, com o histórico na observação).
+
+Conferência: login no celular; cadastro de equipamento sem chapinha e sem série; Apontamentos da unidade com dois usuários que importaram arquivos diferentes; menu do administrador → testar como Apoio e voltar.
+
+---
+
 ## Entrega de 20/10/2026 (inventário SEI, LGPD, mural e relatório)
 
 O banco **desta** instalação já está neste ponto. Não rode de novo aqui só por atualizar o código. Em outro computador: restaure um dump feito depois desta data, **ou** banco vazio com `migrations/bootstrap_nova_instalacao.py`. Se o dump for anterior, rode só:

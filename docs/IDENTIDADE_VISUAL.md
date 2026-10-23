@@ -32,6 +32,8 @@ Botão primário: `#1A82B8`, hover `#155d8c`, radius 6px. Cards brancos, radius 
 
 Faixa no topo com gradiente 90deg vermelho / amarelo / azul.
 
+No computador o cartão fica centralizado, com o crédito da licença ao lado. No celular (até 767 px) o cartão usa a largura da tela e o crédito desce para baixo dele. Sem isso o formulário fica espremido e o crédito atravessa os campos. O visual do computador não muda.
+
 ## Páginas públicas e cartão de QR code
 
 Páginas sem login (Links Úteis, notificação de Segurança do Paciente, Mapa da Saúde) seguem o mesmo padrão: faixa vermelho / amarelo / azul, topo `#0D3B5E` com borda `#1A82B8` e logo branca, fundo `#F4F6F9`.

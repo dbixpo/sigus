@@ -479,6 +479,7 @@
     </div>
 
     <div class="dash-col dash-col-direita">
+        {% if pode_ver_mural %}
         <div class="card dash-painel">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <span><i class="fas fa-images me-2"></i>Mural da rede</span>
@@ -545,6 +546,7 @@
                 {% endif %}
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
 </div>

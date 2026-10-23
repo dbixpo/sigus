@@ -384,6 +384,59 @@ def alterar_prazo_acao(acao, prazo_novo, motivo='', origem='planejamento'):
     return True
 
 
+def alterar_titulo_acao(acao, titulo_novo, motivo=''):
+    """Troca o título da ação e registra a mudança no histórico (observações).
+
+    Avisa os responsáveis. Não faz commit. Retorna False se o título não mudou.
+    """
+    from markupsafe import escape
+    from app.models.notificacao import Notificacao
+
+    titulo_novo = (titulo_novo or '').strip()
+    anterior = (acao.titulo or '').strip()
+    if anterior == titulo_novo:
+        return False
+
+    frase = f'Título alterado de "{anterior}" para "{titulo_novo}"'
+    frase_html = (
+        f'Título alterado de <strong>{escape(anterior)}</strong> '
+        f'para <strong>{escape(titulo_novo)}</strong>'
+    )
+    texto = f'<p><i class="fas fa-pen me-1"></i>{frase_html}.</p>'
+    motivo = (motivo or '').strip()[:1000]
+    if motivo:
+        texto += f'<p><strong>Motivo:</strong> {escape(motivo)}</p>'
+
+    agora = agora_local()
+    acao.titulo = titulo_novo
+    acao.atualizado_em = agora
+    acao.atualizado_por = current_user.id
+    planejamento = acao.planejamento
+    if planejamento:
+        planejamento.atualizado_em = agora
+        planejamento.atualizado_por = current_user.id
+    db.session.add(AcaoObservacao(
+        acao_id=acao.id,
+        usuario_id=current_user.id,
+        texto=texto,
+        criado_em=agora,
+    ))
+
+    plano_txt = f'Plano: "{planejamento.titulo}" — ' if planejamento else ''
+    aviso = f'{plano_txt}{frase} por {current_user.nome}.'
+    if motivo:
+        aviso += f' Motivo: {motivo}'
+    for r in acao.responsaveis or []:
+        if r and r.id != current_user.id:
+            db.session.add(Notificacao(
+                usuario_id=r.id,
+                tipo='acao_alterada',
+                titulo='Ação de planejamento alterada',
+                texto=aviso[:2000],
+            ))
+    return True
+
+
 def _resp_display_html(acao):
     """Retorna HTML do bloco de responsáveis/empresas para atualização via AJAX."""
     parts = []
@@ -1138,6 +1191,34 @@ def atualizar_prazo_acao(id):
         'prazo': acao.prazo.strftime('%d/%m/%Y') if acao.prazo else '',
         'prazo_iso': acao.prazo.isoformat() if acao.prazo else '',
         'prazo_dias_texto': getattr(acao, 'prazo_dias_texto', None) or '',
+        'atualizado_em': formatar_brasilia(acao.atualizado_em) if acao.atualizado_em else None,
+    })
+
+
+@planejamentos_bp.route('/acoes/<int:id>/titulo', methods=['POST'])
+@login_required
+def atualizar_titulo_acao(id):
+    """Edita o título da ação. A mudança fica no histórico de observações."""
+    if not current_user.pode('criar_acao'):
+        abort(403)
+
+    acao = AcaoPlanejamento.query.get_or_404(id)
+    planejamento = acao.planejamento
+    if not _usuario_pode_editar_planejamento(planejamento):
+        abort(403)
+
+    titulo = (request.form.get('titulo') or '').strip()
+    if not titulo:
+        return jsonify({'ok': False, 'erro': 'O título da ação é obrigatório.'}), 400
+    if len(titulo) > 300:
+        return jsonify({'ok': False, 'erro': 'O título pode ter no máximo 300 caracteres.'}), 400
+
+    mudou = alterar_titulo_acao(acao, titulo, request.form.get('motivo', ''))
+    db.session.commit()
+    return jsonify({
+        'ok': True,
+        'mudou': mudou,
+        'titulo': acao.titulo,
         'atualizado_em': formatar_brasilia(acao.atualizado_em) if acao.atualizado_em else None,
     })
 

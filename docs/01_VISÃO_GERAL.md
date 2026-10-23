@@ -15,7 +15,7 @@ Documentação técnica: [00_INDICE.md](00_INDICE.md). Licença: [LICENSE](../LI
 - **Prédios** — Edificações
 - **Unidades** — UBS, USF, UPA, especialidades, etc. (ficha com abas)
 - **Salas** — Ambientes por unidade (consultório, farmácia, recepção…). Há cadastro externo sem login para mutirão
-- **Equipamentos** — Inventário por sala (patrimônio PMS-, marca/modelo, usuário, baixa)
+- **Equipamentos** — Inventário por sala (patrimônio PMS-, marca/modelo, usuário, baixa). Há cadastro externo sem login, com QR na ficha da unidade, para o mutirão do inventário inicial. Sem patrimônio e sem número de série, o cadastro e a edição exigem uma foto quadrada de 500×500, que a pessoa enquadra antes de salvar
 
 ### Operações
 

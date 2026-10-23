@@ -104,12 +104,12 @@ def _registrar_ciencia(item, origem, exigir_assinatura=False):
 
 def pode_publicar(usuario=None):
     u = usuario or current_user
-    return bool(u.is_authenticated and u.perfil in PERFIS_PUBLICAR)
+    return bool(getattr(u, 'is_authenticated', False) and u.pode('publicar_mural'))
 
 
 def pode_compartilhar(usuario=None):
     u = usuario or current_user
-    return bool(u.is_authenticated and u.perfil in PERFIS_COMPARTILHAR)
+    return bool(getattr(u, 'is_authenticated', False) and u.pode('compartilhar_mural'))
 
 
 def _pode_editar(autor_id, usuario=None):
@@ -1135,6 +1135,8 @@ def excluir_acao(id):
 @noticias_bp.route('/mural')
 @login_required
 def mural():
+    if not current_user.pode('ver_mural'):
+        abort(403)
     tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
     unidades = unidades_ativas()
     try:

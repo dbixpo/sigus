@@ -69,6 +69,15 @@
                         <div class="text-muted small">Nº de Série</div>
                         <div class="fw-semibold">{{ equipamento.numero_serie or '—' }}</div>
                     </div>
+                    {% if equipamento.foto_url %}
+                    <div class="col-md-4">
+                        <div class="text-muted small">Foto</div>
+                        <a href="{{ equipamento.foto_url }}" target="_blank" rel="noopener">
+                            <img src="{{ equipamento.foto_url }}" alt="Foto do equipamento" width="120" height="120"
+                                 class="rounded border" style="object-fit:cover">
+                        </a>
+                    </div>
+                    {% endif %}
                     <div class="col-md-4">
                         <div class="text-muted small">Tipo</div>
                         <div class="fw-semibold">{{ equipamento.tipo_equipamento.nome }}</div>

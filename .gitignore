@@ -43,6 +43,7 @@ app/static/uploads/obs_acoes/
 app/static/uploads/planos/
 app/static/uploads/links/
 app/static/uploads/equipamentos/
+app/static/uploads/equipamentos_fotos/
 
 # Dados locais da instalação (frequência temporária, perfil do LibreOffice, rascunho)
 instance/

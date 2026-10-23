@@ -1,5 +1,7 @@
-from datetime import datetime
 from flask_login import UserMixin
+from sqlalchemy import event
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Session
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
 from app.utils import prefixed_static_url, agora_local
@@ -204,7 +206,7 @@ class Usuario(UserMixin, db.Model):
     nome          = db.Column(db.String(150), nullable=False)
     email         = db.Column(db.String(200), nullable=False, unique=True)
     senha_hash    = db.Column(db.String(256), nullable=False)
-    perfil        = db.Column(db.String(30), nullable=False, default='profissional')
+    _perfil       = db.Column('perfil', db.String(30), nullable=False, default='profissional')
     whatsapp      = db.Column(db.String(20))
     foto_perfil   = db.Column(db.String(200))   # filename em static/uploads/perfis/
     ativo         = db.Column(db.Boolean, nullable=False, default=True)
@@ -264,6 +266,36 @@ class Usuario(UserMixin, db.Model):
 
     def check_senha(self, senha):
         return check_password_hash(self.senha_hash, senha)
+
+    @hybrid_property
+    def perfil(self):
+        """Perfil que vale nesta sessão. O gravado no cadastro continua em _perfil."""
+        simulado = getattr(self, '_perfil_simulado', None)
+        return simulado or self._perfil
+
+    @perfil.setter
+    def perfil(self, valor):
+        self._perfil = valor
+
+    @perfil.expression
+    def perfil(cls):
+        return cls._perfil
+
+    @property
+    def perfil_gravado(self):
+        return self._perfil
+
+    @property
+    def testando_perfil(self):
+        return bool(getattr(self, '_perfil_simulado', None))
+
+    def aplicar_perfil_teste(self, codigo):
+        """Só o cadastro Administrador pode ver o sistema como outro perfil."""
+        self._perfil_simulado = None
+        if self._perfil != 'administrador':
+            return
+        if codigo in PERFIS and codigo != 'administrador':
+            self._perfil_simulado = codigo
 
     @property
     def perfil_label(self):
@@ -419,7 +451,13 @@ class Usuario(UserMixin, db.Model):
 
     @property
     def pode_importar_frequencia(self):
-        """Gestor local, gestor central ou administrador: importa planilhas de frequência."""
+        """Quem a matriz libera e que também gere alguma unidade (ou a rede inteira)."""
+        if not (
+            self.pode('ver_apontamentos_unidade')
+            or self.pode('importar_frequencia')
+            or self.pode('editar_apontamentos_unidade')
+        ):
+            return False
         from app.models.frequencia import unidades_gestao_rh
         ids = unidades_gestao_rh(self)
         return ids is None or bool(ids)
@@ -440,6 +478,17 @@ class Usuario(UserMixin, db.Model):
             return True
         return len(self.setores_vinculados) > 0
 
+    def abre_menu_configuracoes(self):
+        """Algum catálogo ou a área de configurações está liberado na matriz."""
+        if (self.pode('ver_configuracoes') or self.pode('gerenciar_perfis')
+                or self.pode('gerenciar_tipos_equipamento') or self.pode('editar_identidade')):
+            return True
+        from app.models.perfil_permissao import ACAO_PARA_SECAO_TIPO
+        for acao, (secao, _tipo) in ACAO_PARA_SECAO_TIPO.items():
+            if secao.startswith('CONF_') and self.pode(acao):
+                return True
+        return False
+
     def pode(self, acao):
         # Administrador tem acesso total (não consulta DB)
         if self.perfil == 'administrador':
@@ -459,24 +508,20 @@ class Usuario(UserMixin, db.Model):
         if not mapeamento:
             return False
         secao, tipo = mapeamento
-        
-        # Verifica permissão direta
-        tem_perm = PerfilPermissao.tem_permissao(self.perfil, secao, tipo)
-        if tem_perm:
-            return True
-        
-        # Se for tipo "ver" e não tem permissão direta, verifica seção pai
+        from app.models.perfil_permissao import PerfilPermissao as _PP
+        row = _PP.query.filter_by(perfil=self.perfil, secao=secao).first()
+        if row:
+            return bool(getattr(row, tipo, False))
+
+        # Seção ainda sem linha gravada: o Ver do grupo pai libera a consulta.
         if tipo == 'ver':
-            # Encontra seção pai
             secao_pai = None
             for sec_key, _label, _icon, pai in SECOES:
                 if sec_key == secao and pai:
                     secao_pai = pai
                     break
             if secao_pai:
-                # Se seção pai tem "ver", permite acesso
                 return PerfilPermissao.tem_permissao(self.perfil, secao_pai, 'ver')
-        
         return False
 
     def pode_gerir_patrimonio(self):
@@ -509,4 +554,49 @@ class Usuario(UserMixin, db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(Usuario, int(user_id))
+    user = db.session.get(Usuario, int(user_id))
+    if user is None:
+        return None
+    try:
+        from flask import has_request_context, session
+        if has_request_context():
+            user.aplicar_perfil_teste(session.get('perfil_teste'))
+    except Exception:
+        pass
+    return user
+
+
+def _repor_perfil_de_teste(session):
+    """O commit expira o objeto. A simulação precisa voltar no mesmo pedido."""
+    from flask import has_request_context, session as sessao
+    if not has_request_context():
+        return
+    codigo = sessao.get('perfil_teste')
+    if not codigo:
+        return
+    try:
+        from flask_login import current_user
+        usuario_id = int(current_user.get_id())
+    except Exception:
+        return
+    for obj in list(session.identity_map.values()):
+        if isinstance(obj, Usuario) and obj.id == usuario_id:
+            obj.aplicar_perfil_teste(codigo)
+            break
+
+
+@event.listens_for(Session, 'before_flush')
+def _nao_gravar_perfil_de_teste(session, flush_context, instances):
+    for obj in list(session.dirty):
+        if isinstance(obj, Usuario) and getattr(obj, '_perfil_simulado', None):
+            obj._perfil = 'administrador'
+
+
+@event.listens_for(Session, 'after_commit')
+def _repor_perfil_depois_commit(session):
+    _repor_perfil_de_teste(session)
+
+
+@event.listens_for(Session, 'after_rollback')
+def _repor_perfil_depois_rollback(session):
+    _repor_perfil_de_teste(session)

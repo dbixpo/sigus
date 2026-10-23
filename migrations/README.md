@@ -48,6 +48,10 @@ Se o servidor ainda **não** tem o objeto, estes são os scripts típicos (já i
 **Patrimônio**
 
 - `add_inventario_catalogo.py` — colunas de incorporação, classificação RENEM (incluindo Veículos), status em `status_de_equipamento` e itens de veículo da RENEM. O bootstrap de banco vazio já chama este arquivo. Não carrega a planilha da Flávia.
+- `add_foto_identificacao_equipamento.py` — coluna `foto_identificacao` (JPEG 500×500 quando o bem não tem patrimônio nem série). Idempotente. Banco vazio já nasce com a coluna pelo model.
+- `seed_permissoes_faltantes.py` — cria só a linha de permissão que ainda não existe. Não regrava interruptor já salvo. O bootstrap de banco vazio já chama este arquivo.
+- `limpar_auditoria_ruido.py` — apaga da auditoria só o ruído antigo do sino e do manifesto e cria índice. Pode rodar de novo. O bootstrap de banco vazio já chama este arquivo.
+- `recuperar_catalogo_apagado.py` — recoloca no catálogo tipo que a planilha desta rede ainda tem e o banco perdeu. Simula sem `--aplicar`. Não cria equipamento físico. Não rode num município novo.
 - `add_categorias_equipamento.py` — mesma classificação, para banco que já tinha tipos com o texto antigo em `classificacao`
 - `aplicar_catalogo_flavia.py` / `importar_itens_flavia.py` — carga da planilha desta rede (caminho local, fora do Git). Não rode num município novo.
 - `add_capacidade_maxima_salas.py`

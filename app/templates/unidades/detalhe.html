@@ -61,7 +61,7 @@
             <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
         </button>
     </li>
-    {% if veiculos_info or current_user.pode('cadastrar_veiculo') %}
+    {% if (current_user.pode('ver_veiculos') or current_user.pode('cadastrar_veiculo') or current_user.pode('editar_veiculo')) and (veiculos_info or current_user.pode('cadastrar_veiculo')) %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-veiculos" type="button">
             <i class="fas fa-car me-1"></i>Veículos
@@ -356,9 +356,17 @@
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <span><i class="fas fa-desktop me-2"></i>Equipamentos da Unidade</span>
-                <div class="d-flex gap-2">
+                <div class="d-flex gap-2 flex-wrap">
                     <button class="btn btn-sm btn-outline-success" id="btnExportarEquipamentos" title="Exportar CSV">
                         <i class="fas fa-download me-1"></i>Exportar CSV
+                    </button>
+                    {% set _url_cadastro_eq = url_publica('equipamentos.cadastro_externo', unidade_id=unidade.id) %}
+                    <button type="button" class="btn btn-sm btn-outline-primary js-acesso-publico"
+                            data-url="{{ _url_cadastro_eq }}"
+                            data-titulo="Cadastro de equipamentos · {{ unidade.nome }}"
+                            data-arquivo="qrcode-equipamentos-{{ unidade.id }}"
+                            title="Link e QR code do cadastro externo, sem login">
+                        <i class="fas fa-qrcode me-1"></i>Cadastro externo
                     </button>
                     {% if current_user.pode_lancar_inventario(unidade) %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
@@ -415,6 +423,8 @@
                                     <i class="fas fa-tag me-1"></i>{{ e.numero_patrimonio }}
                                     {% elif e.numero_serie %}
                                     <i class="fas fa-upc me-1"></i>{{ e.numero_serie }}
+                                    {% elif e.foto_url %}
+                                    <img src="{{ e.foto_url }}" alt="Foto do equipamento" width="36" height="36" class="rounded" style="object-fit:cover">
                                     {% else %}—{% endif %}
                                 </td>
                                 <td class="d-none d-md-table-cell text-muted small">
@@ -451,6 +461,13 @@
                 <div class="empty-state">
                     <i class="fas fa-desktop"></i>
                     <h6>Nenhum equipamento cadastrado nesta unidade</h6>
+                    {% set _url_cadastro_eq = url_publica('equipamentos.cadastro_externo', unidade_id=unidade.id) %}
+                    <button type="button" class="btn btn-outline-primary mt-2 js-acesso-publico"
+                            data-url="{{ _url_cadastro_eq }}"
+                            data-titulo="Cadastro de equipamentos · {{ unidade.nome }}"
+                            data-arquivo="qrcode-equipamentos-{{ unidade.id }}">
+                        <i class="fas fa-qrcode me-1"></i>Cadastro externo
+                    </button>
                     {% if current_user.pode_lancar_inventario(unidade) %}
                     {% if salas %}
                     <a href="{{ url_for('equipamentos.novo_na_unidade', unidade_id=unidade.id) }}"
@@ -473,7 +490,7 @@
     <!-- ══════════════════════════════════════════════
          ABA VEÍCULOS
     ══════════════════════════════════════════════ -->
-    {% if veiculos_info or current_user.pode('cadastrar_veiculo') %}
+    {% if (current_user.pode('ver_veiculos') or current_user.pode('cadastrar_veiculo') or current_user.pode('editar_veiculo')) and (veiculos_info or current_user.pode('cadastrar_veiculo')) %}
     <div class="tab-pane fade" id="tab-veiculos">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">

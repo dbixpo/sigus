@@ -19,6 +19,7 @@ Prefixo da aplicação: `/sigus`. Rotas abaixo são relativas a esse prefixo.
 | Padrão de salas e equipamentos | `/relatorios/padrao-salas` | Aderência de cada sala ao kit do seu ambiente padrão: falta, sobra e custo estimado. Abas por unidade, necessidade por item, sala a sala (até 5 unidades) e a reclassificar. Excel com 4 abas. Ver [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md) |
 | Contratos | `/relatorios/contratos` | Contratos vigentes |
 | Profissionais | `/relatorios/profissionais` | Profissionais por unidade |
+| Base de servidores do RH | `/relatorios/base-rh` | Aba Banco de Dados da planilha de frequência. Uma matrícula por linha, com os dados da competência mais nova. Filtros: matrícula, nome, uma ou mais funções, um ou mais locais e planilha |
 | Empenhos | `/relatorios/empenhos` | Controle financeiro (ContratoFinanceiro) |
 | Segurança do Paciente | `nsp.relatorios` (`/seguranca-paciente/relatorios`) | Indicadores e painel na mesma página; Excel e CSV. Só Núcleo e comissões (card some para os demais) |
 | Chamados | `/relatorios/chamados` | Chamados da rede |

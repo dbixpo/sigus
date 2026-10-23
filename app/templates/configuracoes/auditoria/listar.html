@@ -6,7 +6,8 @@
     <div>
         <h1><i class="fas fa-book me-2"></i>Auditoria do Sistema</h1>
         <p class="text-muted mb-0 small">
-            Registro de todas as requisições HTTP. Apenas administradores podem visualizar.
+            O que foi consultado, pesquisado, incluído, alterado, excluído, exportado ou impresso em cada módulo.
+            A notificação de Segurança do Paciente entra sem identificar quem fez.
         </p>
     </div>
     <div>
@@ -33,8 +34,8 @@
                 <label class="form-label small mb-0">Ação</label>
                 <select name="acao" class="form-select form-select-sm">
                     <option value="">Todas</option>
-                    {% for a in acao_opcoes %}
-                    <option value="{{ a }}" {% if filtros.acao == a %}selected{% endif %}>{{ a }}</option>
+                    {% for codigo, rotulo in acao_opcoes %}
+                    <option value="{{ codigo }}" {% if filtros.acao == codigo %}selected{% endif %}>{{ rotulo }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -42,8 +43,8 @@
                 <label class="form-label small mb-0">Módulo</label>
                 <select name="modulo" class="form-select form-select-sm">
                     <option value="">Todos</option>
-                    {% for m in modulo_opcoes %}
-                    <option value="{{ m }}" {% if filtros.modulo == m %}selected{% endif %}>{{ m }}</option>
+                    {% for codigo, rotulo in modulo_opcoes %}
+                    <option value="{{ codigo }}" {% if filtros.modulo == codigo %}selected{% endif %}>{{ rotulo }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -101,7 +102,7 @@
                         <th>Usuário</th>
                         <th>Ação</th>
                         <th>Módulo</th>
-                        <th>Endpoint</th>
+                        <th>Tela</th>
                         <th>Method</th>
                         <th>Status</th>
                         <th>IP</th>
@@ -118,9 +119,19 @@
                             <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td><span class="badge bg-secondary">{{ r.acao or '—' }}</span></td>
-                        <td class="small">{{ r.modulo or '—' }}</td>
-                        <td class="small font-monospace" style="font-size:.75rem">{{ r.endpoint or '—' }}</td>
+                        <td><span class="badge bg-secondary">{{ rotulos_acao.get(r.acao, r.acao or '—') }}</span></td>
+                        <td class="small">{{ rotulos_modulo.get(r.modulo, r.modulo or '—') }}</td>
+                        <td class="small">
+                            <div class="font-monospace" style="font-size:.75rem">{{ r.endpoint or '—' }}</div>
+                            {% set resumo = r.resumo() %}
+                            {% if r.entity_id or resumo %}
+                            <div class="text-muted" style="font-size:.72rem">
+                                {% if r.entity_id %}registro {{ r.entity_id }}{% endif %}
+                                {% if r.entity_id and resumo %} · {% endif %}
+                                {{ resumo }}
+                            </div>
+                            {% endif %}
+                        </td>
                         <td><code class="small">{{ r.method or '—' }}</code></td>
                         <td>
                             {% if r.response_status %}

@@ -1,22 +1,13 @@
 # -*- coding: utf-8 -*-
 """Registro de auditoria de requisições HTTP."""
-from datetime import datetime
 from app.utils import agora_local
 from app import db
 
 
-ACAO_OPCOES = [
-    'view', 'search', 'create', 'update', 'delete',
-    'export', 'print', 'login',
-]
+from app.services.auditoria_http import ACAO_LABELS, MODULO_LABELS, resumo_parametros
 
-MODULO_OPCOES = [
-    'contratos', 'contrato_financeiro', 'chamados', 'configuracoes', 'relatorios',
-    'usuarios', 'unidades', 'salas', 'equipamentos', 'auth',
-    'transferencias', 'planejamentos', 'empresas', 'links',
-    'rh', 'solicitacoes', 'notificacoes', 'predios', 'dashboard',
-    'nsp',
-]
+ACAO_OPCOES = list(ACAO_LABELS)
+MODULO_OPCOES = list(MODULO_LABELS)
 
 
 class Auditoria(db.Model):
@@ -40,3 +31,6 @@ class Auditoria(db.Model):
     detalhes = db.Column(db.Text)
 
     usuario = db.relationship('Usuario', foreign_keys=[usuario_id])
+
+    def resumo(self):
+        return resumo_parametros(self.parametros)

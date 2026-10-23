@@ -38,6 +38,9 @@ from app.models.contrato_financeiro import ContratoFinanceiro
 from app.models.usuario import Usuario, PERFIS
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.matricula import MatriculaProfissional
+from app.models.frequencia import (
+    FreqImportacao, RhServidor, competencia_label, normalizar_matricula,
+)
 from app.models.falta_abonada import FaltaAbonada
 from app.models.noticias import AcaoLocal, TipoAcao
 from sqlalchemy.orm import joinedload, selectinload
@@ -3386,3 +3389,141 @@ def boletim_mural():
             'termo': termo,
         },
     )
+
+
+_ACENTOS_RH = 'áàâãäéèêëíìîïóòôõöúùûüç'
+_SEM_ACENTOS_RH = 'aaaaaeeeeiiiiooooouuuuc'
+
+
+def _texto_rh(valor):
+    return (valor or '').lower().translate(str.maketrans(_ACENTOS_RH, _SEM_ACENTOS_RH))
+
+
+def _competencias_base_rh():
+    return [
+        c for (c,) in db.session.query(RhServidor.competencia)
+        .filter(RhServidor.competencia.isnot(None))
+        .distinct()
+        .order_by(RhServidor.competencia.desc())
+    ]
+
+
+def _filtros_base_rh(competencias):
+    """Filtros da base. Sem competência na URL, abre na planilha mais nova."""
+    ultima = competencias[0] if competencias else None
+    bruto = request.args.get('competencia')
+    if bruto is None:
+        competencia = ultima
+    elif bruto in ('', 'todas'):
+        competencia = None
+    else:
+        try:
+            competencia = datetime.strptime(bruto[:10], '%Y-%m-%d').date()
+        except ValueError:
+            competencia = ultima
+    return {
+        'nome': (request.args.get('nome') or '').strip(),
+        'matricula': (request.args.get('matricula') or '').strip(),
+        'funcoes': _getstrlist('funcao'),
+        'locais': _getstrlist('local'),
+        'competencia': competencia,
+        'competencia_param': 'todas' if bruto in ('', 'todas') else (
+            competencia.isoformat() if competencia else ''
+        ),
+    }
+
+
+def _query_base_rh(filtros):
+    q = RhServidor.query
+    if filtros['competencia']:
+        q = q.filter(RhServidor.competencia == filtros['competencia'])
+    matricula = normalizar_matricula(filtros['matricula'])
+    if matricula:
+        q = q.filter(RhServidor.matricula.contains(matricula))
+    termo = _texto_rh(filtros['nome'])
+    if termo:
+        coluna_norm = db.func.translate(db.func.lower(RhServidor.nome), _ACENTOS_RH, _SEM_ACENTOS_RH)
+        for pedaco in termo.split():
+            q = q.filter(coluna_norm.like('%' + pedaco.replace('%', '\\%').replace('_', '\\_') + '%', escape='\\'))
+    if filtros['funcoes']:
+        q = q.filter(RhServidor.funcao.in_(filtros['funcoes']))
+    if filtros['locais']:
+        q = q.filter(RhServidor.local.in_(filtros['locais']))
+    return q.order_by(RhServidor.nome, RhServidor.matricula).all()
+
+
+def _linhas_base_rh(rows):
+    linhas = [['Matrícula', 'Nome', 'Função', 'Local', 'Competência da planilha']]
+    for s in rows:
+        linhas.append([
+            s.matricula,
+            s.nome,
+            s.funcao or '',
+            s.local or '',
+            competencia_label(s.competencia),
+        ])
+    return linhas
+
+
+@relatorios_bp.route('/base-rh')
+@login_required
+def base_rh():
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    competencias = _competencias_base_rh()
+    filtros = _filtros_base_rh(competencias)
+    rows = _query_base_rh(filtros)
+    ultima_imp = (
+        FreqImportacao.query.filter_by(status=FreqImportacao.STATUS_ATIVA)
+        .filter(FreqImportacao.n_servidores_base > 0)
+        .order_by(FreqImportacao.competencia.desc(), FreqImportacao.importado_em.desc())
+        .first()
+    )
+    funcoes = [
+        f for (f,) in db.session.query(RhServidor.funcao)
+        .filter(RhServidor.funcao.isnot(None), RhServidor.funcao != '')
+        .distinct().order_by(RhServidor.funcao)
+    ]
+    locais = [
+        f for (f,) in db.session.query(RhServidor.local)
+        .filter(RhServidor.local.isnot(None), RhServidor.local != '')
+        .distinct().order_by(RhServidor.local)
+    ]
+    return render_template(
+        'relatorios/base_rh.html',
+        rows=rows,
+        total=len(rows),
+        filtros=filtros,
+        competencias=competencias,
+        funcoes={f: f for f in funcoes},
+        locais={f: f for f in locais},
+        competencia_label=competencia_label,
+        ultima_imp=ultima_imp,
+    )
+
+
+@relatorios_bp.route('/base-rh/exportar/<formato>')
+@login_required
+def exportar_base_rh(formato):
+    if not current_user.pode('emitir_relatorios'):
+        abort(403)
+    filtros = _filtros_base_rh(_competencias_base_rh())
+    linhas = _linhas_base_rh(_query_base_rh(filtros))
+    nome = 'base_servidores_rh_' + datetime.now().strftime('%Y%m%d_%H%M')
+    if formato == 'csv':
+        return _csv_response(linhas, nome)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Base do RH'
+    _estilizar_cabecalho(ws, linhas[0])
+    for linha in linhas[1:]:
+        ws.append(linha)
+    _autofit(ws)
+    ws.freeze_panes = 'A2'
+    if formato == 'xls':
+        return Response(
+            _xlsx_response(wb, nome).get_data(),
+            mimetype='application/vnd.ms-excel',
+            headers={'Content-Disposition': f'attachment; filename="{nome}.xls"'},
+        )
+    return _xlsx_response(wb, nome)

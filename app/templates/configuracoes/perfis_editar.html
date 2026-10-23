@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}Editar Perfil — {{ perfil_label }}{% endblock %}
 
+{% block head %}
+<style>
+.perm-dica { font-size: .75rem; color: #718096; font-weight: 400; max-width: 26rem; margin-top: .15rem; }
+</style>
+{% endblock %}
+
 {% block content %}
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb">
@@ -40,6 +46,7 @@
                             <td style="padding-left: 2.5rem;">
                                 <i class="fas fa-{{ icon }} text-muted me-2"></i>
                                 <span>{{ secao_label }}</span>
+                                {% if dicas.get(secao_key) %}<div class="perm-dica">{{ dicas[secao_key] }}</div>{% endif %}
                             </td>
                         {% else %}
                         <tr>

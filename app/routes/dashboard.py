@@ -132,6 +132,7 @@ def index():
         mural_stats=mural_stats,
         meses=meses,
         pode_publicar=pode_publicar(),
+        pode_ver_mural=current_user.pode('ver_mural'),
         pode_editar_acao=pode_editar_acao,
         pode_excluir_acao=pode_excluir_acao,
         eh_meu_aniversario=eh_meu_aniversario,

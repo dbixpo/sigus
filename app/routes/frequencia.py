@@ -44,8 +44,12 @@ def _gestao():
     return unidades_gestao_rh(current_user)
 
 
+_PERFIS_TELA_UNIDADE = ('administrador', 'gestor_secretaria', 'coordenador')
+
+
 def _exigir_importador():
-    if not current_user.pode_importar_frequencia:
+    """Apontamentos da unidade e a importação que alimenta essa tela."""
+    if current_user.perfil not in _PERFIS_TELA_UNIDADE:
         abort(403)
 
 
@@ -62,18 +66,20 @@ def _unidades_escolha():
 
 
 def _pode_ver_matricula(matricula):
+    """A matrícula da própria pessoa, ou uma que esteja numa planilha que ela importou."""
     if matricula in matriculas_do_usuario(current_user):
         return True
-    ids = _gestao()
-    if ids is None:
-        return True
-    if not ids:
+    if current_user.perfil not in _PERFIS_TELA_UNIDADE:
         return False
-    return db.session.query(FreqLancamento.id).join(FreqImportacao).filter(
+    q = db.session.query(FreqLancamento.id).join(FreqImportacao).filter(
         FreqLancamento.matricula == matricula,
         FreqImportacao.status == FreqImportacao.STATUS_ATIVA,
-        FreqImportacao.unidade_id.in_(ids),
-    ).first() is not None
+        FreqImportacao.importado_por == current_user.id,
+    )
+    ids = _gestao()
+    if ids is not None:
+        q = q.filter(FreqImportacao.unidade_id.in_(ids or [0]))
+    return q.first() is not None
 
 
 # ── Prévia temporária ───────────────────────────────────────────────────────
@@ -141,12 +147,8 @@ def _sugerir_unidade(local, unidades):
 # ── Importação ──────────────────────────────────────────────────────────────
 
 def _importacoes_visiveis():
-    q = FreqImportacao.query
-    ids = _gestao()
-    if ids is not None:
-        q = q.filter(db.or_(FreqImportacao.unidade_id.in_(ids or [0]),
-                            FreqImportacao.importado_por == current_user.id))
-    return q
+    """Cada pessoa vê só o arquivo que ela mesma subiu."""
+    return FreqImportacao.query.filter(FreqImportacao.importado_por == current_user.id)
 
 
 @frequencia_bp.route('/frequencia/importar', methods=['GET', 'POST'])
@@ -209,7 +211,8 @@ def previa(token):
         unidade_sel = unidades[0].id
 
     anterior = FreqImportacao.query.filter_by(
-        competencia=competencia, local=dados['local'], status=FreqImportacao.STATUS_ATIVA).first()
+        competencia=competencia, local=dados['local'], status=FreqImportacao.STATUS_ATIVA,
+        importado_por=current_user.id).first()
 
     mats = [l['matricula'] for l in dados['lancamentos']] + [h['matricula'] for h in dados['horas_extras']]
     no_sigus = _matriculas_no_sigus(mats)
@@ -265,7 +268,8 @@ def confirmar(token):
 
     substituida = None
     for antiga in FreqImportacao.query.filter_by(
-            competencia=competencia, local=dados['local'], status=FreqImportacao.STATUS_ATIVA).all():
+            competencia=competencia, local=dados['local'], status=FreqImportacao.STATUS_ATIVA,
+            importado_por=current_user.id).all():
         FreqLancamento.query.filter_by(importacao_id=antiga.id).delete(synchronize_session=False)
         FreqHoraExtra.query.filter_by(importacao_id=antiga.id).delete(synchronize_session=False)
         antiga.status = FreqImportacao.STATUS_SUBSTITUIDA
@@ -323,8 +327,7 @@ def confirmar(token):
 def excluir_importacao(imp_id):
     _exigir_importador()
     imp = FreqImportacao.query.get_or_404(imp_id)
-    ids = _gestao()
-    if ids is not None and imp.unidade_id not in ids:
+    if imp.importado_por != current_user.id:
         abort(403)
     rotulo = f'{imp.competencia_label} ({imp.local})'
     db.session.delete(imp)
@@ -439,13 +442,16 @@ def apontamentos():
     lancs = []
     hes = []
     if mats:
+        dono = [FreqImportacao.importado_por == current_user.id] if de_outro else []
         lancs = (FreqLancamento.query.join(FreqImportacao)
                  .filter(FreqLancamento.matricula.in_(mats),
-                         FreqImportacao.status == FreqImportacao.STATUS_ATIVA)
+                         FreqImportacao.status == FreqImportacao.STATUS_ATIVA,
+                         *dono)
                  .order_by(FreqImportacao.competencia.desc()).all())
         hes = (FreqHoraExtra.query.join(FreqImportacao)
                .filter(FreqHoraExtra.matricula.in_(mats),
-                       FreqImportacao.status == FreqImportacao.STATUS_ATIVA)
+                       FreqImportacao.status == FreqImportacao.STATUS_ATIVA,
+                       *dono)
                .order_by(FreqImportacao.competencia.desc()).all())
 
     competencias = sorted({l.importacao.competencia for l in lancs} | {h.importacao.competencia for h in hes},
@@ -526,19 +532,19 @@ def apontamentos():
 @login_required
 def unidade():
     _exigir_importador()
-    ids = _gestao()
-    q_imp = FreqImportacao.query.filter_by(status=FreqImportacao.STATUS_ATIVA)
-    if ids is not None:
-        q_imp = q_imp.filter(FreqImportacao.unidade_id.in_(ids or [0]))
-    unidade_ids = sorted({i for (i,) in q_imp.with_entities(FreqImportacao.unidade_id).distinct() if i})
-    unidades = Unidade.query.filter(Unidade.id.in_(unidade_ids or [0])).order_by(Unidade.nome).all()
+    unidades = _unidades_escolha()
+    unidade_ids = {u.id for u in unidades}
 
     un_id = request.args.get('unidade_id', type=int)
     if un_id not in unidade_ids:
         logada = current_user.unidade_logada
         un_id = logada.id if logada and logada.id in unidade_ids else (unidades[0].id if unidades else None)
 
-    imps = q_imp.filter(FreqImportacao.unidade_id == un_id).all() if un_id else []
+    imps = []
+    if un_id:
+        imps = (FreqImportacao.query.filter_by(
+            status=FreqImportacao.STATUS_ATIVA, unidade_id=un_id,
+            importado_por=current_user.id).all())
     competencias = sorted({i.competencia for i in imps}, reverse=True)
     comp = _parse_competencia(request.args.get('competencia'))
     if comp not in competencias:

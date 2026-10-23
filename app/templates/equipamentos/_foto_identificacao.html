@@ -1,0 +1,58 @@
+<div id="blocoFotoEquipamento" class="border rounded-3 p-3" hidden
+     style="border-color:rgba(26,130,184,.35)!important;background:rgba(26,130,184,.05)">
+    <div class="fw-semibold mb-1" style="color:#0D3B5E">
+        <i class="fas fa-camera me-1" style="color:#1A82B8"></i>Foto do equipamento
+    </div>
+    <p class="small mb-2" style="color:#1E3A50">
+        Sem patrimônio e sem número de série, a foto identifica o bem.
+        Arraste para posicionar e use o controle para aproximar.
+        O que ficar no quadrado é gravado em 500×500 pixels.
+    </p>
+    <div id="fotoAtualEquipamento" class="align-items-center gap-2 mb-2 {% if equipamento and equipamento.foto_url %}d-flex{% else %}d-none{% endif %}">
+        {% if equipamento and equipamento.foto_url %}
+        <img src="{{ equipamento.foto_url }}" alt="Foto atual do equipamento" width="72" height="72"
+             class="rounded border" style="object-fit:cover">
+        {% endif %}
+        <span class="small" style="color:#718096">Esta foto já está salva. Tire outra só se quiser trocar.</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mb-2">
+        <button type="button" class="btn btn-primary btn-sm" id="btnTirarFoto">
+            <i class="fas fa-camera me-1"></i>Tirar foto
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm" id="btnEscolherFoto">
+            <i class="fas fa-image me-1"></i>Escolher imagem
+        </button>
+    </div>
+    <input type="file" id="inputFotoCamera" accept="image/*" capture="environment" hidden>
+    <input type="file" id="inputFotoArquivo" accept="image/*" hidden>
+    <input type="hidden" name="foto_identificacao" id="fotoIdentificacao" value="">
+    <div id="recorteFoto" hidden>
+        <div id="palcoFoto" role="application" aria-label="Ajuste o enquadramento da foto">
+            <img id="imgRecorte" alt="">
+        </div>
+        <label class="form-label small mt-2 mb-1" for="zoomFoto">Aproximar</label>
+        <input type="range" id="zoomFoto" class="form-range" min="1" max="3" step="0.01" value="1">
+    </div>
+    <div id="avisoFoto" class="small mt-2" style="color:#E63030" hidden>Tire a foto e ajuste o enquadramento antes de salvar.</div>
+</div>
+<style>
+#palcoFoto {
+    width: min(100%, 320px);
+    aspect-ratio: 1;
+    overflow: hidden;
+    position: relative;
+    background: #0D3B5E;
+    border-radius: 12px;
+    touch-action: none;
+    cursor: grab;
+}
+#imgRecorte {
+    position: absolute;
+    left: 0;
+    top: 0;
+    max-width: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+}
+</style>

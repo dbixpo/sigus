@@ -6,13 +6,13 @@ Registro: `app/__init__.py` (`create_app`).
 
 | Blueprint | Prefixo | Arquivo | Para que serve |
 |---|---|---|---|
-| `auth` | `/` | `app/routes/auth.py` | Login, logout, perfil, unidade padrão |
+| `auth` | `/` | `app/routes/auth.py` | Login, logout, perfil, unidade padrão. Administrador pode simular outro perfil na sessão (`POST /testar-perfil`); o cadastro não muda |
 | `dashboard` | `/` | `app/routes/dashboard.py` | Home após o login |
 | `noticias` | `/` | `app/routes/noticias.py` | Comunicados, ciência, mural de ações |
 | `unidades` | `/configuracoes/unidades` | `app/routes/unidades.py` | Ficha da unidade (abas: salas, equipamentos, NSP, profissionais…) |
 | `predios` | `/configuracoes/predios` | `app/routes/predios.py` | Prédios |
 | `salas` | `/salas` | `app/routes/salas.py` | CRUD de sala + **cadastro externo** |
-| `equipamentos` | `/equipamentos` | `app/routes/equipamentos.py` | Inventário, ficha, baixa, usuários do bem |
+| `equipamentos` | `/equipamentos` | `app/routes/equipamentos.py` | Inventário, ficha, baixa, usuários do bem, cadastro externo e foto obrigatória sem patrimônio e sem série. No formulário, Informações Adicionais ficam em grade abaixo da identificação e dos campos do tipo; estado e condição continuam na coluna da direita |
 | `chamados` | `/chamados` | `app/routes/chamados.py` | Abrir / acompanhar / gestão (fila) |
 | `chamados_externo` | `/abrir-chamado` | `app/routes/chamados_externo.py` | Chamado **público** (sem login) |
 | `transferencias` | `/transferencias` | `app/routes/transferencias.py` | Termos, aceite, Lojinha |
@@ -20,7 +20,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `contrato_financeiro` | `/contratos/empenhos` | `app/routes/contrato_financeiro.py` | Empenhos |
 | `empresas` | `/empresas` | `app/routes/empresas.py` | Empresas contratadas |
 | `sueq` | `/sueq` | `app/routes/sueq.py` | Emendas / licitações / chamados SUEQ (schema `sueq`) |
-| `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban; prazo editável com histórico (`alterar_prazo_acao`) |
+| `planejamentos` | `/planejamentos` | `app/routes/planejamentos.py` | Planos GUT / Kanban; prazo e título da ação editáveis, com histórico na observação (`alterar_prazo_acao`, `alterar_titulo_acao`) |
 | `agenda` | `/agenda` | `app/routes/agenda.py` | Agenda estilo Google + reuniões, reservas de veículo e de sala; arrastar (`/eventos/<id>/mover`). Ver [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) |
 | `veiculos` | `/veiculos` | `app/routes/veiculos.py` | Cadastro de veículos (tabela própria, sem equipamentos), usos do mês, km e RDV para imprimir (A4 paisagem, frente e verso) |
 | `nsp` | `/seguranca-paciente` | `app/routes/nsp.py` | Segurança do Paciente no fluxo do Núcleo (notificação pública, qualificação, comissões, relatórios). Ver [SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md) |
@@ -45,6 +45,7 @@ Trate como superfície de internet: CSRF, validação, sem dado clínico.
 | `/abrir-chamado` | Chamado externo |
 | `/solicitar-vinculo-profissional` | Pedido de vínculo (coordenação aprova na ficha da unidade) |
 | `/salas/cadastro-externo` | Mutirão de salas |
+| `/equipamentos/cadastro-externo` | Mutirão de equipamentos da unidade (o QR da ficha da unidade já traz `unidade_id`) |
 | `/mapa-da-saude` | Mapa público da rede |
 | `/links` (sem login) e `/links/publico` | Links Úteis liberados para todos os perfis. O endereço curto `/sigus/links` é o que vai no QR e no copiar |
 | `/seguranca-paciente/notificar` | Notificação de incidente (anônima por padrão) |

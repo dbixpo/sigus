@@ -1,8 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session, abort
 from flask_login import login_user, logout_user, login_required, current_user
 import os, uuid, mimetypes
 from app import db
-from app.models.usuario import Usuario
+from app.models.usuario import Usuario, PERFIS
 from app.models.notificacao import Notificacao
 from app.models.unidade import Unidade
 
@@ -77,9 +77,36 @@ def definir_unidade_padrao():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    session.pop('perfil_teste', None)
     logout_user()
     flash('Você saiu do sistema.', 'info')
     return redirect(url_for('auth.login'))
+
+
+def _voltar_depois_do_teste():
+    destino = request.referrer or ''
+    if destino.startswith(request.host_url):
+        return redirect(destino)
+    return redirect(url_for('dashboard.index'))
+
+
+@auth_bp.route('/testar-perfil', methods=['POST'])
+@login_required
+def testar_perfil():
+    """Administrador vê o sistema como outro perfil, sem alterar o cadastro."""
+    if current_user.perfil_gravado != 'administrador':
+        abort(403)
+    codigo = (request.form.get('perfil') or '').strip()
+    if not codigo or codigo == 'administrador':
+        session.pop('perfil_teste', None)
+        flash('Você voltou ao perfil Administrador.', 'success')
+    elif codigo not in PERFIS:
+        abort(400)
+    else:
+        session['perfil_teste'] = codigo
+        flash(f'Você está vendo o sistema como {PERFIS[codigo]}.', 'info')
+    current_user.aplicar_perfil_teste(session.get('perfil_teste'))
+    return _voltar_depois_do_teste()
 
 
 @auth_bp.route('/perfil', methods=['GET', 'POST'])

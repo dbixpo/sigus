@@ -127,6 +127,18 @@
     <div class="col-md-4 relatorio-card">
         <div class="card h-100">
             <div class="card-body text-center py-4">
+                <i class="fas fa-address-book fs-1 d-block mb-3" style="color:#1A82B8;"></i>
+                <h5 class="fw-bold">Base de servidores do RH</h5>
+                <p class="text-muted small">Profissionais da aba Banco de Dados da planilha de frequência. Uma matrícula por linha, com os dados da planilha mais recente.</p>
+                <a href="{{ url_for('relatorios.base_rh') }}" class="btn text-white" style="background:#1A82B8;">
+                    <i class="fas fa-search me-1"></i>Abrir Relatório
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 relatorio-card">
+        <div class="card h-100">
+            <div class="card-body text-center py-4">
                 <i class="fas fa-user-lines-fill fs-1 text-secondary d-block mb-3"></i>
                 <h5 class="fw-bold">Relatório de Usuários</h5>
                 <p class="text-muted small">Visão cadastral — nome, e-mail, WhatsApp, matrículas, CBO e status de todos os usuários do sistema.</p>

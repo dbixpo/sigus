@@ -15,6 +15,7 @@
     --sigus-text-muted:#718096;
     --sigus-sidebar-width: 256px;
     --sigus-navbar-height: 58px;
+    --sigus-teste-altura: 0px;
     --sigus-sidebar-collapsed-width: 64px;
 }
 
@@ -25,6 +26,50 @@ body {
     font-size: 0.9rem;
     color: var(--sigus-text);
     background-color: var(--sigus-bg);
+}
+
+body[data-teste-perfil] {
+    --sigus-teste-altura: 44px;
+}
+
+.sigus-teste-perfil {
+    position: fixed;
+    top: var(--sigus-navbar-height);
+    left: 0;
+    right: 0;
+    z-index: 1045;
+    min-height: var(--sigus-teste-altura);
+    background: var(--sigus-accent-yellow);
+    color: var(--sigus-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    padding: .35rem .8rem;
+    font-size: .85rem;
+    font-weight: 600;
+}
+.sigus-teste-perfil form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 0;
+}
+.sigus-teste-perfil button {
+    background: var(--sigus-dark);
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: .25rem .7rem;
+    font-weight: 600;
+    font-size: .8rem;
+}
+.sigus-teste-perfil button:hover { background: #155d8c; }
+
+@media (max-width: 767.98px) {
+    body[data-teste-perfil] { --sigus-teste-altura: 68px; }
 }
 
 /* ── NAVBAR ─────────────────────────────────────────────── */
@@ -67,7 +112,7 @@ body {
 .sigus-wrapper {
     display: flex;
     min-height: 100vh;
-    padding-top: var(--sigus-navbar-height);
+    padding-top: calc(var(--sigus-navbar-height) + var(--sigus-teste-altura));
 }
 
 /* ── SIDEBAR ─────────────────────────────────────────────── */
@@ -75,7 +120,7 @@ body {
     width: var(--sigus-sidebar-width);
     background-color: var(--sigus-dark);
     position: fixed;
-    top: var(--sigus-navbar-height);
+    top: calc(var(--sigus-navbar-height) + var(--sigus-teste-altura));
     left: 0;
     bottom: 0;
     display: flex;
@@ -299,7 +344,7 @@ body {
 .sigus-main {
     flex: 1;
     margin-left: var(--sigus-sidebar-width);
-    min-height: calc(100vh - var(--sigus-navbar-height));
+    min-height: calc(100vh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
     transition: margin-left 0.25s ease;
     overflow-x: hidden;
 }
@@ -536,6 +581,38 @@ body {
     padding: 2rem;
 }
 
+/* No celular o crédito ficava ao lado do cartão e espremia o formulário. */
+@media (max-width: 767.98px) {
+    .login-wrapper {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem 1rem max(1.25rem, env(safe-area-inset-bottom));
+    }
+    .login-card {
+        width: 100%;
+        flex-shrink: 0;
+    }
+    .login-card .login-header {
+        padding: 1.5rem 1.25rem 1.15rem;
+    }
+    .login-card .login-body {
+        padding: 1.25rem 1.15rem 1.35rem;
+    }
+    .login-card .form-control,
+    .login-card .input-group-text,
+    .login-card .btn {
+        font-size: 16px;
+    }
+    .login-wrapper > p {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    .login-wrapper > p a {
+        color: var(--sigus-text-muted) !important;
+    }
+}
+
 /* ── FILTROS ─────────────────────────────────────────────── */
 .filter-bar {
     background: #fff;
@@ -623,9 +700,9 @@ body {
         width: 0;
         overflow: hidden;
         position: fixed;
-        top: var(--sigus-navbar-height);
+        top: calc(var(--sigus-navbar-height) + var(--sigus-teste-altura));
         left: 0;
-        height: calc(100vh - var(--sigus-navbar-height));
+        height: calc(100vh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
         z-index: 1040;
         transition: width 0.25s ease;
     }
@@ -772,9 +849,9 @@ body.pagina-agenda .sigus-wrapper {
     overflow: hidden;
 }
 body.pagina-agenda .sigus-main {
-    height: calc(100dvh - var(--sigus-navbar-height));
+    height: calc(100dvh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
     min-height: 0;
-    max-height: calc(100dvh - var(--sigus-navbar-height));
+    max-height: calc(100dvh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
     overflow: hidden;
     display: flex;
     flex-direction: column;

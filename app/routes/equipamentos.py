@@ -177,9 +177,86 @@ def _resolver_marca_modelo(tipo):
     return marca_id, modelo_id
 
 
+def _aplicar_numeros(equipamento):
+    """Sem patrimônio / sem série limpam o campo. Os dois marcados exigem foto."""
+    sem_pat = request.form.get('sem_patrimonio') == 'on'
+    sem_ser = request.form.get('sem_serie') == 'on'
+    if sem_pat:
+        equipamento.numero_patrimonio = None
+    else:
+        equipamento.numero_patrimonio = _normalizar_patrimonio(request.form.get('numero_patrimonio', ''))
+    if sem_ser:
+        equipamento.numero_serie = None
+    else:
+        equipamento.numero_serie = request.form.get('numero_serie', '').strip() or None
+    return sem_pat and sem_ser
+
+
+def _pasta_fotos_equipamento():
+    pasta = os.path.join(current_app.static_folder, 'uploads', 'equipamentos_fotos')
+    os.makedirs(pasta, exist_ok=True)
+    return pasta
+
+
+def _remover_arquivo_foto(nome):
+    if not nome or nome != os.path.basename(nome):
+        return
+    try:
+        os.remove(os.path.join(_pasta_fotos_equipamento(), nome))
+    except OSError:
+        pass
+
+
+def _gravar_foto_quadrada(data_url):
+    """Aceita o recorte enviado pelo navegador e grava JPEG 500×500."""
+    bruto = (data_url or '').strip()
+    if not bruto.startswith('data:image/') or ',' not in bruto:
+        return None
+    import base64
+    from io import BytesIO
+    from PIL import Image, ImageOps
+    try:
+        raw = base64.b64decode(bruto.split(',', 1)[1], validate=False)
+        if not raw or len(raw) > 1_500_000:
+            return None
+        img = ImageOps.exif_transpose(Image.open(BytesIO(raw)))
+        img = img.convert('RGB')
+    except Exception:
+        return None
+    largura, altura = img.size
+    lado = min(largura, altura)
+    if lado < 32:
+        return None
+    if largura != altura:
+        esquerda = (largura - lado) // 2
+        topo = (altura - lado) // 2
+        img = img.crop((esquerda, topo, esquerda + lado, topo + lado))
+    filtro = getattr(getattr(Image, 'Resampling', Image), 'LANCZOS')
+    img = img.resize((500, 500), filtro)
+    nome = uuid.uuid4().hex + '.jpg'
+    img.save(os.path.join(_pasta_fotos_equipamento(), nome), 'JPEG', quality=85, optimize=True)
+    return nome
+
+
+def _exigir_foto_se_preciso(equipamento):
+    """Grava a foto nova. Sem plaquinha e sem série, ela é obrigatória."""
+    if request.form.get('sem_patrimonio') != 'on' or request.form.get('sem_serie') != 'on':
+        return None
+    data_url = (request.form.get('foto_identificacao') or '').strip()
+    if data_url:
+        nome = _gravar_foto_quadrada(data_url)
+        if not nome:
+            return 'Não consegui usar essa foto. Tire outra e ajuste o enquadramento.'
+        _remover_arquivo_foto(equipamento.foto_identificacao)
+        equipamento.foto_identificacao = nome
+        return None
+    if equipamento.foto_identificacao:
+        return None
+    return 'Sem patrimônio e sem número de série, a foto do equipamento é obrigatória.'
+
+
 def _aplicar_identificacao(equipamento, tipo):
-    equipamento.numero_patrimonio = _normalizar_patrimonio(request.form.get('numero_patrimonio', ''))
-    equipamento.numero_serie = request.form.get('numero_serie', '').strip() or None
+    _aplicar_numeros(equipamento)
     equipamento.ano_fabricacao = _parse_ano(request.form.get('ano_fabricacao'))
     equipamento.observacoes = request.form.get('observacoes', '').strip()
     marca_id, modelo_id = _resolver_marca_modelo(tipo)
@@ -294,6 +371,240 @@ def listar():
                            filtro_condicao_list=filtro_condicao_list)
 
 
+def _resolver_marca_modelo_externo(tipo):
+    """Marca e modelo do mutirão. Texto novo fica pendente para a SUEQ."""
+    marca_id = request.form.get('marca_id', type=int) or None
+    modelo_id = request.form.get('modelo_id', type=int) or None
+    nova_marca = (request.form.get('nova_marca') or '').strip()
+    novo_modelo = (request.form.get('novo_modelo') or '').strip()
+
+    if nova_marca:
+        marca = Marca.query.filter(db.func.lower(Marca.nome) == nova_marca.lower()).first()
+        if not marca:
+            marca = Marca(nome=nova_marca, pendente=True)
+            db.session.add(marca)
+            db.session.flush()
+        if not marca.suporta_tipo(tipo.id):
+            marca.tipos.append(tipo)
+        marca_id = marca.id
+
+    if novo_modelo and marca_id:
+        modelo = Modelo.query.filter(
+            Modelo.marca_id == marca_id,
+            Modelo.tipo_equipamento_id == tipo.id,
+            db.func.lower(Modelo.nome) == novo_modelo.lower(),
+        ).first()
+        if not modelo:
+            modelo = Modelo(
+                marca_id=marca_id, tipo_equipamento_id=tipo.id,
+                nome=novo_modelo, pendente=True,
+            )
+            db.session.add(modelo)
+            db.session.flush()
+        modelo_id = modelo.id
+
+    if marca_id:
+        marca = db.session.get(Marca, marca_id)
+        if not marca or not marca.suporta_tipo(tipo.id):
+            return None, None
+        if modelo_id:
+            modelo = db.session.get(Modelo, modelo_id)
+            if not modelo or modelo.marca_id != marca_id or (
+                modelo.tipo_equipamento_id and modelo.tipo_equipamento_id != tipo.id
+            ):
+                modelo_id = None
+    return marca_id, modelo_id
+
+
+def _sem_acento(texto):
+    import unicodedata
+    texto = unicodedata.normalize('NFD', texto or '')
+    return ''.join(c for c in texto if not unicodedata.combining(c)).lower()
+
+
+def _usuarios_ativos_unidade(unidade, excluir_ids=()):
+    """Pessoas com vínculo ativo na unidade, inclusive administrador."""
+    if not unidade:
+        return []
+    ids = {uu.usuario_id for uu in unidade.usuarios.filter_by(ativo=True).all() if uu.usuario_id}
+    ids -= set(excluir_ids or ())
+    if not ids:
+        return []
+    return Usuario.query.filter(
+        Usuario.id.in_(ids),
+        Usuario.ativo == True,
+    ).order_by(Usuario.nome).all()
+
+
+@equipamentos_bp.route('/tipos-busca')
+def buscar_tipos():
+    """Busca de tipo para o cadastro (normal e externo). Só responde depois de 2 letras."""
+    termo = _sem_acento((request.args.get('q') or '').strip())
+    if len(termo) < 2:
+        return jsonify(resultados=[])
+    pedacos = termo.split()
+    achados = []
+    consulta = TipoEquipamento.query.filter_by(ativo=True).order_by(TipoEquipamento.nome)
+    for tipo in consulta:
+        alvo = _sem_acento(f'{tipo.nome} {tipo.classificacao or ""}')
+        if all(pedaco in alvo for pedaco in pedacos):
+            achados.append({
+                'id': tipo.id,
+                'nome': tipo.nome,
+                'classificacao': tipo.classificacao or '',
+            })
+        if len(achados) >= 15:
+            break
+    return jsonify(resultados=achados)
+
+
+@equipamentos_bp.route('/cadastro-externo/marcas/<int:tipo_id>')
+def cadastro_externo_marcas(tipo_id):
+    tipo = TipoEquipamento.query.filter_by(id=tipo_id, ativo=True).first_or_404()
+    marcas = tipo.marcas.order_by(Marca.nome).all()
+    return jsonify([{'id': m.id, 'nome': _nome_marca(m)} for m in marcas])
+
+
+@equipamentos_bp.route('/cadastro-externo/modelos/<int:marca_id>')
+def cadastro_externo_modelos(marca_id):
+    tipo_id = request.args.get('tipo_id', type=int)
+    q = Modelo.query.filter_by(marca_id=marca_id)
+    if tipo_id:
+        q = q.filter_by(tipo_equipamento_id=tipo_id)
+    return jsonify([
+        {'id': m.id, 'nome': f'{m.nome} (pendente de validação)' if m.pendente else m.nome}
+        for m in q.order_by(Modelo.nome).all()
+    ])
+
+
+def _pessoa_da_unidade(unidade, usuario_id):
+    """Pessoa ativa com vínculo ativo na unidade. O cadastro externo não cria gente nova."""
+    if not unidade or not usuario_id:
+        return None
+    pessoa = Usuario.query.filter_by(id=usuario_id, ativo=True).first()
+    if not pessoa:
+        return None
+    vinculo = UsuarioUnidade.query.filter_by(
+        usuario_id=pessoa.id, unidade_id=unidade.id, ativo=True,
+    ).first()
+    return pessoa if vinculo else None
+
+
+@equipamentos_bp.route('/cadastro-externo/pessoas')
+def cadastro_externo_pessoas():
+    """Busca de quem já está na unidade, para o cadastro externo. Sem CPF."""
+    unidade_id = request.args.get('unidade_id', type=int)
+    termo = _sem_acento((request.args.get('q') or '').strip())
+    if not unidade_id or len(termo) < 2:
+        return jsonify(resultados=[])
+    unidade = Unidade.query.filter_by(id=unidade_id, status='ativa').first()
+    if not unidade:
+        return jsonify(resultados=[])
+    pedacos = termo.split()
+    achados = []
+    for pessoa in _usuarios_ativos_unidade(unidade):
+        nome = _sem_acento(pessoa.nome or '')
+        if all(pedaco in nome for pedaco in pedacos):
+            achados.append({
+                'id': pessoa.id,
+                'nome': pessoa.nome,
+                'perfil': pessoa.perfil_label,
+            })
+        if len(achados) >= 15:
+            break
+    return jsonify(resultados=achados)
+
+
+@equipamentos_bp.route('/cadastro-externo', methods=['GET', 'POST'])
+def cadastro_externo():
+    """Mutirão de equipamentos, sem login. O QR da ficha da unidade já traz a unidade."""
+    if request.method == 'POST' and (request.form.get('website') or '').strip():
+        unidade_id = request.form.get('unidade_id', type=int)
+        return redirect(url_for('equipamentos.cadastro_externo', unidade_id=unidade_id))
+
+    if request.method == 'POST':
+        unidade_id = request.form.get('unidade_id', type=int)
+        sala_id = request.form.get('sala_id', type=int)
+        unidade = Unidade.query.get(unidade_id) if unidade_id else None
+        destino = url_for('equipamentos.cadastro_externo', unidade_id=unidade_id, sala_id=sala_id)
+        if not unidade or unidade.status != 'ativa':
+            flash('Selecione uma unidade válida.', 'danger')
+            return redirect(url_for('equipamentos.cadastro_externo'))
+        if unidade.inventario_inicial_concluido:
+            flash('O inventário inicial desta unidade já foi encerrado. Quem inclui equipamento agora é a SUEQ ou a TI, no SIGUS.', 'warning')
+            return redirect(destino)
+        sala = Sala.query.get(sala_id) if sala_id else None
+        if not sala or sala.unidade_id != unidade.id or not sala.ativo:
+            flash('Selecione a sala onde o equipamento está.', 'danger')
+            return redirect(url_for('equipamentos.cadastro_externo', unidade_id=unidade.id))
+        tipo = TipoEquipamento.query.filter_by(
+            id=request.form.get('tipo_equipamento_id', type=int), ativo=True,
+        ).first()
+        if not tipo:
+            flash('Selecione o tipo de equipamento.', 'danger')
+            return redirect(destino)
+        patrimonio = None
+        if request.form.get('sem_patrimonio') != 'on':
+            patrimonio = _normalizar_patrimonio(request.form.get('numero_patrimonio', ''))
+        if patrimonio:
+            outro = Equipamento.query.filter_by(ativo=True, numero_patrimonio=patrimonio).first()
+            if outro and outro.sala:
+                flash(
+                    f'O patrimônio {patrimonio} já está em {outro.sala.unidade.nome}, sala {outro.sala.nome}.',
+                    'warning',
+                )
+                return redirect(destino)
+        status, condicao = _status_condicao_do_form()
+        equipamento = Equipamento(
+            sala_id=sala.id,
+            tipo_equipamento_id=tipo.id,
+            status=status,
+            condicao=condicao,
+        )
+        db.session.add(equipamento)
+        db.session.flush()
+        _aplicar_numeros(equipamento)
+        equipamento.ano_fabricacao = _parse_ano(request.form.get('ano_fabricacao'))
+        equipamento.observacoes = (request.form.get('observacoes') or '').strip()
+        marca_id, modelo_id = _resolver_marca_modelo_externo(tipo)
+        equipamento.marca_id = marca_id
+        equipamento.modelo_id = modelo_id
+        pessoa = _pessoa_da_unidade(unidade, request.form.get('usuario_id', type=int))
+        aviso_pessoa = bool(request.form.get('usuario_id', type=int)) and not pessoa
+        if pessoa:
+            db.session.add(EquipamentoUsuario(
+                equipamento_id=equipamento.id,
+                usuario_id=pessoa.id,
+            ))
+        erro_foto = _exigir_foto_se_preciso(equipamento)
+        if erro_foto:
+            db.session.rollback()
+            flash(erro_foto, 'danger')
+            return redirect(destino)
+        db.session.commit()
+        flash(f'{tipo.nome} cadastrado em {sala.nome}.', 'success')
+        if pessoa:
+            flash(f'{pessoa.nome} vinculado a este equipamento.', 'success')
+        elif aviso_pessoa:
+            flash('A pessoa informada não está nesta unidade, então o vínculo não foi feito.', 'warning')
+        return redirect(destino)
+
+    unidade_id = request.args.get('unidade_id', type=int)
+    sala_id = request.args.get('sala_id', type=int)
+    unidade = Unidade.query.filter_by(id=unidade_id, status='ativa').first() if unidade_id else None
+    salas = []
+    if unidade:
+        salas = Sala.query.filter_by(unidade_id=unidade.id, ativo=True).order_by(Sala.nome).all()
+    unidades = Unidade.query.filter_by(status='ativa').order_by(Unidade.nome).all()
+    return render_template(
+        'equipamentos/cadastro_externo.html',
+        unidade=unidade,
+        unidades=unidades,
+        salas=salas,
+        sala_id=sala_id,
+    )
+
+
 @equipamentos_bp.route('/novo/<int:sala_id>', methods=['GET', 'POST'])
 @login_required
 def novo(sala_id):
@@ -316,6 +627,11 @@ def novo(sala_id):
         db.session.add(equipamento)
         db.session.flush()
         _aplicar_identificacao(equipamento, tipo)
+        erro_foto = _exigir_foto_se_preciso(equipamento)
+        if erro_foto:
+            db.session.rollback()
+            flash(erro_foto, 'danger')
+            return redirect(url_for('equipamentos.novo', sala_id=sala_id))
         if pode_informacoes_adicionais(current_user):
             _aplicar_info_sueq(equipamento)
         db.session.commit()
@@ -338,12 +654,7 @@ def novo_na_unidade(unidade_id):
     tipos   = TipoEquipamento.query.filter_by(ativo=True).order_by(TipoEquipamento.nome).all()
 
     # Usuários disponíveis para vincular durante o cadastro (mesma lógica do detalhe do equipamento)
-    ids_unidade = {uu.usuario_id for uu in unidade.usuarios.filter_by(ativo=True).all() if uu.usuario_id}
-    usuarios_disponiveis = Usuario.query.filter(
-        Usuario.id.in_(ids_unidade) if ids_unidade else db.false(),
-        Usuario.ativo == True,
-        Usuario.perfil != 'administrador',
-    ).order_by(Usuario.nome).all()
+    usuarios_disponiveis = _usuarios_ativos_unidade(unidade)
 
     if request.method == 'POST':
         sala_id = request.form.get('sala_id', type=int)
@@ -371,6 +682,11 @@ def novo_na_unidade(unidade_id):
         db.session.add(equipamento)
         db.session.flush()
         _aplicar_identificacao(equipamento, tipo)
+        erro_foto = _exigir_foto_se_preciso(equipamento)
+        if erro_foto:
+            db.session.rollback()
+            flash(erro_foto, 'danger')
+            return redirect(url_for('equipamentos.novo_na_unidade', unidade_id=unidade_id))
         if pode_informacoes_adicionais(current_user):
             _aplicar_info_sueq(equipamento)
         db.session.commit()
@@ -440,15 +756,7 @@ def detalhe(id):
     # Usuários disponíveis para vincular: ativos na mesma unidade, ainda não vinculados
     ids_ja_vinculados = {ev.usuario_id for ev in usuarios_vinculados}
     unidade = equipamento.sala.unidade if equipamento.sala else None
-    if unidade:
-        ids_unidade = {uu.usuario_id for uu in unidade.usuarios.filter_by(ativo=True).all()}
-    else:
-        ids_unidade = set()
-    usuarios_disponiveis = Usuario.query.filter(
-        Usuario.id.in_(ids_unidade - ids_ja_vinculados),
-        Usuario.ativo == True,
-        Usuario.perfil != 'administrador'
-    ).order_by(Usuario.nome).all()
+    usuarios_disponiveis = _usuarios_ativos_unidade(unidade, ids_ja_vinculados)
 
     return render_template('equipamentos/detalhe.html',
                            equipamento=equipamento,
@@ -595,6 +903,11 @@ def editar(id):
         equipamento.condicao = condicao
         db.session.flush()
         _aplicar_identificacao(equipamento, tipo_atual)
+        erro_foto = _exigir_foto_se_preciso(equipamento)
+        if erro_foto:
+            db.session.rollback()
+            flash(erro_foto, 'danger')
+            return _render_editar()
         if pode_informacoes_adicionais(current_user):
             _aplicar_info_sueq(equipamento)
         db.session.commit()

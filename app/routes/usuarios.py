@@ -12,11 +12,14 @@ from app.utils import _montar_corpo_email, _montar_corpo_email_ficha, nome_propr
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
-# Perfis que cada nível pode atribuir ao cadastrar/editar um usuário
+# Quem pode receber cada perfil no cadastro e na edição.
+# Linha = quem cadastra. Não inclui o próprio nível, salvo o Administrador.
 _PERFIS_PERMITIDOS = {
-    'administrador':    ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo', 'profissional'],
-    'gestor_secretaria': ['gestor_secretaria', 'coordenador', 'administrativo', 'profissional'],  # Gestor Central pode editar perfil (exceto admin)
-    'coordenador':      ['coordenador', 'administrativo', 'profissional'],
+    'administrador':     ['administrador', 'gestor_secretaria', 'coordenador', 'administrativo', 'profissional'],
+    'gestor_secretaria': ['coordenador', 'administrativo', 'profissional'],
+    'coordenador':       ['administrativo', 'profissional'],
+    'administrativo':    ['profissional'],
+    'profissional':      [],
 }
 
 def _perfis_disponiveis():
@@ -156,6 +159,8 @@ def novo():
         abort(403)
 
     perfis_disponiveis = _perfis_disponiveis()
+    if not perfis_disponiveis:
+        abort(403)
 
     if request.method == 'POST':
         from app.models.identidade import completar_email
@@ -165,9 +170,9 @@ def novo():
             return redirect(url_for('usuarios.novo'))
 
         perfil_solicitado = request.form.get('perfil', 'profissional')
-        # Garante que não consiga atribuir perfil acima do permitido
-        if perfil_solicitado not in perfis_disponiveis:
-            perfil_solicitado = list(perfis_disponiveis.keys())[-1]
+        if not perfis_disponiveis or perfil_solicitado not in perfis_disponiveis:
+            flash('Você não pode cadastrar um usuário com esse perfil.', 'danger')
+            return redirect(url_for('usuarios.novo'))
 
         u = Usuario(
             nome=nome_proprio(request.form['nome']),
@@ -212,8 +217,8 @@ def editar(id):
 
     perfis_disponiveis = _perfis_disponiveis()
     is_admin = current_user.pode('gerenciar_usuarios')
-    # Admin pode mudar qualquer perfil; outros só dentro do seu escopo
-    pode_alterar_perfil = is_admin or (usuario.perfil in perfis_disponiveis)
+    # Só altera o perfil se o atual já estiver entre os que esta pessoa pode atribuir.
+    pode_alterar_perfil = usuario.perfil in perfis_disponiveis
 
     if request.method == 'POST':
         try:
@@ -231,8 +236,13 @@ def editar(id):
                     usuario.email = novo_email
 
             novo_perfil = request.form.get('perfil', usuario.perfil)
-            if pode_alterar_perfil and (is_admin or novo_perfil in perfis_disponiveis):
-                usuario.perfil = novo_perfil
+            if novo_perfil != usuario.perfil:
+                if pode_alterar_perfil and novo_perfil in perfis_disponiveis:
+                    usuario.perfil = novo_perfil
+                else:
+                    db.session.rollback()
+                    flash('Você não pode atribuir esse perfil.', 'danger')
+                    return redirect(url_for('usuarios.editar', id=usuario.id))
 
             if is_admin:
                 usuario.ativo = request.form.get('ativo') == 'on'
@@ -259,7 +269,7 @@ def editar(id):
     cbos_ativos = [(c.codigo, c.descricao) for c in CBO.query.filter_by(ativo=True).order_by(CBO.codigo).all()]
     from app.sis_consulta import configurado as sis_configurado
     return render_template('usuarios/form.html', usuario=usuario,
-                           perfis=perfis_disponiveis if not is_admin else PERFIS,
+                           perfis=perfis_disponiveis,
                            escolaridades=ESCOLARIDADES,
                            cbos=cbos_ativos,
                            matriculas=matriculas,

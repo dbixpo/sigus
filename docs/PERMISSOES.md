@@ -20,13 +20,48 @@ No código: `current_user.pode('abrir_chamado')` etc. (`Usuario.pode` em `app/mo
 
 Hierarquia numérica (não substitui a matriz): administrador 5 … profissional 1.
 
+## Quem pode cadastrar qual perfil
+
+No cadastro e na edição de usuário (`/usuarios/novo` e `/usuarios/<id>/editar`), o perfil que pode ser gravado segue esta tabela. Quem edita uma pessoa cujo perfil está fora da lista vê o perfil travado e o servidor recusa a troca.
+
+| Quem cadastra | Administrador | Gestor Central | Gestor de Área | Apoio Administrativo | Operador Padrão |
+|---|---|---|---|---|---|
+| Administrador | sim | sim | sim | sim | sim |
+| Gestor Central | não | não | sim | sim | sim |
+| Gestor de Área | não | não | não | sim | sim |
+| Apoio Administrativo | não | não | não | não | sim |
+| Operador Padrão | não | não | não | não | não |
+
+Operador Padrão também não abre a tela de usuários. A lista fica em `_PERFIS_PERMITIDOS` (`app/routes/usuarios.py`).
+
+## Testar o sistema como outro perfil
+
+Quem está gravado como **Administrador** pode, no menu do próprio nome, escolher outro perfil. A troca vale só naquela sessão: menus, botões e bloqueios passam a ser os daquele perfil. O cadastro não muda. A faixa amarela **Voltar ao Administrador** desfaz a simulação, inclusive se o perfil testado não tiver acesso às configurações. Sair do sistema também desfaz.
+
 ## Matriz de seções
 
-Em **Configurações → Gestão de Perfis** cada perfil ganha Ver / Editar / Adicionar por seção (`SECOES`): patrimônio (prédios, unidades, salas, equipamentos), operações (chamados, gestão, transferências, contratos, emendas, licitações, SUEQ, empenho, empresas), gestão (planejamentos, agenda, Segurança do Paciente, relatórios), RH, links, cadastro público, configurações, usuários, auditoria.
+Em **Configurações → Gestão de Perfis** cada perfil (exceto Administrador) ganha Ver / Editar / Adicionar. A lista está em `SECOES` (`app/models/perfil_permissao.py`). Se a linha existe, vale o que está gravado: desmarcar o Ver de um item filho fecha aquele item mesmo com o grupo pai ligado. A herança do Ver do pai só existe enquanto a linha daquele item nunca foi salva.
 
-- Item **desmarcado** some do menu daquele perfil.
-- Administrador não precisa dessa tela para si; ela vale para os outros.
-- Não “teste” permissão no perfil de toda a rede em produção.
+| Grupo | O que o interruptor controla |
+|---|---|
+| Patrimônio | Prédios, unidades, salas, equipamentos e a aba de veículos da unidade |
+| Operações | Chamados, gestão de chamados, transferências, contratos, emendas, licitações, chamados SUEQ, controle de empenho, empresas |
+| Gestão | Agenda, planejamentos, Segurança do Paciente (menu), relatórios, mural e comunicados |
+| Outros | Links úteis e o link/QR do cadastro público |
+| Recursos humanos | Faltas abonadas e apontamentos da unidade (planilha do RH) |
+| Configurações | Cada catálogo separado: feriados, tipos de ação, tipos de unidade, padrão e tipos de sala, classificação RENEM, catálogo e status de equipamento, catálogo de veículos, marcas e modelos, divisões, status de chamados, CBOs, catálogos da Segurança do Paciente, identidade, usuários e auditoria |
+
+Como ler os três interruptores quando o rótulo não é óbvio:
+
+- **Mural:** Ver mostra o mural. Adicionar publica na própria unidade. Editar comunica para várias unidades.
+- **Apontamentos da unidade:** a tela só abre para Gestor de Área, Gestor Central e Administrador. Dá para trocar a unidade do alcance de cada um, mas a lista mostra só a planilha que a própria pessoa importou. Quem não subiu arquivo não vê lançamento nenhum. “Meus apontamentos” continua pessoal.
+- **Relatórios:** um interruptor para todos os relatórios do menu.
+- **Identidade e assets:** município, logos e domínio de e-mail. O Administrador sempre entra; os demais só com esta linha marcada.
+- **Gestão de Perfis:** só o Administrador. A linha da matriz não abre essa tela para outro perfil.
+- **Segurança do Paciente:** Ver abre o menu. Quem conduz os casos continua sendo a lista de membros do Núcleo e das comissões, não o perfil.
+- **Equipamentos na unidade:** incluir e corrigir cadastro seguem Adicionar e Editar. Depois do primeiro inventário, a unidade continua podendo transferir e mudar o estado do bem.
+
+O script `migrations/seed_permissoes_faltantes.py` só cria a linha que ainda não existe, com o mesmo acesso que a pessoa já tinha. Não regrava o que já foi salvo.
 
 ## Vínculo com unidade
 

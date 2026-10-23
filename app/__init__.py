@@ -216,10 +216,15 @@ def create_app(config_name='default'):
 
     # Endpoints que sempre são permitidos (login, logout, assets, sem-vinculo)
     _ENDPOINTS_LIVRES = {
-        'auth.login', 'auth.logout', 'auth.index',
+        'auth.login', 'auth.logout', 'auth.index', 'auth.testar_perfil',
         'static',
         'unidades.sem_vinculo',
         'solicitacoes.formulario', 'solicitacoes.confirmacao',
+        'equipamentos.cadastro_externo',
+        'equipamentos.cadastro_externo_marcas',
+        'equipamentos.cadastro_externo_modelos',
+        'equipamentos.cadastro_externo_pessoas',
+        'equipamentos.buscar_tipos',
         'links.publico',
         'unidades.maps_redirect',
         'nsp.notificar', 'nsp.notificado', 'nsp.acompanhar',
@@ -263,115 +268,27 @@ def create_app(config_name='default'):
     # A auditoria não pode permitir ligar a notificação a quem a fez.
     _ENDPOINTS_ANONIMOS = {'nsp.notificar', 'nsp.notificado', 'nsp.acompanhar'}
 
-    def _dados_auditoria(request, current_user):
-        if request.endpoint in _ENDPOINTS_ANONIMOS:
-            rota = str(request.url_rule) if request.url_rule else request.path
-            return None, None, None, rota[:500]
-        usuario_id = current_user.id if current_user.is_authenticated else None
-        ip = request.remote_addr or request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
-        user_agent = (request.headers.get('User-Agent') or '')[:500]
-        return usuario_id, ip, user_agent, (request.url or '')[:500]
-
-    # ── Auditoria: registra todas as requisições (exceto static) ─────────────
     @app.after_request
     def registrar_auditoria(response):
         from flask import g, request
         from flask_login import current_user
-
-        # Não auditar static
-        if request.endpoint == 'static' or request.endpoint is None:
-            return response
-
-        try:
-            # Inferir ação
-            acao = 'view'
-            if request.endpoint == 'auth.login' and request.method == 'POST':
-                acao = 'login'
-            elif request.method == 'GET':
-                url_lower = (request.url or '').lower()
-                if 'xlsx' in url_lower or 'csv' in url_lower or 'export' in url_lower:
-                    acao = 'export'
-                elif 'imprimir' in url_lower or (request.endpoint and 'imprimir' in request.endpoint):
-                    acao = 'print'
-                elif request.args and (request.endpoint or '').endswith('listar'):
-                    acao = 'search'
-            elif request.method == 'POST':
-                endpoint = request.endpoint or ''
-                url_lower = (request.url or '').lower()
-                if 'excluir' in endpoint or 'excluir' in url_lower or 'delete' in url_lower:
-                    acao = 'delete'
-                elif 'novo' in endpoint or 'novo' in url_lower or 'criar' in url_lower:
-                    acao = 'create'
-                else:
-                    acao = 'update'
-
-            # Inferir módulo
-            modulo = (request.endpoint or 'unknown').split('.')[0] if request.endpoint else 'unknown'
-
-            # Sanitizar parâmetros (não gravar senhas)
-            parametros = {}
-            if request.args:
-                parametros['args'] = dict(request.args)
-            if request.form and request.method in ('POST', 'PUT', 'PATCH'):
-                form_safe = {}
-                for k, v in request.form.items():
-                    if k.lower() not in ('senha', 'password', 'csrf_token', 'nova_senha', 'senha_atual'):
-                        form_safe[k] = v
-                if form_safe:
-                    parametros['form'] = form_safe
-            if not parametros or request.endpoint in _ENDPOINTS_ANONIMOS:
-                parametros = None
-
-            usuario_id, ip, user_agent, url = _dados_auditoria(request, current_user)
-
-            from app.models.auditoria import Auditoria
-            rec = Auditoria(
-                usuario_id=usuario_id,
-                acao=acao,
-                modulo=modulo,
-                endpoint=request.endpoint or '',
-                url=url,
-                method=request.method or '',
-                parametros=parametros,
-                ip_address=ip[:45] if ip else None,
-                user_agent=user_agent or None,
-                response_status=response.status_code if response else None,
+        from app.services.auditoria_http import gravar_auditoria
+        if not getattr(g, '_auditoria_done', False):
+            gravar_auditoria(
+                request, current_user,
+                response.status_code if response else None,
+                None, _ENDPOINTS_ANONIMOS,
             )
-            db.session.add(rec)
-            db.session.commit()
-            g._auditoria_done = True
-        except Exception:
-            db.session.rollback()
         return response
 
     @app.teardown_request
     def auditoria_teardown(exc=None):
-        """Registra auditoria em caso de exceção (after_request não roda)."""
+        """Se a resposta quebrou antes do after_request, a linha ainda entra."""
         from flask import g, request
         from flask_login import current_user
+        from app.services.auditoria_http import gravar_auditoria
         if getattr(g, '_auditoria_done', False):
             return
-        try:
-            if request.endpoint == 'static' or request.endpoint is None:
-                return
-            modulo = (request.endpoint or 'unknown').split('.')[0] if request.endpoint else 'unknown'
-            usuario_id, ip, user_agent, url = _dados_auditoria(request, current_user)
-            from app.models.auditoria import Auditoria
-            rec = Auditoria(
-                usuario_id=usuario_id,
-                acao='view',
-                modulo=modulo,
-                endpoint=request.endpoint or '',
-                url=url,
-                method=request.method or '',
-                ip_address=ip[:45] if ip else None,
-                user_agent=user_agent or None,
-                response_status=500 if exc else None,
-                detalhes=str(exc)[:2000] if exc else None,
-            )
-            db.session.add(rec)
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
+        gravar_auditoria(request, current_user, 500 if exc else None, exc, _ENDPOINTS_ANONIMOS)
 
     return app
