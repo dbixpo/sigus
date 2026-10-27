@@ -202,6 +202,12 @@ body { background: #F4F6F9; color: var(--sigus-text); font-family: Inter, "Segoe
           <label class="form-label" for="ano_fabricacao">Ano de fabricação</label>
           <input type="number" name="ano_fabricacao" id="ano_fabricacao" class="form-control" min="1900" max="2100" inputmode="numeric" placeholder="Ex.: 2019">
         </div>
+        <div class="col-12" id="bloco-campos-tipo">
+          <div class="form-label text-muted mb-2">Informações específicas do tipo</div>
+          <div id="campos-customizados" class="row g-3">
+            <p class="text-muted small mb-0">Selecione o tipo de equipamento para ver os campos específicos.</p>
+          </div>
+        </div>
         <div class="col-12">
           <label class="form-label" for="observacoes">Observações</label>
           <textarea name="observacoes" id="observacoes" class="form-control" rows="2"></textarea>
@@ -241,8 +247,57 @@ body { background: #F4F6F9; color: var(--sigus-text); font-family: Inter, "Segoe
     sel.disabled = itens.length === 0;
   }
 
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function carregarCamposTipo(tipoId) {
+    var box = document.getElementById('campos-customizados');
+    if (!box) return;
+    if (!tipoId) {
+      box.innerHTML = '<p class="text-muted small mb-0">Selecione o tipo de equipamento para ver os campos específicos.</p>';
+      return;
+    }
+    box.innerHTML = '<p class="text-muted small mb-0">Carregando campos…</p>';
+    var url = '{{ url_for("equipamentos.cadastro_externo_campos", tipo_id=0) }}'.replace(/\/0$/, '/' + tipoId);
+    fetch(url).then(function (r) { return r.json(); }).then(function (campos) {
+      if (!campos.length) {
+        box.innerHTML = '<p class="text-muted small mb-0">Este tipo não tem campos específicos.</p>';
+        return;
+      }
+      box.innerHTML = campos.map(function (c) {
+        var rotulo = escHtml(c.nome_campo) + (c.obrigatorio ? ' <span class="text-danger">*</span>' : '');
+        var input = '';
+        var req = c.obrigatorio ? ' required' : '';
+        if (c.tipo_dado === 'selecao' && c.opcoes_selecao) {
+          var opts = (c.opcoes_selecao || []).map(function (o) {
+            return '<option value="' + escHtml(o) + '">' + escHtml(o) + '</option>';
+          }).join('');
+          input = '<select name="campo_' + c.id + '" class="form-select"' + req + '><option value="">Selecione…</option>' + opts + '</select>';
+        } else if (c.tipo_dado === 'texto_longo') {
+          input = '<textarea name="campo_' + c.id + '" class="form-control" rows="2"' + req + '></textarea>';
+        } else if (c.tipo_dado === 'booleano') {
+          input = '<div class="d-flex gap-3 flex-wrap pt-1">'
+            + '<div class="form-check"><input class="form-check-input" type="radio" name="campo_' + c.id + '" id="campo_' + c.id + '_sim" value="sim"' + req + '>'
+            + '<label class="form-check-label small" for="campo_' + c.id + '_sim">Sim</label></div>'
+            + '<div class="form-check"><input class="form-check-input" type="radio" name="campo_' + c.id + '" id="campo_' + c.id + '_nao" value="nao"' + req + '>'
+            + '<label class="form-check-label small" for="campo_' + c.id + '_nao">Não</label></div></div>';
+        } else {
+          var t = c.tipo_dado === 'numero' ? 'number' : (c.tipo_dado === 'data' ? 'date' : 'text');
+          input = '<input type="' + t + '" name="campo_' + c.id + '" class="form-control"' + req + '>';
+        }
+        return '<div class="col-md-6"><label class="form-label">' + rotulo + '</label>' + input + '</div>';
+      }).join('');
+    }).catch(function () {
+      box.innerHTML = '<p class="text-danger small mb-0">Não deu para carregar os campos deste tipo.</p>';
+    });
+  }
+
   tipo.addEventListener('change', function () {
     preencher(modelo, [], 'Selecione a marca primeiro', '');
+    carregarCamposTipo(this.value);
     if (!this.value) {
       preencher(marca, [], 'Selecione o tipo primeiro', '');
       return;

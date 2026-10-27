@@ -255,13 +255,7 @@ def _exigir_foto_se_preciso(equipamento):
     return 'Sem patrimônio e sem número de série, a foto do equipamento é obrigatória.'
 
 
-def _aplicar_identificacao(equipamento, tipo):
-    _aplicar_numeros(equipamento)
-    equipamento.ano_fabricacao = _parse_ano(request.form.get('ano_fabricacao'))
-    equipamento.observacoes = request.form.get('observacoes', '').strip()
-    marca_id, modelo_id = _resolver_marca_modelo(tipo)
-    equipamento.marca_id = marca_id
-    equipamento.modelo_id = modelo_id
+def _aplicar_campos_customizados(equipamento, tipo):
     for campo in tipo.campos.all():
         valor = request.form.get(f'campo_{campo.id}', '').strip()
         cv = equipamento.campos_valores.filter_by(campo_id=campo.id).first()
@@ -270,6 +264,16 @@ def _aplicar_identificacao(equipamento, tipo):
         elif valor:
             db.session.add(EquipamentoCampoValor(
                 equipamento_id=equipamento.id, campo_id=campo.id, valor=valor))
+
+
+def _aplicar_identificacao(equipamento, tipo):
+    _aplicar_numeros(equipamento)
+    equipamento.ano_fabricacao = _parse_ano(request.form.get('ano_fabricacao'))
+    equipamento.observacoes = request.form.get('observacoes', '').strip()
+    marca_id, modelo_id = _resolver_marca_modelo(tipo)
+    equipamento.marca_id = marca_id
+    equipamento.modelo_id = modelo_id
+    _aplicar_campos_customizados(equipamento, tipo)
 
 
 def _aplicar_info_sueq(equipamento):
@@ -477,6 +481,20 @@ def cadastro_externo_modelos(marca_id):
     ])
 
 
+@equipamentos_bp.route('/cadastro-externo/campos/<int:tipo_id>')
+def cadastro_externo_campos(tipo_id):
+    """Campos específicos do tipo, para o mutirão sem login."""
+    tipo = TipoEquipamento.query.filter_by(id=tipo_id, ativo=True).first_or_404()
+    campos = tipo.campos.order_by(CampoTipoEquipamento.ordem).all()
+    return jsonify([{
+        'id': c.id,
+        'nome_campo': c.nome_campo,
+        'tipo_dado': c.tipo_dado,
+        'obrigatorio': c.obrigatorio,
+        'opcoes_selecao': c.opcoes_selecao,
+    } for c in campos])
+
+
 def _pessoa_da_unidade(unidade, usuario_id):
     """Pessoa ativa com vínculo ativo na unidade. O cadastro externo não cria gente nova."""
     if not unidade or not usuario_id:
@@ -569,6 +587,7 @@ def cadastro_externo():
         marca_id, modelo_id = _resolver_marca_modelo_externo(tipo)
         equipamento.marca_id = marca_id
         equipamento.modelo_id = modelo_id
+        _aplicar_campos_customizados(equipamento, tipo)
         pessoa = _pessoa_da_unidade(unidade, request.form.get('usuario_id', type=int))
         aviso_pessoa = bool(request.form.get('usuario_id', type=int)) and not pessoa
         if pessoa:

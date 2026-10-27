@@ -223,6 +223,7 @@ def create_app(config_name='default'):
         'equipamentos.cadastro_externo',
         'equipamentos.cadastro_externo_marcas',
         'equipamentos.cadastro_externo_modelos',
+        'equipamentos.cadastro_externo_campos',
         'equipamentos.cadastro_externo_pessoas',
         'equipamentos.buscar_tipos',
         'links.publico',

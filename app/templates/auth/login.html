@@ -20,6 +20,11 @@
             {% endif %}
             {% endwith %}
 
+            <p class="login-dica">
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                <span>O usuário é o mesmo da rede.<br>A senha inicial é o CPF, só os números.</span>
+            </p>
+
             <form method="POST" action="{{ url_for('auth.login') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-3">
