@@ -11,6 +11,7 @@
     --sigus-menu:      #1A5278;   /* menu, um tom acima da faixa */
     --sigus-accent-red:    #E63030;  /* vermelho do coração */
     --sigus-accent-yellow: #F5C500;  /* amarelo do coração */
+    --sigus-faixa: linear-gradient(90deg, #E63030 33%, #F5C500 66%, #1A82B8 100%);
     --sigus-bg:        #F4F6F9;
     --sigus-text:      #1E3A50;
     --sigus-text-muted:#718096;
@@ -79,8 +80,18 @@ body[data-teste-perfil] {
     background-color: var(--sigus-dark) !important;
     height: var(--sigus-navbar-height);
     z-index: 1030;
-    border-bottom: 3px solid #1A82B8;
+    border-bottom: 0;
     overflow: visible;
+}
+.sigus-navbar::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 4px;
+    background: var(--sigus-faixa);
+    pointer-events: none;
 }
 body[data-campanha] #dataHoraNavbar i {
     color: var(--campanha-cor);
@@ -535,9 +546,13 @@ body[data-campanha] #dataHoraNavbar i {
 }
 
 .laco-navbar {
-    position: relative;
     display: flex;
     align-items: center;
+    gap: 2px;
+}
+.laco-item {
+    position: relative;
+    display: flex;
 }
 .laco-botao {
     display: flex;
@@ -597,8 +612,8 @@ body[data-campanha] #dataHoraNavbar i {
     margin-top: 0.45rem !important;
     color: var(--sigus-text-muted);
 }
-.laco-navbar:hover .laco-balao,
-.laco-navbar:focus-within .laco-balao {
+.laco-item:hover .laco-balao,
+.laco-item:focus-within .laco-balao {
     display: block;
 }
 
@@ -642,11 +657,7 @@ body[data-campanha] #dataHoraNavbar i {
     color: white;
     /* Tênue borda colorida no topo inspirada nos 3 arcos do coração */
     border-top: 4px solid transparent;
-    border-image: linear-gradient(90deg,
-        var(--sigus-accent-red) 33%,
-        var(--sigus-accent-yellow) 66%,
-        var(--sigus-primary) 100%
-    ) 1;
+    border-image: var(--sigus-faixa) 1;
 }
 
 .login-card .login-body {
