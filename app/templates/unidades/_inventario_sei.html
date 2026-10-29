@@ -69,7 +69,13 @@
 }
 </style>
 
-<div class="px-3 py-2 border-bottom bg-light">
+<details class="inventario-sei px-3 py-2 border-bottom bg-light">
+    <summary class="inventario-sei-resumo">
+        <i class="fas fa-file-export"></i>
+        <span>Exportar para o SEI</span>
+        <i class="fas fa-chevron-down inventario-sei-seta" aria-hidden="true"></i>
+    </summary>
+    <div class="inventario-sei-corpo">
     <div class="small text-muted mb-2">
         Inventário {{ inventario_sei.ano }} no padrão do SEI! Cidades.
         A planilha abre no LibreOffice Calc. Os textos abrem preenchidos para copiar e colar no processo.
@@ -102,7 +108,8 @@
             <span class="badge text-bg-light">{{ inventario_sei.n_equipe }}</span>
         </button>
     </div>
-</div>
+    </div>
+</details>
 
 {% macro modal_sei(mid, titulo, dica, alvo, conteudo) %}
 <div class="modal fade sei-modal" id="{{ mid }}" tabindex="-1" aria-labelledby="{{ mid }}Titulo" aria-hidden="true">

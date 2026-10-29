@@ -22,27 +22,42 @@
 
             <p class="login-dica">
                 <i class="fas fa-info-circle" aria-hidden="true"></i>
-                <span>O usuário é o mesmo da rede.<br>A senha inicial é o CPF, só os números.</span>
+                <span>O usuário é o e-mail institucional.<br>A senha inicial é o CPF, só os números.</span>
             </p>
 
-            <form method="POST" action="{{ url_for('auth.login') }}">
+            {# autocomplete e ids próprios do SIGUS: o Chrome não deve misturar com o SIS #}
+            <form method="POST" action="{{ url_for('auth.login') }}"
+                  autocomplete="on" data-lpignore="true" data-1p-ignore="true">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {# Isca: o Chrome preenche estes campos invisíveis e deixa o login do SIGUS em branco #}
+                <div class="login-autofill-isca" aria-hidden="true">
+                    <input type="text" name="fake_usuario_sis" tabindex="-1" autocomplete="username">
+                    <input type="password" name="fake_senha_sis" tabindex="-1" autocomplete="current-password">
+                </div>
                 <div class="mb-3">
-                    <label class="form-label">E-mail</label>
+                    <label class="form-label" for="sigusLoginEmail">E-mail</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                        <input type="text" name="email" class="form-control"
-                               placeholder="usuario ou usuario@{{ identidade.dominio_email }}" required autofocus>
+                        <input type="text" name="email" id="sigusLoginEmail" class="form-control"
+                               placeholder="usuario ou usuario@{{ identidade.dominio_email }}"
+                               required autofocus
+                               autocomplete="username"
+                               autocapitalize="off" autocorrect="off" spellcheck="false"
+                               data-lpignore="true" data-1p-ignore="true"
+                               readonly onfocus="this.removeAttribute('readonly')">
                     </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Senha</label>
+                    <label class="form-label" for="senhaInput">Senha</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="fas fa-lock"></i></span>
                         <input type="password" name="senha" id="senhaInput"
-                               class="form-control" placeholder="••••••••" required>
+                               class="form-control" placeholder="••••••••" required
+                               autocomplete="current-password"
+                               data-lpignore="true" data-1p-ignore="true"
+                               readonly onfocus="this.removeAttribute('readonly')">
                         <button class="btn btn-outline-secondary" type="button"
-                                onclick="toggleSenha()">
+                                onclick="toggleSenha()" tabindex="-1">
                             <i class="fas fa-eye" id="senhaIcon"></i>
                         </button>
                     </div>

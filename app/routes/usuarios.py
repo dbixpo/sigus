@@ -8,7 +8,10 @@ from app.models.cbo import CBO
 from app.models.unidade import Unidade
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.matricula import MatriculaProfissional
-from app.utils import _montar_corpo_email, _montar_corpo_email_ficha, nome_proprio
+from app.utils import (
+    _montar_corpo_email, _montar_corpo_email_ficha, nome_proprio,
+    cpf_valido, digitos_cpf, usuarios_com_mesmo_cpf,
+)
 
 usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 
@@ -88,11 +91,39 @@ def _matriculas_da_base_rh(usuario):
     return criadas
 
 
+def _erro_cpf_cadastro(form, usuario=None):
+    """Recusa CPF vazio no cadastro novo, dígito inválido e CPF que já pertence a outra pessoa.
+
+    Na edição, o CPF que já estava gravado (mesmo inválido ou repetido) pode continuar
+    até alguém corrigir — senão o formulário trava um cadastro antigo.
+    """
+    digitos = digitos_cpf(form.get('cpf', ''))
+    atual = digitos_cpf(usuario.cpf) if usuario and usuario.cpf else ''
+    if not digitos:
+        if usuario is None or atual:
+            return 'Informe o CPF. Sem ele a senha inicial não fecha e o cadastro fica duplicável.'
+        return None
+    if usuario is not None and digitos == atual:
+        return None
+    if not cpf_valido(digitos):
+        return 'CPF inválido. Confira os números, inclusive os dois dígitos do fim.'
+    outros = usuarios_com_mesmo_cpf(digitos, exceto_id=usuario.id if usuario else None)
+    if outros:
+        nomes = ', '.join(o.nome for o in outros[:3])
+        return (
+            f'Este CPF já está no cadastro de {nomes}. '
+            'Abra essa pessoa em vez de criar outra — principalmente se ela já tem matrícula.'
+        )
+    return None
+
+
 def _preencher_usuario(u, form):
     for campo in _CAMPOS_PROF:
         val = form.get(campo, '').strip() or None
         if val and campo in ('nome_mae', 'nome_pai'):
             val = nome_proprio(val)
+        if campo == 'cpf':
+            val = digitos_cpf(val) or None
         setattr(u, campo, val)
     for form_key, attr in _DATAS.items():
         setattr(u, attr, _parse_date(form.get(form_key, '')))
@@ -152,6 +183,25 @@ def listar():
     )
 
 
+@usuarios_bp.route('/verificar-cpf', methods=['POST'])
+@login_required
+def verificar_cpf():
+    """Confere o CPF ao sair do campo, antes de a pessoa preencher o resto do cadastro."""
+    if not current_user.pode('cadastrar_usuario') and not current_user.pode('gerenciar_usuarios'):
+        abort(403)
+    payload = request.get_json(silent=True) or {}
+    usuario = None
+    usuario_id = payload.get('usuario_id')
+    if usuario_id:
+        usuario = Usuario.query.get(usuario_id)
+        if not usuario or not _pode_ver_usuario(usuario):
+            abort(403)
+    erro = _erro_cpf_cadastro({'cpf': payload.get('cpf') or ''}, usuario)
+    if erro:
+        return jsonify(ok=False, erro=erro)
+    return jsonify(ok=True)
+
+
 @usuarios_bp.route('/novo', methods=['GET', 'POST'])
 @login_required
 def novo():
@@ -174,14 +224,18 @@ def novo():
             flash('Você não pode cadastrar um usuário com esse perfil.', 'danger')
             return redirect(url_for('usuarios.novo'))
 
+        erro_cpf = _erro_cpf_cadastro(request.form)
+        if erro_cpf:
+            flash(erro_cpf, 'danger')
+            return redirect(url_for('usuarios.novo'))
+
         u = Usuario(
             nome=nome_proprio(request.form['nome']),
             email=email,
             perfil=perfil_solicitado,
         )
-        # Senha inicial = CPF (só dígitos). Fallback: token aleatório se CPF não informado.
-        cpf_raw = request.form.get('cpf', '').strip()
-        senha_inicial = ''.join(c for c in cpf_raw if c.isdigit()) or __import__('secrets').token_urlsafe(8)
+        # Senha inicial = CPF (só dígitos).
+        senha_inicial = digitos_cpf(request.form.get('cpf', '')) or __import__('secrets').token_urlsafe(8)
         u.set_senha(senha_inicial)
         _preencher_usuario(u, request.form)
         db.session.add(u)
@@ -246,6 +300,12 @@ def editar(id):
 
             if is_admin:
                 usuario.ativo = request.form.get('ativo') == 'on'
+
+            erro_cpf = _erro_cpf_cadastro(request.form, usuario)
+            if erro_cpf:
+                db.session.rollback()
+                flash(erro_cpf, 'danger')
+                return redirect(url_for('usuarios.editar', id=usuario.id))
 
             nova_senha = request.form.get('nova_senha', '')
             if nova_senha:

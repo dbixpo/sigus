@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}{{ unidade.nome }}{% endblock %}
+{% block body_attrs %} class="pagina-unidade"{% endblock %}
 
 {% block content %}
 <nav aria-label="breadcrumb">
@@ -57,7 +58,7 @@
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-equipamentos" type="button">
-            <i class="fas fa-desktop me-1"></i>Equipamentos
+            <i class="fas fa-desktop me-1"></i><span class="d-none d-md-inline">Equipamentos</span><span class="d-inline d-md-none">Equip.</span>
             <span class="badge bg-secondary ms-1">{{ total_equipamentos_unidade }}</span>
         </button>
     </li>
@@ -71,26 +72,26 @@
     {% endif %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-salas" type="button">
-            <i class="fas fa-door-open me-1"></i>Salas/Setores
+            <i class="fas fa-door-open me-1"></i><span class="d-none d-md-inline">Salas/Setores</span><span class="d-inline d-md-none">Salas</span>
             <span class="badge bg-secondary ms-1">{{ salas | length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-profissionais" type="button">
-            <i class="fas fa-users me-1"></i>Profissionais
+            <i class="fas fa-users me-1"></i><span class="d-none d-md-inline">Profissionais</span><span class="d-inline d-md-none">Equipe</span>
             <span class="badge bg-primary ms-1">{{ vinculos | length }}</span>
         </button>
     </li>
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-fichas" type="button">
-            <i class="fas fa-file-earmark-person me-1"></i>Fichas CNES
+            <i class="fas fa-file-earmark-person me-1"></i><span class="d-none d-md-inline">Fichas CNES</span><span class="d-inline d-md-none">CNES</span>
             <span class="badge bg-secondary ms-1">{{ fichas | length }}</span>
         </button>
     </li>
     {% if current_user.pode('vincular_profissionais') %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-solicitacoes" type="button">
-            <i class="fas fa-user-plus me-1"></i>Solicitações de Vínculo (Cadastro Público)
+            <i class="fas fa-user-plus me-1"></i><span class="d-none d-md-inline">Solicitações de Vínculo (Cadastro Público)</span><span class="d-inline d-md-none">Pedidos</span>
             {% set _nsol = solicitacoes_pendentes | length %}
             {% if _nsol > 0 %}
             <span class="badge bg-danger ms-1">{{ _nsol }}</span>
@@ -100,7 +101,7 @@
     {% endif %}
     <li class="nav-item">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-info" type="button">
-            <i class="fas fa-info-circle me-1"></i>Informações
+            <i class="fas fa-info-circle me-1"></i><span class="d-none d-md-inline">Informações</span><span class="d-inline d-md-none">Info</span>
         </button>
     </li>
 </ul>
@@ -802,7 +803,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle mb-0">
+                <table class="table table-hover table-sm align-middle mb-0 tabela-sol-pendentes">
                     <thead class="table-light">
                         <tr>
                             <th>Nome</th>
@@ -866,7 +867,7 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
+                <table class="table table-sm align-middle mb-0 tabela-sol-hist">
                     <thead class="table-light">
                         <tr>
                             <th>Nome</th>

@@ -49,17 +49,21 @@
         <div class="tab-pane fade show active" id="tab-acesso">
             <div class="row g-3">
                 <div class="col-12">
-                    <label class="form-label fw-semibold">CPF</label>
+                    <label class="form-label fw-semibold">CPF <span class="text-danger">*</span></label>
                     <div class="input-group">
                         <input type="text" name="cpf" class="form-control" maxlength="14"
                                value="{{ usuario.cpf or '' if usuario else '' }}"
-                               placeholder="000.000.000-00" id="campoCPF">
+                               placeholder="000.000.000-00" id="campoCPF"
+                               data-cpf-original="{{ (usuario.cpf or '') if usuario else '' }}"
+                               data-usuario-id="{{ usuario.id if usuario else '' }}"
+                               data-verificar-url="{{ url_for('usuarios.verificar_cpf') }}">
                         {% if sis_ok %}
                         <button type="button" class="btn btn-primary" id="btnImportarCadastro">
                             <i class="fas fa-file-import me-1"></i>Importar dados cadastrais
                         </button>
                         {% endif %}
                     </div>
+                    <div id="statusCPF" class="small mt-1 mb-0" hidden></div>
                     {% if sis_ok %}
                     <div id="statusImportarCadastro" class="small mt-2 mb-0"></div>
                     {% else %}
@@ -544,12 +548,79 @@
 (function () {
     const inp = document.getElementById('campoCPF');
     if (!inp) return;
+    const status = document.getElementById('statusCPF');
+    const form = inp.closest('form');
+
+    function mostrarStatusCpf(texto) {
+        if (!status) return;
+        if (!texto) {
+            status.hidden = true;
+            status.textContent = '';
+            inp.classList.remove('is-invalid');
+            return;
+        }
+        status.hidden = false;
+        status.textContent = texto;
+        status.className = 'small mt-1 mb-0 text-danger';
+        inp.classList.add('is-invalid');
+    }
+
+    function digitosCpf() {
+        return (inp.value || '').replace(/\D/g, '');
+    }
+
     inp.addEventListener('input', function () {
         let v = this.value.replace(/\D/g, '');
         this.value = v.replace(/^(\d{3})(\d)/, '$1.$2')
                       .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
                       .replace(/\.(\d{3})(\d)/, '.$1-$2')
                       .substring(0, 14);
+        if (form) delete form.dataset.cpfLiberado;
+        mostrarStatusCpf('');
+    });
+
+    window.conferirCpfCadastro = async function (digits) {
+        const csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+        const resp = await fetch(inp.dataset.verificarUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ cpf: digits, usuario_id: inp.dataset.usuarioId || null }),
+        });
+        const dados = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) return 'Não foi possível conferir o CPF agora.';
+        return dados.ok ? '' : (dados.erro || 'Não foi possível conferir o CPF agora.');
+    };
+
+    inp.addEventListener('blur', async function () {
+        const digits = digitosCpf();
+        const original = (inp.dataset.cpfOriginal || '').replace(/\D/g, '');
+        if (!digits || digits === original) {
+            mostrarStatusCpf('');
+            if (form && digits) form.dataset.cpfLiberado = digits;
+            return;
+        }
+        if (!cpfValidoSigus(digits)) {
+            if (form) delete form.dataset.cpfLiberado;
+            mostrarStatusCpf('CPF inválido. Confira os números, inclusive os dois dígitos do fim.');
+            return;
+        }
+        mostrarStatusCpf('');
+        status.hidden = false;
+        status.textContent = 'Conferindo o CPF…';
+        status.className = 'small mt-1 mb-0 text-muted';
+        const erro = await window.conferirCpfCadastro(digits);
+        if (digitosCpf() !== digits) return;
+        if (erro) {
+            if (form) delete form.dataset.cpfLiberado;
+            mostrarStatusCpf(erro);
+            return;
+        }
+        if (form) form.dataset.cpfLiberado = digits;
+        mostrarStatusCpf('');
     });
     inp.closest('form')?.addEventListener('submit', function () {
         inp.value = inp.value.replace(/\D/g, '');
@@ -583,6 +654,16 @@
         inp.value = inp.value.replace(/\D/g, '');
     }, { capture: true });
 })();
+
+function cpfValidoSigus(d) {
+    if (d.length !== 11 || /^(.)\1{10}$/.test(d)) return false;
+    var s1 = 0;
+    for (var i = 0; i < 9; i++) s1 += parseInt(d[i], 10) * (10 - i);
+    if ((s1 * 10 % 11) % 10 !== parseInt(d[9], 10)) return false;
+    var s2 = 0;
+    for (var j = 0; j < 10; j++) s2 += parseInt(d[j], 10) * (11 - j);
+    return (s2 * 10 % 11) % 10 === parseInt(d[10], 10);
+}
 
 function mascararCpfSigus(v) {
     const d = (v || '').replace(/\D/g, '').slice(0, 11);
@@ -753,6 +834,36 @@ document.getElementById('formUsuario').addEventListener('submit', function (e) {
         erros.push({ campo: email, aba: '#tab-acesso', msg: 'Informe o e-mail.' });
     }
 
+    const cpfEl = document.getElementById('campoCPF');
+    if (cpfEl) {
+        const digits = (cpfEl.value || '').replace(/\D/g, '');
+        const original = (cpfEl.dataset.cpfOriginal || '').replace(/\D/g, '');
+        if (!digits) {
+            erros.push({ campo: cpfEl, aba: '#tab-acesso', msg: 'Informe o CPF.' });
+        } else if (digits !== original && !cpfValidoSigus(digits)) {
+            erros.push({ campo: cpfEl, aba: '#tab-acesso', msg: 'CPF inválido. Confira os números, inclusive os dois dígitos do fim.' });
+        } else if (digits && digits !== original && document.getElementById('formUsuario').dataset.cpfLiberado !== digits) {
+            e.preventDefault();
+            window.conferirCpfCadastro(digits).then(function (erro) {
+                if ((cpfEl.value || '').replace(/\D/g, '') !== digits) return;
+                if (erro) {
+                    const aviso = document.getElementById('statusCPF');
+                    if (aviso) {
+                        aviso.hidden = false;
+                        aviso.textContent = erro;
+                        aviso.className = 'small mt-1 mb-0 text-danger';
+                    }
+                    cpfEl.classList.add('is-invalid');
+                    cpfEl.focus();
+                    return;
+                }
+                document.getElementById('formUsuario').dataset.cpfLiberado = digits;
+                document.getElementById('formUsuario').requestSubmit();
+            });
+            return;
+        }
+    }
+
     // Senha inicial = CPF — não há campo de senha no cadastro
 
     if (erros.length > 0) {
@@ -762,6 +873,9 @@ document.getElementById('formUsuario').addEventListener('submit', function (e) {
         const tabBtn = document.querySelector(`[data-bs-target="${primeiro.aba}"]`);
         if (tabBtn) bootstrap.Tab.getOrCreateInstance(tabBtn).show();
         // Foca o campo após a aba abrir
+        if (cpfEl && cpfEl.value && cpfEl.value.indexOf('.') === -1) {
+            cpfEl.value = mascararCpfSigus(cpfEl.value);
+        }
         setTimeout(() => {
             if (primeiro.campo) {
                 primeiro.campo.focus();

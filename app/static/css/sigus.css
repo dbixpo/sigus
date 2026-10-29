@@ -581,6 +581,16 @@ body[data-teste-perfil] {
     padding: 2rem;
 }
 
+.login-autofill-isca {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
 .login-dica {
     display: flex;
     align-items: center;
@@ -1304,3 +1314,296 @@ body.pagina-agenda .sigus-main > .container-fluid {
 .veic-badge-livre { background: rgba(25, 168, 139, .15); color: #0F7A66; }
 .veic-badge-uso { background: rgba(245, 197, 0, .22); color: #7A6200; }
 .min-w-0 { min-width: 0; }
+
+/* No computador o bloco do SEI fica sempre aberto, sem a faixa. */
+@media (min-width: 768px) {
+    .inventario-sei > .inventario-sei-resumo { display: none !important; }
+    .inventario-sei > .inventario-sei-corpo { display: block !important; }
+}
+
+/* ── Detalhe da unidade no celular ───────────────────────
+   Só abaixo de 768px. No computador a tela permanece igual. */
+@media (max-width: 767.98px) {
+    body.pagina-unidade .breadcrumb {
+        font-size: 0.75rem;
+        margin-bottom: 0.6rem;
+    }
+    body.pagina-unidade .page-header h1 {
+        font-size: 1.2rem;
+        line-height: 1.35;
+        gap: 0.35rem;
+    }
+    body.pagina-unidade .page-header h1 .badge {
+        font-size: 0.68rem !important;
+        font-weight: 600;
+    }
+    body.pagina-unidade .page-header > .d-flex {
+        width: 100%;
+    }
+    body.pagina-unidade .page-header > .d-flex .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+        justify-content: center;
+    }
+
+    body.pagina-unidade #tabsUnidade {
+        position: sticky;
+        top: calc(var(--sigus-navbar-height) + var(--sigus-teste-altura));
+        z-index: 1020;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.4rem;
+        overflow-x: auto;
+        margin: 0 -0.75rem 0.85rem;
+        padding: 0.45rem 0.75rem 0.55rem;
+        background: var(--sigus-bg);
+        border: 0;
+        scrollbar-width: none;
+    }
+    body.pagina-unidade #tabsUnidade::-webkit-scrollbar { display: none; }
+    body.pagina-unidade #tabsUnidade .nav-item { flex: 0 0 auto; }
+    body.pagina-unidade #tabsUnidade .nav-link {
+        border: 1px solid #d7e1ea;
+        border-radius: 999px;
+        background: #fff;
+        color: var(--sigus-dark);
+        white-space: nowrap;
+        padding: 0.45rem 0.8rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    body.pagina-unidade #tabsUnidade .nav-link.active {
+        background: var(--sigus-dark);
+        border-color: var(--sigus-dark);
+        color: #fff;
+    }
+    body.pagina-unidade #tabsUnidade .nav-link .badge {
+        background: rgba(13, 59, 94, 0.1) !important;
+        color: var(--sigus-dark) !important;
+    }
+    body.pagina-unidade #tabsUnidade .nav-link.active .badge {
+        background: rgba(255, 255, 255, 0.18) !important;
+        color: #fff !important;
+    }
+
+    body.pagina-unidade #tabsUnidadeContent .card-header {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.55rem;
+    }
+    body.pagina-unidade #tabsUnidadeContent .card-header .d-flex,
+    body.pagina-unidade #tabsUnidadeContent .card-header .btn-group {
+        width: 100%;
+    }
+    body.pagina-unidade #tabsUnidadeContent .card-header .btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+    body.pagina-unidade #tabsUnidadeContent .bg-light .form-control,
+    body.pagina-unidade #tabsUnidadeContent .bg-light .form-select {
+        max-width: none !important;
+        width: 100%;
+        flex: 1 1 100%;
+        font-size: 16px;
+    }
+    body.pagina-unidade #tabsUnidadeContent .card-body {
+        padding: 0 !important;
+    }
+
+    body.pagina-unidade #tabsUnidadeContent .table-responsive,
+    body.pagina-unidade #tabsUnidadeContent .table-dropdown-safe {
+        overflow: visible !important;
+    }
+    body.pagina-unidade #tabsUnidadeContent table thead { display: none; }
+    body.pagina-unidade #tabsUnidadeContent table,
+    body.pagina-unidade #tabsUnidadeContent tbody {
+        display: block;
+        width: 100%;
+    }
+    body.pagina-unidade #tabsUnidadeContent tr {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        margin: 0.65rem 0.75rem;
+        padding: 0.75rem 0.85rem 0.65rem;
+        border: 1px solid #e3ebf2;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(13, 59, 94, 0.05);
+    }
+    body.pagina-unidade #tabsUnidadeContent td {
+        display: flex !important;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 0.75rem;
+        width: 100% !important;
+        border: 0;
+        padding: 0.28rem 0;
+        text-align: right;
+        white-space: normal !important;
+        font-size: 0.84rem;
+    }
+    body.pagina-unidade #tabsUnidadeContent td.d-none { display: flex !important; }
+    body.pagina-unidade #tabsUnidadeContent td::before {
+        flex: 0 0 38%;
+        text-align: left;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--sigus-text-muted);
+        padding-top: 0.15rem;
+    }
+    body.pagina-unidade #tabsUnidadeContent td:nth-child(1) {
+        display: block !important;
+        text-align: left;
+        font-size: 0.98rem;
+        padding-bottom: 0.2rem;
+    }
+    body.pagina-unidade #tabsUnidadeContent td:nth-child(1)::before { content: none; }
+
+    #tabelaProfissionais td:nth-child(2)::before { content: "Matrícula"; }
+    #tabelaProfissionais td:nth-child(3)::before { content: "Telefone"; }
+    #tabelaProfissionais td:nth-child(4)::before { content: "E-mail"; }
+    #tabelaProfissionais td:nth-child(5)::before { content: "CBO"; }
+    #tabelaProfissionais td:nth-child(6)::before { content: "Perfil"; }
+    #tabelaProfissionais td:nth-child(7)::before { content: "Status"; }
+    #tabelaProfissionais td:nth-child(8) {
+        display: block !important;
+        padding-top: 0.45rem;
+    }
+    #tabelaProfissionais td:nth-child(8)::before { content: none; }
+    #tabelaProfissionais td:nth-child(8) .btn { width: 100%; }
+
+    #tabelaEquipamentos td:nth-child(2)::before { content: "Patrimônio"; }
+    #tabelaEquipamentos td:nth-child(3)::before { content: "Marca"; }
+    #tabelaEquipamentos td:nth-child(4)::before { content: "Usuário"; }
+    #tabelaEquipamentos td:nth-child(5)::before { content: "Sala"; }
+    #tabelaEquipamentos td:nth-child(6)::before { content: "Status"; }
+    #tabelaEquipamentos td:nth-child(7)::before { content: "Condição"; }
+    #tabelaEquipamentos tr { padding-right: 2.8rem; }
+    #tabelaEquipamentos td:nth-child(8) {
+        position: absolute;
+        top: 0.55rem;
+        right: 0.45rem;
+        width: auto !important;
+        padding: 0;
+    }
+    #tabelaEquipamentos td:nth-child(8)::before { content: none; }
+
+    body.pagina-unidade .inventario-sei { padding: 0.4rem 0.75rem; }
+    body.pagina-unidade .inventario-sei-resumo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        list-style: none;
+        cursor: pointer;
+        margin: 0;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: var(--sigus-dark);
+    }
+    body.pagina-unidade .inventario-sei-resumo::-webkit-details-marker { display: none; }
+    body.pagina-unidade .inventario-sei-resumo::marker { content: ""; }
+    body.pagina-unidade .inventario-sei-seta {
+        margin-left: auto;
+        font-size: 0.72rem;
+        color: var(--sigus-text-muted);
+        transition: transform 0.15s ease;
+    }
+    body.pagina-unidade .inventario-sei[open] .inventario-sei-seta { transform: rotate(180deg); }
+    body.pagina-unidade .inventario-sei-corpo { padding-top: 0.65rem; }
+    body.pagina-unidade .inventario-sei-corpo .d-flex {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem;
+    }
+    body.pagina-unidade .inventario-sei-corpo .btn {
+        width: 100%;
+        justify-content: center;
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    #tab-salas td:nth-child(2)::before { content: "Tipo"; }
+    #tab-salas td:nth-child(3)::before { content: "Ramal"; }
+    #tab-salas td:nth-child(4)::before { content: "Equipamentos"; }
+    #tab-salas td:nth-child(5) {
+        display: flex !important;
+        justify-content: flex-start;
+        gap: 0.4rem;
+        padding-top: 0.45rem;
+    }
+    #tab-salas td:nth-child(5)::before { content: none; }
+
+    body.pagina-unidade #tab-chamados td:nth-child(1)::before { content: "Número"; }
+    body.pagina-unidade #tab-chamados td:nth-child(1) {
+        display: flex !important;
+        font-size: 0.84rem;
+        order: 2;
+    }
+    #tab-chamados td:nth-child(2) {
+        display: block !important;
+        order: 1;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.98rem;
+        padding-bottom: 0.35rem;
+    }
+    #tab-chamados td:nth-child(2)::before { content: none; }
+    #tab-chamados td:nth-child(3)::before { content: "Tipo"; }
+    #tab-chamados td:nth-child(4)::before { content: "Prioridade"; }
+    #tab-chamados td:nth-child(5)::before { content: "Status"; }
+    #tab-chamados td:nth-child(6)::before { content: "Abertura"; }
+    #tab-chamados td:nth-child(7)::before { content: "Atualização"; }
+    #tab-chamados tr { cursor: pointer; }
+
+    #tab-fichas td:nth-child(2)::before { content: "Tipo"; }
+    #tab-fichas td:nth-child(3)::before { content: "CBO"; }
+    #tab-fichas td:nth-child(4)::before { content: "Vínculo"; }
+    #tab-fichas td:nth-child(5)::before { content: "Carga"; }
+    #tab-fichas td:nth-child(6)::before { content: "Gerado em"; }
+    #tab-fichas td:nth-child(7) {
+        display: block !important;
+        padding-top: 0.45rem;
+    }
+    #tab-fichas td:nth-child(7)::before { content: none; }
+    #tab-fichas td:nth-child(7) .btn { width: 100%; }
+
+    #tab-solicitacoes .alert {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    #tab-solicitacoes .alert code {
+        display: block;
+        white-space: normal;
+        word-break: break-all;
+    }
+    #tab-solicitacoes .alert .btn { width: 100%; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(2)::before { content: "E-mail"; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(3)::before { content: "CBO"; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(4)::before { content: "Vínculo"; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(5)::before { content: "Enviado"; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6) {
+        display: block !important;
+        padding-top: 0.45rem;
+    }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6)::before { content: none; }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6) .d-flex {
+        flex-direction: column;
+        width: 100%;
+    }
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6) .btn,
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6) form,
+    #tab-solicitacoes .tabela-sol-pendentes td:nth-child(6) form .btn { width: 100%; }
+    #tab-solicitacoes .tabela-sol-hist td:nth-child(2)::before { content: "Status"; }
+    #tab-solicitacoes .tabela-sol-hist td:nth-child(3)::before { content: "Por"; }
+    #tab-solicitacoes .tabela-sol-hist td:nth-child(4)::before { content: "Em"; }
+
+    body.pagina-unidade #tab-veiculos .veic-card .d-flex.flex-wrap .btn {
+        flex: 1 1 calc(50% - 0.5rem);
+        justify-content: center;
+    }
+    body.pagina-unidade #tabsUnidadeContent {
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    }
+}

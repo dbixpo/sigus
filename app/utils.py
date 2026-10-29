@@ -295,6 +295,38 @@ def ve_dados_pessoais_completos(usuario=None):
     return getattr(usuario, 'perfil', None) not in _PERFIS_DADOS_RESTRITOS
 
 
+def digitos_cpf(valor):
+    """Só os dígitos do CPF, sem pontuação."""
+    return ''.join(c for c in (valor or '') if c.isdigit())
+
+
+def cpf_valido(valor):
+    """Confere os dois dígitos verificadores. Recusa sequência repetida (000…, 111…)."""
+    digitos = digitos_cpf(valor)
+    if len(digitos) != 11 or len(set(digitos)) == 1:
+        return False
+    soma = sum(int(digitos[i]) * (10 - i) for i in range(9))
+    if (soma * 10 % 11) % 10 != int(digitos[9]):
+        return False
+    soma = sum(int(digitos[i]) * (11 - i) for i in range(10))
+    return (soma * 10 % 11) % 10 == int(digitos[10])
+
+
+def usuarios_com_mesmo_cpf(valor, exceto_id=None):
+    """Outros cadastros com os mesmos 11 dígitos, mesmo que um esteja pontuado e o outro não."""
+    from app import db
+    from app.models.usuario import Usuario
+
+    digitos = digitos_cpf(valor)
+    if len(digitos) != 11:
+        return []
+    expr = db.func.regexp_replace(db.func.coalesce(Usuario.cpf, ''), '[^0-9]', '', 'g')
+    consulta = Usuario.query.filter(expr == digitos)
+    if exceto_id is not None:
+        consulta = consulta.filter(Usuario.id != exceto_id)
+    return consulta.order_by(Usuario.id).all()
+
+
 def cpf_anonimizado(valor):
     """000.***.**0-00 — três primeiros, o nono dígito e os dois finais."""
     digitos = ''.join(c for c in (valor or '') if c.isdigit())[:11]

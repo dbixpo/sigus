@@ -13,7 +13,7 @@ import secrets
 from datetime import date
 
 from flask import (Blueprint, render_template, redirect, url_for,
-                   flash, request, abort)
+                   flash, request, abort, jsonify)
 from flask_login import login_required, current_user
 
 from app import db
@@ -23,22 +23,17 @@ from app.models.cbo import CBO
 from app.models.solicitacao_vinculo import SolicitacaoVinculo
 from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.notificacao import Notificacao
-from app.utils import recortar_assinatura_png, agora_local
+from app.utils import (
+    recortar_assinatura_png, agora_local,
+    cpf_valido, digitos_cpf, usuarios_com_mesmo_cpf,
+)
 
 solicitacoes_bp = Blueprint('solicitacoes', __name__, url_prefix='/solicitar-vinculo-profissional')
 
 
 def _validar_cpf(digits: str) -> bool:
-    """Valida CPF pelos dígitos verificadores. Recebe só os 11 dígitos."""
-    if len(digits) != 11 or len(set(digits)) == 1:
-        return False
-    # Primeiro dígito verificador
-    s = sum(int(digits[i]) * (10 - i) for i in range(9))
-    if (s * 10 % 11) % 10 != int(digits[9]):
-        return False
-    # Segundo dígito verificador
-    s = sum(int(digits[i]) * (11 - i) for i in range(10))
-    return (s * 10 % 11) % 10 == int(digits[10])
+    """Valida CPF pelos dígitos verificadores."""
+    return cpf_valido(digits)
 
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
@@ -71,8 +66,8 @@ def _notificar_gestores(unidade, solicitacao):
 
 
 def _cpf_digitos(cpf):
-    """Remove formatação do CPF — retorna só os 11 dígitos."""
-    return ''.join(c for c in (cpf or '') if c.isdigit())
+    """Remove formatação do CPF — retorna só os dígitos."""
+    return digitos_cpf(cpf)
 
 
 def _cnpj_limpo(val):
@@ -82,6 +77,25 @@ def _cnpj_limpo(val):
 
 
 # ─── Rota pública ─────────────────────────────────────────────────────────────
+
+@solicitacoes_bp.route('/verificar-cpf', methods=['POST'])
+def verificar_cpf():
+    """Confere o CPF ao sair do campo. Só diz se o número é válido e se já está na base.
+    Não devolve nome nem consulta sistema externo."""
+    payload = request.get_json(silent=True) or {}
+    digitos = _cpf_digitos(payload.get('cpf') or '')
+    if not digitos:
+        return jsonify(ok=True)
+    if not _validar_cpf(digitos):
+        return jsonify(ok=False, erro='CPF inválido. Verifique os dígitos.')
+    if usuarios_com_mesmo_cpf(digitos):
+        return jsonify(
+            ok=False,
+            erro='Este CPF já está cadastrado no SIGUS. '
+                 'Peça à unidade para vincular o cadastro que já existe, em vez de enviar um novo.',
+        )
+    return jsonify(ok=True)
+
 
 @solicitacoes_bp.route('/', methods=['GET', 'POST'])
 def formulario():
@@ -105,8 +119,20 @@ def formulario():
                                    escolaridades=ESCOLARIDADES,
                                    form=request.form)
 
-        if cpf_digits and not _validar_cpf(cpf_digits):
+        if not _validar_cpf(cpf_digits):
             flash('CPF inválido. Verifique os dígitos e tente novamente.', 'danger')
+            return render_template('solicitacoes/formulario.html',
+                                   unidades=unidades, cbos=cbos_ativos,
+                                   vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
+                                   escolaridades=ESCOLARIDADES,
+                                   form=request.form)
+
+        # Só a base do SIGUS. Não consulta SIS nem outro sistema: o formulário
+        # público não pode devolver dado de quem já está cadastrado.
+        if usuarios_com_mesmo_cpf(cpf_digits):
+            flash('Este CPF já está cadastrado no SIGUS. '
+                  'Peça à unidade para vincular o cadastro que já existe, em vez de enviar um novo.',
+                  'danger')
             return render_template('solicitacoes/formulario.html',
                                    unidades=unidades, cbos=cbos_ativos,
                                    vinculos=VINCULOS, tipos_vinculo=TIPOS_VINCULO,
@@ -140,7 +166,7 @@ def formulario():
             unidade_id    = unidade_id,
             nome          = nome,
             email         = email,
-            cpf           = _s('cpf'),
+            cpf           = cpf_digits,
             cns           = _s('cns'),
             sexo          = _s('sexo'),
             data_nasc     = _d('data_nasc'),
@@ -224,10 +250,12 @@ def aprovar(id):
     if not _pode_aprovar(sol.unidade):
         abort(403)
 
-    # 1. Verificar se já existe usuário com esse e-mail ou CPF
+    # 1. Verificar se já existe usuário com esse e-mail ou CPF (com ou sem pontuação)
     usuario = Usuario.query.filter_by(email=sol.email).first()
     if not usuario and sol.cpf:
-        usuario = Usuario.query.filter_by(cpf=sol.cpf).first()
+        encontrados = usuarios_com_mesmo_cpf(sol.cpf)
+        com_matricula = [u for u in encontrados if u.matriculas.first()]
+        usuario = (com_matricula or encontrados or [None])[0]
 
     usuario_ja_existia = usuario is not None
 
@@ -238,7 +266,7 @@ def aprovar(id):
             nome             = sol.nome,
             email            = sol.email,
             perfil           = 'profissional',
-            cpf              = sol.cpf,
+            cpf              = _cpf_digitos(sol.cpf) or None,
             cns              = sol.cns,
             sexo             = sol.sexo,
             data_nasc        = sol.data_nasc,

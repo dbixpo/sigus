@@ -177,8 +177,9 @@ body { background: #f0f4f8; font-family: 'Segoe UI', Arial, sans-serif; font-siz
           <div class="col-md-4 campo-obrig">
             <label class="form-label">CPF</label>
             <input type="text" name="cpf" id="campoCPF" class="form-control" required
-                   value="{{ form.get('cpf', '') }}" placeholder="000.000.000-00" maxlength="14">
-            <div class="invalid-feedback">CPF inválido. Verifique os dígitos.</div>
+                   value="{{ form.get('cpf', '') }}" placeholder="000.000.000-00" maxlength="14"
+                   data-verificar-url="{{ url_for('solicitacoes.verificar_cpf') }}">
+            <div class="invalid-feedback" id="feedbackCPF">CPF inválido. Verifique os dígitos.</div>
           </div>
           <div class="col-md-4 campo-obrig">
             <label class="form-label" for="campoCNS">CNS (Cartão Nacional de Saúde)</label>
@@ -507,20 +508,72 @@ function validarCPF(cpf) {
                       .replace(/^(\d{3})\.(\d{3})(\d)/,  '$1.$2.$3')
                       .replace(/\.(\d{3})(\d)/,           '.$1-$2')
                       .substring(0, 14);
+        if (formCpf) delete formCpf.dataset.cpfLiberado;
         avaliar();
     });
     inp.addEventListener('blur', avaliar);
     if (inp.value) avaliar();
 
+    var feedback = document.getElementById('feedbackCPF');
+    var formCpf = inp.closest('form');
+
+    function digitosAtuais() {
+        return (inp.value || '').replace(/\D/g, '');
+    }
+
+    function marcarCpf(ok, texto) {
+        if (feedback && texto) feedback.textContent = texto;
+        inp.classList.toggle('is-valid', ok === true);
+        inp.classList.toggle('is-invalid', ok === false);
+    }
+
+    window.conferirCpfPublico = async function (digits) {
+        var csrf = document.querySelector('input[name=csrf_token]')?.value || '';
+        var resp = await fetch(inp.dataset.verificarUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ cpf: digits }),
+        });
+        var dados = await resp.json().catch(function () { return {}; });
+        if (!resp.ok) return 'Não foi possível conferir o CPF agora.';
+        return dados.ok ? '' : (dados.erro || 'Não foi possível conferir o CPF agora.');
+    };
+
     function avaliar() {
-        var digits = inp.value.replace(/\D/g, '');
+        var digits = digitosAtuais();
         var ok = validarCPF(digits);
         cns.disabled    = !ok;
         btnCns.disabled = !ok;
-        if (!digits) { inp.classList.remove('is-invalid','is-valid'); return; }
-        inp.classList.toggle('is-valid',   ok);
-        inp.classList.toggle('is-invalid', !ok);
+        if (!digits) {
+            inp.classList.remove('is-invalid','is-valid');
+            return;
+        }
+        if (!ok) {
+            if (formCpf) delete formCpf.dataset.cpfLiberado;
+            marcarCpf(false, 'CPF inválido. Verifique os dígitos.');
+            return;
+        }
+        marcarCpf(true, '');
     }
+
+    inp.addEventListener('blur', async function () {
+        avaliar();
+        var digits = digitosAtuais();
+        if (!validarCPF(digits)) return;
+        var erro = await window.conferirCpfPublico(digits);
+        if (digitosAtuais() !== digits) return;
+        if (erro) {
+            if (formCpf) delete formCpf.dataset.cpfLiberado;
+            marcarCpf(false, erro);
+            return;
+        }
+        if (formCpf) formCpf.dataset.cpfLiberado = digits;
+        marcarCpf(true, '');
+    });
 
     btnCns.addEventListener('click', function () {
         var d = inp.value.replace(/\D/g,'');
@@ -844,6 +897,31 @@ function validarCPF(cpf) {
     var formSolicitacao = canvas.closest('form');
     if (formSolicitacao) {
         formSolicitacao.addEventListener('submit', function (e) {
+            var cpfInp = document.getElementById('campoCPF');
+            var digitsCpf = (cpfInp && cpfInp.value || '').replace(/\D/g, '');
+            if (cpfInp && !validarCPF(digitsCpf)) {
+                e.preventDefault();
+                cpfInp.classList.add('is-invalid');
+                cpfInp.focus();
+                return;
+            }
+            if (cpfInp && formSolicitacao.dataset.cpfLiberado !== digitsCpf) {
+                e.preventDefault();
+                window.conferirCpfPublico(digitsCpf).then(function (erro) {
+                    if ((cpfInp.value || '').replace(/\D/g, '') !== digitsCpf) return;
+                    if (erro) {
+                        var aviso = document.getElementById('feedbackCPF');
+                        if (aviso) aviso.textContent = erro;
+                        cpfInp.classList.add('is-invalid');
+                        cpfInp.classList.remove('is-valid');
+                        cpfInp.focus();
+                        return;
+                    }
+                    formSolicitacao.dataset.cpfLiberado = digitsCpf;
+                    formSolicitacao.requestSubmit();
+                });
+                return;
+            }
             sincronizar();
             // Limpa máscara do CNPJ antes de enviar
             var inputCNPJForm = document.getElementById('inputCNPJ');
