@@ -211,6 +211,51 @@ def campanhas_na_data(dia=None):
     return (ativas[0] if ativas else None), ativas
 
 
+def _nome_tipo_livre(nome, ignorar_id=None):
+    from app.models.noticias import TipoAcao
+
+    base = (nome or 'Campanha').strip()[:200] or 'Campanha'
+    candidato = base
+    for n in range(2, 30):
+        q = TipoAcao.query.filter_by(nome=candidato)
+        if ignorar_id:
+            q = q.filter(TipoAcao.id != ignorar_id)
+        if not q.first():
+            return candidato
+        sufixo = f' ({n})'
+        candidato = base[:200 - len(sufixo)] + sufixo
+    return candidato
+
+
+def sincronizar_tipo_da_campanha(campanha):
+    """O tema do mural acompanha o nome, o texto e o status da campanha."""
+    from app.models.noticias import TipoAcao
+
+    tipo = TipoAcao.query.filter_by(campanha_id=campanha.id).first()
+    if tipo is None:
+        tipo = TipoAcao.query.filter(
+            TipoAcao.nome == (campanha.nome or '').strip(),
+            TipoAcao.campanha_id.is_(None),
+        ).first()
+    if tipo is None:
+        tipo = TipoAcao(
+            nome=_nome_tipo_livre(campanha.nome),
+            ordem=200 + int(campanha.mes_inicio or 0),
+        )
+        db.session.add(tipo)
+        db.session.flush()
+    tipo.campanha_id = campanha.id
+    tipo.nome = _nome_tipo_livre(campanha.nome, ignorar_id=tipo.id)
+    tipo.descricao = campanha.resumo
+    tipo.ativo = bool(campanha.ativo)
+
+
+def sincronizar_tipos_campanha():
+    for campanha in CampanhaSaude.query.order_by(CampanhaSaude.id).all():
+        sincronizar_tipo_da_campanha(campanha)
+    db.session.commit()
+
+
 def garantir_campanhas():
     """Inclui as campanhas oficiais que ainda não existem. Não mexe nas editadas."""
     for item in SEMENTE:
@@ -230,3 +275,7 @@ def garantir_campanhas():
             ativo=True,
         ))
     db.session.commit()
+    try:
+        sincronizar_tipos_campanha()
+    except Exception:
+        db.session.rollback()

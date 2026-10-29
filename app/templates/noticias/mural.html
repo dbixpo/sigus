@@ -10,7 +10,7 @@
     box-shadow: 0 1px 3px rgba(0,0,0,.07);
     padding: 0.95rem 1rem 1rem; margin-bottom: 0.75rem;
 }
-.mural-tema { font-size: 0.68rem; font-weight: 700; color: #1A82B8; text-transform: uppercase; letter-spacing: .03em; }
+.mural-tema { display: flex; align-items: center; gap: 0.35rem; font-size: 0.68rem; font-weight: 700; color: #1A82B8; text-transform: uppercase; letter-spacing: .03em; }
 .mural-tema.lojinha { color: #19A88B; }
 .mural-desc { font-size: 0.88rem; color: #1E3A50; margin-top: 0.25rem; line-height: 1.4; }
 .mural-foot { font-size: 0.75rem; color: #718096; margin-top: 0.45rem; }
@@ -67,9 +67,22 @@
         <select name="tipo" id="tipo" class="form-select form-select-sm">
             <option value="">Todos</option>
             <option value="lojinha" {% if filtro_tipo == 'lojinha' %}selected{% endif %}>Lojinha Interna</option>
-            {% for t in tipos %}
-            <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
-            {% endfor %}
+            {% set temas_campanha = tipos | selectattr('campanha_id') | list %}
+            {% set temas_rede = tipos | rejectattr('campanha_id') | list %}
+            {% if temas_campanha %}
+            <optgroup label="Campanhas">
+                {% for t in temas_campanha %}
+                <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
+            {% if temas_rede %}
+            <optgroup label="Temas">
+                {% for t in temas_rede %}
+                <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
+                {% endfor %}
+            </optgroup>
+            {% endif %}
         </select>
     </div>
     <div class="col-md-2">
@@ -88,7 +101,14 @@
     {% if entry.tipo == 'acao' %}
     {% set a = entry.acao %}
     <article class="mural-card" id="acao-{{ a.id }}">
-        <div class="mural-tema">{{ a.tipo.nome if a.tipo else 'Ação' }}</div>
+        <div class="mural-tema">
+            {% if a.tipo and a.tipo.campanha %}
+            <span class="laco-mural" style="color: {{ a.tipo.campanha.cor }};" aria-hidden="true">
+                {% with item = a.tipo.campanha %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+            </span>
+            {% endif %}
+            <span>{{ a.tipo.nome if a.tipo else 'Ação' }}</span>
+        </div>
         <div class="mural-desc">{{ a.descricao }}</div>
         {{ thumbs(a.fotos, 'acao-' ~ a.id, a.id) }}
         <div class="mural-foot">

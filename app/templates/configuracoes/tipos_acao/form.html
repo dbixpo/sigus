@@ -23,16 +23,30 @@
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if tipo and tipo.campanha %}
+                    <div class="alert alert-light border d-flex align-items-center gap-2">
+                        <span class="laco-amostra" style="color: {{ tipo.campanha.cor }};" aria-hidden="true">
+                            {% with item = tipo.campanha %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+                        </span>
+                        <div>
+                            Este tema acompanha a campanha <strong>{{ tipo.campanha.nome }}</strong>.
+                            Nome, texto e status mudam por lá.
+                            <a href="{{ url_for('configuracoes.editar_campanha', id=tipo.campanha.id) }}">Editar campanha</a>
+                        </div>
+                    </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label" for="nome">Nome *</label>
                         <input type="text" name="nome" id="nome" class="form-control" required maxlength="200"
-                               value="{{ tipo.nome if tipo else '' }}">
+                               value="{{ tipo.nome if tipo else '' }}"
+                               {% if tipo and tipo.campanha %}disabled{% endif %}>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="codigo_esus">Código e-SUS (opcional)</label>
                             <input type="number" name="codigo_esus" id="codigo_esus" class="form-control"
-                                   value="{{ tipo.codigo_esus if tipo and tipo.codigo_esus is not none else '' }}">
+                                   value="{{ tipo.codigo_esus if tipo and tipo.codigo_esus is not none else '' }}"
+                                   {% if tipo and tipo.campanha %}disabled{% endif %}>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="ordem">Ordem</label>
@@ -42,11 +56,13 @@
                     </div>
                     <div class="mb-3 mt-3">
                         <label class="form-label" for="descricao">Descrição</label>
-                        <textarea name="descricao" id="descricao" class="form-control" rows="3">{{ tipo.descricao if tipo else '' }}</textarea>
+                        <textarea name="descricao" id="descricao" class="form-control" rows="3"
+                                  {% if tipo and tipo.campanha %}disabled{% endif %}>{{ tipo.descricao if tipo else '' }}</textarea>
                     </div>
                     <div class="form-check mb-4">
                         <input type="checkbox" name="ativo" class="form-check-input" id="ativo"
-                               {% if not tipo or tipo.ativo %}checked{% endif %}>
+                               {% if not tipo or tipo.ativo %}checked{% endif %}
+                               {% if tipo and tipo.campanha %}disabled{% endif %}>
                         <label class="form-check-label" for="ativo">Tema ativo (aparece no formulário do mural)</label>
                     </div>
                     <div class="d-flex gap-2">

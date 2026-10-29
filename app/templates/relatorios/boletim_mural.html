@@ -55,6 +55,8 @@
         font-size: 9px; font-weight: 700; letter-spacing: .08em;
         text-transform: uppercase; color: #000;
     }
+    .laco-boletim { display: inline-flex; vertical-align: -3px; margin-right: 3px; }
+    .laco-boletim svg { width: 11px; height: 16px; display: block; filter: drop-shadow(0 0 0.6px rgba(0,0,0,.55)); }
     h2, h3 { color: #000; font-weight: 700; }
     .texto { margin: 0; font-size: 11.5px; line-height: 1.35; color: #000; }
     .linha { margin: 3px 0 0; font-size: 10px; color: #000; }
@@ -164,16 +166,24 @@ if (window.self !== window.top) {
 {% endif %}
 {% endmacro %}
 
+{% macro laco(cor, slug) %}
+{% if cor %}
+<span class="laco-boletim" style="color: {{ cor }};">
+{% with item = {'laco': slug or 'padrao'} %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+</span>
+{% endif %}
+{% endmacro %}
+
 {% macro ficha(item, titulo) %}
 {% if titulo != 'h2' and item.manchete %}
-<p class="kicker">{{ item.tipo }}</p>
+<p class="kicker">{{ laco(item.laco_cor, item.laco_slug) }}{{ item.tipo }}</p>
 {% endif %}
 {% if titulo == 'h2' %}
 <h2>{{ item.manchete or item.tipo }}</h2>
 {% elif item.manchete %}
 <h3>{{ item.manchete }}</h3>
 {% else %}
-<h3>{{ item.tipo }}</h3>
+<h3>{{ laco(item.laco_cor, item.laco_slug) }}{{ item.tipo }}</h3>
 {% endif %}
 {% if item.corpo %}<p class="texto">{{ item.corpo }}</p>{% endif %}
 <p class="linha">
@@ -222,8 +232,8 @@ if (window.self !== window.top) {
             {{ fotos(capa) }}
             <div class="coluna-texto">
                 <div class="corpo">
-                    <p class="kicker">{% if capa.curtidas %}Destaque · mais curtida{% else %}Destaque{% endif %}{% if capa.manchete %} · {{ capa.tipo }}{% endif %}</p>
-                    <h2>{{ capa.manchete or capa.tipo }}</h2>
+                    <p class="kicker">{% if capa.curtidas %}Destaque · mais curtida{% else %}Destaque{% endif %}{% if capa.manchete %} · {{ laco(capa.laco_cor, capa.laco_slug) }}{{ capa.tipo }}{% endif %}</p>
+                    <h2>{% if not capa.manchete %}{{ laco(capa.laco_cor, capa.laco_slug) }}{% endif %}{{ capa.manchete or capa.tipo }}</h2>
                     {% if capa.corpo %}<p class="texto">{{ capa.corpo }}</p>{% endif %}
                 </div>
                 <p class="linha">

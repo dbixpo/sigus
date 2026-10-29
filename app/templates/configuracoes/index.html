@@ -94,11 +94,11 @@
 
     {% if current_user.pode('ver_tipos_acao') or current_user.pode('editar_tipos_acao') or current_user.pode('adicionar_tipos_acao') %}
     <a class="cfg-row" href="{{ url_for('configuracoes.tipos_acao') }}"
-       data-busca="tipos de ação acoes mural temas e-sus atividade coletiva">
+       data-busca="tipos de ação acoes mural temas e-sus atividade coletiva campanhas laço">
         <span class="cfg-row-icone"><i class="fas fa-images"></i></span>
         <div class="flex-grow-1 min-w-0">
             <div class="cfg-row-titulo">Tipos de ação (mural)</div>
-            <div class="cfg-row-desc">Temas do mural de ações da rede. Seed inicial no padrão e-SUS APS; dá para incluir mais.</div>
+            <div class="cfg-row-desc">Temas do mural de ações da rede, no padrão e-SUS APS, mais as campanhas de saúde.</div>
         </div>
         <span class="cfg-row-meta">{{ total_tipos_acao | default(0) }} ativo(s)</span>
         <i class="fas fa-chevron-right text-muted small"></i>

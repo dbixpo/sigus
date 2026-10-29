@@ -31,6 +31,7 @@ from app.models.feriado import (
 )
 from app.models.campanha import (
     CampanhaSaude, LACOS, LACO_PADRAO, normalizar_cor,
+    sincronizar_tipo_da_campanha, sincronizar_tipos_campanha,
 )
 from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
 from app.models.noticias import TipoAcao
@@ -300,6 +301,7 @@ def alternar_status_tipo_unidade(id):
 @login_required
 def tipos_acao():
     _exigir_admin()
+    sincronizar_tipos_campanha()
     tipos = TipoAcao.query.order_by(TipoAcao.ordem, TipoAcao.nome).all()
     return render_template('configuracoes/tipos_acao/listar.html', tipos=tipos)
 
@@ -346,6 +348,16 @@ def novo_tipo_acao():
 def editar_tipo_acao(id):
     _exigir_admin()
     tipo = TipoAcao.query.get_or_404(id)
+    if request.method == 'POST' and tipo.campanha_id:
+        try:
+            tipo.ordem = int(request.form.get('ordem') or 0)
+        except (TypeError, ValueError):
+            tipo.ordem = tipo.ordem or 0
+        if tipo.campanha:
+            sincronizar_tipo_da_campanha(tipo.campanha)
+        db.session.commit()
+        flash('A ordem foi salva. Nome, texto e status vêm da campanha.', 'success')
+        return redirect(url_for('configuracoes.tipos_acao'))
     if request.method == 'POST':
         nome = (request.form.get('nome') or '').strip()
         if not nome:
@@ -381,6 +393,9 @@ def editar_tipo_acao(id):
 def alternar_status_tipo_acao(id):
     _exigir_admin()
     tipo = TipoAcao.query.get_or_404(id)
+    if tipo.campanha_id:
+        flash('Esse tema acompanha a campanha. Ative ou desative a campanha.', 'warning')
+        return redirect(url_for('configuracoes.tipos_acao'))
     tipo.ativo = not tipo.ativo
     db.session.commit()
     estado = 'ativado' if tipo.ativo else 'desativado'
@@ -2362,7 +2377,10 @@ def nova_campanha():
             flash('Informe o nome, uma cor e um período válido dentro do ano.', 'danger')
             return render_template('configuracoes/campanhas/form.html', item=None, lacos=LACOS)
         dados.pop('periodo_ok')
-        db.session.add(CampanhaSaude(**dados))
+        item = CampanhaSaude(**dados)
+        db.session.add(item)
+        db.session.flush()
+        sincronizar_tipo_da_campanha(item)
         db.session.commit()
         flash(f'Campanha "{dados["nome"]}" cadastrada.', 'success')
         return redirect(url_for('configuracoes.campanhas'))
@@ -2382,6 +2400,7 @@ def editar_campanha(id):
         dados.pop('periodo_ok')
         for chave, valor in dados.items():
             setattr(item, chave, valor)
+        sincronizar_tipo_da_campanha(item)
         db.session.commit()
         flash('Campanha atualizada.', 'success')
         return redirect(url_for('configuracoes.campanhas'))
@@ -2394,6 +2413,7 @@ def alternar_campanha(id):
     _exigir_admin()
     item = CampanhaSaude.query.get_or_404(id)
     item.ativo = not item.ativo
+    sincronizar_tipo_da_campanha(item)
     db.session.commit()
     flash(f'{"Ativada" if item.ativo else "Desativada"}: {item.nome}.', 'info')
     return redirect(url_for('configuracoes.campanhas'))

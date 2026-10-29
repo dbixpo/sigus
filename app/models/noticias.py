@@ -59,12 +59,18 @@ class TipoAcao(db.Model):
     descricao = db.Column(db.Text)
     ativo = db.Column(db.Boolean, nullable=False, default=True)
     ordem = db.Column(db.Integer, nullable=False, default=0)
+    campanha_id = db.Column(
+        db.Integer,
+        db.ForeignKey('campanhas_saude.id', ondelete='SET NULL'),
+        unique=True,
+    )
     criado_em = db.Column(db.DateTime, nullable=False, default=agora_local)
     atualizado_em = db.Column(
         db.DateTime, nullable=False, default=agora_local, onupdate=agora_local
     )
 
     acoes = db.relationship('AcaoLocal', back_populates='tipo', lazy='dynamic')
+    campanha = db.relationship('CampanhaSaude')
 
     def __repr__(self):
         return f'<TipoAcao {self.nome}>'

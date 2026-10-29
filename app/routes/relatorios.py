@@ -3283,10 +3283,13 @@ def _montar_mural(acoes, curtidas, comentarios):
     linhas = []
     for acao in acoes:
         unidade = acao.unidade
+        campanha = acao.tipo.campanha if acao.tipo else None
         linhas.append({
             'id': acao.id,
             'data': acao.data_acao,
             'tipo': acao.tipo.nome if acao.tipo else 'Ação',
+            'laco_cor': campanha.cor if campanha else None,
+            'laco_slug': campanha.laco if campanha else None,
             'unidade': unidade.nome if unidade else '—',
             'tipo_unidade': (
                 unidade.tipo_unidade.nome if unidade and unidade.tipo_unidade else '—'

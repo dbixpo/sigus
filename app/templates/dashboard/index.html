@@ -153,6 +153,9 @@
     margin-bottom: 0.35rem;
 }
 .mural-post-tema {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
     font-size: 0.68rem;
     font-weight: 700;
     color: #1A82B8;
@@ -500,7 +503,14 @@
                             {{ a.data_acao.day }} de {{ meses[a.data_acao.month] }}
                             {% if a.data_acao.year != hoje.year %} de {{ a.data_acao.year }}{% endif %}
                         </div>
-                        <div class="mural-post-tema">{{ a.tipo.nome if a.tipo else 'Ação' }}</div>
+                        <div class="mural-post-tema">
+                            {% if a.tipo and a.tipo.campanha %}
+                            <span class="laco-mural" style="color: {{ a.tipo.campanha.cor }};" aria-hidden="true">
+                                {% with item = a.tipo.campanha %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+                            </span>
+                            {% endif %}
+                            <span>{{ a.tipo.nome if a.tipo else 'Ação' }}</span>
+                        </div>
                         <div class="mural-post-desc">{{ a.descricao }}</div>
                         {{ thumbs(a.fotos, 'acao-' ~ a.id, a.id) }}
                         <div class="mural-post-foot">

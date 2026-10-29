@@ -583,6 +583,22 @@ body[data-campanha] #dataHoraNavbar i {
     width: 26px;
     height: 38px;
 }
+.laco-mural {
+    display: inline-flex;
+    flex: 0 0 auto;
+    line-height: 0;
+}
+.laco-mural .laco-svg {
+    width: 14px;
+    height: 20px;
+    filter: drop-shadow(0 0 0.6px rgba(13, 59, 94, 0.95));
+}
+.mural-tema,
+.mural-post-tema {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
 .laco-balao {
     display: none;
     position: absolute;
