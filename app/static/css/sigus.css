@@ -7,7 +7,8 @@
     /* Paleta do SIGUS */
     --sigus-primary:   #1A82B8;   /* azul céu da logo */
     --sigus-secondary: #19A88B;
-    --sigus-dark:      #0D3B5E;   /* azul petróleo */
+    --sigus-dark:      #0D3B5E;   /* azul petróleo da faixa */
+    --sigus-menu:      #1A5278;   /* menu, um tom acima da faixa */
     --sigus-accent-red:    #E63030;  /* vermelho do coração */
     --sigus-accent-yellow: #F5C500;  /* amarelo do coração */
     --sigus-bg:        #F4F6F9;
@@ -78,16 +79,8 @@ body[data-teste-perfil] {
     background-color: var(--sigus-dark) !important;
     height: var(--sigus-navbar-height);
     z-index: 1030;
-    border-bottom: 3px solid var(--campanha-cor, var(--sigus-primary));
+    border-bottom: 3px solid #1A82B8;
     overflow: visible;
-}
-body[data-campanha] .sigus-navbar {
-    background-image: linear-gradient(
-        to top,
-        color-mix(in srgb, var(--campanha-cor) 42%, var(--sigus-dark)) 0%,
-        var(--sigus-dark) 16px
-    ) !important;
-    box-shadow: 0 6px 16px color-mix(in srgb, var(--campanha-cor) 30%, transparent);
 }
 body[data-campanha] #dataHoraNavbar i {
     color: var(--campanha-cor);
@@ -130,7 +123,7 @@ body[data-campanha] #dataHoraNavbar i {
 /* ── SIDEBAR ─────────────────────────────────────────────── */
 .sigus-sidebar {
     width: var(--sigus-sidebar-width);
-    background-color: var(--sigus-dark);
+    background-color: var(--sigus-menu);
     position: fixed;
     top: calc(var(--sigus-navbar-height) + var(--sigus-teste-altura));
     left: 0;
