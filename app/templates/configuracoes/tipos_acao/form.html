@@ -23,30 +23,16 @@
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    {% if tipo and tipo.campanha %}
-                    <div class="alert alert-light border d-flex align-items-center gap-2">
-                        <span class="laco-amostra" style="color: {{ tipo.campanha.cor }};" aria-hidden="true">
-                            {% with item = tipo.campanha %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
-                        </span>
-                        <div>
-                            Este tema acompanha a campanha <strong>{{ tipo.campanha.nome }}</strong>.
-                            Nome, texto e status mudam por lá.
-                            <a href="{{ url_for('configuracoes.editar_campanha', id=tipo.campanha.id) }}">Editar campanha</a>
-                        </div>
-                    </div>
-                    {% endif %}
                     <div class="mb-3">
                         <label class="form-label" for="nome">Nome *</label>
                         <input type="text" name="nome" id="nome" class="form-control" required maxlength="200"
-                               value="{{ tipo.nome if tipo else '' }}"
-                               {% if tipo and tipo.campanha %}disabled{% endif %}>
+                               value="{{ request.form.get('nome') if request.method == 'POST' else (tipo.nome if tipo else '') }}">
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label" for="codigo_esus">Código e-SUS (opcional)</label>
                             <input type="number" name="codigo_esus" id="codigo_esus" class="form-control"
-                                   value="{{ tipo.codigo_esus if tipo and tipo.codigo_esus is not none else '' }}"
-                                   {% if tipo and tipo.campanha %}disabled{% endif %}>
+                                   value="{{ request.form.get('codigo_esus') if request.method == 'POST' else (tipo.codigo_esus if tipo and tipo.codigo_esus is not none else '') }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="ordem">Ordem</label>
@@ -56,13 +42,40 @@
                     </div>
                     <div class="mb-3 mt-3">
                         <label class="form-label" for="descricao">Descrição</label>
-                        <textarea name="descricao" id="descricao" class="form-control" rows="3"
-                                  {% if tipo and tipo.campanha %}disabled{% endif %}>{{ tipo.descricao if tipo else '' }}</textarea>
+                        <textarea name="descricao" id="descricao" class="form-control" rows="3">{{ request.form.get('descricao') if request.method == 'POST' else (tipo.descricao if tipo else '') }}</textarea>
+                    </div>
+                    {% set campanha_sel = request.form.get('campanha_id') if request.method == 'POST' else ((tipo.campanha_id | string) if tipo and tipo.campanha_id else '') %}
+                    {% set ns = namespace(atual=none) %}
+                    {% for c in campanhas %}
+                        {% if campanha_sel == (c.id | string) %}{% set ns.atual = c %}{% endif %}
+                    {% endfor %}
+                    <div class="mb-3">
+                        <label class="form-label" for="campanha_id">Campanha de saúde</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="prevLaco" class="laco-mural" {% if not ns.atual %}hidden{% endif %}
+                                  style="color: {{ ns.atual.cor if ns.atual else '#1A82B8' }};">
+                                <span data-laco="padrao" {% if ns.atual and ns.atual.laco == 'bigode' %}hidden{% endif %}>
+                                    {% with item = {'laco': 'padrao'} %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+                                </span>
+                                <span data-laco="bigode" {% if not ns.atual or ns.atual.laco != 'bigode' %}hidden{% endif %}>
+                                    {% with item = {'laco': 'bigode'} %}{% include 'configuracoes/campanhas/_laco.html' %}{% endwith %}
+                                </span>
+                            </span>
+                            <select name="campanha_id" id="campanha_id" class="form-select">
+                                <option value="">Nenhuma</option>
+                                {% for c in campanhas %}
+                                <option value="{{ c.id }}" data-cor="{{ c.cor }}" data-laco="{{ c.laco }}"
+                                        {% if campanha_sel == (c.id | string) %}selected{% endif %}>
+                                    {{ c.nome }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-text">Opcional. A notícia continua com o nome deste tema, e o laço da campanha aparece junto.</div>
                     </div>
                     <div class="form-check mb-4">
                         <input type="checkbox" name="ativo" class="form-check-input" id="ativo"
-                               {% if not tipo or tipo.ativo %}checked{% endif %}
-                               {% if tipo and tipo.campanha %}disabled{% endif %}>
+                               {% if request.method == 'POST' %}{% if request.form.get('ativo') %}checked{% endif %}{% elif not tipo or tipo.ativo %}checked{% endif %}>
                         <label class="form-check-label" for="ativo">Tema ativo (aparece no formulário do mural)</label>
                     </div>
                     <div class="d-flex gap-2">
@@ -72,6 +85,28 @@
                         <a href="{{ url_for('configuracoes.tipos_acao') }}" class="btn btn-outline-secondary">Cancelar</a>
                     </div>
                 </form>
+                <script>
+                (function () {
+                    var sel = document.getElementById('campanha_id');
+                    var prev = document.getElementById('prevLaco');
+                    if (!sel || !prev) return;
+                    function sync() {
+                        var opt = sel.options[sel.selectedIndex];
+                        var cor = opt && opt.getAttribute('data-cor');
+                        if (!cor) {
+                            prev.hidden = true;
+                            return;
+                        }
+                        prev.hidden = false;
+                        prev.style.color = cor;
+                        var laco = opt.getAttribute('data-laco') || 'padrao';
+                        prev.querySelectorAll('[data-laco]').forEach(function (el) {
+                            el.hidden = el.getAttribute('data-laco') !== laco;
+                        });
+                    }
+                    sel.addEventListener('change', sync);
+                })();
+                </script>
             </div>
         </div>
     </div>

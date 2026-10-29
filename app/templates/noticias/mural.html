@@ -67,22 +67,9 @@
         <select name="tipo" id="tipo" class="form-select form-select-sm">
             <option value="">Todos</option>
             <option value="lojinha" {% if filtro_tipo == 'lojinha' %}selected{% endif %}>Lojinha Interna</option>
-            {% set temas_campanha = tipos | selectattr('campanha_id') | list %}
-            {% set temas_rede = tipos | rejectattr('campanha_id') | list %}
-            {% if temas_campanha %}
-            <optgroup label="Campanhas">
-                {% for t in temas_campanha %}
-                <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
-                {% endfor %}
-            </optgroup>
-            {% endif %}
-            {% if temas_rede %}
-            <optgroup label="Temas">
-                {% for t in temas_rede %}
-                <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
-                {% endfor %}
-            </optgroup>
-            {% endif %}
+            {% for t in tipos %}
+            <option value="{{ t.id }}" {% if filtro_tipo == t.id %}selected{% endif %}>{{ t.nome }}</option>
+            {% endfor %}
         </select>
     </div>
     <div class="col-md-2">

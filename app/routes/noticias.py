@@ -631,6 +631,15 @@ def _acao_payload(acao, foto_idx=0):
     }
 
 
+def _temas_para_mural(incluir=None):
+    """Temas de verdade. A cópia automática da campanha não entra no seletor."""
+    tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
+    tipos = [t for t in tipos if not t.copia_de_campanha]
+    if incluir is not None and incluir not in tipos:
+        tipos = [incluir] + tipos
+    return tipos
+
+
 def _ctx_acao(tipos, unidades, escolher_unidade, item=None):
     return dict(
         tipos=tipos,
@@ -955,7 +964,7 @@ def excluir_comunicado(id):
 @login_required
 def nova_acao():
     _exigir_publicar()
-    tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
+    tipos = _temas_para_mural()
     unidades = unidades_para_publicar()
     escolher_unidade = current_user.perfil in ('administrador', 'gestor_secretaria')
     ctx = _ctx_acao(tipos, unidades, escolher_unidade)
@@ -1029,9 +1038,7 @@ def editar_acao(id):
     acao = AcaoLocal.query.options(selectinload(AcaoLocal.fotos)).get_or_404(id)
     if not pode_editar_acao(acao):
         abort(403)
-    tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
-    if acao.tipo and acao.tipo not in tipos:
-        tipos = [acao.tipo] + tipos
+    tipos = _temas_para_mural(acao.tipo)
     escolher_unidade = current_user.perfil in ('administrador', 'gestor_secretaria')
     unidades = unidades_para_publicar() if escolher_unidade else ([acao.unidade] if acao.unidade else [])
     ctx = _ctx_acao(tipos, unidades, escolher_unidade, item=acao)
@@ -1137,7 +1144,7 @@ def excluir_acao(id):
 def mural():
     if not current_user.pode('ver_mural'):
         abort(403)
-    tipos = TipoAcao.query.filter_by(ativo=True).order_by(TipoAcao.ordem, TipoAcao.nome).all()
+    tipos = _temas_para_mural()
     unidades = unidades_ativas()
     try:
         unidade_id = int(request.args.get('unidade') or 0) or None

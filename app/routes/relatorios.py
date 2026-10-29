@@ -3311,7 +3311,12 @@ def _opcoes_mural():
     return (
         unidades.order_by(Unidade.nome).all(),
         TipoUnidade.query.filter_by(ativo=True).order_by(TipoUnidade.nome).all(),
-        TipoAcao.query.order_by(TipoAcao.ativo.desc(), TipoAcao.ordem, TipoAcao.nome).all(),
+        [
+            t for t in TipoAcao.query.order_by(
+                TipoAcao.ativo.desc(), TipoAcao.ordem, TipoAcao.nome
+            ).all()
+            if not t.copia_de_campanha
+        ],
     )
 
 

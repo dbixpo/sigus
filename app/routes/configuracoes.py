@@ -31,7 +31,6 @@ from app.models.feriado import (
 )
 from app.models.campanha import (
     CampanhaSaude, LACOS, LACO_PADRAO, normalizar_cor,
-    sincronizar_tipo_da_campanha, sincronizar_tipos_campanha,
 )
 from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
 from app.models.noticias import TipoAcao
@@ -297,11 +296,39 @@ def alternar_status_tipo_unidade(id):
 #  TIPOS DE AÇÃO (mural)
 # ══════════════════════════════════════════════════════════
 
+def _campanhas_do_tema(atual_id=None):
+    linhas = (
+        CampanhaSaude.query
+        .order_by(CampanhaSaude.mes_inicio, CampanhaSaude.dia_inicio, CampanhaSaude.nome)
+        .all()
+    )
+    return [c for c in linhas if c.ativo or c.id == atual_id]
+
+
+def _render_form_tipo(tipo):
+    return render_template(
+        'configuracoes/tipos_acao/form.html',
+        tipo=tipo,
+        campanhas=_campanhas_do_tema(tipo.campanha_id if tipo else None),
+    )
+
+
+def _ler_campanha_id():
+    raw = (request.form.get('campanha_id') or '').strip()
+    if not raw:
+        return None
+    try:
+        cid = int(raw)
+    except (TypeError, ValueError):
+        return None
+    campanha = CampanhaSaude.query.get(cid)
+    return campanha.id if campanha else None
+
+
 @configuracoes_bp.route('/tipos-acao')
 @login_required
 def tipos_acao():
     _exigir_admin()
-    sincronizar_tipos_campanha()
     tipos = TipoAcao.query.order_by(TipoAcao.ordem, TipoAcao.nome).all()
     return render_template('configuracoes/tipos_acao/listar.html', tipos=tipos)
 
@@ -314,10 +341,10 @@ def novo_tipo_acao():
         nome = (request.form.get('nome') or '').strip()
         if not nome:
             flash('Informe o nome do tema.', 'danger')
-            return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+            return _render_form_tipo(None)
         if TipoAcao.query.filter_by(nome=nome).first():
             flash(f'Já existe o tema "{nome}".', 'danger')
-            return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+            return _render_form_tipo(None)
         try:
             ordem = int(request.form.get('ordem') or 0)
         except (TypeError, ValueError):
@@ -335,12 +362,13 @@ def novo_tipo_acao():
             codigo_esus=codigo,
             ordem=ordem,
             ativo=request.form.get('ativo') == 'on',
+            campanha_id=_ler_campanha_id(),
         )
         db.session.add(tipo)
         db.session.commit()
         flash(f'Tema "{tipo.nome}" cadastrado.', 'success')
         return redirect(url_for('configuracoes.tipos_acao'))
-    return render_template('configuracoes/tipos_acao/form.html', tipo=None)
+    return _render_form_tipo(None)
 
 
 @configuracoes_bp.route('/tipos-acao/<int:id>/editar', methods=['GET', 'POST'])
@@ -348,25 +376,15 @@ def novo_tipo_acao():
 def editar_tipo_acao(id):
     _exigir_admin()
     tipo = TipoAcao.query.get_or_404(id)
-    if request.method == 'POST' and tipo.campanha_id:
-        try:
-            tipo.ordem = int(request.form.get('ordem') or 0)
-        except (TypeError, ValueError):
-            tipo.ordem = tipo.ordem or 0
-        if tipo.campanha:
-            sincronizar_tipo_da_campanha(tipo.campanha)
-        db.session.commit()
-        flash('A ordem foi salva. Nome, texto e status vêm da campanha.', 'success')
-        return redirect(url_for('configuracoes.tipos_acao'))
     if request.method == 'POST':
         nome = (request.form.get('nome') or '').strip()
         if not nome:
             flash('Informe o nome do tema.', 'danger')
-            return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+            return _render_form_tipo(tipo)
         conflito = TipoAcao.query.filter(TipoAcao.nome == nome, TipoAcao.id != id).first()
         if conflito:
             flash(f'Já existe outro tema com o nome "{nome}".', 'danger')
-            return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+            return _render_form_tipo(tipo)
         try:
             tipo.ordem = int(request.form.get('ordem') or 0)
         except (TypeError, ValueError):
@@ -382,10 +400,11 @@ def editar_tipo_acao(id):
         tipo.nome = nome
         tipo.descricao = (request.form.get('descricao') or '').strip() or None
         tipo.ativo = request.form.get('ativo') == 'on'
+        tipo.campanha_id = _ler_campanha_id()
         db.session.commit()
         flash('Tema atualizado.', 'success')
         return redirect(url_for('configuracoes.tipos_acao'))
-    return render_template('configuracoes/tipos_acao/form.html', tipo=tipo)
+    return _render_form_tipo(tipo)
 
 
 @configuracoes_bp.route('/tipos-acao/<int:id>/alternar-status', methods=['POST'])
@@ -393,9 +412,6 @@ def editar_tipo_acao(id):
 def alternar_status_tipo_acao(id):
     _exigir_admin()
     tipo = TipoAcao.query.get_or_404(id)
-    if tipo.campanha_id:
-        flash('Esse tema acompanha a campanha. Ative ou desative a campanha.', 'warning')
-        return redirect(url_for('configuracoes.tipos_acao'))
     tipo.ativo = not tipo.ativo
     db.session.commit()
     estado = 'ativado' if tipo.ativo else 'desativado'
@@ -2379,8 +2395,6 @@ def nova_campanha():
         dados.pop('periodo_ok')
         item = CampanhaSaude(**dados)
         db.session.add(item)
-        db.session.flush()
-        sincronizar_tipo_da_campanha(item)
         db.session.commit()
         flash(f'Campanha "{dados["nome"]}" cadastrada.', 'success')
         return redirect(url_for('configuracoes.campanhas'))
@@ -2400,7 +2414,6 @@ def editar_campanha(id):
         dados.pop('periodo_ok')
         for chave, valor in dados.items():
             setattr(item, chave, valor)
-        sincronizar_tipo_da_campanha(item)
         db.session.commit()
         flash('Campanha atualizada.', 'success')
         return redirect(url_for('configuracoes.campanhas'))
@@ -2413,7 +2426,6 @@ def alternar_campanha(id):
     _exigir_admin()
     item = CampanhaSaude.query.get_or_404(id)
     item.ativo = not item.ativo
-    sincronizar_tipo_da_campanha(item)
     db.session.commit()
     flash(f'{"Ativada" if item.ativo else "Desativada"}: {item.nome}.', 'info')
     return redirect(url_for('configuracoes.campanhas'))
