@@ -81,6 +81,17 @@ body[data-teste-perfil] {
     border-bottom: 3px solid var(--campanha-cor, var(--sigus-primary));
     overflow: visible;
 }
+body[data-campanha] .sigus-navbar {
+    background-image: linear-gradient(
+        to top,
+        color-mix(in srgb, var(--campanha-cor) 42%, var(--sigus-dark)) 0%,
+        var(--sigus-dark) 16px
+    ) !important;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--campanha-cor) 30%, transparent);
+}
+body[data-campanha] #dataHoraNavbar i {
+    color: var(--campanha-cor);
+}
 
 /* Todos os botões do lado direito da navbar com altura uniforme */
 .sigus-navbar .ms-auto .btn {
@@ -552,16 +563,17 @@ body[data-teste-perfil] {
     background: rgba(255, 255, 255, 0.12);
 }
 .laco-svg {
-    width: 22px;
-    height: 26px;
+    width: 20px;
+    height: 29px;
     display: block;
+    filter: drop-shadow(0 1px 1px rgba(13, 59, 94, 0.45));
 }
 .laco-amostra {
     display: inline-flex;
 }
 .laco-amostra .laco-svg {
-    width: 28px;
-    height: 32px;
+    width: 26px;
+    height: 38px;
 }
 .laco-balao {
     display: none;
