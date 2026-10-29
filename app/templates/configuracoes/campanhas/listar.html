@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Campanhas da saúde{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Campanhas da saúde</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-ribbon me-2"></i>Campanhas da saúde</h1>
+    <a href="{{ url_for('configuracoes.nova_campanha') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus-circle me-1"></i>Nova
+    </a>
+</div>
+
+<p class="text-muted small mb-3">
+    Laços do calendário de cores. Repetem todo ano. No período, a cor do SIGUS acompanha
+    a campanha de maior prioridade e o laço fica na barra, ao lado do relógio.
+    Se a cor for clara, o botão escurece o bastante para o texto branco continuar legível.
+</p>
+
+<div class="card">
+    {% if itens %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Laço</th>
+                    <th>Campanha</th>
+                    <th>Período</th>
+                    <th>Prioridade</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr class="{% if not item.ativo %}text-muted{% endif %}">
+                    <td>
+                        <span class="laco-amostra" style="color: {{ item.cor }};" title="{{ item.cor }}">
+                            {% include 'configuracoes/campanhas/_laco.html' %}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="fw-semibold">{{ item.nome }}</span>
+                        {% if item.resumo %}<div class="small text-muted">{{ item.resumo }}</div>{% endif %}
+                    </td>
+                    <td>{{ item.periodo }}</td>
+                    <td>{{ item.prioridade }}</td>
+                    <td class="text-center">
+                        {% if item.ativo %}
+                        <span class="badge bg-success">Ativa</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativa</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{{ url_for('configuracoes.editar_campanha', id=item.id) }}"
+                           class="btn btn-sm btn-outline-primary">Editar</a>
+                        <form method="POST" action="{{ url_for('configuracoes.alternar_campanha', id=item.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                {{ 'Desativar' if item.ativo else 'Ativar' }}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body text-muted">Nenhuma campanha cadastrada.</div>
+    {% endif %}
+</div>
+{% endblock %}

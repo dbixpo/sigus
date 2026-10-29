@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Nova' }} campanha{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.campanhas') }}">Campanhas da saúde</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Nova' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1><i class="fas fa-ribbon me-2"></i>{{ 'Editar' if item else 'Nova' }} campanha</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold" for="nome">Nome *</label>
+                            <input type="text" name="nome" id="nome" class="form-control" required maxlength="120"
+                                   value="{{ item.nome if item else '' }}" placeholder="Ex.: Outubro Rosa">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" for="cor">Cor do laço *</label>
+                            <input type="color" name="cor" id="cor" class="form-control form-control-color w-100"
+                                   value="{{ item.cor if item else '#C2185B' }}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="resumo">O que é</label>
+                            <textarea name="resumo" id="resumo" class="form-control" rows="2" maxlength="400"
+                                      placeholder="Aparece quando a pessoa passa o mouse no laço.">{{ item.resumo if item and item.resumo else '' }}</textarea>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold" for="dia_inicio">Dia inicial</label>
+                            <input type="number" name="dia_inicio" id="dia_inicio" class="form-control" min="1" max="31" required
+                                   value="{{ item.dia_inicio if item else 1 }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold" for="mes_inicio">Mês inicial</label>
+                            <select name="mes_inicio" id="mes_inicio" class="form-select">
+                                {% for n in range(1, 13) %}
+                                <option value="{{ n }}" {% if item and item.mes_inicio == n or not item and n == 10 %}selected{% endif %}>{{ '%02d'|format(n) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold" for="dia_fim">Dia final</label>
+                            <input type="number" name="dia_fim" id="dia_fim" class="form-control" min="1" max="31" required
+                                   value="{{ item.dia_fim if item else 31 }}">
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label fw-semibold" for="mes_fim">Mês final</label>
+                            <select name="mes_fim" id="mes_fim" class="form-select">
+                                {% for n in range(1, 13) %}
+                                <option value="{{ n }}" {% if item and item.mes_fim == n or not item and n == 10 %}selected{% endif %}>{{ '%02d'|format(n) }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" for="prioridade">Prioridade</label>
+                            <input type="number" name="prioridade" id="prioridade" class="form-control" min="0" max="99"
+                                   value="{{ item.prioridade if item else 10 }}">
+                            <div class="form-text">Quando duas campanhas caem juntas, a maior pinta o sistema.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold" for="laco">Laço</label>
+                            <select name="laco" id="laco" class="form-select">
+                                {% for k, v in lacos.items() %}
+                                <option value="{{ k }}" {% if item and item.laco == k or not item and k == 'padrao' %}selected{% endif %}>{{ v }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                                       {% if not item or item.ativo %}checked{% endif %}>
+                                <label class="form-check-label" for="ativo">Ativa</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                        <a href="{{ url_for('configuracoes.campanhas') }}" class="btn btn-light">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

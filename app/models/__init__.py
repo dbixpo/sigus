@@ -28,6 +28,7 @@ from app.models.empresa import EmpresaContratada
 from app.models.veiculo import Veiculo, ModeloVeiculo, TipoVeiculo
 from app.models.agenda import AgendaEvento
 from app.models.feriado import Feriado
+from app.models.campanha import CampanhaSaude
 from app.models.cbo import CBO
 from app.models.sueq import (
     SueqParlamentar, SueqUnidade, SueqProcesso, SueqEmenda, SueqEmendaItem,

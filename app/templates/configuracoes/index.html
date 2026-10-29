@@ -79,6 +79,19 @@
     </a>
     {% endif %}
 
+    {% if current_user.pode('ver_campanhas') or current_user.pode('editar_campanhas') or current_user.pode('adicionar_campanhas') %}
+    <a class="cfg-row" href="{{ url_for('configuracoes.campanhas') }}"
+       data-busca="campanhas laços cores outubro rosa novembro azul calendário saúde">
+        <span class="cfg-row-icone"><i class="fas fa-ribbon"></i></span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Campanhas da saúde</div>
+            <div class="cfg-row-desc">Laços do calendário de cores. A cor do SIGUS acompanha a campanha do período.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_campanhas | default(0) }} ativa(s)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+    {% endif %}
+
     {% if current_user.pode('ver_tipos_acao') or current_user.pode('editar_tipos_acao') or current_user.pode('adicionar_tipos_acao') %}
     <a class="cfg-row" href="{{ url_for('configuracoes.tipos_acao') }}"
        data-busca="tipos de ação acoes mural temas e-sus atividade coletiva">

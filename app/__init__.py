@@ -210,6 +210,13 @@ def create_app(config_name='default'):
             opcoes = current_user.unidades_ativas
         return {'unidades_seletor': opcoes}
 
+    @app.context_processor
+    def inject_campanha():
+        from datetime import date
+        from app.models.campanha import campanhas_na_data
+        principal, todas = campanhas_na_data(date.today())
+        return {'campanha_dia': principal, 'campanhas_dia': todas}
+
     # ── Guarda de acesso: perfis que precisam de vínculo ────────────────
     from flask import redirect, url_for, request as req
     from flask_login import current_user as cu

@@ -78,7 +78,8 @@ body[data-teste-perfil] {
     background-color: var(--sigus-dark) !important;
     height: var(--sigus-navbar-height);
     z-index: 1030;
-    border-bottom: 3px solid var(--sigus-primary);
+    border-bottom: 3px solid var(--campanha-cor, var(--sigus-primary));
+    overflow: visible;
 }
 
 /* Todos os botões do lado direito da navbar com altura uniforme */
@@ -525,8 +526,75 @@ body[data-teste-perfil] {
 }
 
 .btn-primary:hover {
-    background-color: #155d8c;
-    border-color: #155d8c;
+    background-color: var(--sigus-primary-hover, #155d8c);
+    border-color: var(--sigus-primary-hover, #155d8c);
+}
+
+.laco-navbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.laco-botao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+}
+.laco-botao:hover,
+.laco-botao:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+}
+.laco-svg {
+    width: 22px;
+    height: 26px;
+    display: block;
+}
+.laco-amostra {
+    display: inline-flex;
+}
+.laco-amostra .laco-svg {
+    width: 28px;
+    height: 32px;
+}
+.laco-balao {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 260px;
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    background: #fff;
+    color: var(--sigus-text);
+    box-shadow: 0 10px 28px rgba(13, 59, 94, 0.18);
+    z-index: 1040;
+    text-align: left;
+}
+.laco-balao strong {
+    display: block;
+    font-size: 0.86rem;
+    margin-bottom: 0.2rem;
+}
+.laco-balao p {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    font-weight: 400;
+}
+.laco-tambem {
+    margin-top: 0.45rem !important;
+    color: var(--sigus-text-muted);
+}
+.laco-navbar:hover .laco-balao,
+.laco-navbar:focus-within .laco-balao {
+    display: block;
 }
 
 /* ── BREADCRUMB ─────────────────────────────────────────── */

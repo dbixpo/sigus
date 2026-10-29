@@ -29,6 +29,9 @@ from app.models.predio import Predio
 from app.models.feriado import (
     Feriado, TIPOS_FOLGA, NATUREZAS, TIPO_FERIADO, NATUREZA_NACIONAL,
 )
+from app.models.campanha import (
+    CampanhaSaude, LACOS, LACO_PADRAO, normalizar_cor,
+)
 from app.models.nsp import NspCatalogo, GRUPOS_CATALOGO, GRUPOS_LABELS, BADGE_CORES as NSP_BADGE_CORES
 from app.models.noticias import TipoAcao
 from app.models.veiculo import (
@@ -43,6 +46,7 @@ def _regra_catalogo():
     nome = (request.endpoint or '').split('.')[-1]
     regras = (
         (('feriado',), 'feriados'),
+        (('campanha',), 'campanhas'),
         (('tipo_acao', 'tipos_acao'), 'tipos_acao'),
         (('tipo_unidade', 'tipos_unidade'), 'tipos_unidade'),
         (('divisao', 'divisoes', 'setor'), 'divisoes'),
@@ -73,7 +77,7 @@ def _pode_catalogo(codigo, escrever=False):
 
 
 _CATALOGOS = (
-    'feriados', 'tipos_acao', 'tipos_unidade', 'divisoes', 'tipos_sala',
+    'feriados', 'campanhas', 'tipos_acao', 'tipos_unidade', 'divisoes', 'tipos_sala',
     'padrao_salas', 'classificacao', 'tipos_veiculo', 'status_equip',
     'catalogo_equip', 'marcas', 'status_chamado', 'cbos', 'nsp_catalogo',
 )
@@ -187,6 +191,7 @@ def index():
     total_setores = SetorManutencao.query.count()
     total_cbos = CBO.query.count()
     total_feriados = Feriado.query.filter_by(ativo=True).count()
+    total_campanhas = CampanhaSaude.query.filter_by(ativo=True).count()
     total_nsp_catalogos = NspCatalogo.query.filter_by(ativo=True).count()
     total_tipos_acao = TipoAcao.query.filter_by(ativo=True).count()
     return render_template('configuracoes/index.html',
@@ -208,6 +213,7 @@ def index():
                            total_setores=total_setores,
                            total_cbos=total_cbos,
                            total_feriados=total_feriados,
+                           total_campanhas=total_campanhas,
                            total_nsp_catalogos=total_nsp_catalogos,
                            total_tipos_acao=total_tipos_acao)
 
@@ -2294,6 +2300,103 @@ def excluir_feriado(id):
     db.session.commit()
     flash(f'Feriado "{nome}" excluído.', 'info')
     return redirect(url_for('configuracoes.feriados', ano=ano))
+
+
+def _dados_campanha(form):
+    from datetime import date as date_cls
+    cor = normalizar_cor(form.get('cor'))
+    laco = form.get('laco') or LACO_PADRAO
+    if laco not in LACOS:
+        laco = LACO_PADRAO
+    try:
+        dia_inicio = int(form.get('dia_inicio') or 0)
+        mes_inicio = int(form.get('mes_inicio') or 0)
+        dia_fim = int(form.get('dia_fim') or 0)
+        mes_fim = int(form.get('mes_fim') or 0)
+        prioridade = int(form.get('prioridade') or 10)
+    except ValueError:
+        dia_inicio = mes_inicio = dia_fim = mes_fim = 0
+        prioridade = 10
+    periodo_ok = True
+    for mes, dia in ((mes_inicio, dia_inicio), (mes_fim, dia_fim)):
+        try:
+            date_cls(2024, mes, dia)
+        except ValueError:
+            periodo_ok = False
+    if periodo_ok and (mes_inicio, dia_inicio) > (mes_fim, dia_fim):
+        periodo_ok = False
+    return {
+        'nome': (form.get('nome') or '').strip(),
+        'resumo': (form.get('resumo') or '').strip() or None,
+        'cor': cor,
+        'dia_inicio': dia_inicio,
+        'mes_inicio': mes_inicio,
+        'dia_fim': dia_fim,
+        'mes_fim': mes_fim,
+        'prioridade': max(0, min(99, prioridade)),
+        'laco': laco,
+        'ativo': form.get('ativo') == 'on',
+        'periodo_ok': periodo_ok,
+    }
+
+
+@configuracoes_bp.route('/campanhas')
+@login_required
+def campanhas():
+    _exigir_admin()
+    itens = (
+        CampanhaSaude.query
+        .order_by(CampanhaSaude.mes_inicio, CampanhaSaude.dia_inicio, CampanhaSaude.prioridade.desc())
+        .all()
+    )
+    return render_template('configuracoes/campanhas/listar.html', itens=itens)
+
+
+@configuracoes_bp.route('/campanhas/nova', methods=['GET', 'POST'])
+@login_required
+def nova_campanha():
+    _exigir_admin()
+    if request.method == 'POST':
+        dados = _dados_campanha(request.form)
+        if not dados['nome'] or not dados['cor'] or not dados['periodo_ok']:
+            flash('Informe o nome, uma cor e um período válido dentro do ano.', 'danger')
+            return render_template('configuracoes/campanhas/form.html', item=None, lacos=LACOS)
+        dados.pop('periodo_ok')
+        db.session.add(CampanhaSaude(**dados))
+        db.session.commit()
+        flash(f'Campanha "{dados["nome"]}" cadastrada.', 'success')
+        return redirect(url_for('configuracoes.campanhas'))
+    return render_template('configuracoes/campanhas/form.html', item=None, lacos=LACOS)
+
+
+@configuracoes_bp.route('/campanhas/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_campanha(id):
+    _exigir_admin()
+    item = CampanhaSaude.query.get_or_404(id)
+    if request.method == 'POST':
+        dados = _dados_campanha(request.form)
+        if not dados['nome'] or not dados['cor'] or not dados['periodo_ok']:
+            flash('Informe o nome, uma cor e um período válido dentro do ano.', 'danger')
+            return render_template('configuracoes/campanhas/form.html', item=item, lacos=LACOS)
+        dados.pop('periodo_ok')
+        for chave, valor in dados.items():
+            setattr(item, chave, valor)
+        db.session.commit()
+        flash('Campanha atualizada.', 'success')
+        return redirect(url_for('configuracoes.campanhas'))
+    return render_template('configuracoes/campanhas/form.html', item=item, lacos=LACOS)
+
+
+@configuracoes_bp.route('/campanhas/<int:id>/alternar', methods=['POST'])
+@login_required
+def alternar_campanha(id):
+    _exigir_admin()
+    item = CampanhaSaude.query.get_or_404(id)
+    item.ativo = not item.ativo
+    db.session.commit()
+    flash(f'{"Ativada" if item.ativo else "Desativada"}: {item.nome}.', 'info')
+    return redirect(url_for('configuracoes.campanhas'))
 
 
 # ══════════════════════════════════════════════════════════
