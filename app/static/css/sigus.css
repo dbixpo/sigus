@@ -490,6 +490,16 @@ body[data-campanha] #dataHoraNavbar i {
     padding: 0.35em 0.65em;
 }
 
+a.badge-predio,
+a.badge-predio:hover,
+a.badge-predio:focus,
+a.badge-predio:active,
+a.badge-predio:visited {
+    background-color: var(--sigus-primary) !important;
+    color: #fff !important;
+    text-decoration: none;
+}
+
 /* ── FORMULÁRIOS ─────────────────────────────────────────── */
 .form-label {
     font-size: 0.82rem;

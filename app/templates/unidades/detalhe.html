@@ -24,7 +24,7 @@
         {% endif %}
         {% if unidade.predio %}
         <a href="{{ url_for('predios.detalhe', id=unidade.predio_id) }}"
-           class="badge bg-secondary fs-6 text-decoration-none" title="Ver prédio">
+           class="badge badge-predio fs-6" title="Ver prédio">
             <i class="fas fa-building me-1"></i>{{ unidade.predio.nome }}
         </a>
         {% endif %}
