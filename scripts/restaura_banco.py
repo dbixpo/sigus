@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-SIGUS — Restaura o banco PostgreSQL a partir do backup em database/sigus_backup.zip ou .sql.
+SIGUS — Restaura o banco PostgreSQL.
+
+Ordem: database/sigus_backup.zip, o sigus_backup_*.sql mais novo,
+ou database/sigus_inicial.sql (base pública, sem pessoas).
 
 Uso:
     python scripts/restaura_banco.py
@@ -83,17 +86,21 @@ def main():
             zf.extract(target, DATABASE_DIR)
             sql_temp = os.path.join(DATABASE_DIR, target)
     else:
-        # Tenta achar o .sql mais recente
-        sqls = [
+        datados = [
             os.path.join(DATABASE_DIR, f)
             for f in os.listdir(DATABASE_DIR)
-            if f.endswith('.sql')
+            if f.startswith('sigus_backup_') and f.endswith('.sql')
         ]
-        if not sqls:
-            print('  [ERRO] Nenhum backup encontrado em database/')
-            sys.exit(1)
-        sqls.sort(key=os.path.getmtime, reverse=True)
-        sql_temp = sqls[0]
+        if datados:
+            datados.sort(key=os.path.getmtime, reverse=True)
+            sql_temp = datados[0]
+        else:
+            inicial = os.path.join(DATABASE_DIR, 'sigus_inicial.sql')
+            if not os.path.exists(inicial):
+                print('  [ERRO] Nenhum backup encontrado em database/')
+                print('  Esperado: sigus_backup.zip, sigus_backup_*.sql ou sigus_inicial.sql')
+                sys.exit(1)
+            sql_temp = inicial
 
     print(f'  Arquivo SQL: {sql_temp}')
     print(f'  Host: {params["host"]}:{params["port"]}')

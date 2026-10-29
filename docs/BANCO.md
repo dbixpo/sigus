@@ -11,21 +11,25 @@ Schema principal: **`public`** (SIGUS). Módulo de emendas/licitações do Patri
 | Ação | Script | Observação |
 |---|---|---|
 | Exportar o banco da máquina atual | `python scripts/clone_banco.py` | Gera `database/sigus_backup_AAAAMMDD_HHMM.sql` — **gitignore** |
-| Restaurar | `python scripts/restaura_banco.py` | Lê `database/sigus_backup.zip` ou o `.sql` mais recente; usa `DATABASE_URL` |
+| Base pública, sem pessoas | `python scripts/gerar_dump_inicial.py` | Gera `database/sigus_inicial.sql` — este arquivo **vai** no Git |
+| Restaurar | `python scripts/restaura_banco.py` | Usa o backup local, se existir; senão `database/sigus_inicial.sql` |
 
-Dumps **não** entram no Git. Backup de cada instalação é da equipe que opera aquele servidor. **Não** commitar dump. **Não** restaurar um dump em cima de um banco que já atende gente sem cópia prévia.
+`database/sigus_inicial.sql` é a base para quem começa: unidades, salas, equipamentos, catálogos e um administrador só (`admin@localhost` / `sigus-inicial`). Não tem usuário real, CPF, e-mail de pessoa nem senha de quem usa o sistema. Troque essa senha no primeiro acesso.
+
+Os outros dumps **não** entram no Git. Backup de cada instalação é da equipe que opera aquele servidor. **Não** commitar dump com gente. **Não** restaurar um dump em cima de um banco que já atende gente sem cópia prévia.
 
 Instalação nova, sem dado de outra rede: [INSTALACAO.md](INSTALACAO.md) (`migrations/bootstrap_nova_instalacao.py`).
 
 ## Levar esta instalação para outro computador
 
-O código vem do Git. O banco **não**. No notebook:
+O código vem do Git. A base sem pessoas também (`database/sigus_inicial.sql`). O banco com as pessoas, não. No notebook:
 
 1. Clone ou `git pull` deste repositório.
 2. PostgreSQL local e um `.env` **novo**, com `DATABASE_URL` em `localhost`. `SIGUS_BEHIND_PROXY=0` e `SIGUS_PUBLIC_HOST` vazio. Não copie o `.env` do servidor.
-3. Banco vazio: `python migrations/bootstrap_nova_instalacao.py` (cria as tabelas e, no fim, `add_inventario_catalogo.py`: RENEM, status de equipamento e itens de veículo).
-4. Quer os dados de uma rede que já usa o SIGUS: faça o dump **naquela** máquina (`python scripts/clone_banco.py`) e restaure **aqui** (`python scripts/restaura_banco.py`). O dump não vai para o Git. Se o dump for anterior a 20/10/2026, rode `python migrations/add_inventario_catalogo.py` depois do restore.
-5. Suba com `python run.py` em `http://localhost:5001/sigus/`. Não aponte este `.env` para o servidor.
+3. Banco vazio, do zero: `python migrations/bootstrap_nova_instalacao.py` (cria as tabelas e, no fim, `add_inventario_catalogo.py`: RENEM, status de equipamento e itens de veículo).
+4. Quer a base que já vem no Git, sem pessoas: crie o banco `sigus` vazio e rode `python scripts/restaura_banco.py`. Ele usa `database/sigus_inicial.sql`. Entre com `admin@localhost` / `sigus-inicial` e troque a senha.
+5. Quer os dados de uma rede que já usa o SIGUS, com as pessoas: faça o dump **naquela** máquina (`python scripts/clone_banco.py`) e restaure **aqui** (`python scripts/restaura_banco.py`). Esse dump não vai para o Git. Se o dump for anterior a 20/10/2026, rode `python migrations/add_inventario_catalogo.py` depois do restore.
+6. Suba com `python run.py` em `http://localhost:5001/sigus/`. Não aponte este `.env` para o servidor.
 
 ## Trabalhar neste computador sem mexer numa instalação que já roda
 
