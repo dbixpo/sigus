@@ -61,6 +61,7 @@ def create_app(config_name='default'):
     from app.routes.transferencias import transferencias_bp
     from app.routes.predios import predios_bp
     from app.routes.links import links_bp
+    from app.routes.metabase import metabase_bp
     from app.routes.solicitacoes import solicitacoes_bp
     from app.routes.notificacoes import notificacoes_bp
     from app.routes.rh import rh_bp
@@ -89,6 +90,7 @@ def create_app(config_name='default'):
     app.register_blueprint(configuracoes_bp)
     app.register_blueprint(transferencias_bp)
     app.register_blueprint(links_bp)
+    app.register_blueprint(metabase_bp)
     app.register_blueprint(solicitacoes_bp)
     app.register_blueprint(notificacoes_bp)
     app.register_blueprint(rh_bp)

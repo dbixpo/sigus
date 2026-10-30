@@ -35,6 +35,7 @@ SECOES = [
     # OUTROS (seção pai)
     ('OUTROS',         'OUTROS',          'three-dots-vertical', None),
     ('OUT_LinksUteis', 'Links Úteis',    'link-45deg', 'OUTROS'),
+    ('OUT_Metabase',   'Metabase',       'chart-pie', 'OUTROS'),
     ('OUT_CadastroPublico', 'Cadastro Público', 'person-plus', 'OUTROS'),
     # RECURSOS HUMANOS (seção pai)
     ('RECURSOS_HUMANOS', 'RECURSOS HUMANOS', 'people-fill', None),
@@ -147,6 +148,9 @@ ACAO_PARA_SECAO_TIPO = {
     'ver_links_uteis':     ('OUT_LinksUteis', 'ver'),
     'editar_links_uteis':  ('OUT_LinksUteis', 'editar'),
     'adicionar_links_uteis': ('OUT_LinksUteis', 'adicionar'),
+    'ver_metabase':        ('OUT_Metabase', 'ver'),
+    'editar_metabase':     ('OUT_Metabase', 'editar'),
+    'adicionar_metabase':  ('OUT_Metabase', 'adicionar'),
     # RECURSOS HUMANOS - Faltas Abonadas
     'ver_faltas_abonadas': ('RH_FaltasAbonadas', 'ver'),
     'editar_faltas_abonadas': ('RH_FaltasAbonadas', 'editar'),
@@ -227,6 +231,7 @@ SECAO_DICAS = {
     'CONF_Sistema': 'Abre o grupo Configurações. Cada catálogo abaixo tem o próprio interruptor.',
     'CONF_Identidade': 'Município, logos e domínio de e-mail. O Administrador sempre pode; os demais só se esta linha estiver marcada.',
     'OUT_CadastroPublico': 'Link e QR code do formulário público de vínculo profissional.',
+    'OUT_Metabase': 'Ver abre o menu Metabase. Editar e Adicionar configuram a conexão e os painéis.',
     'Veiculos': 'A aba de veículos da unidade. O catálogo de tipos fica em Configurações.',
 }
 

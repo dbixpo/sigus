@@ -31,6 +31,7 @@ MODULO_LABELS = {
     'equipamentos': 'Equipamentos',
     'frequencia': 'Apontamentos',
     'links': 'Links úteis',
+    'metabase': 'Metabase',
     'mapa_da_saude': 'Mapa da Saúde',
     'noticias': 'Mural e comunicados',
     'notificacoes': 'Notificações',

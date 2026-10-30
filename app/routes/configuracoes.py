@@ -18,6 +18,7 @@ from app.services.padrao_salas import agrupar_tipos_sala, agrupar_tipos_equipame
 from app.models.usuario import Usuario, PERFIS, HIERARQUIA
 from app.models.link_util import LinkUtil
 from app.models.tipo_link import TipoLink
+from app.models.metabase import MetabasePainel
 from app.models.status_chamado import StatusChamado, BADGE_CORES
 from app.models.auditoria import Auditoria
 from app.services.auditoria_http import ACAO_LABELS, MODULO_LABELS, rotulo_modulo
@@ -186,6 +187,7 @@ def index():
     total_modelos        = Modelo.query.count()
     total_links          = LinkUtil.query.count()
     total_tipos_link     = TipoLink.query.count()
+    total_metabase       = MetabasePainel.query.count()
     total_status_chamado = StatusChamado.query.filter_by(ativo=True).count()
     total_divisoes = Divisao.query.filter_by(ativo=True).count()
     total_setores = SetorManutencao.query.count()
@@ -208,6 +210,7 @@ def index():
                            total_modelos=total_modelos,
                            total_links=total_links,
                            total_tipos_link=total_tipos_link,
+                           total_metabase=total_metabase,
                            total_status_chamado=total_status_chamado,
                            total_divisoes=total_divisoes,
                            total_setores=total_setores,

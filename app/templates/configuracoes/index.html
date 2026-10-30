@@ -281,6 +281,19 @@
     </a>
     {% endif %}
 
+    {% if current_user.pode('editar_metabase') or current_user.pode('adicionar_metabase') %}
+    <a class="cfg-row" href="{{ url_for('metabase.cfg') }}"
+       data-busca="metabase painéis dashboards incorporação gráficos apresentação">
+        <span class="cfg-row-icone">{% include 'metabase/_icone.html' %}</span>
+        <div class="flex-grow-1 min-w-0">
+            <div class="cfg-row-titulo">Metabase</div>
+            <div class="cfg-row-desc">Painéis incorporados, ordem da apresentação, perfil, tipo de unidade e CBO.</div>
+        </div>
+        <span class="cfg-row-meta">{{ total_metabase }} painel(is)</span>
+        <i class="fas fa-chevron-right text-muted small"></i>
+    </a>
+    {% endif %}
+
     {% if current_user.pode('ver_divisoes') or current_user.pode('editar_divisoes') or current_user.pode('adicionar_divisoes') %}
     <a class="cfg-row" href="{{ url_for('configuracoes.divisoes') }}"
        data-busca="divisões e setores chamados quem vê trabalha">

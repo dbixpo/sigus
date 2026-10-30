@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% block title %}Metabase — configuração{% endblock %}
+
+{% block head %}
+<style>
+.sortable-row.dragging { opacity: .45; }
+.sortable-row.drag-over { border-top: 2px dashed #1A82B8; }
+</style>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item active">Metabase</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>{% include 'metabase/_icone.html' %} Metabase</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('metabase.index') }}" class="btn btn-outline-secondary btn-sm" target="_blank">
+            <i class="fas fa-eye me-1"></i>Ver painéis
+        </a>
+        <a href="{{ url_for('metabase.cfg_novo') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus-circle me-1"></i>Novo painel
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="h6 mb-1">Conexão e apresentação</h2>
+        <p class="text-muted small">
+            Defina o tempo da troca automática antes de cadastrar os painéis.
+            A chave fica no servidor. O token do painel vale 10 anos, porque o relógio do Metabase está horas à frente deste computador.
+        </p>
+        <form method="POST" action="{{ url_for('metabase.cfg_conexao') }}" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="col-md-6">
+                <label class="form-label" for="siteUrl">URL do Metabase</label>
+                <input type="url" class="form-control" id="siteUrl" name="site_url" required
+                       value="{{ config.site_url }}"
+                       placeholder="https://saudedigital.sorocaba.sp.gov.br/metabase">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="intervalo">Troca automática (segundos)</label>
+                <input type="number" class="form-control" id="intervalo" name="intervalo_segundos"
+                       min="10" max="600" required value="{{ config.intervalo_segundos }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="secretKey">Chave de incorporação</label>
+                <input type="password" class="form-control" id="secretKey" name="secret_key"
+                       autocomplete="new-password"
+                       placeholder="{{ 'Deixe em branco para manter' if config.chave_gravada else 'Cole a chave secreta' }}">
+                {% if config.chave_gravada %}
+                <div class="form-text text-success"><i class="fas fa-check-circle me-1"></i>Chave gravada</div>
+                {% endif %}
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fas fa-check-circle me-1"></i>Salvar conexão
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if itens %}
+<div class="alert alert-info py-2 px-3 mb-3 d-flex align-items-center gap-2">
+    <i class="fas fa-grip-vertical"></i>
+    <span>Arraste as linhas para organizar a ordem da apresentação.</span>
+    <span id="statusSalvo" class="ms-auto text-success small d-none">
+        <i class="fas fa-check-circle me-1"></i>Ordem salva
+    </span>
+</div>
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:36px"></th>
+                    <th>Painel</th>
+                    <th class="d-none d-md-table-cell">Dashboard</th>
+                    <th class="d-none d-lg-table-cell">Quem vê</th>
+                    <th class="d-none d-md-table-cell">Status</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="sortableBody">
+                {% for item in itens %}
+                <tr data-id="{{ item.id }}" class="sortable-row" style="cursor:grab">
+                    <td class="text-muted ps-3"><i class="fas fa-grip-vertical"></i></td>
+                    <td>
+                        <span class="fw-semibold">{{ item.nome }}</span>
+                        {% if item.descricao %}
+                        <div class="text-muted small">{{ item.descricao }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">{{ item.resource_id }}</td>
+                    <td class="d-none d-lg-table-cell">
+                        {% set pa = item.perfis_acesso or [] %}
+                        {% if 'todos' in pa %}
+                        <span class="badge bg-primary">Todos os perfis</span>
+                        {% else %}
+                        {% for v, l in perfis %}{% if v in pa %}
+                        <span class="badge bg-secondary me-1">{{ l }}</span>
+                        {% endif %}{% endfor %}
+                        {% endif %}
+                        {% if item.tipos_unidade_ids %}
+                        <div class="small text-muted mt-1">
+                            {% for tid in item.tipos_unidade_ids %}
+                            {% set tipo = tipos_unidade.get(tid|int) %}
+                            {{ tipo.nome if tipo else tid }}{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="small text-muted mt-1">Todos os tipos de unidade</div>
+                        {% endif %}
+                        {% if item.cbos %}
+                        <div class="small text-muted">CBO: {{ item.cbos | join(', ') }}</div>
+                        {% else %}
+                        <div class="small text-muted">Todas as categorias</div>
+                        {% endif %}
+                    </td>
+                    <td class="d-none d-md-table-cell">
+                        {% if item.ativo %}
+                        <span class="badge bg-success">Ativo</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end pe-3">
+                        <div class="d-flex justify-content-end gap-1">
+                            <a href="{{ url_for('metabase.cfg_editar', id=item.id) }}"
+                               class="btn btn-outline-primary btn-sm" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('metabase.cfg_excluir', id=item.id) }}"
+                                  onsubmit="return confirm('Excluir {{ item.nome }}?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state py-5 text-center">
+    <i class="fas fa-chart-column fs-1 text-muted d-block mb-3"></i>
+    <h6>Nenhum painel cadastrado.</h6>
+    <a href="{{ url_for('metabase.cfg_novo') }}" class="btn btn-primary mt-2">
+        <i class="fas fa-plus-circle me-1"></i>Adicionar o primeiro painel
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const tbody = document.getElementById('sortableBody');
+    if (!tbody) return;
+    const statusEl = document.getElementById('statusSalvo');
+    let dragSrc = null;
+    tbody.querySelectorAll('.sortable-row').forEach(row => {
+        row.setAttribute('draggable', 'true');
+        row.addEventListener('dragstart', e => {
+            if (e.target.closest('a, button, form')) { e.preventDefault(); return; }
+            dragSrc = row;
+            row.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+            row.classList.remove('dragging');
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            salvar();
+        });
+        row.addEventListener('dragover', e => {
+            e.preventDefault();
+            tbody.querySelectorAll('.sortable-row').forEach(r => r.classList.remove('drag-over'));
+            if (dragSrc && row !== dragSrc) row.classList.add('drag-over');
+        });
+        row.addEventListener('drop', e => {
+            e.preventDefault();
+            if (!dragSrc || dragSrc === row) return;
+            const rect = row.getBoundingClientRect();
+            const depois = e.clientY > rect.top + rect.height / 2;
+            tbody.insertBefore(dragSrc, depois ? row.nextSibling : row);
+            row.classList.remove('drag-over');
+        });
+    });
+    function salvar() {
+        const ids = [...tbody.querySelectorAll('.sortable-row')].map(r => parseInt(r.dataset.id, 10));
+        fetch('{{ url_for("metabase.cfg_reordenar") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ ids })
+        }).then(r => {
+            if (!r.ok) return;
+            statusEl.classList.remove('d-none');
+            setTimeout(() => statusEl.classList.add('d-none'), 1600);
+        });
+    }
+})();
+</script>
+{% endblock %}

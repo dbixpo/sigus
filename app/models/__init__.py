@@ -24,6 +24,7 @@ from app.models.ficha_cnes import FichaCnesVinculo
 from app.models.matricula import MatriculaProfissional
 from app.models.tipo_link import TipoLink
 from app.models.link_util import LinkUtil
+from app.models.metabase import MetabaseConfig, MetabasePainel
 from app.models.empresa import EmpresaContratada
 from app.models.veiculo import Veiculo, ModeloVeiculo, TipoVeiculo
 from app.models.agenda import AgendaEvento

@@ -14,6 +14,28 @@ Cursor no servidor: copie [PRODUCAO-CURSOR.md](PRODUCAO-CURSOR.md) para o chat d
 
 > Se o IIS dessa máquina também atende outro site, **não** rode `iisreset` nem recicle o pool padrão. Reinicie **só** o processo do SIGUS (seção 4). O caminho da pasta e o nome do pool ficam no caderno da equipe, não neste arquivo.
 
+## Entrega de 30/10/2026 (Metabase)
+
+O banco **desta** instalação local já pode estar neste ponto. Em outro computador, depois do `git pull` e com backup feito antes:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install PyJWT==2.10.1
+.\venv\Scripts\python.exe migrations\add_metabase.py
+.\venv\Scripts\python.exe migrations\seed_permissoes_faltantes.py
+```
+
+Idempotentes. O primeiro cria as tabelas, a linha de conexão, o dashboard 580 e as colunas novas do painel se ainda não existirem. Colar o Python do Metabase no painel grava o dashboard e o SIGUS troca a validade do token por 10 anos. A chave secreta **não** está no repositório: cole em Configurações → Metabase, ou deixe `METABASE_SECRET_KEY` no `.env` daquela máquina antes do script (ele só grava a chave se o campo estiver vazio). Manual: [docs/METABASE.md](docs/METABASE.md). Reinicie só o SIGUS (seção 4).
+
+O que entrou:
+
+- Menu **Metabase** (ícone do Metabase). A pessoa vê só painéis ativos do perfil, do tipo da unidade logada e do CBO (cadastro ou da unidade).
+- Configurações → Metabase: URL, chave, tempo da apresentação (padrão 40 segundos) e a lista arrastável, no mesmo espírito do linktree.
+- No painel: pedir acesso (chamado administrativo para a Saúde Digital, com justificativa e os dados da pessoa), play/pausa com passagem manual, e tela cheia com a troca automática.
+
+Conferência: abrir Metabase e ver o dashboard 580; dar play e pausar; pedir acesso e achar o chamado na fila da Saúde Digital.
+
+---
+
 ## Entrega de 23/10/2026 (perfis, auditoria, foto do bem, apontamentos e login no celular)
 
 O banco **desta** instalação já está neste ponto. Não rode de novo aqui só por atualizar o código. Em outro computador, depois do `git pull` e com backup feito antes:

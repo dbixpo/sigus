@@ -1722,3 +1722,26 @@ body.pagina-agenda .sigus-main > .container-fluid {
         padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
     }
 }
+
+.mb-mark {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex-shrink: 0;
+    display: block;
+}
+.sigus-sidebar.collapsed .nav-link .mb-mark {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+.page-header h1 .mb-mark,
+.cfg-row-icone .mb-mark {
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--sigus-primary);
+}
+.empty-state .mb-mark {
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0 auto;
+    color: #1A82B8;
+}

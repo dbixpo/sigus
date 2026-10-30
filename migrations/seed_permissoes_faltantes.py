@@ -49,6 +49,9 @@ with app.app_context():
     novas += garantir('profissional', 'Mural', True, False, False)
     # A planilha da unidade continua limitada ao papel na unidade.
     novas += garantir('profissional', 'RH_Apontamentos', True, True, True)
+    for perfil in TODOS:
+        gerir = perfil == 'gestor_secretaria'
+        novas += garantir(perfil, 'OUT_Metabase', True, gerir, gerir)
     db.session.commit()
     print(f'OK: {novas} linhas novas. Linhas existentes ficaram como estavam.')
 os._exit(0)

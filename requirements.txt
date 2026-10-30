@@ -16,3 +16,4 @@ Pillow
 tzdata
 requests
 beautifulsoup4
+PyJWT==2.10.1

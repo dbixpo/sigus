@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Editar' if item else 'Novo' }} painel do Metabase{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('configuracoes.index') }}">Configurações</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('metabase.cfg') }}">Metabase</a></li>
+        <li class="breadcrumb-item active">{{ 'Editar' if item else 'Novo' }}</li>
+    </ol>
+</nav>
+
+<div class="page-header">
+    <h1>{% include 'metabase/_icone.html' %} {{ 'Editar painel' if item else 'Novo painel' }}</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-section">
+                <div class="form-section-title">Painel</div>
+                <div class="mb-3">
+                    <label class="form-label">Nome <span class="text-danger">*</span></label>
+                    <input type="text" name="nome" class="form-control" required maxlength="150"
+                           value="{{ item.nome if item else '' }}"
+                           placeholder="Ex.: Produção da atenção básica">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descrição <span class="text-muted small">(opcional)</span></label>
+                    <input type="text" name="descricao" class="form-control" maxlength="300"
+                           value="{{ item.descricao or '' if item else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="codigoSecret">Código Python do Metabase</label>
+                    <textarea id="codigoSecret" name="codigo_secret" class="form-control font-monospace" rows="8"
+                              spellcheck="false" autocomplete="off"
+                              placeholder="Cole aqui o código que o Metabase gera, do jeito que veio."></textarea>
+                    <div class="form-text">
+                        Cole o Python do Metabase (<code>import jwt</code>).
+                        A linha <code>exp: round(time.time()) + (60 * 10) # 10 minute expiration</code>
+                        pode ficar como veio: o SIGUS troca por 10 anos.
+                        O download do gráfico fica desligado. A chave do código não é gravada aqui.
+                    </div>
+                    <div id="avisoExp" class="form-text text-success" hidden>
+                        Validade do código ignorada. Este painel será assinado por 10 anos.
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Número do dashboard <span class="text-danger">*</span></label>
+                    <input type="number" name="resource_id" id="resourceId" class="form-control" required min="1"
+                           value="{{ item.resource_id if item else '' }}"
+                           placeholder="580">
+                    <div class="form-text">Preenche sozinho quando o Python é colado. É o número de /dashboard/580.</div>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="titled" id="titled"
+                           {% if not item or item.titled %}checked{% endif %}>
+                    <label class="form-check-label" for="titled">Mostrar título do Metabase</label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-section-title">Quem vê</div>
+                <p class="text-muted small">Igual ao linktree: vazio ou “todos” libera geral. Marque para restringir.</p>
+
+                <div class="mb-3">
+                    <label class="form-label">Perfil no SIGUS</label>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for val, lbl in perfis %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="perfis_acesso"
+                                   id="perfil_{{ val }}" value="{{ val }}"
+                                   {% if not item and val == 'todos' %}checked
+                                   {% elif item and val in (item.perfis_acesso or []) %}checked{% endif %}>
+                            <label class="form-check-label" for="perfil_{{ val }}">{{ lbl }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Tipo de unidade</label>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="tipos_todos" id="tiposTodos" value="1"
+                               {% if not item or not item.tipos_unidade_ids %}checked{% endif %}>
+                        <label class="form-check-label" for="tiposTodos">Todos os tipos de unidade</label>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2" id="listaTipos">
+                        {% for t in tipos_unidade %}
+                        <div class="form-check">
+                            <input class="form-check-input js-tipo" type="checkbox" name="tipos_unidade_ids"
+                                   id="tipo_{{ t.id }}" value="{{ t.id }}"
+                                   {% if item and t.id in (item.tipos_unidade_ids or []) %}checked{% endif %}>
+                            <label class="form-check-label" for="tipo_{{ t.id }}">{{ t.nome }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="cbos">Categoria profissional (CBO)</label>
+                    <select id="cbos" name="cbos" multiple
+                            placeholder="Vazio = todas as categorias">
+                        {% for c in cbos %}
+                        <option value="{{ c.codigo }}"
+                            {% if item and c.codigo in (item.cbos or []) %}selected{% endif %}>
+                            {{ c.codigo }} – {{ c.descricao }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">Compara com o CBO do cadastro e com o CBO da unidade em que a pessoa está.</div>
+                </div>
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="ativo" id="ativo"
+                           {% if not item or item.ativo %}checked{% endif %}>
+                    <label class="form-check-label" for="ativo">Ativo</label>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-check-circle me-1"></i>{{ 'Salvar' if item else 'Adicionar' }}
+                </button>
+                <a href="{{ url_for('metabase.cfg') }}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const todos = document.getElementById('tiposTodos');
+    const tipos = document.querySelectorAll('.js-tipo');
+    if (todos) {
+        todos.addEventListener('change', () => {
+            if (todos.checked) tipos.forEach(el => { el.checked = false; });
+        });
+        tipos.forEach(el => el.addEventListener('change', () => {
+            if (el.checked) todos.checked = false;
+            if (![...tipos].some(x => x.checked)) todos.checked = true;
+        }));
+    }
+    const codigo = document.getElementById('codigoSecret');
+    const aviso = document.getElementById('avisoExp');
+    const numero = document.getElementById('resourceId');
+    if (codigo) {
+        const lerCodigo = () => {
+            const texto = codigo.value;
+            const dash = texto.match(/["']dashboard["']\s*:\s*(\d+)/);
+            if (dash && numero) numero.value = dash[1];
+            if (aviso) aviso.hidden = !/["']exp["']\s*:/.test(texto);
+        };
+        codigo.addEventListener('input', lerCodigo);
+    }
+    const sel = document.getElementById('cbos');
+    if (sel && window.TomSelect) {
+        new TomSelect(sel, {
+            plugins: ['remove_button'],
+            maxOptions: 80,
+            placeholder: 'Vazio = todas as categorias'
+        });
+    }
+})();
+</script>
+{% endblock %}

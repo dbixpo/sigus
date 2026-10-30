@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% block title %}Metabase{% endblock %}
+
+{% block body_attrs %} class="pagina-metabase"{% endblock %}
+
+{% block head %}
+<style>
+html:has(body.pagina-metabase),
+body.pagina-metabase {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+body.pagina-metabase .sigus-wrapper {
+    height: 100dvh;
+    min-height: 0;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+body.pagina-metabase .sigus-main {
+    height: calc(100dvh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
+    min-height: 0;
+    max-height: calc(100dvh - var(--sigus-navbar-height) - var(--sigus-teste-altura));
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+body.pagina-metabase .sigus-main > .container-fluid {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+}
+body.pagina-metabase .page-header {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    margin-bottom: 0.75rem;
+    gap: 0.75rem;
+}
+body.pagina-metabase .page-header h1 {
+    min-width: 0;
+    margin: 0;
+}
+.mb-pagina {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.mb-subtitulo {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #718096;
+    margin-left: 0.75rem;
+}
+.mb-pos { color: #718096; font-size: 0.8rem; font-weight: 500; margin-left: 0.35rem; }
+.mb-acoes { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; }
+.mb-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(13, 59, 94, 0.06);
+}
+.mb-frame { flex: 1 1 auto; min-height: 0; overflow: hidden; position: relative; }
+.mb-frame metabase-dashboard {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    min-height: 0 !important;
+}
+/* O Metabase aberto ignora o pedido de esconder o download e a marca.
+   A faixa de cima leva as abas e o botão de baixar; a de baixo, o "Desenvolvido por". */
+.mb-frame iframe {
+    position: absolute !important;
+    top: -72px !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: calc(100% + 72px + 58px) !important;
+    min-height: 0 !important;
+    border: 0 !important;
+}
+.mb-manual {
+    flex: 0 0 auto;
+    background: #fff;
+    border-bottom: 1px solid #edf1f5;
+    padding: 0.5rem 0.75rem;
+}
+#mbPlayer:fullscreen,
+#mbPlayer:-webkit-full-screen {
+    background: #F4F6F9;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem 1rem;
+    overflow: hidden;
+}
+#mbPlayer:fullscreen .page-header,
+#mbPlayer:-webkit-full-screen .page-header {
+    background: #0D3B5E;
+    color: #fff;
+    border-bottom: 3px solid #1A82B8;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    margin-bottom: 0.75rem;
+}
+#mbPlayer:fullscreen .page-header h1,
+#mbPlayer:-webkit-full-screen .page-header h1,
+#mbPlayer:fullscreen .mb-subtitulo,
+#mbPlayer:-webkit-full-screen .mb-subtitulo,
+#mbPlayer:fullscreen .mb-pos,
+#mbPlayer:-webkit-full-screen .mb-pos { color: #fff; }
+#mbPlayer:fullscreen .mb-stage,
+#mbPlayer:-webkit-full-screen .mb-stage { flex: 1; min-height: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not config.pronta %}
+<div class="page-header">
+    <h1>{% include 'metabase/_icone.html' %} Metabase</h1>
+</div>
+<div class="card">
+    <div class="card-body empty-state py-5 text-center">
+        {% include 'metabase/_icone.html' %}
+        <h6 class="mt-3">Os painéis ainda não estão disponíveis.</h6>
+        {% if pode_configurar %}
+        <p class="text-muted small">Falta a URL ou a chave de incorporação.</p>
+        <a href="{{ url_for('metabase.cfg') }}" class="btn btn-primary btn-sm">Configurar Metabase</a>
+        {% else %}
+        <p class="text-muted small mb-0">A Saúde Digital ainda está fechando a incorporação.</p>
+        {% endif %}
+    </div>
+</div>
+{% elif not cartoes %}
+<div class="page-header">
+    <h1>{% include 'metabase/_icone.html' %} Metabase</h1>
+    <div class="mb-acoes">
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAcesso">
+            <i class="fas fa-key me-1"></i>Pedir acesso ao Metabase
+        </button>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body empty-state py-4 text-center">
+        <i class="fas fa-chart-column fs-1 text-muted d-block mb-3"></i>
+        <h6>Nenhum painel liberado para você agora.</h6>
+        <p class="text-muted small mb-0">O que aparece depende do perfil, do tipo de unidade e do CBO.</p>
+    </div>
+</div>
+{% else %}
+<div class="mb-pagina" id="mbPlayer">
+    <div class="page-header">
+        <h1>
+            {% include 'metabase/_icone.html' %} Metabase
+            <span class="mb-subtitulo" id="mbTitulo">{{ cartoes[0].nome }}</span>
+            <span class="mb-pos" id="mbPos">1 / {{ cartoes|length }}</span>
+        </h1>
+        <div class="mb-acoes">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAcesso">
+                <i class="fas fa-key me-1"></i>Pedir acesso ao Metabase
+            </button>
+            <button type="button" class="btn btn-primary" id="mbPlay" title="Apresentar os painéis" aria-pressed="false">
+                <i class="fas fa-play"></i>
+            </button>
+            <button type="button" class="btn btn-outline-secondary" id="mbFull" title="Tela cheia">
+                <i class="fas fa-expand"></i>
+            </button>
+        </div>
+    </div>
+    <div class="mb-stage">
+        <div class="collapse show" id="mbManual">
+            <div class="mb-manual">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="mbPrev" title="Anterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="mbNext" title="Próximo">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <div class="d-flex flex-wrap gap-2" id="mbLista"></div>
+                </div>
+            </div>
+        </div>
+        <div class="mb-frame" id="mbQuadro"></div>
+    </div>
+    <span class="visually-hidden" id="mbEstado">Pausado.</span>
+</div>
+<div class="modal fade" id="modalAcesso" tabindex="-1" aria-labelledby="modalAcessoTitulo" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('metabase.pedir_acesso') }}" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAcessoTitulo">Pedir acesso ao Metabase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">
+                    Abre um chamado administrativo para a Saúde Digital com o seu nome, CPF, e-mail,
+                    perfil no SIGUS, CBO de cadastro, CBO na unidade e a unidade em que você está.
+                </p>
+                <label class="form-label" for="justificativa">Por que você precisa do acesso?</label>
+                <textarea class="form-control" id="justificativa" name="justificativa" rows="4" required minlength="10"
+                          placeholder="Explique o que você precisa conferir nos gráficos."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Abrir chamado</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+function defineMetabaseConfig(config) { window.metabaseConfig = config; }
+defineMetabaseConfig({
+    theme: { preset: 'light' },
+    isGuest: true,
+    instanceUrl: {{ config.site_url | tojson }}
+});
+</script>
+<script src="{{ config.site_url.rstrip('/') }}/app/embed.js"></script>
+<script type="application/json" id="mbDados">{{ {
+    'intervalo': config.intervalo_segundos,
+    'paineis': cartoes
+} | tojson }}</script>
+{% endif %}
+
+{% if config.pronta and not cartoes %}
+<div class="modal fade" id="modalAcesso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('metabase.pedir_acesso') }}" class="modal-content">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h5 class="modal-title">Pedir acesso ao Metabase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">
+                    Abre um chamado administrativo para a Saúde Digital com o seu nome, CPF, e-mail,
+                    perfil no SIGUS, CBO de cadastro, CBO na unidade e a unidade em que você está.
+                </p>
+                <label class="form-label" for="justificativaVazio">Por que você precisa do acesso?</label>
+                <textarea class="form-control" id="justificativaVazio" name="justificativa" rows="4" required minlength="10"
+                          placeholder="Explique o que você precisa conferir nos gráficos."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Abrir chamado</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if cartoes %}
+<script>
+(function () {
+    const dados = JSON.parse(document.getElementById('mbDados').textContent);
+    const paineis = dados.paineis || [];
+    const intervaloMs = Math.max(10, Number(dados.intervalo) || 40) * 1000;
+    const quadro = document.getElementById('mbQuadro');
+    const titulo = document.getElementById('mbTitulo');
+    const pos = document.getElementById('mbPos');
+    const estado = document.getElementById('mbEstado');
+    const btnPlay = document.getElementById('mbPlay');
+    const btnFull = document.getElementById('mbFull');
+    const lista = document.getElementById('mbLista');
+    const manual = document.getElementById('mbManual');
+    const player = document.getElementById('mbPlayer');
+    let indice = 0;
+    let tocando = false;
+    let timer = null;
+    const cache = {};
+    const agora = Date.now() / 1000;
+    paineis.forEach(p => { cache[p.id] = { token: p.token, emitido: agora }; });
+
+    paineis.forEach((p, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-sm btn-outline-primary';
+        b.textContent = p.nome;
+        b.dataset.idx = String(i);
+        b.addEventListener('click', () => { if (!tocando) mostrar(i); });
+        lista.appendChild(b);
+    });
+
+    function colapso(abrir) {
+        const inst = bootstrap.Collapse.getOrCreateInstance(manual, { toggle: false });
+        if (abrir) inst.show();
+        else inst.hide();
+    }
+
+    function marcarLista() {
+        lista.querySelectorAll('button').forEach((b, i) => {
+            b.classList.toggle('btn-primary', i === indice);
+            b.classList.toggle('btn-outline-primary', i !== indice);
+        });
+    }
+
+    function tokenValido(p) {
+        const item = cache[p.id];
+        return item && item.token;
+    }
+
+    function desenhar(p, token) {
+        const el = document.createElement('metabase-dashboard');
+        el.setAttribute('token', token);
+        el.setAttribute('with-title', p.with_title ? 'true' : 'false');
+        el.setAttribute('with-downloads', p.with_downloads ? 'true' : 'false');
+        const iniciais = p.initial_parameters || {};
+        if (Object.keys(iniciais).length) {
+            el.setAttribute('initial-parameters', JSON.stringify(iniciais));
+        }
+        quadro.replaceChildren(el);
+    }
+
+    function garantirToken(p) {
+        if (tokenValido(p)) return Promise.resolve(cache[p.id].token);
+        return fetch(p.endereco, { headers: { 'Accept': 'application/json' } })
+            .then(r => {
+                if (!r.ok) throw new Error('endereco');
+                return r.json();
+            })
+            .then(d => {
+                cache[p.id] = { token: d.token, emitido: Date.now() / 1000 };
+                p.with_title = d.with_title;
+                p.with_downloads = d.with_downloads;
+                p.initial_parameters = d.initial_parameters || {};
+                return d.token;
+            });
+    }
+
+    function mostrar(i) {
+        if (!paineis.length) return;
+        indice = (i + paineis.length) % paineis.length;
+        const p = paineis[indice];
+        titulo.textContent = p.nome;
+        pos.textContent = (indice + 1) + ' / ' + paineis.length;
+        marcarLista();
+        garantirToken(p).then(token => desenhar(p, token)).catch(() => {
+            estado.textContent = 'Não consegui renovar este painel. Pause e tente de novo.';
+        });
+    }
+
+    function iconePlay(play) {
+        btnPlay.innerHTML = play
+            ? '<i class="fas fa-pause"></i>'
+            : '<i class="fas fa-play"></i>';
+        btnPlay.title = play ? 'Pausar' : 'Apresentar os painéis';
+        btnPlay.setAttribute('aria-pressed', play ? 'true' : 'false');
+        btnPlay.classList.toggle('btn-primary', !play);
+        btnPlay.classList.toggle('btn-outline-secondary', play);
+    }
+
+    function tocar() {
+        tocando = true;
+        iconePlay(true);
+        estado.textContent = 'Apresentação ligada. Troca a cada ' + Math.round(intervaloMs / 1000) + ' s.';
+        colapso(false);
+        clearInterval(timer);
+        if (paineis.length > 1) {
+            timer = setInterval(() => mostrar(indice + 1), intervaloMs);
+        }
+    }
+
+    function pausar() {
+        tocando = false;
+        clearInterval(timer);
+        timer = null;
+        iconePlay(false);
+        estado.textContent = 'Pausado. Dá para passar os painéis na mão.';
+        colapso(true);
+    }
+
+    btnPlay.addEventListener('click', () => { tocando ? pausar() : tocar(); });
+    document.getElementById('mbPrev').addEventListener('click', () => { if (!tocando) mostrar(indice - 1); });
+    document.getElementById('mbNext').addEventListener('click', () => { if (!tocando) mostrar(indice + 1); });
+
+    function emTelaCheia() {
+        return document.fullscreenElement === player || document.webkitFullscreenElement === player;
+    }
+    document.querySelectorAll('[data-bs-target="#modalAcesso"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (emTelaCheia()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        });
+    });
+    btnFull.addEventListener('click', () => {
+        if (emTelaCheia()) {
+            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+            const pedir = player.requestFullscreen || player.webkitRequestFullscreen;
+            if (pedir) pedir.call(player);
+        }
+    });
+    function aoMudarTela() {
+        const cheia = emTelaCheia();
+        btnFull.innerHTML = cheia ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+        btnFull.title = cheia ? 'Sair da tela cheia' : 'Tela cheia';
+    }
+    document.addEventListener('fullscreenchange', aoMudarTela);
+    document.addEventListener('webkitfullscreenchange', aoMudarTela);
+    marcarLista();
+    mostrar(0);
+})();
+</script>
+{% endif %}
+{% endblock %}

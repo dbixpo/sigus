@@ -43,6 +43,7 @@ SEEDS = [
     'add_feriados.py',
     'add_status_chamado.py',
     'add_inventario_catalogo.py',
+    'add_metabase.py',
     'seed_permissoes_faltantes.py',
     'limpar_auditoria_ruido.py',
 ]
