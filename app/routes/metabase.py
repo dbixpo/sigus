@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 """Painéis do Metabase e pedido de acesso (chamado administrativo)."""
-from flask import Blueprint, render_template, request, redirect, url_for, flash, abort, jsonify
+import re
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote
+from urllib.request import Request, urlopen
+
+from flask import Blueprint, Response, render_template, request, redirect, url_for, flash, abort, jsonify
 from flask_login import login_required, current_user
 
-from app import db
+from app import csrf, db
 from app.models.cbo import CBO
 from app.models.chamado import Chamado, ChamadoHistorico, prioridade_de_gut
 from app.models.link_util import PERFIS_LINK
 from app.models.metabase import (
     MetabaseConfig, MetabasePainel, cbo_na_unidade, interpretar_codigo_metabase,
-    rotulo_cbo, token_excede_iis,
+    rotulo_cbo,
 )
 from app.models.tipo_unidade import TipoUnidade
 from app.models.unidade import Unidade
@@ -19,6 +24,12 @@ metabase_bp = Blueprint('metabase', __name__, url_prefix='/metabase')
 
 _INTERVALO_MIN = 10
 _INTERVALO_MAX = 600
+_METABASE_INTERNO = 'http://127.0.0.1:3000/'
+_LIMITE_CORPO = 26 * 1024 * 1024
+_CAMINHO_PONTE = re.compile(
+    r'^(?:app/(?:dist|assets)/.+|embed/dashboard/\d+(?:/.*)?|api/embed/.+)$'
+)
+_PAINEL_PONTE = re.compile(r'^(?P<api>api/)?embed/dashboard/(?P<id>\d+)(?P<resto>/.*)?$')
 
 
 def _pode_ver():
@@ -102,12 +113,6 @@ def _ler_painel(item):
             except (TypeError, ValueError):
                 continue
     cbos = [c.strip() for c in request.form.getlist('cbos') if c.strip()]
-    if token_excede_iis(resource_id, params, embedding):
-        return None, (
-            'Esse código deixa o token comprido demais. O IIS do Metabase recusa o endereço '
-            'e responde que a URL é inválida. Use o Python com resource, params e a linha do exp, '
-            'sem o bloco _embedding_params.'
-        )
     dados = {
         'nome': nome[:150],
         'descricao': (request.form.get('descricao') or '').strip()[:300] or None,
@@ -126,18 +131,16 @@ def _ler_painel(item):
     return dados, None
 
 
-def _cartao(painel, config):
-    token, expira = painel.emitir_token(config)
+def _cartao(painel, _config):
     return {
         'id': painel.id,
         'nome': painel.nome,
         'descricao': painel.descricao or '',
-        'token': token,
-        'exp': expira,
+        'bordered': bool(painel.bordered),
         'with_title': bool(painel.titled),
         'with_downloads': bool(painel.with_downloads),
         'initial_parameters': painel.initial_parameters if isinstance(painel.initial_parameters, dict) else {},
-        'endereco': url_for('metabase.endereco', id=painel.id),
+        'quadro': url_for('metabase.ponte', caminho=f'embed/dashboard/{painel.id}'),
     }
 
 
@@ -180,6 +183,98 @@ def endereco(id):
         abort(403)
     resp = jsonify(_cartao(painel, cfg))
     resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
+def _caminho_da_ponte(caminho):
+    if not caminho or caminho.startswith(('/', '\\')) or '\\' in caminho:
+        return None
+    if any(parte == '..' for parte in caminho.split('/')):
+        return None
+    if not _CAMINHO_PONTE.match(caminho):
+        return None
+    return caminho
+
+
+def _url_interna(caminho, token):
+    destino = caminho
+    achado = _PAINEL_PONTE.match(caminho)
+    if achado and token:
+        api = achado.group('api') or ''
+        resto = achado.group('resto') or ''
+        destino = f'{api}embed/dashboard/{token}{resto}'
+    partes = '/'.join(quote(parte, safe='') for parte in destino.split('/'))
+    url = _METABASE_INTERNO + partes
+    consulta = request.query_string
+    if consulta:
+        url += '?' + consulta.decode('ascii', 'ignore')
+    return url
+
+
+@metabase_bp.route('/ponte/<path:caminho>', methods=['GET', 'HEAD', 'POST'])
+@csrf.exempt
+@login_required
+def ponte(caminho):
+    """O navegador pede o painel pelo número. O token comprido só vai até o Metabase local."""
+    if not _pode_ver():
+        abort(403)
+    caminho = _caminho_da_ponte(caminho)
+    if not caminho:
+        abort(404)
+    cfg = _config()
+    if not cfg.pronta:
+        abort(404)
+    achado = _PAINEL_PONTE.match(caminho)
+    painel = None
+    token = None
+    if achado:
+        painel = db.session.get(MetabasePainel, int(achado.group('id')))
+        if not painel or not painel.ativo:
+            abort(404)
+        if not painel.visivel_para(current_user):
+            abort(403)
+        token, _expira = painel.emitir_token(cfg)
+    if request.method == 'POST' and (request.content_length or 0) > 2_000_000:
+        abort(413)
+    corpo = request.get_data() if request.method == 'POST' else None
+    pedido = Request(_url_interna(caminho, token), data=corpo, method=request.method)
+    tipo_pedido = request.headers.get('Content-Type')
+    if tipo_pedido:
+        pedido.add_header('Content-Type', tipo_pedido)
+    aceita = request.headers.get('Accept')
+    if aceita:
+        pedido.add_header('Accept', aceita)
+    try:
+        upstream = urlopen(pedido, timeout=45)
+    except HTTPError as exc:
+        upstream = exc
+    except URLError:
+        return Response(
+            'O Metabase não respondeu.',
+            status=502,
+            mimetype='text/plain; charset=utf-8',
+        )
+    try:
+        bruto = upstream.read(_LIMITE_CORPO + 1)
+    finally:
+        upstream.close()
+    if len(bruto) > _LIMITE_CORPO:
+        return Response(
+            'A resposta do Metabase veio grande demais.',
+            status=502,
+            mimetype='text/plain; charset=utf-8',
+        )
+    if token:
+        bruto = bruto.replace(token.encode('ascii'), str(painel.id).encode('ascii'))
+    resp = Response(bruto, status=getattr(upstream, 'status', None) or upstream.code)
+    resp.headers['Content-Type'] = upstream.headers.get('Content-Type', 'application/octet-stream')
+    if caminho.startswith('app/'):
+        resp.headers['Cache-Control'] = 'public, max-age=86400'
+    else:
+        resp.headers['Cache-Control'] = 'no-store'
+    politica = upstream.headers.get('Content-Security-Policy')
+    if politica:
+        resp.headers['Content-Security-Policy'] = politica
     return resp
 
 

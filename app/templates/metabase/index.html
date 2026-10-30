@@ -71,13 +71,6 @@ body.pagina-metabase .page-header h1 {
     box-shadow: 0 8px 24px rgba(13, 59, 94, 0.06);
 }
 .mb-frame { flex: 1 1 auto; min-height: 0; overflow: hidden; position: relative; }
-.mb-frame metabase-dashboard {
-    display: block;
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    min-height: 0 !important;
-}
 /* O Metabase aberto ignora o pedido de esconder o download e a marca.
    A faixa de cima leva as abas e o botão de baixar; a de baixo, o "Desenvolvido por". */
 .mb-frame iframe {
@@ -333,15 +326,6 @@ body.pagina-metabase .page-header h1 {
         </form>
     </div>
 </div>
-<script>
-function defineMetabaseConfig(config) { window.metabaseConfig = config; }
-defineMetabaseConfig({
-    theme: { preset: 'light' },
-    isGuest: true,
-    instanceUrl: {{ config.site_url | tojson }}
-});
-</script>
-<script src="{{ config.site_url.rstrip('/') }}/app/embed.js"></script>
 <script type="application/json" id="mbDados">{{ {
     'intervalo': config.intervalo_segundos,
     'paineis': cartoes
@@ -395,9 +379,6 @@ defineMetabaseConfig({
     let indice = 0;
     let tocando = false;
     let timer = null;
-    const cache = {};
-    const agora = Date.now() / 1000;
-    paineis.forEach(p => { cache[p.id] = { token: p.token, emitido: agora }; });
 
     paineis.forEach((p, i) => {
         const b = document.createElement('button');
@@ -422,37 +403,24 @@ defineMetabaseConfig({
         });
     }
 
-    function tokenValido(p) {
-        const item = cache[p.id];
-        return item && item.token;
-    }
-
-    function desenhar(p, token) {
-        const el = document.createElement('metabase-dashboard');
-        el.setAttribute('token', token);
-        el.setAttribute('with-title', p.with_title ? 'true' : 'false');
-        el.setAttribute('with-downloads', p.with_downloads ? 'true' : 'false');
+    function hashDoPainel(p) {
+        const q = new URLSearchParams();
+        q.set('bordered', p.bordered ? 'true' : 'false');
+        q.set('titled', p.with_title ? 'true' : 'false');
         const iniciais = p.initial_parameters || {};
-        if (Object.keys(iniciais).length) {
-            el.setAttribute('initial-parameters', JSON.stringify(iniciais));
-        }
-        quadro.replaceChildren(el);
+        Object.keys(iniciais).forEach(chave => {
+            const valor = iniciais[chave];
+            if (Array.isArray(valor)) q.set(chave, valor.join(','));
+            else if (valor != null) q.set(chave, String(valor));
+        });
+        return q.toString();
     }
 
-    function garantirToken(p) {
-        if (tokenValido(p)) return Promise.resolve(cache[p.id].token);
-        return fetch(p.endereco, { headers: { 'Accept': 'application/json' } })
-            .then(r => {
-                if (!r.ok) throw new Error('endereco');
-                return r.json();
-            })
-            .then(d => {
-                cache[p.id] = { token: d.token, emitido: Date.now() / 1000 };
-                p.with_title = d.with_title;
-                p.with_downloads = d.with_downloads;
-                p.initial_parameters = d.initial_parameters || {};
-                return d.token;
-            });
+    function desenhar(p) {
+        const frame = document.createElement('iframe');
+        frame.title = p.nome;
+        frame.src = p.quadro + '#' + hashDoPainel(p);
+        quadro.replaceChildren(frame);
     }
 
     function mostrar(i) {
@@ -462,9 +430,7 @@ defineMetabaseConfig({
         titulo.textContent = p.nome;
         pos.textContent = (indice + 1) + ' / ' + paineis.length;
         marcarLista();
-        garantirToken(p).then(token => desenhar(p, token)).catch(() => {
-            estado.textContent = 'Não consegui renovar este painel. Pause e tente de novo.';
-        });
+        desenhar(p);
     }
 
     function iconePlay(play) {

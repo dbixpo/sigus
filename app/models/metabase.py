@@ -2,7 +2,8 @@
 """Painéis do Metabase incorporados no SIGUS.
 
 A chave de incorporação fica nesta tabela (e, na instalação, no .env).
-O navegador só recebe o endereço já assinado, nunca a chave.
+O navegador pede o painel pelo número. Quem assina e fala com o Metabase
+é o SIGUS, por dentro. A chave não sai daqui.
 """
 import ast
 import html
@@ -17,10 +18,6 @@ from app.utils import agora_local
 # O relógio do Metabase está horas à frente deste PC. Dez minutos já nasce
 # vencido. Dez anos cobre essa diferença e a apresentação fica aberta.
 EXP_SEGUNDOS = 60 * 60 * 24 * 365 * 10
-
-# O IIS na frente do Metabase recusa um pedaço de endereço maior que 260
-# caracteres e devolve "Bad Request - Invalid URL". O token vai nesse pedaço.
-LIMITE_TOKEN_IIS = 250
 
 
 def _pular_string(texto, i):
@@ -206,21 +203,6 @@ def interpretar_codigo_metabase(codigo):
         'with_downloads': flags['with_downloads'],
         'initial_parameters': flags['initial_parameters'],
     }, None
-
-
-def token_excede_iis(resource_id, params, embedding):
-    """True quando o JWT não cabe no endereço que o IIS do Metabase aceita."""
-    payload = {
-        'resource': {'dashboard': int(resource_id)},
-        'params': params or {},
-        'exp': 1,
-    }
-    if embedding:
-        payload['_embedding_params'] = embedding
-    token = jwt.encode(payload, 'x' * 32, algorithm='HS256')
-    if isinstance(token, bytes):
-        token = token.decode('ascii')
-    return len(token) > LIMITE_TOKEN_IIS
 
 
 def rotulo_cbo(codigo):

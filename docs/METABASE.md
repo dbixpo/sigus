@@ -30,9 +30,9 @@ Na conexão:
 
 Cada painel tem nome, número do dashboard (o `580` de `/dashboard/580`), título, ativo, perfis, tipos de unidade e CBOs. O download do gráfico fica desligado. Lista vazia em tipo de unidade ou CBO significa todo mundo. Arrastar a linha grava a ordem da apresentação.
 
-No painel, cole o Python que o Metabase gera (`import jwt`, `payload` com `resource`, `params` e `exp`). A linha `exp: round(time.time()) + (60 * 10) # 10 minute expiration` fica como veio: o SIGUS assina por 10 anos. A chave que vier nesse texto não é gravada no painel.
+No painel, cole o Python que o Metabase gera (`import jwt`, `payload` com `resource`, `params` e `exp`). A linha `exp: round(time.time()) + (60 * 10) # 10 minute expiration` fica como veio: o SIGUS assina por 10 anos. A chave que vier nesse texto não é gravada no painel. Filtros dentro de `params`, mesmo com acento, entram no gráfico.
 
-O IIS na frente do Metabase recusa um pedaço de endereço maior que 260 caracteres e devolve `Bad Request - Invalid URL`. O token vai nesse pedaço. O Python do exemplo, sem `_embedding_params`, gera um token de cerca de 160 caracteres e abre. Com os filtros em português dentro do token, ele passa de 500 e o IIS barra.
+O IIS na frente do Metabase recusa um caminho de endereço maior que 260 caracteres. Um token com filtro em português passa disso e o IIS responde que a URL é inválida. O navegador não recebe esse token: pede o painel pelo número (`/metabase/ponte/embed/dashboard/<id>`) e o SIGUS assina e busca o gráfico em `127.0.0.1:3000`.
 
 O dashboard **580** já entra nesta instalação, visível para todos os perfis, tipos e categorias, com borda e título. Dá para renomear e restringir.
 
