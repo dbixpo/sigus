@@ -12,7 +12,8 @@ Do lado direito do painel:
 
 - **Pedir acesso ao Metabase.** Abre um modal só com a justificativa. O SIGUS grava um chamado administrativo para a unidade Saúde Digital, com nome, CPF, e-mail, perfil em uso no SIGUS, CBO de cadastro, CBO na unidade, unidade e tipo de unidade. A matriz GUT vai como 3, 3 e 3 (prioridade média), porque esse botão não pede GUT. Se já existir um pedido em aberto da mesma pessoa, o sistema não abre outro.
 - **Play.** Troca os painéis sozinho. O tempo padrão é 40 segundos e se muda em Configurações → Metabase, antes da lista de painéis. Pausar devolve o botão para play e abre o bloco para passar na mão (anterior, próximo e a lista).
-- **Tela cheia.** A apresentação continua trocando sozinha. Pausar dentro da tela cheia também libera a passagem manual.
+- **Tela cheia.** A apresentação continua trocando sozinha. Pausar dentro da tela cheia também libera a passagem manual. No celular, se o aparelho não deixar a tela cheia de verdade, o painel cobre a tela do mesmo jeito.
+- **Celular.** O título fica em cima e os botões embaixo: pedir acesso vira só o ícone da chave, com área de toque maior. A lista de painéis rola para o lado. O gráfico ocupa o que sobra. No computador a disposição não muda.
 
 No gráfico incorporado dá para clicar e abrir o registro, do mesmo jeito que no Metabase.
 

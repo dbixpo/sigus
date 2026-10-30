@@ -121,7 +121,108 @@ body.pagina-metabase .page-header h1 {
 #mbPlayer:fullscreen .mb-pos,
 #mbPlayer:-webkit-full-screen .mb-pos { color: #fff; }
 #mbPlayer:fullscreen .mb-stage,
-#mbPlayer:-webkit-full-screen .mb-stage { flex: 1; min-height: 0; }
+#mbPlayer:-webkit-full-screen .mb-stage,
+#mbPlayer.mb-cheia .mb-stage { flex: 1; min-height: 0; }
+.mb-transporte { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+#mbPlayer.mb-cheia {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    width: 100%;
+    height: 100%;
+    background: #F4F6F9;
+    display: flex;
+    flex-direction: column;
+    padding: max(0.5rem, env(safe-area-inset-top)) 0.75rem max(0.5rem, env(safe-area-inset-bottom));
+    overflow: hidden;
+}
+#mbPlayer.mb-cheia .page-header {
+    background: #0D3B5E;
+    color: #fff;
+    border-bottom: 3px solid #1A82B8;
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    margin-bottom: 0.75rem;
+}
+#mbPlayer.mb-cheia .page-header h1,
+#mbPlayer.mb-cheia .mb-subtitulo,
+#mbPlayer.mb-cheia .mb-pos { color: #fff; }
+@media (max-width: 991.98px) {
+    body.pagina-metabase .sigus-main {
+        padding: 0.4rem !important;
+    }
+    body.pagina-metabase .sigus-main > .container-fluid {
+        padding: 0.15rem 0 0 !important;
+    }
+    body.pagina-metabase .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        margin-bottom: 0.4rem;
+    }
+    body.pagina-metabase .page-header h1 {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: 0.4rem;
+        row-gap: 0.1rem;
+        width: 100%;
+        font-size: 1.05rem;
+        line-height: 1.25;
+    }
+    body.pagina-metabase .mb-subtitulo {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-left: 0;
+        font-size: 0.82rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    body.pagina-metabase .mb-pos { margin-left: 0; }
+    body.pagina-metabase .mb-acoes {
+        width: 100%;
+        margin-left: 0;
+        justify-content: space-between;
+    }
+    body.pagina-metabase .mb-pedir span { display: none; }
+    body.pagina-metabase .mb-pedir .fas { margin-right: 0 !important; }
+    body.pagina-metabase .mb-acoes .btn,
+    body.pagina-metabase .mb-manual .btn {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    body.pagina-metabase .mb-stage {
+        border-radius: 10px;
+        margin-bottom: env(safe-area-inset-bottom);
+    }
+    body.pagina-metabase .mb-manual { padding: 0.35rem 0.5rem; }
+    body.pagina-metabase .mb-manual > .d-flex {
+        flex-wrap: nowrap;
+        min-width: 0;
+    }
+    body.pagina-metabase #mbLista {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        min-width: 0;
+        flex: 1 1 auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    body.pagina-metabase #mbLista::-webkit-scrollbar { display: none; }
+    body.pagina-metabase #mbLista .btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    #mbPlayer.mb-cheia .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
 </style>
 {% endblock %}
 
@@ -146,8 +247,8 @@ body.pagina-metabase .page-header h1 {
 <div class="page-header">
     <h1>{% include 'metabase/_icone.html' %} Metabase</h1>
     <div class="mb-acoes">
-        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAcesso">
-            <i class="fas fa-key me-1"></i>Pedir acesso ao Metabase
+        <button type="button" class="btn btn-outline-primary mb-pedir" data-bs-toggle="modal" data-bs-target="#modalAcesso" title="Pedir acesso ao Metabase" aria-label="Pedir acesso ao Metabase">
+            <i class="fas fa-key me-1" aria-hidden="true"></i><span>Pedir acesso ao Metabase</span>
         </button>
     </div>
 </div>
@@ -167,15 +268,17 @@ body.pagina-metabase .page-header h1 {
             <span class="mb-pos" id="mbPos">1 / {{ cartoes|length }}</span>
         </h1>
         <div class="mb-acoes">
-            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalAcesso">
-                <i class="fas fa-key me-1"></i>Pedir acesso ao Metabase
+            <button type="button" class="btn btn-outline-primary mb-pedir" data-bs-toggle="modal" data-bs-target="#modalAcesso" title="Pedir acesso ao Metabase" aria-label="Pedir acesso ao Metabase">
+                <i class="fas fa-key me-1" aria-hidden="true"></i><span>Pedir acesso ao Metabase</span>
             </button>
+            <div class="mb-transporte">
             <button type="button" class="btn btn-primary" id="mbPlay" title="Apresentar os painéis" aria-pressed="false">
                 <i class="fas fa-play"></i>
             </button>
             <button type="button" class="btn btn-outline-secondary" id="mbFull" title="Tela cheia">
                 <i class="fas fa-expand"></i>
             </button>
+            </div>
         </div>
     </div>
     <div class="mb-stage">
@@ -389,20 +492,42 @@ defineMetabaseConfig({
     document.getElementById('mbNext').addEventListener('click', () => { if (!tocando) mostrar(indice + 1); });
 
     function emTelaCheia() {
-        return document.fullscreenElement === player || document.webkitFullscreenElement === player;
+        return document.fullscreenElement === player
+            || document.webkitFullscreenElement === player
+            || player.classList.contains('mb-cheia');
+    }
+    function sairTelaCheia() {
+        if (player.classList.contains('mb-cheia')) {
+            player.classList.remove('mb-cheia');
+            aoMudarTela();
+            return;
+        }
+        const sair = document.exitFullscreen || document.webkitExitFullscreen;
+        if (sair) sair.call(document);
+    }
+    function pedirTelaCheia() {
+        const pedir = player.requestFullscreen || player.webkitRequestFullscreen;
+        if (!pedir) {
+            player.classList.add('mb-cheia');
+            aoMudarTela();
+            return;
+        }
+        const pedido = pedir.call(player);
+        if (pedido && pedido.catch) {
+            pedido.catch(() => {
+                player.classList.add('mb-cheia');
+                aoMudarTela();
+            });
+        }
     }
     document.querySelectorAll('[data-bs-target="#modalAcesso"]').forEach(btn => {
         btn.addEventListener('click', () => {
-            if (emTelaCheia()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            if (emTelaCheia()) sairTelaCheia();
         });
     });
     btnFull.addEventListener('click', () => {
-        if (emTelaCheia()) {
-            (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        } else {
-            const pedir = player.requestFullscreen || player.webkitRequestFullscreen;
-            if (pedir) pedir.call(player);
-        }
+        if (emTelaCheia()) sairTelaCheia();
+        else pedirTelaCheia();
     });
     function aoMudarTela() {
         const cheia = emTelaCheia();
