@@ -11,8 +11,8 @@ Menu **Metabase**, com o ícone do Metabase.
 Do lado direito do painel:
 
 - **Pedir acesso ao Metabase.** Abre um modal só com a justificativa. O SIGUS grava um chamado administrativo para a unidade Saúde Digital, com nome, CPF, e-mail, perfil em uso no SIGUS, CBO de cadastro, CBO na unidade, unidade e tipo de unidade. A matriz GUT vai como 3, 3 e 3 (prioridade média), porque esse botão não pede GUT. Se já existir um pedido em aberto da mesma pessoa, o sistema não abre outro.
-- **Play.** Troca os painéis sozinho. O tempo padrão é 40 segundos e se muda em Configurações → Metabase, antes da lista de painéis. Pausar devolve o botão para play e abre o bloco para passar na mão (anterior, próximo e a lista).
-- **Tela cheia.** A apresentação continua trocando sozinha. Pausar dentro da tela cheia também libera a passagem manual. No celular, se o aparelho não deixar a tela cheia de verdade, o painel cobre a tela do mesmo jeito.
+- **Play.** Troca os painéis sozinho. O tempo padrão é 40 segundos e se muda em Configurações → Metabase, antes da lista de painéis. Enquanto a apresentação está ligada, só o próximo gráfico fica carregado por trás, um por pessoa. Pausar solta esse extra. Pausar devolve o botão para play e abre o bloco para passar na mão (anterior, próximo e a lista).
+- **Tela cheia.** A apresentação continua trocando sozinha. A faixa escura mostra o símbolo da Saúde Digital junto do nome SIGUS, e os botões de play e tela cheia ficam brancos em cima dela. O botão de pedir acesso sai dessa faixa. Pausar dentro da tela cheia também libera a passagem manual. No celular, se o aparelho não deixar a tela cheia de verdade, o painel cobre a tela do mesmo jeito.
 - **Celular.** O título fica em cima e os botões embaixo: pedir acesso vira só o ícone da chave, com área de toque maior. O gráfico ocupa o que sobra. No computador o título e os botões continuam na mesma linha.
 - **Barra dos painéis.** Os publicados ficam numa linha só. Se não couberem, a barra rola na horizontal, no celular e no computador.
 
@@ -32,7 +32,7 @@ Cada painel tem nome, número do dashboard (o `580` de `/dashboard/580`), títul
 
 No painel, cole o Python que o Metabase gera (`import jwt`, `payload` com `resource`, `params` e `exp`). A linha `exp: round(time.time()) + (60 * 10) # 10 minute expiration` fica como veio: o SIGUS assina por 10 anos. A chave que vier nesse texto não é gravada no painel. Filtros dentro de `params`, mesmo com acento, entram no gráfico.
 
-O IIS na frente do Metabase recusa um caminho de endereço maior que 260 caracteres. Um token com filtro em português passa disso e o IIS responde que a URL é inválida. O navegador não recebe esse token: pede o painel pelo número (`/metabase/ponte/embed/dashboard/<id>`) e o SIGUS assina e busca o gráfico em `127.0.0.1:3000`.
+O IIS na frente do Metabase recusa um caminho de endereço maior que 260 caracteres. Um token com filtro em português passa disso e o IIS responde que a URL é inválida. O navegador não recebe esse token. O endereço leva um identificador curto, em três pedaços, para o Metabase reconhecer o dashboard. O SIGUS troca pelo token assinado e busca o gráfico em `127.0.0.1:3000`.
 
 O dashboard **580** já entra nesta instalação, visível para todos os perfis, tipos e categorias, com borda e título. Dá para renomear e restringir.
 

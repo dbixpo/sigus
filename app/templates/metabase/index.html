@@ -60,6 +60,33 @@ body.pagina-metabase .page-header h1 {
 }
 .mb-pos { color: #718096; font-size: 0.8rem; font-weight: 500; margin-left: 0.35rem; }
 .mb-acoes { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-shrink: 0; }
+.mb-marca {
+    display: none;
+    align-items: center;
+    gap: 0.55rem;
+    margin-right: 0.35rem;
+    flex-shrink: 0;
+}
+.mb-marca img { height: 42px; width: auto; display: block; }
+.mb-marca-nome {
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: .06em;
+    font-size: 1rem;
+    line-height: 1;
+    padding-left: 0.55rem;
+    border-left: 1px solid rgba(255, 255, 255, .4);
+}
+#mbReserva {
+    position: fixed;
+    left: -12000px;
+    top: 0;
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    pointer-events: none;
+}
+#mbReserva iframe { width: 100%; height: 100%; border: 0; }
 .mb-stage {
     flex: 1 1 auto;
     min-height: 0;
@@ -136,10 +163,41 @@ body.pagina-metabase .page-header h1 {
 }
 #mbPlayer:fullscreen .page-header h1,
 #mbPlayer:-webkit-full-screen .page-header h1,
+#mbPlayer.mb-cheia .page-header h1 {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    min-width: 0;
+}
+#mbPlayer:fullscreen .page-header h1,
+#mbPlayer:-webkit-full-screen .page-header h1,
 #mbPlayer:fullscreen .mb-subtitulo,
 #mbPlayer:-webkit-full-screen .mb-subtitulo,
 #mbPlayer:fullscreen .mb-pos,
 #mbPlayer:-webkit-full-screen .mb-pos { color: #fff; }
+#mbPlayer:fullscreen .mb-marca,
+#mbPlayer:-webkit-full-screen .mb-marca { display: flex; }
+#mbPlayer:fullscreen .mb-pedir,
+#mbPlayer:-webkit-full-screen .mb-pedir { display: none !important; }
+#mbPlayer:fullscreen .mb-acoes .btn,
+#mbPlayer:-webkit-full-screen .mb-acoes .btn {
+    color: #fff;
+    background: transparent;
+    border-color: rgba(255, 255, 255, .85);
+}
+#mbPlayer:fullscreen .mb-acoes .btn-primary,
+#mbPlayer:-webkit-full-screen .mb-acoes .btn-primary {
+    background: #1A82B8;
+    border-color: #1A82B8;
+    color: #fff;
+}
+#mbPlayer:fullscreen .mb-acoes .btn:hover,
+#mbPlayer:-webkit-full-screen .mb-acoes .btn:hover {
+    background: #155d8c;
+    border-color: #155d8c;
+    color: #fff;
+}
 #mbPlayer:fullscreen .mb-stage,
 #mbPlayer:-webkit-full-screen .mb-stage,
 #mbPlayer.mb-cheia .mb-stage { flex: 1; min-height: 0; }
@@ -167,6 +225,23 @@ body.pagina-metabase .page-header h1 {
 #mbPlayer.mb-cheia .page-header h1,
 #mbPlayer.mb-cheia .mb-subtitulo,
 #mbPlayer.mb-cheia .mb-pos { color: #fff; }
+#mbPlayer.mb-cheia .mb-marca { display: flex; }
+#mbPlayer.mb-cheia .mb-pedir { display: none !important; }
+#mbPlayer.mb-cheia .mb-acoes .btn {
+    color: #fff;
+    background: transparent;
+    border-color: rgba(255, 255, 255, .85);
+}
+#mbPlayer.mb-cheia .mb-acoes .btn-primary {
+    background: #1A82B8;
+    border-color: #1A82B8;
+    color: #fff;
+}
+#mbPlayer.mb-cheia .mb-acoes .btn:hover {
+    background: #155d8c;
+    border-color: #155d8c;
+    color: #fff;
+}
 @media (max-width: 991.98px) {
     body.pagina-metabase .sigus-main {
         padding: 0.4rem !important;
@@ -266,6 +341,10 @@ body.pagina-metabase .page-header h1 {
 <div class="mb-pagina" id="mbPlayer">
     <div class="page-header">
         <h1>
+            <span class="mb-marca">
+                <img src="{{ url_for('static', filename='img/logo-sd-branco.png') }}" alt="Saúde Digital">
+                <span class="mb-marca-nome">SIGUS</span>
+            </span>
             {% include 'metabase/_icone.html' %} Metabase
             <span class="mb-subtitulo" id="mbTitulo">{{ cartoes[0].nome }}</span>
             <span class="mb-pos" id="mbPos">1 / {{ cartoes|length }}</span>
@@ -278,7 +357,7 @@ body.pagina-metabase .page-header h1 {
             <button type="button" class="btn btn-primary" id="mbPlay" title="Apresentar os painéis" aria-pressed="false">
                 <i class="fas fa-play"></i>
             </button>
-            <button type="button" class="btn btn-outline-secondary" id="mbFull" title="Tela cheia">
+            <button type="button" class="btn btn-outline-primary" id="mbFull" title="Tela cheia">
                 <i class="fas fa-expand"></i>
             </button>
             </div>
@@ -288,10 +367,10 @@ body.pagina-metabase .page-header h1 {
         <div class="collapse show" id="mbManual">
             <div class="mb-manual">
                 <div class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="mbPrev" title="Anterior">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="mbPrev" title="Anterior">
                         <i class="fas fa-chevron-left"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="mbNext" title="Próximo">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="mbNext" title="Próximo">
                         <i class="fas fa-chevron-right"></i>
                     </button>
                     <div class="d-flex flex-nowrap gap-2" id="mbLista"></div>
@@ -299,6 +378,7 @@ body.pagina-metabase .page-header h1 {
             </div>
         </div>
         <div class="mb-frame" id="mbQuadro"></div>
+        <div id="mbReserva" aria-hidden="true"></div>
     </div>
     <span class="visually-hidden" id="mbEstado">Pausado.</span>
 </div>
@@ -376,9 +456,11 @@ body.pagina-metabase .page-header h1 {
     const lista = document.getElementById('mbLista');
     const manual = document.getElementById('mbManual');
     const player = document.getElementById('mbPlayer');
+    const reserva = document.getElementById('mbReserva');
     let indice = 0;
     let tocando = false;
     let timer = null;
+    let reservaFrame = null;
 
     paineis.forEach((p, i) => {
         const b = document.createElement('button');
@@ -416,11 +498,50 @@ body.pagina-metabase .page-header h1 {
         return q.toString();
     }
 
-    function desenhar(p) {
+    function idPainel(p) { return String(p.id); }
+
+    function criarFrame(p) {
         const frame = document.createElement('iframe');
         frame.title = p.nome;
+        frame.dataset.id = idPainel(p);
         frame.src = p.quadro + '#' + hashDoPainel(p);
+        return frame;
+    }
+
+    function soltarReserva() {
+        if (!reservaFrame) return;
+        reservaFrame.remove();
+        reservaFrame = null;
+    }
+
+    function prepararProximo() {
+        if (!tocando || paineis.length < 2) return;
+        const p = paineis[(indice + 1) % paineis.length];
+        const id = idPainel(p);
+        if (reservaFrame && reservaFrame.dataset.id === id) return;
+        if (quadro.querySelector('iframe[data-id="' + id + '"]')) return;
+        soltarReserva();
+        reservaFrame = criarFrame(p);
+        reserva.appendChild(reservaFrame);
+    }
+
+    function encaixar(frame) {
         quadro.replaceChildren(frame);
+        try { frame.contentWindow.dispatchEvent(new Event('resize')); } catch (e) {}
+    }
+
+    function desenhar(p) {
+        const id = idPainel(p);
+        const atual = quadro.querySelector('iframe');
+        if (reservaFrame && reservaFrame.dataset.id === id) {
+            const pronto = reservaFrame;
+            reservaFrame = null;
+            encaixar(pronto);
+            return;
+        }
+        if (atual && atual.dataset.id === id) return;
+        if (atual) atual.remove();
+        quadro.replaceChildren(criarFrame(p));
     }
 
     function mostrar(i) {
@@ -431,6 +552,7 @@ body.pagina-metabase .page-header h1 {
         pos.textContent = (indice + 1) + ' / ' + paineis.length;
         marcarLista();
         desenhar(p);
+        if (tocando) prepararProximo();
     }
 
     function iconePlay(play) {
@@ -440,7 +562,7 @@ body.pagina-metabase .page-header h1 {
         btnPlay.title = play ? 'Pausar' : 'Apresentar os painéis';
         btnPlay.setAttribute('aria-pressed', play ? 'true' : 'false');
         btnPlay.classList.toggle('btn-primary', !play);
-        btnPlay.classList.toggle('btn-outline-secondary', play);
+        btnPlay.classList.toggle('btn-outline-primary', play);
     }
 
     function tocar() {
@@ -450,6 +572,7 @@ body.pagina-metabase .page-header h1 {
         colapso(false);
         clearInterval(timer);
         if (paineis.length > 1) {
+            prepararProximo();
             timer = setInterval(() => mostrar(indice + 1), intervaloMs);
         }
     }
@@ -458,6 +581,7 @@ body.pagina-metabase .page-header h1 {
         tocando = false;
         clearInterval(timer);
         timer = null;
+        soltarReserva();
         iconePlay(false);
         estado.textContent = 'Pausado. Dá para passar os painéis na mão.';
         colapso(true);

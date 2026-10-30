@@ -14,7 +14,7 @@ from app.models.chamado import Chamado, ChamadoHistorico, prioridade_de_gut
 from app.models.link_util import PERFIS_LINK
 from app.models.metabase import (
     MetabaseConfig, MetabasePainel, cbo_na_unidade, interpretar_codigo_metabase,
-    rotulo_cbo,
+    ler_token_curto, rotulo_cbo, token_curto,
 )
 from app.models.tipo_unidade import TipoUnidade
 from app.models.unidade import Unidade
@@ -26,10 +26,13 @@ _INTERVALO_MIN = 10
 _INTERVALO_MAX = 600
 _METABASE_INTERNO = 'http://127.0.0.1:3000/'
 _LIMITE_CORPO = 26 * 1024 * 1024
+_MARCA = r'[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*'
 _CAMINHO_PONTE = re.compile(
-    r'^(?:app/(?:dist|assets)/.+|embed/dashboard/\d+(?:/.*)?|api/embed/.+)$'
+    r'^(?:app/(?:dist|assets)/.+|embed/dashboard/' + _MARCA + r'(?:/.*)?|api/embed/.+)$'
 )
-_PAINEL_PONTE = re.compile(r'^(?P<api>api/)?embed/dashboard/(?P<id>\d+)(?P<resto>/.*)?$')
+_PAINEL_PONTE = re.compile(
+    r'^(?P<api>api/)?embed/dashboard/(?P<marca>' + _MARCA + r')(?P<resto>/.*)?$'
+)
 
 
 def _pode_ver():
@@ -140,7 +143,7 @@ def _cartao(painel, _config):
         'with_title': bool(painel.titled),
         'with_downloads': bool(painel.with_downloads),
         'initial_parameters': painel.initial_parameters if isinstance(painel.initial_parameters, dict) else {},
-        'quadro': url_for('metabase.ponte', caminho=f'embed/dashboard/{painel.id}'),
+        'quadro': url_for('metabase.ponte', caminho='embed/dashboard/' + token_curto(painel)),
     }
 
 
@@ -203,7 +206,7 @@ def _url_interna(caminho, token):
         api = achado.group('api') or ''
         resto = achado.group('resto') or ''
         destino = f'{api}embed/dashboard/{token}{resto}'
-    partes = '/'.join(quote(parte, safe='') for parte in destino.split('/'))
+    partes = '/'.join(quote(parte, safe='.') for parte in destino.split('/'))
     url = _METABASE_INTERNO + partes
     consulta = request.query_string
     if consulta:
@@ -227,12 +230,21 @@ def ponte(caminho):
     achado = _PAINEL_PONTE.match(caminho)
     painel = None
     token = None
+    marca_curta = None
     if achado:
-        painel = db.session.get(MetabasePainel, int(achado.group('id')))
+        marca = achado.group('marca')
+        if marca.isdigit():
+            painel = db.session.get(MetabasePainel, int(marca))
+        else:
+            lido = ler_token_curto(marca)
+            painel = db.session.get(MetabasePainel, lido[0]) if lido else None
+            if painel and lido[1] != int(painel.resource_id):
+                painel = None
         if not painel or not painel.ativo:
             abort(404)
         if not painel.visivel_para(current_user):
             abort(403)
+        marca_curta = token_curto(painel) if marca.isdigit() else marca
         token, _expira = painel.emitir_token(cfg)
     if request.method == 'POST' and (request.content_length or 0) > 2_000_000:
         abort(413)
@@ -264,8 +276,8 @@ def ponte(caminho):
             status=502,
             mimetype='text/plain; charset=utf-8',
         )
-    if token:
-        bruto = bruto.replace(token.encode('ascii'), str(painel.id).encode('ascii'))
+    if token and marca_curta:
+        bruto = bruto.replace(token.encode('ascii'), marca_curta.encode('ascii'))
     resp = Response(bruto, status=getattr(upstream, 'status', None) or upstream.code)
     resp.headers['Content-Type'] = upstream.headers.get('Content-Type', 'application/octet-stream')
     if caminho.startswith('app/'):

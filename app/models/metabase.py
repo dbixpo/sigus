@@ -6,7 +6,9 @@ O navegador pede o painel pelo número. Quem assina e fala com o Metabase
 é o SIGUS, por dentro. A chave não sai daqui.
 """
 import ast
+import base64
 import html
+import json
 import re
 import time
 
@@ -144,8 +146,43 @@ def _flags_do_html(codigo):
     return saida, None
 
 
+def _b64_json(dados):
+    bruto = json.dumps(dados, separators=(',', ':'), ensure_ascii=True).encode('utf-8')
+    return base64.urlsafe_b64encode(bruto).rstrip(b'=').decode('ascii')
+
+
+def token_curto(painel):
+    """Três pedaços para o Metabase achar o dashboard. A assinatura de verdade não vai no endereço."""
+    corpo = {
+        'resource': {'dashboard': int(painel.resource_id)},
+        'p': int(painel.id),
+        'exp': int(time.time()) + EXP_SEGUNDOS,
+    }
+    return _b64_json({'alg': 'none'}) + '.' + _b64_json(corpo) + '.0'
+
+
+def ler_token_curto(segmento):
+    """Devolve (id do painel, número do dashboard) ou None."""
+    if not segmento or segmento.count('.') != 2:
+        return None
+    miolo = segmento.split('.')[1]
+    try:
+        bruto = base64.urlsafe_b64decode(miolo + ('=' * ((-len(miolo)) % 4)))
+        dados = json.loads(bruto.decode('utf-8'))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    if not isinstance(dados, dict):
+        return None
+    recurso = dados.get('resource')
+    if not isinstance(recurso, dict):
+        return None
+    try:
+        return int(dados.get('p')), int(recurso.get('dashboard'))
+    except (TypeError, ValueError):
+        return None
+
+
 def json_loads_objeto(bruto):
-    import json
     try:
         valor = json.loads(bruto)
     except json.JSONDecodeError as exc:
