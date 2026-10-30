@@ -47,7 +47,7 @@ Em **Configurações → Gestão de Perfis** cada perfil (exceto Administrador) 
 | Patrimônio | Prédios, unidades, salas, equipamentos e a aba de veículos da unidade |
 | Operações | Chamados, gestão de chamados, transferências, contratos, emendas, licitações, chamados SUEQ, controle de empenho, empresas |
 | Gestão | Agenda, planejamentos, Segurança do Paciente (menu), relatórios, mural e comunicados |
-| Outros | Links úteis e o link/QR do cadastro público |
+| Outros | Links úteis, o link/QR do cadastro público e Metabase (`OUT_Metabase`) |
 | Recursos humanos | Faltas abonadas e apontamentos da unidade (planilha do RH) |
 | Configurações | Cada catálogo separado: feriados, tipos de ação, tipos de unidade, padrão e tipos de sala, classificação RENEM, catálogo e status de equipamento, catálogo de veículos, marcas e modelos, divisões, status de chamados, CBOs, catálogos da Segurança do Paciente, identidade, usuários e auditoria |
 
@@ -59,6 +59,7 @@ Como ler os três interruptores quando o rótulo não é óbvio:
 - **Identidade e assets:** município, logos e domínio de e-mail. O Administrador sempre entra; os demais só com esta linha marcada.
 - **Gestão de Perfis:** só o Administrador. A linha da matriz não abre essa tela para outro perfil.
 - **Segurança do Paciente:** Ver abre o menu. Quem conduz os casos continua sendo a lista de membros do Núcleo e das comissões, não o perfil.
+- **Metabase:** Ver abre o menu e os painéis liberados para o perfil, o tipo da unidade e o CBO. Editar e Adicionar abrem Configurações → Metabase. Na matriz nova, isso fica com o Gestor Central; o Administrador entra sempre. Detalhe: [METABASE.md](METABASE.md).
 - **Equipamentos na unidade:** incluir e corrigir cadastro seguem Adicionar e Editar. Depois do primeiro inventário, a unidade continua podendo transferir e mudar o estado do bem.
 
 O script `migrations/seed_permissoes_faltantes.py` só cria a linha que ainda não existe, com o mesmo acesso que a pessoa já tinha. Não regrava o que já foi salvo.

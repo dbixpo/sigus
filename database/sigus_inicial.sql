@@ -7,7 +7,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict qzqhVBT0YJKTtvsCtM28ZLteO3aqDnVOUx7tEpP2wFUAyGA8zo4DECg0PdEqsBN
 
 -- Dumped from database version 17.10
 -- Dumped by pg_dump version 17.10
@@ -2132,6 +2131,65 @@ ALTER SEQUENCE public.matriculas_profissionais_id_seq OWNED BY public.matriculas
 
 
 --
+-- Name: metabase_config; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.metabase_config (
+    id integer NOT NULL,
+    site_url character varying(300) DEFAULT ''::character varying NOT NULL,
+    secret_key character varying(200) DEFAULT ''::character varying NOT NULL,
+    intervalo_segundos integer DEFAULT 40 NOT NULL,
+    atualizado_em timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: metabase_paineis; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.metabase_paineis (
+    id integer NOT NULL,
+    nome character varying(150) NOT NULL,
+    descricao character varying(300),
+    resource_id integer NOT NULL,
+    bordered boolean DEFAULT true NOT NULL,
+    titled boolean DEFAULT true NOT NULL,
+    ativo boolean DEFAULT true NOT NULL,
+    ordem integer DEFAULT 0 NOT NULL,
+    perfis_acesso json DEFAULT '["todos"]'::json NOT NULL,
+    tipos_unidade_ids json DEFAULT '[]'::json NOT NULL,
+    cbos json DEFAULT '[]'::json NOT NULL,
+    criado_por integer,
+    criado_em timestamp without time zone DEFAULT now() NOT NULL,
+    atualizado_em timestamp without time zone DEFAULT now() NOT NULL,
+    with_downloads boolean DEFAULT false NOT NULL,
+    embedding_params json DEFAULT '{}'::json NOT NULL,
+    initial_parameters json DEFAULT '{}'::json NOT NULL,
+    params json DEFAULT '{}'::json NOT NULL
+);
+
+
+--
+-- Name: metabase_paineis_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.metabase_paineis_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: metabase_paineis_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.metabase_paineis_id_seq OWNED BY public.metabase_paineis.id;
+
+
+--
 -- Name: modelos; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -3081,7 +3139,8 @@ CREATE TABLE public.tipos_acao (
     ativo boolean DEFAULT true NOT NULL,
     ordem integer DEFAULT 0 NOT NULL,
     criado_em timestamp without time zone DEFAULT now() NOT NULL,
-    atualizado_em timestamp without time zone DEFAULT now() NOT NULL
+    atualizado_em timestamp without time zone DEFAULT now() NOT NULL,
+    campanha_id integer
 );
 
 
@@ -4155,6 +4214,13 @@ ALTER TABLE ONLY public.matriculas_profissionais ALTER COLUMN id SET DEFAULT nex
 
 
 --
+-- Name: metabase_paineis id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metabase_paineis ALTER COLUMN id SET DEFAULT nextval('public.metabase_paineis_id_seq'::regclass);
+
+
+--
 -- Name: modelos id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -4440,6 +4506,9 @@ COPY public.acao_local_fotos (id, acao_id, filename, original, mime_type, ordem,
 14	10	3d301e7b2a8c4fd48c0852839c7077be.jpeg	WhatsApp Image 2026-10-10 at 14.29.45 (1).jpeg	image/jpeg	2	2026-10-12 12:56:46.595122
 15	10	315549e752b14f9f96d7808bb1b958ea.jpeg	WhatsApp Image 2026-10-10 at 14.29.45.jpeg	image/jpeg	3	2026-10-12 12:56:46.595122
 16	11	e697856e0afa47419d1b14248d546a2c.jpeg	WhatsApp Image 2026-10-19 at 10.11.48.jpeg	image/jpeg	0	2026-10-19 20:22:01.387947
+18	13	503d846dae2f47ac8671e937949ab9d1.jpeg	WhatsApp Image 2026-10-29 at 10.19.07.jpeg	image/jpeg	0	2026-10-29 16:12:15.08323
+19	13	2a023f8ad7f147c6bd6a84e9fda99548.jpeg	WhatsApp Image 2026-10-29 at 10.17.01.jpeg	image/jpeg	1	2026-10-29 16:12:15.08323
+20	14	611612a4b76a40f19d030b4f44f8d2e5.jpeg	WhatsApp Image 2026-10-29 at 10.53.30.jpeg	image/jpeg	0	2026-10-29 19:14:46.04811
 \.
 
 
@@ -4499,8 +4568,10 @@ COPY public.acao_planejamento_responsaveis (acao_id, usuario_id) FROM stdin;
 
 COPY public.acoes_locais (id, unidade_id, autor_id, tipo_acao_id, descricao, data_acao, criado_em) FROM stdin;
 1	1	\N	9	📘 FORMAÇÃO EM TELESSAÚDE\r\n\r\nO Curso de Telessaúde já está disponível na EGP para os servidores da Secretaria da Saúde!\r\n\r\n🎓 Carga horária: 70h\r\n⏳ Acesso por 6 meses\r\n\r\nPara profissionais de nível superior, a capacitação integra as ações formativas obrigatórias da Secretaria da Saúde.\r\n\r\n🔗 egp.sorocaba.sp.gov.br	2026-09-14	2026-09-14 23:56:36.11911
-10	20	\N	19	Hoje 10/10/2026, Ação na Unidade Vitória Régia - Saúde da mulher e Educação em Saúde sobre a Violência contra a mulher com a Téc. Enf. Mariana	2026-10-10	2026-10-12 12:56:46.578111
 11	1	\N	20	19 de outubro - Dia do Profissional de TI! Parabéns aos profisionais que fazem a transformação digital no SUS acontecer!!!!	2026-10-19	2026-10-19 20:22:01.37995
+13	1	\N	20	1º Curso de Introdução às ferramentas digitais	2026-10-29	2026-10-29 16:12:15.073229
+10	20	\N	19	Hoje 10/10/2026, Ação na Unidade Vitória Régia - Saúde da mulher e Educação em Saúde sobre a Violência contra a mulher com a Téc. Enf. Mariana	2026-10-10	2026-10-12 12:56:46.578111
+14	1	\N	20	Habilitação no PET Saúde! A Saúde digital de Sorocaba em parceria com àrea de Educação em saúde submeteu projeto sobre IA , e foi um dos projetos escolhidos !!!	2026-10-29	2026-10-29 19:14:46.003222
 \.
 
 
@@ -4509,7 +4580,8 @@ COPY public.acoes_locais (id, unidade_id, autor_id, tipo_acao_id, descricao, dat
 --
 
 COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, ordem, criado_por, criado_em, prazo, atualizado_por, atualizado_em) FROM stdin;
-9	5	Acompanhar na DAG	\N	concluido	0	\N	2026-03-13 16:53:19.195434	\N	\N	2026-03-19 18:53:45.271
+351	97	COLHER ASSINATURA SR. SES	\N	backlog	4	\N	2026-10-26 19:41:33.950801	\N	\N	\N
+352	97	TRAMITAR PARA SEAD	\N	backlog	5	\N	2026-10-26 19:41:49.720692	\N	\N	\N
 30	15	API CADSUS - Integraçãop de Sistemas Próprios com CADSUS	\N	concluido	0	\N	2026-03-13 17:32:34.401205	\N	\N	\N
 31	15	RIA - Integração de Vacinas	\N	em_andamento	2	\N	2026-03-13 17:33:04.498393	\N	\N	\N
 32	15	SUS Digital - Integração de Sistemas Externos ao SUS Digital Profissional	\N	backlog	3	\N	2026-03-13 17:33:46.246147	\N	\N	\N
@@ -4528,6 +4600,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 21	11	Mapeamento de Sistemas de Informação em Saúde	\N	concluido	0	\N	2026-03-13 17:18:52.742126	\N	\N	\N
 29	15	REL - Integração de Resultados de Exames Laboratoriais	\N	backlog	1	\N	2026-03-13 17:31:52.255628	\N	\N	\N
 240	6	Levantamento 2026 por unidade	\N	backlog	6	\N	2026-09-03 17:17:50.425709	\N	\N	\N
+392	106	Anexar documentos assinados no SEI	\N	backlog	3	\N	2026-10-29 16:27:04.367603	\N	\N	\N
 66	1	CAPS Aquarela	\N	backlog	5	\N	2026-03-13 18:14:39.374658	2026-11-30	\N	\N
 67	1	CAPS Ser e Conviver	\N	backlog	6	\N	2026-03-13 18:15:21.583205	2026-12-31	\N	\N
 68	1	CAPS Bem Querer	\N	backlog	7	\N	2026-03-13 18:15:50.518394	2027-01-31	\N	\N
@@ -4542,6 +4615,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 26	13	Criar demanda reprimida de Saúde Mental	\N	backlog	2	\N	2026-03-13 17:25:17.668965	\N	\N	\N
 27	13	Criar demanda reprimida de Planejamento Familiar	\N	backlog	3	\N	2026-03-13 17:25:34.896505	\N	\N	\N
 143	36	Escuta Inicial	\N	concluido	18	\N	2026-04-01 18:22:41.482841	2026-04-01	\N	\N
+393	110	Inserir Dotação no SIAM	\N	backlog	1	\N	2026-10-29 17:35:25.312039	\N	\N	\N
 24	12	Ferramenta de Cuidado Compartilhado EMulti (Seguindo ESUSAPS)	\N	backlog	2	\N	2026-03-13 17:23:21.021885	\N	\N	\N
 214	53	Cadastrar e treinar todos os Usuarios.	\N	backlog	1	\N	2026-05-26 14:55:21.567657	2026-05-27	\N	\N
 204	49	Estudo publicado no SEI	\N	concluido	3	\N	2026-05-12 21:36:35.076559	\N	\N	\N
@@ -4555,7 +4629,6 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 254	63	Acompanhamento	\N	backlog	2	\N	2026-09-03 20:17:05.655774	\N	\N	\N
 255	63	Correção no SIS	\N	backlog	3	\N	2026-09-03 20:17:37.321499	\N	\N	\N
 256	36	Manual do equipamentos	\N	em_andamento	19	\N	2026-09-03 20:25:15.766218	2026-10-31	\N	\N
-191	47	Elaborar segunda resposta	\N	concluido	3	\N	2026-04-15 19:42:53.931001	2026-04-23	\N	2026-04-17 18:28:29.057585
 262	66	Barão Grupo A	\N	backlog	6	\N	2026-09-21 15:25:07.156756	2026-10-23	\N	\N
 288	60	Reavaliar planos de ação	\N	backlog	1	\N	2026-09-24 15:03:36.856566	\N	\N	\N
 296	17	Reunião 9h TI do paço	\N	backlog	5	\N	2026-09-29 22:25:12.63061	2026-11-13	\N	\N
@@ -4568,8 +4641,6 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 322	87	Divulgar  diretrizes institucionais para uso de tecnologias digitais, como : inteligência artificial, aplicativos, telemedicina, automação e ferramentas de apoio à decisão	\N	backlog	1	\N	2026-10-21 15:26:30.153438	2027-01-31	\N	\N
 334	94	AGUARDA ASSINATURA DO SR. SES VIA SEI	\N	em_andamento	0	\N	2026-10-26 18:31:13.804467	\N	\N	\N
 333	93	Devolver para incluir despacho à SCPR e SEDI	\N	backlog	6	\N	2026-10-26 14:49:27.644291	\N	\N	\N
-351	97	COLHER ASSINATURA SR. SES	\N	backlog	4	\N	2026-10-26 19:41:33.950801	\N	\N	\N
-352	97	TRAMITAR PARA SEAD	\N	backlog	5	\N	2026-10-26 19:41:49.720692	\N	\N	\N
 338	94	TRAMITAR PARA SEAD	\N	backlog	5	\N	2026-10-26 18:34:06.285853	\N	\N	\N
 337	94	ENVIAR RESPOSTA DO PARECER PARA ASSINATURA SR. SES	\N	backlog	4	\N	2026-10-26 18:33:46.226859	\N	\N	\N
 339	94	ANEXAR RESERVA E ANEXO III	\N	backlog	3	\N	2026-10-26 18:34:44.703194	\N	\N	\N
@@ -4585,7 +4656,9 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 367	100	VERIFICAR PEDIDOS PENDENTES DA ATA	\N	backlog	9	\N	2026-10-26 20:35:50.857663	\N	\N	\N
 368	101	FAZER AF DE ESTETOSCOPIO	\N	backlog	1	\N	2026-10-26 20:37:22.198096	\N	\N	\N
 371	103	ANÁLISE DE HABILITAÇÃO	\N	backlog	2	\N	2026-10-27 11:36:25.56638	\N	\N	\N
-373	105	TRAMITAR PARA NACP	\N	backlog	2	\N	2026-10-27 11:43:15.457444	\N	\N	\N
+350	97	ANEXAR RESPOSTA DO PARECER JURIDICO	\N	backlog	3	\N	2026-10-26 19:41:04.085692	\N	\N	2026-10-26 19:41:13.700382
+389	110	Anexar documentos assinados no SEI	\N	backlog	3	\N	2026-10-29 15:23:54.604644	\N	\N	\N
+390	110	Tramitar SEI para Controle Interno	\N	backlog	4	\N	2026-10-29 15:24:14.794941	\N	\N	\N
 381	107	Solicitar reserva sem onerar	\N	backlog	2	\N	2026-10-27 16:36:22.84277	\N	\N	\N
 382	107	Anexar Listas de Verificação no SEI	\N	backlog	3	\N	2026-10-27 16:37:08.681758	\N	\N	\N
 383	107	Tramitar SEI para Controle Interno	\N	backlog	4	\N	2026-10-27 16:37:42.673812	\N	\N	\N
@@ -4593,6 +4666,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 385	108	Assinar despacho no SEI e tramitar à SEAD/GAB/REQUISIÇÕES	\N	backlog	0	\N	2026-10-27 16:46:37.187533	2026-10-27	\N	\N
 386	109	Assinar despacho no SEI e tramitar à SEAD/GAB/REQUISIÇÕES	\N	backlog	1	\N	2026-10-27 16:52:23.409569	2026-10-27	\N	\N
 4	2	Alterar IP das credenciais de RNDS RIA no Portal de Serviços	\N	concluido	1	\N	2026-03-13 00:08:12.214397	2026-03-11	\N	2026-03-13 01:18:44.245653
+9	5	Acompanhar na DAG	\N	concluido	0	\N	2026-03-13 16:53:19.195434	\N	\N	2026-03-19 18:53:45.271
 28	14	Enviar e-mail para Evelin falando sobre os documentos de aquisição de Data Center, Antenas para redundancia de internet, wi-fi, SSD e periféricos	\N	cancelado	1	\N	2026-03-13 17:30:09.330507	\N	\N	2026-04-09 20:42:59.561521
 6	3	Explicação	\N	concluido	0	\N	2026-03-13 09:28:51.781757	2026-03-13	\N	2026-03-13 05:33:43.545791
 8	4	UPA Zona Oeste - Enfermagem	\N	concluido	1	\N	2026-03-13 16:46:40.158677	2026-03-13	\N	2026-03-27 17:11:11.06725
@@ -4639,6 +4713,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 84	2	Abrir rechamado no WebAtendimento RNDS	\N	concluido	3	\N	2026-03-13 23:31:05.992698	2026-03-18	\N	2026-03-19 03:04:29.849498
 218	55	Parametrizar	\N	concluido	2	\N	2026-05-28 20:36:23.961832	2026-06-15	\N	2026-06-09 16:47:11.323939
 119	35	Lopes de Oliveira (16:00 às 17:00)	\N	concluido	17	\N	2026-03-27 16:50:13.112532	2026-04-29	\N	2026-04-30 13:26:06.513842
+227	59	Criação de Planilhas	\N	concluido	1	\N	2026-06-19 17:05:53.853429	\N	\N	2026-06-19 17:13:18.680546
 78	28	Realizar reunião com Educação em Saúde para solicitar apoio	\N	cancelado	2	\N	2026-03-13 19:17:18.048577	\N	\N	2026-04-09 20:42:20.7994
 92	31	Transmissão de Março/2026	\N	cancelado	2	\N	2026-03-19 23:33:46.399613	2026-03-23	\N	2026-03-27 16:30:51.607179
 98	32	Propor estrutura inicial de projeto	\N	concluido	1	\N	2026-03-23 22:05:10.655453	\N	\N	2026-04-05 16:44:28.764248
@@ -4649,6 +4724,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 219	56	Avaliar modelo e elaborar solução	\N	concluido	1	\N	2026-06-02 20:46:52.058207	\N	\N	2026-06-02 20:47:10.021516
 90	31	Transmissão de Janeiro/2026	\N	concluido	0	\N	2026-03-19 23:32:29.669433	2026-03-19	\N	2026-03-19 23:39:39.315579
 91	31	Transmissão de Fevereiro/2026	\N	concluido	1	\N	2026-03-19 23:32:55.769538	2026-03-20	\N	2026-03-20 20:13:27.090603
+253	67	Aula piloto	\N	concluido	1	\N	2026-09-03 19:47:24.626412	2026-10-29	\N	2026-10-29 19:54:03.14166
 25	12	Ferramenta de Cálculo do M-CHAT (Seguindo ESUSAPS)	\N	em_andamento	3	\N	2026-03-13 17:24:01.402626	\N	\N	2026-06-03 15:48:27.152729
 76	27	Integração com o SISWEB	\N	cancelado	1	\N	2026-03-13 19:11:20.820994	\N	\N	2026-06-03 17:33:52.408537
 75	13	Criar demanda reprimida de PPD	\N	em_andamento	0	\N	2026-03-13 19:10:07.693627	\N	\N	2026-03-13 19:10:25.390142
@@ -4686,7 +4762,6 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 223	9	Anexar Orçamentos e Enviar para DAC emitir relatório de Pesquisa de Preço e encaminhar para NACP	\N	concluido	7	\N	2026-06-03 15:45:24.546524	2026-06-03	\N	2026-07-28 15:11:36.858813
 248	66	Barão Grupo A	\N	cancelado	1	\N	2026-09-03 17:44:19.979467	2026-09-23	\N	2026-09-21 15:25:18.170064
 251	66	Ulisses grupo B	\N	backlog	8	\N	2026-09-03 17:47:52.035834	2026-12-17	\N	2026-09-03 17:48:38.91835
-253	67	Aula piloto	\N	backlog	1	\N	2026-09-03 19:47:24.626412	2026-10-29	\N	2026-09-16 16:00:17.163555
 135	36	Protocolo de integração de laboratórios terceiros	\N	concluido	15	\N	2026-03-29 17:50:47.156535	2026-03-29	\N	2026-03-29 17:50:59.365169
 137	36	Solicitação e recepção de exames	\N	concluido	17	\N	2026-03-29 17:54:17.718801	2026-03-29	\N	2026-03-29 17:54:34.863583
 105	35	Aparecidinha (07:00 às 08:00)	\N	concluido	2	\N	2026-03-27 16:35:57.492929	2026-03-31	\N	2026-04-08 22:20:26.828026
@@ -4704,6 +4779,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 166	27	Integração com BNAFAR	\N	em_andamento	0	\N	2026-04-09 21:07:15.044587	2026-04-15	\N	2026-06-03 17:33:58.136425
 109	35	Sabiá (10:00 às 12:00)	\N	concluido	6	\N	2026-03-27 16:38:21.094057	2026-04-08	\N	2026-04-08 22:21:16.467554
 153	21	GUIA POR ESPECIALIDADE - CIRURGIA VASCULAR REVISADA	\N	concluido	0	\N	2026-04-08 21:31:16.867731	\N	\N	2026-04-08 21:40:07.31683
+228	17	Agendar kickoff	\N	concluido	3	\N	2026-07-23 15:51:39.661442	2026-09-10	\N	2026-09-10 19:34:30.499962
 154	21	GUIA POR ESPECIALIDADE - DERMATOLOGIA	\N	concluido	1	\N	2026-04-08 21:31:25.62819	\N	\N	2026-04-08 21:41:03.767835
 155	21	GUIA POR ESPECIALIDADE - ENDOCRINOLOGIA	\N	concluido	2	\N	2026-04-08 21:31:33.63005	\N	\N	2026-04-08 21:41:58.509725
 156	21	GUIA POR ESPECIALIDADE - GASTROENTEROLOGIA	\N	concluido	3	\N	2026-04-08 21:31:41.037439	\N	\N	2026-04-08 21:42:43.739718
@@ -4753,6 +4829,7 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 184	9	Realizar reunião para ajustar orçamento	\N	cancelado	4	\N	2026-04-15 14:35:48.745581	2026-04-20	\N	2026-04-15 22:32:52.705491
 200	47	Acompanhar	\N	concluido	5	\N	2026-04-17 18:28:54.292549	\N	\N	2026-04-28 21:46:29.263371
 196	9	Pedir reajuste de proposta de acordo com orçamento	\N	concluido	5	\N	2026-04-15 22:32:48.822849	2026-04-22	\N	2026-05-21 18:46:44.898213
+191	47	Elaborar segunda resposta	\N	concluido	3	\N	2026-04-15 19:42:53.931001	2026-04-23	\N	2026-04-17 18:28:29.057585
 192	47	Enviar segunda resposta	\N	concluido	4	\N	2026-04-15 19:43:21.784163	2026-04-23	\N	2026-04-17 18:29:01.884322
 211	51	Instalar ESUS APS	\N	concluido	4	\N	2026-05-19 18:05:18.48314	\N	\N	2026-05-22 13:09:10.447039
 195	43	Atualizar a versão do monitor nas unidades	\N	cancelado	3	\N	2026-04-15 21:42:34.712437	\N	\N	2026-06-02 20:49:37.558757
@@ -4770,9 +4847,8 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 40	12	Geração de Relatórios de Indicadores para avaliação e monitoramento	\N	em_andamento	4	\N	2026-03-13 17:44:35.876605	\N	\N	2026-03-13 17:45:10.008492
 152	12	Agenda de Serviços, Agendamento Direto de Serviços e Grupo de Atendimento	\N	backlog	7	\N	2026-04-07 08:51:24.194931	\N	\N	2026-04-07 08:51:48.803437
 232	63	Solicitar lista atual ao RH SES	\N	concluido	1	\N	2026-08-17 15:50:28.78975	\N	\N	2026-09-03 20:16:50.888286
-227	59	Criação de Planilhas	\N	concluido	1	\N	2026-06-19 17:05:53.853429	\N	\N	2026-06-19 17:13:18.680546
-228	17	Agendar kickoff	\N	concluido	3	\N	2026-07-23 15:51:39.661442	2026-09-10	\N	2026-09-10 19:34:30.499962
 209	51	Migração de servidor	\N	concluido	2	\N	2026-05-19 18:04:34.045895	2026-05-27	\N	2026-07-01 12:41:09.439265
+394	67	Agendar novos treinamentos	\N	backlog	2	\N	2026-10-29 19:55:00.178886	\N	\N	2026-10-29 19:55:49.063898
 210	51	Adequação do sistema operacional para versão compatível	\N	concluido	3	\N	2026-05-19 18:04:56.20609	\N	\N	2026-07-23 15:50:51.995068
 213	52	Teste de Planejamento	\N	cancelado	1	\N	2026-05-26 14:51:38.620766	2026-05-27	\N	2026-09-22 23:34:44.406677
 222	57	Enviar para Suporte SIS por e-mail e acompanhar	\N	concluido	1	\N	2026-06-03 15:31:17.742181	2026-06-03	\N	2026-07-23 15:52:21.717945
@@ -4854,7 +4930,6 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 309	81	Configurar conta institucional – USF Vila Barão	\N	concluido	5	\N	2026-10-05 22:37:59.591726	2026-10-06	\N	2026-10-08 00:18:24.635833
 311	81	Verificar conta e configurar retinógrafo – USF Paineiras	\N	concluido	7	\N	2026-10-05 22:39:34.901241	2026-10-06	\N	2026-10-08 00:22:03.577321
 307	81	Configurar conta institucional – USF Habiteto Ana Paula Eleutério	\N	concluido	3	\N	2026-10-05 22:36:53.020443	2026-10-06	\N	2026-10-08 00:51:31.074141
-350	97	ANEXAR RESPOSTA DO PARECER JURIDICO	\N	backlog	3	\N	2026-10-26 19:41:04.085692	\N	\N	2026-10-26 19:41:13.700382
 312	81	Verificar situação do retinógrafo – USF Aparecidinha	\N	concluido	8	\N	2026-10-05 22:40:35.24083	\N	\N	2026-10-21 15:35:52.471811
 318	85	Divulgar periodicamente resultados, projetos, indicadores e avanços da Saúde Digital para gestores e equipes.	\N	backlog	3	\N	2026-10-21 15:07:32.623956	2026-12-31	\N	2026-10-21 15:19:05.581142
 315	85	Definir  papéis, responsabilidades e instâncias decisórias entre Saúde Digital, TI, Planejamento, Regulação, APS, Atenção Especializada e demais áreas	\N	backlog	0	\N	2026-10-21 15:03:56.662575	2026-12-31	\N	2026-10-21 15:27:37.578873
@@ -4880,18 +4955,20 @@ COPY public.acoes_planejamento (id, planejamento_id, titulo, descricao, status, 
 341	95	REALIZAR ANALISE ADMINISTRATIVA	\N	concluido	2	\N	2026-10-26 18:38:44.88689	\N	\N	2026-10-27 14:51:16.104993
 342	95	RESPONDER SEAD	\N	concluido	3	\N	2026-10-26 18:38:56.765886	\N	\N	2026-10-27 14:51:18.504548
 349	97	TRAMITAR PARA CINT/SES	\N	concluido	2	\N	2026-10-26 19:39:50.36039	\N	\N	2026-10-29 15:15:44.457521
+373	105	TRAMITAR PARA NACP	\N	concluido	2	\N	2026-10-27 11:43:15.457444	\N	\N	2026-10-29 16:31:12.469122
 372	105	DISPONIBLIZAR SEI PARA ASSINATURA DO CE (SR SES)	\N	concluido	1	\N	2026-10-27 11:42:03.431903	2026-10-26	\N	2026-10-27 12:15:06.450308
 377	106	Disponibilizar documentos do SEI para assinatura do Sr. SES	\N	backlog	4	\N	2026-10-27 11:48:14.921843	\N	\N	2026-10-27 16:25:23.440902
-374	106	Análise de edital	\N	concluido	1	\N	2026-10-27 11:44:57.343119	2026-10-27	\N	2026-10-27 12:15:32.940914
-375	106	Atualizar CE, Relatório de Pesquisa de Preços, SC, PRÉ COTAÇÃO, TR	\N	concluido	2	\N	2026-10-27 11:46:59.90363	2026-10-27	\N	2026-10-27 16:24:14.307848
-376	106	Enviar SC e Pré Cotação para assinatura do Sr. SES	\N	backlog	3	\N	2026-10-27 11:47:34.400628	2026-10-27	\N	2026-10-27 16:24:31.581835
+374	106	Análise de edital	\N	concluido	0	\N	2026-10-27 11:44:57.343119	2026-10-27	\N	2026-10-27 12:15:32.940914
+375	106	Atualizar CE, Relatório de Pesquisa de Preços, SC, PRÉ COTAÇÃO, TR	\N	concluido	1	\N	2026-10-27 11:46:59.90363	2026-10-27	\N	2026-10-27 16:24:14.307848
+376	106	Enviar SC e Pré Cotação para assinatura do Sr. SES	\N	backlog	2	\N	2026-10-27 11:47:34.400628	2026-10-27	\N	2026-10-27 16:24:31.581835
+388	110	Enviar SC e Pré Contação para assinatura do Sr. SES	\N	backlog	2	\N	2026-10-29 13:08:13.043103	2026-10-29	\N	2026-10-29 13:08:23.133912
 330	93	Anexar documentos assinados no SEI 3552205.404.00034890/2026-49	\N	concluido	3	\N	2026-10-26 14:47:16.47797	2026-10-27	\N	2026-10-27 12:09:36.079584
 378	106	Assinar Listas e Tramitar para Controle Interno	\N	backlog	5	\N	2026-10-27 11:49:26.741351	\N	\N	2026-10-27 16:25:14.300307
 379	106	Devolver para incluir despacho à SEDI	\N	backlog	6	\N	2026-10-27 16:26:09.769221	\N	\N	2026-10-27 16:26:27.364889
 380	107	Verificar tramitação da SC 3683/2026	\N	backlog	1	\N	2026-10-27 16:33:15.107226	2026-10-27	\N	2026-10-27 16:33:53.37178
-387	110	Finalizar SC e Pré Cotação 4837/2026	\N	concluido	1	\N	2026-10-28 15:59:19.594604	2026-10-29	\N	2026-10-29 13:07:53.764925
-388	110	Enviar SC e Pré Contação para assinatura do Sr. SES	\N	backlog	2	\N	2026-10-29 13:08:13.043103	2026-10-29	\N	2026-10-29 13:08:23.133912
+391	110	Tramitar SEI e SIAM para SEAD	\N	backlog	5	\N	2026-10-29 15:24:42.835782	\N	\N	2026-10-29 15:44:39.790078
 332	93	Assinar e tramitar SEI Listas para Controle Interno	\N	concluido	5	\N	2026-10-26 14:48:55.673778	\N	\N	2026-10-29 15:12:20.664212
+387	110	Finalizar SC e Pré Cotação 4837/2026	\N	concluido	0	\N	2026-10-28 15:59:19.594604	2026-10-29	\N	2026-10-29 13:07:53.764925
 \.
 
 
@@ -5476,7 +5553,7 @@ COPY public.contrato_tipos_equipamento (id, contrato_id, tipo_equipamento_id, de
 --
 
 COPY public.contratos (id, numero_sei, empresa, tipo_contrato, objeto, data_inicio, data_fim, valor_total, status, observacoes, criado_por, criado_em, atualizado_em, empresa_id, cpl, link_sei, modalidade, secao, numero_contrato, data_assinatura, vigencia, fonte, valor_inicial, valor_atual, valor_mensal_atual, aditivo_data_pct, reajuste_data_base_pct, fiscalizacao, supressao_data_pct, contato_nome_telefone, empenhos, tag, mandado_judicial) FROM stdin;
-1	\N	Vivver Sistemas LTDA	Suporte Técnico e Manutenção de Sistema	SERVIÇOS DE SUPORTE TÉCNICO, MANUTENÇÃO CORRETIVA E MELHORIAS EVOLUTIVAS SOB DEMANDA, PARA O SISTEMA INTEGRADO DE SAÚDE - SIS	2020-01-06	2027-01-04	\N	vigente		\N	2026-03-05 22:59:22.49723	2026-10-29 12:23:04.063203	1	424/2020	\N	Inexigibilidade	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
+1	\N	Vivver Sistemas LTDA	Suporte Técnico e Manutenção de Sistema	SERVIÇOS DE SUPORTE TÉCNICO, MANUTENÇÃO CORRETIVA E MELHORIAS EVOLUTIVAS SOB DEMANDA, PARA O SISTEMA INTEGRADO DE SAÚDE - SIS	2020-01-06	2027-01-04	\N	vigente		\N	2026-03-05 22:59:22.49723	2026-10-30 11:51:41.839903	1	424/2020	\N	Inexigibilidade	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	f
 \.
 
 
@@ -6989,6 +7066,113 @@ COPY public.equipamento_campo_valores (id, equipamento_id, campo_id, valor) FROM
 1471	2678	307	sim
 1472	2678	308	Alto
 1473	2678	309	Courvin/Tela
+1474	2688	273	-1
+1475	2690	316	Reta
+1476	2690	317	120
+1478	2692	293	300
+1479	2693	269	140 l
+1480	2694	269	140 l
+1481	2698	307	sim
+1482	2698	308	Baixo
+1483	2698	309	Courvin
+1484	2699	280	Aço Pintado
+1485	2699	281	nao
+1486	2700	269	140 l
+1487	2701	315	-4
+1488	2702	315	4
+1489	2717	233	Simples
+1490	2718	233	Simples
+1491	2719	233	Simples
+1492	2720	233	Simples
+1493	2721	233	Simples
+1494	2722	233	Simples
+1495	2723	246	Portátil
+1496	2724	246	Portátil
+1497	2725	246	Portátil
+1498	2726	246	Portátil
+1499	2727	246	Portátil
+1500	2728	246	Portátil
+1501	2729	246	Portátil
+1502	2731	315	4
+1503	2732	316	Reta
+1504	2732	317	120
+1505	2732	318	sim
+1506	2733	316	Reta
+1507	2733	317	120
+1508	2733	318	sim
+1509	2734	360	Pedra
+1510	2735	360	Pedra
+1511	2736	315	4
+1512	2737	307	sim
+1513	2737	308	Baixo
+1514	2737	309	Courvin
+1515	2747	315	4
+1516	2748	315	4
+1517	2749	316	Reta
+1518	2749	317	120
+1519	2749	318	nao
+1520	2750	316	Reta
+1521	2750	317	120
+1522	2750	318	nao
+1523	2751	316	Reta
+1524	2751	317	120
+1525	2751	318	nao
+1526	2752	316	Reta
+1527	2752	317	120
+1528	2752	318	nao
+1477	2690	318	sim
+1532	2754	316	em L
+1533	2754	317	120
+1534	2754	318	nao
+1535	2755	315	4
+1536	2756	307	sim
+1537	2756	308	Alto
+1538	2756	309	Courvin/Tela
+1539	2757	307	sim
+1540	2757	308	Alto
+1541	2757	309	Courvin/Tela
+1542	2758	307	sim
+1543	2758	308	Alto
+1544	2758	309	Courvin/Tela
+1545	2759	315	4
+1546	2766	316	Reta
+1547	2766	317	120
+1548	2766	318	nao
+1549	2768	316	Reta
+1550	2768	317	120
+1551	2768	318	sim
+1552	2778	307	nao
+1553	2778	308	Baixo
+1554	2778	309	Courvin
+1561	2781	315	3
+1569	2790	233	Simples
+1573	2797	233	Simples
+1555	2779	307	nao
+1556	2779	308	Baixo
+1557	2779	309	Courvin
+1558	2780	307	sim
+1559	2780	308	Alto
+1560	2780	309	Courvin/Tela
+1575	2799	233	Simples
+1577	2801	233	Simples
+1579	2803	233	Simples
+1562	2782	316	em L
+1563	2782	317	120
+1564	2782	318	nao
+1565	2786	233	Simples
+1574	2798	233	Simples
+1578	2802	233	Simples
+1580	2804	233	Simples
+1581	2805	233	Simples
+1583	2807	233	Simples
+1566	2787	280	Aço Pintado
+1567	2787	281	nao
+1568	2788	233	Simples
+1570	2792	233	Simples
+1571	2793	233	Simples
+1572	2796	233	Simples
+1576	2800	233	Simples
+1582	2806	233	Simples
 \.
 
 
@@ -7053,7 +7237,7 @@ COPY public.equipamentos (id, sala_id, tipo_equipamento_id, numero_patrimonio, n
 1995	29	4	PMS-285762	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:33:55.40086	2026-10-26 15:33:55.399735	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 1998	298	4	PMS-208620	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:35:17.219149	2026-10-26 15:35:17.217563	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 1864	1110	418	PMS-387858	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 12:40:40.919477	2026-10-26 09:53:49.150726	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1904	1142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:45:16.684966	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1904	1142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:45:16.684966	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 1860	1110	418	PMS-387851	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 12:37:17.180364	2026-10-26 09:51:37.523757	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 1972	333	1	PMS-316376	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:11:24.232004	2026-10-26 15:11:24.230301	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 1975	333	1	PMS-316374	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:12:55.893152	2026-10-26 15:12:55.891542	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
@@ -7294,2401 +7478,2532 @@ COPY public.equipamentos (id, sala_id, tipo_equipamento_id, numero_patrimonio, n
 2460	29	476	PMS-383197	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:31:45.519425	2026-10-28 10:31:45.518355	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2464	29	418	PMS-377910	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:32:59.54598	2026-10-28 10:32:59.544702	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2467	29	390	PMS-387721	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:34:04.574104	2026-10-28 10:34:04.571847	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1439	1105	4	PMS-392684	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:59.624561	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1439	1105	4	PMS-392684	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:59.624561	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2354	29	392	PMS-257700	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:48:23.07207	2026-10-27 15:48:23.070336	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2352	322	417	PMS-341004	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:45:29.085593	2026-10-27 15:45:29.084094	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2458	29	495	PMS-387265	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:30:52.101746	2026-10-28 10:30:52.094711	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2459	29	495	PMS-294580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:31:17.298746	2026-10-28 10:31:17.297321	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2462	29	495	PMS-387262	\N	\N	\N	\N	\N	\N	ativo	boa	3 gavetas	t	\N	2026-10-28 13:32:26.660833	2026-10-28 10:32:26.659641	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 2365	29	495	PMS-294583	\N	\N	\N	\N	\N	\N	ativo	boa	três gavetas	t	\N	2026-10-27 19:04:36.810948	2026-10-27 16:04:36.808903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2656	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:18:28.100448	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2	1	7	\N	1441185365YU72B	14	49	2023-01-01	\N	\N	ativo	regular		t	\N	2026-03-16 06:38:22.836789	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1887	1142	418	PMS-388299	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:34:35.748525	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1931	1108	3	PMS-388456	4AG97QF13	1	1	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:47:24.007748	2026-10-29 12:23:04.063203	2023	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1888	1106	383	PMS-203384	47498	226	405	\N	\N	\N	sobressalente	boa		t	\N	2026-10-23 16:41:30.535371	2026-10-29 12:23:04.063203	2014	t	aquisicao	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1714	4	4	PMS-392894	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:05.834244	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1889	1142	495	PMS-03181	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:50:38.591643	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1849	4	1	PMS-393552	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-21 15:27:28.757043	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1953	466	390	PMS-235656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:56:44.468849	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1897	1142	630	\N	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:17:58.686228	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1850	4	4	PMS-392885	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:00:43.134073	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1846	1141	1	PMS-393577	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-10-16 14:05:07.947398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1936	1143	418	PMS-341059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:23:23.025204	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1855	1141	513	PMS-12345	12345	309	604	\N	0.00	\N	inservivel	\N		t	\N	2026-10-22 10:53:38.777765	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-33	5	1	PMS-177733	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-04-27 22:27:29.576068	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-34	5	1	PMS-173869	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:28:33.507343	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-35	5	1	PMS-173867	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:29:33.593876	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-36	5	1	PMS-163105	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:33:50.134353	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-37	5	1	PMS-177753	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:36:05.192764	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-38	5	1	PMS-163381	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:38:18.56822	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-39	5	1	PMS-141434	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:41:30.598743	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-40	5	2	PMS-178156	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:51:01.939294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-41	5	1	PMS-163309	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:52:20.993275	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-42	5	4	PMS-152411	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-27 23:02:05.026888	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-43	5	4	PMS-307055	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:05:01.134323	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-44	5	4	PMS-308310	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:10:43.339511	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-45	5	4	PMS-154211	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:14:03.246845	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-46	5	4	PMS-295189	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:20:58.006934	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-47	5	4	PMS-201646	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:27:17.380685	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-48	5	4	PMS-155990	\N	8	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:28:41.915563	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-49	5	4	PMS-234462	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:11:37.009089	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-50	5	4	PMS-155799	\N	10	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:12:49.470043	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-51	5	4	PMS-308348	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:30:03.974334	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-52	5	4	PMS-146650	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:31:33.47996	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-53	5	4	PMS-305819	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:44:50.106661	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-54	5	4	PMS-203531	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:45:32.701498	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-55	5	4	PMS-313186	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:46:37.814771	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1943	1143	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:54.390444	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1937	1143	418	PMS-377865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:24:08.878608	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1902	1108	495	PMS-297586	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:37:40.398387	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1884	1106	418	PMS-387920	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 15:08:24.630321	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1932	1108	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Patrimônio ilegível	t	\N	2026-10-26 11:31:12.176692	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	42ab12c5a7d345bbb7aa76b8e2584879.jpg
-1885	1106	390	\N	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:26:25.991517	2026-10-29 12:23:04.063203	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	fe5de8cd9c264a06b46d6b50d1b75db6.jpg
-1903	1142	1	PMS-307873	\N	3	663	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:42:37.070306	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1886	1142	3	PMS-151393	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:28:48.311601	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1908	1142	4	PMS-305751	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:54:57.349722	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1910	1142	418	PMS-388301	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:56:26.361482	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1933	1108	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Patrimônio ilegível	t	\N	2026-10-26 11:31:59.13568	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	130b866429264fdba7b29b366b95ddcd.jpg
-1915	1142	4	PMS-261165	\N	2	664	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:01:03.280399	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1923	1142	4	\N	8RG1471CTT	2	665	\N	\N	\N	inservivel	\N		t	\N	2026-10-23 19:07:34.195042	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1938	1143	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:24:36.626133	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1925	1108	418	PMS-387847	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:08:25.346011	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1928	1142	391	PMS-381065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:31:47.617075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1950	127	418	PMS-388064	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 17:45:13.2242	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1934	1108	495	\N	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 11:34:11.025653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	ea73aa3d2777465595c97f4e78d652b9.jpg
-1939	1143	573	PMS-354648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:27:20.062123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1935	1143	605	PMS-394415	\N	20	666	\N	\N	\N	ativo	boa	BRANCA, 127V	t	\N	2026-10-26 13:22:13.047224	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1944	1143	613	PMS-381086	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:32:18.38484	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1940	1143	573	PMS-354662	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:27:48.343118	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1941	1143	573	PMS-354651	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:04.363108	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1947	1144	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 16:27:01.053648	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1949	127	495	PMS-362690	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:41:36.363827	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1952	127	537	PMS-390254	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:54:56.243872	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1954	466	553	PMS-382953	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:58:00.411831	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1957	466	418	PMS-388069	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:01:59.625837	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1958	466	418	PMS-388070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:02:38.678848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1959	466	418	PMS-388065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:03:12.013892	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1963	466	418	PMS-388061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:05:37.470953	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1964	466	418	PMS-388063	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:06:20.148951	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1926	1108	495	PMS-298796	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:09:12.22418	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1851	4	1	PMS-393562	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:01:45.278076	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-10	1	1	PMS-366235	BRJ2371QQS	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 21:36:14.166845	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-11	1	1	PMS-366991	BRJ23822HF	2	131	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:20:57.373529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-12	1	5	PMS-372264	AF112243056322	10	132	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:22:00.889799	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1243	107	1	PMS-208463	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:08.543633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-346	955	4	PMS-376391	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:50:23.140995	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1890	1142	1	PMS-208508	\N	2	\N	\N	\N	\N	ativo	boa	HP ELITE	t	\N	2026-10-23 16:59:39.93764	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-355	983	4	PMS-123131	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:46:53.835179	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1927	1108	418	PMS-387846	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:10:58.041958	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1893	1142	4	PMS-305685	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:08:11.673839	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-460	744	4	PMS-236956	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:30:41.300504	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-462	744	4	\N	BEJE2011PX	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:31:00.449045	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-465	989	1	PMS-174098	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:32:57.427973	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-467	989	4	PMS-367209	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:35:42.136322	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-472	5	4	\N	S38971A002074	8	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:28:07.206383	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-474	5	1	PMS-178482	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:31:20.710837	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1895	1142	476	\N	\N	380	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:13:47.0856	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1956	466	565	PMS-354571	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:00:52.797972	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1905	1142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:46:01.603287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1929	1142	391	PMS-381061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:32:14.95107	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1907	1142	418	PMS-388302	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:48:30.776002	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1912	1142	418	PMS-388300	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:58:07.290919	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-512	204	4	PMS-376357	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:24.908623	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1914	1142	2	PMS-162910	\N	2	2	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:59:31.38301	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1930	1142	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Cinza	t	\N	2026-10-23 19:33:06.520409	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1917	1108	476	PMS-298302	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:02:47.525239	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1918	1108	495	PMS-321228	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:03:47.09864	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1924	1108	495	PMS-298793	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:07:54.905329	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-356	983	4	PMS-317071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:03.350231	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1942	1143	573	PMS-354650	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:25.864358	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-449	751	4	PMS-367211	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:44.845404	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-454	732	4	PMS-376230	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:26:38.632161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-469	746	4	PMS-376232	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:29.549606	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-475	5	1	PMS-178469	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:32:02.854159	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1945	1143	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:32:56.965778	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-491	213	4	PMS-155356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:08.591294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1978	466	495	PMS-386730	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:13:38.107146	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1946	1143	594	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:34:13.706705	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-506	206	4	PMS-367298	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:56.113361	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1962	466	418	PMS-388062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:04:53.217325	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-510	206	4	PMS-367307	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:38.643853	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-514	204	4	PMS-367299	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:41.574123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-522	981	4	PMS-376420	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:12:56.684143	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1948	1144	551	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 16:27:38.191289	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1951	127	436	PMS-389833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:53:35.441968	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1969	466	476	PMS-155065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:10:36.264623	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-352	960	4	PMS-392805	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:44:40.41178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-481	208	4	PMS-155366	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:15:51.450848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-361	962	1	PMS-163403	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:49:51.644223	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-484	203	4	\N	BRG147183V	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:34.143775	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-504	206	4	\N	VHC6683	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:34.954071	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-490	213	1	PMS-301781	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:27:54.013702	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-517	214	1	PMS-178359	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:42:48.925195	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-536	197	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:23:49.12761	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-535	197	1	PMS-163094	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:23:18.271125	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-537	194	1	PMS-208431	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:24:43.377351	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2340	1106	655	PMS-387636	1752726	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:34:48.879523	2026-10-29 12:23:04.063203	2024	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2346	125	390	PMS-387588	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:38.220085	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2463	220	1	PMS-208423	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:32:46.961732	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2474	141	436	PMS-389835	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:37:13.01192	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2476	220	4	PMS-342912	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:37:43.949185	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2366	1150	515	PMS-399411	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:04:50.341898	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-531	171	4	PMS-208560	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:15.920845	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1244	107	4	PMS-208740	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:15.502682	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-538	194	4	PMS-152527	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:24:50.691783	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-13	1	4	PMS-376247	BRC2520429	2	133	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:25:05.591468	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1976	466	495	PMS-386752	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:12:56.359152	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1899	1108	495	PMS-297571	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:22:43.663344	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-75	657	4	PMS-392949	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:59:17.927693	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-360	961	4	PMS-295808	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:49:32.277937	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-451	751	4	PMS-273549	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:23:06.594015	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-458	743	4	PMS-238093	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:30:13.17066	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-463	989	1	PMS-366759	\N	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-29 19:32:26.869577	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-464	989	4	PMS-367179	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:32:41.91109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-473	5	4	\N	VHF3661	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:29:22.5684	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-487	210	4	PMS-227411	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:02.169965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-502	219	4	PMS-228580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:35:12.347637	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1919	1108	476	PMS-298725	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:04:44.054798	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-526	196	4	PMS-226663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:18:34.365973	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1852	4	4	PMS-392834	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:02:34.863627	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1853	4	4	PMS-392881	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:03:15.195589	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-340	953	4	PMS-367259	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:46:07.217757	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-452	751	4	\N	BRG1471FMC	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:23:16.927614	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-456	736	4	PMS-247359	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:29:32.823379	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-471	746	4	PMS-367223	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:37:06.511767	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1891	1142	495	PMS-001604	\N	379	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:04:59.471558	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1906	1142	418	PMS-388298	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:46:57.529084	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-529	202	4	PMS-287676	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:20:36.856484	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1894	1142	4	\N	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:10:03.275138	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1898	1142	630	\N	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:18:55.753835	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1909	1142	2	PMS-177813	\N	2	2	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:55:51.147064	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-103	28	4	PMS-367066	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:11:00.340123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-104	28	4	PMS-208730	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:12:53.36003	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-105	28	4	PMS-208632	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:13:54.360385	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-106	28	4	PMS-350913	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:05:32.062766	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-107	28	4	PMS-208730	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:08:11.244455	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-108	28	1	PMS-208420	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:14:06.067151	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-109	28	4	PMS-350913	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:19:19.510826	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-110	28	4	PMS-207029	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-05 17:36:13.071588	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-111	28	4	\N	30691782	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-05 17:36:46.344811	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-112	720	4	PMS-367134	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:53:41.66168	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-113	719	4	PMS-367052	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:57:36.885098	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1971	466	476	PMS-297561	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:11:16.801612	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-116	721	4	PMS-367248	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:03:01.225314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1913	1142	495	PMS-049605	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:58:48.682281	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-121	723	4	PMS-367039	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:10:26.494982	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-122	725	1	PMS-367024	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:12:25.434113	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-124	726	4	PMS-367138	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:13:43.817216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-119	724	2	PMS-177967	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:09:29.349896	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-125	725	4	PMS-367092	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:14:02.559254	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1982	466	495	PMS-338931	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:15:27.492599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-459	744	1	PMS-178141	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:30:33.208639	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-461	744	1	PMS-178343	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:30:51.600344	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-344	954	4	\N	107U00190	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:49.907053	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-485	203	1	PMS-178478	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 17:16:43.360502	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-353	983	1	PMS-195709	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:46:30.856171	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-480	208	1	PMS-316350	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 17:15:42.186592	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-486	210	1	PMS-178358	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:06:51.338975	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1983	466	495	PMS-294578	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:15:55.14407	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-501	219	1	PMS-195582	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:35:04.568881	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-519	222	1	PMS-226480	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:43:26.17374	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-524	1044	4	PMS-295419	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:17:07.969	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-523	1044	1	PMS-178437	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:16:54.660293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-532	171	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:27.852973	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-525	196	1	PMS-202325	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:18:25.865282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-528	202	1	PMS-177585	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:20:26.791036	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-530	171	1	PMS-208435	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:02.059999	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-534	173	2	PMS-177808	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:22:10.75631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2342	1106	655	PMS-387638	1752724	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:36.135822	2026-10-29 12:23:04.063203	2024	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2344	125	390	PMS-387589	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:16.081854	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-14	1	1	PMS-370669	BRJ2433JP9	2	131	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:26:03.766283	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-128	727	4	PMS-367154	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:17:09.224996	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-130	728	4	PMS-367044	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:20:26.497824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-138	750	4	PMS-367117	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:34:49.556216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-140	737	4	\N	BRG1471C89	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:38:00.060585	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-142	755	4	PMS-367051	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:13.616065	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1892	1142	418	PMS-377880	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:06:54.553561	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-144	758	4	PMS-367057	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:49.056327	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-147	760	4	PMS-288205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:52.699385	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1911	1142	495	PMS-001773	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:57:05.782024	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1896	1142	476	\N	\N	380	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:14:30.841666	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-152	768	4	PMS-278721	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:45:14.323185	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1900	1108	418	PMS-387854	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:27:21.883521	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1901	1108	476	PMS-298476	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:34:14.187448	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1920	1108	418	PMS-387860	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:05:22.96254	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1916	1108	418	PMS-387857	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:02:01.560514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-160	793	4	\N	504SPSL0G998	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:54:11.344538	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1245	107	4	PMS-208592	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:23.317394	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1251	9	4	PMS-308266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:13.650049	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-166	674	1	PMS-173884	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:19:51.204168	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-163	671	4	PMS-270706	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:18:21.736741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-165	673	4	PMS-297235	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:19:15.967033	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-169	675	4	PMS-261029	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:48.733146	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-171	676	4	PMS-208564	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:42.745312	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-173	676	4	PMS-208723	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:22:04.240915	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-177	976	4	PMS-270874	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:30:23.350052	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-185	973	4	PMS-222509	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:35:55.500822	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-193	975	4	PMS-208565	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:42:03.048295	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-174	677	1	PMS-163239	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:24:19.639327	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-204	930	4	PMS-234622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:08:44.913754	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-210	935	4	PMS-367244	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:10.834756	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-342	953	4	PMS-376401	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:07.410239	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1921	1108	476	PMS-298358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:05:59.166978	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-175	677	4	\N	BRG147183L	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:24:33.452618	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-542	1045	4	PMS-208554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:26:56.052636	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1922	1108	418	PMS-387862	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:06:59.926264	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-559	1049	4	PMS-370777	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:15.860447	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-567	1050	4	PMS-257670	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:33:39.233466	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-568	1050	4	PMS-305843	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:33:47.397525	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-572	200	4	PMS-307053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:34:50.563634	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-574	200	4	PMS-305775	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:35:10.176214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-146	758	4	PMS-367067	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:50.704431	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-131	730	1	PMS-178211	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:21:09.923519	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-133	737	1	PMS-163147	BRG1471C89	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:26:26.387733	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-167	674	4	\N	BRG147103X	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:05.565152	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1980	466	495	PMS-303498	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:14:39.317949	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-134	734	4	\N	BRG14717HF	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:26:40.745563	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-170	676	1	PMS-208439	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:30.897257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-172	676	1	PMS-208441	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:54.325531	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-176	976	1	PMS-307950	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:30:10.376845	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-195	978	1	PMS-208447	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:44:01.013078	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-200	683	4	PMS-E2011PX	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:47:52.014672	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-354	983	1	PMS-195722	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:46:43.701136	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-594	865	1	PMS-163150	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:25:22.636693	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-597	866	4	\N	8068PXV22018	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:25:51.945302	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2345	1106	655	PMS-345869	1601130	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:31.710091	2026-10-29 12:23:04.063203	2021	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-610	872	1	PMS-163108	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:32:01.645997	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-554	190	1	PMS-316361	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:27:58.890646	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-571	200	1	PMS-177787	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:34:32.445581	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-575	200	1	PMS-307037	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:21.443804	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-132	734	1	PMS-177706	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:24:50.471119	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-159	793	1	PMS-312423	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:53:00.348925	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-161	828	1	PMS-163145	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-08 16:44:03.857037	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-149	760	4	PMS-307025	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:44:14.018164	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-155	760	4	PMS-240734	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:17.405653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-148	760	1	PMS-164989	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:42:09.290904	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-150	760	1	PMS-202769	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:44:37.286205	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-153	760	1	PMS-307041	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:45:56.737287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-158	760	1	PMS-202604	BRG142153P	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:48:15.70592	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-157	768	1	PMS-178150	None	2	134	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:48:00.242222	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-156	768	4	PMS-367170	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:34.668611	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-547	1075	4	PMS-298435	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:03:00.244599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1246	90	2	PMS-177955	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:30:40.702307	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-615	864	4	PMS-305697	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:42:48.420873	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-617	858	4	PMS-208613	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:26.452135	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-183	972	4	\N	BRG1471FMG	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:34:57.721665	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-179	970	4	PMS-367281	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:13.026219	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-191	974	4	PMS-277590	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:41:22.834827	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-198	31	4	PMS-295717	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:47:10.78291	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-202	680	4	PMS-238414	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:49:14.360802	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-184	973	1	PMS-178357	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:35:39.022493	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-413	987	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:48:21.182324	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-362	962	4	PMS-263786	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:50:49.040138	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-381	986	4	PMS-316397	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:04:00.066391	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-15	1	4	PMS-367188	BRC2380087	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:28:38.235114	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-16	1	4	PMS-208570	BRL9223C8B	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:29:45.000008	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-17	1	4	PMS-208605	BRL9082WPF	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:00.169	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-18	1	4	PMS-208646	BRL8502FJN	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:19.313632	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-19	1	1	PMS-366692	BRJ238246N	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:57.919564	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-433	729	4	PMS-236968	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:16:30.223095	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-437	988	4	PMS-208737	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:18:15.431582	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-443	738	4	PMS-208610	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:34.889239	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-20	1	4	PMS-208563	BRL9082WFP	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:31:17.696222	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-180	971	1	PMS-366913	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:46.210826	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-550	1047	4	\N	BRG14717J9	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:17:40.237006	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-570	200	4	PMS-207439	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:34:22.678385	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-581	857	4	PMS-367306	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:16:34.111767	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-394	357	1	PMS-306970	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:38:45.637352	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-634	879	4	PMS-307058	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:05.437319	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-187	969	4	PMS-208635	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:37:16.896402	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-189	681	4	PMS-257480	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:38:11.794028	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-431	729	4	PMS-208609	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:11:35.635617	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2033	136	476	PMS-251072	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:53:42.376268	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-546	1046	4	PMS-376381	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:53:40.322398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-552	1048	4	PMS-367172	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:25:57.160077	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-563	185	4	PMS-370776	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:21.704506	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-576	200	4	PMS-307052	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:35:33.97581	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-585	861	4	PMS-307059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:18:06.241494	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-593	863	4	PMS-123124	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:22:21.459031	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-432	729	1	PMS-317062	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:16:19.656849	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-436	988	1	PMS-208697	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:18:07.232848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-440	747	1	PMS-178426	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:19:51.792256	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-442	738	1	PMS-208484	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:26.175631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-182	972	1	PMS-316358	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:34:40.822559	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-363	984	1	PMS-203367	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:52:22.837363	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-369	55	4	PMS-203535	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:27.843712	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2043	1105	418	PMS-387870	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:09:13.624009	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-580	857	1	PMS-178189	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:16:20.589155	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-587	862	4	PMS-203525	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:19:05.621129	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-589	862	4	PMS-316417	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:19:21.902274	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-591	863	4	\N	BRG1471DNG	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:21:42.561282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-590	863	1	PMS-177647	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:21:27.951194	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-592	863	1	PMS-163427	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:22:01.900449	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-598	867	1	PMS-155882	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-10 18:26:31.232523	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-599	867	4	\N	BEJL1942HT	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:26:47.66023	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-606	871	4	\N	VHB8362	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:24.114315	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-602	869	2	PMS-165748	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:27:52.461107	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-612	859	1	PMS-177788	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:39:51.702916	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-616	858	1	PMS-208443	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:15.108033	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-630	1051	3	PMS-156768	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:01.473529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-541	1045	1	PMS-208429	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:26:41.624331	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-549	1047	1	PMS-163462	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:17:19.38112	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-569	200	1	PMS-307039	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:34:12.400215	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-573	200	1	PMS-177738	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:02.692391	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-636	879	1	PMS-202548	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:34.350668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-425	9	5	PMS-372306	None	10	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 18:00:16.411934	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-548	1075	1	PMS-307874	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:03:24.763724	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1248	9	4	PMS-367228	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:57.885428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-21	1	4	PMS-208681	BRL8502G25	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:03.683424	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-633	879	4	PMS-119351	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:56.587033	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-181	971	4	PMS-367278	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:34:06.277584	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-365	968	4	PMS-367271	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:16.664567	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-201	680	1	PMS-178169	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:49:06.144413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-188	681	1	PMS-177682	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:38:01.247681	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-190	974	1	PMS-178220	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:41:12.77262	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-22	1	4	PMS-208544	BRL9082WKZ	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:38.537633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-397	357	4	PMS-249580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:39:27.86361	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-427	645	4	PMS-236966	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:32.988862	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-429	645	4	PMS-367199	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:53.622445	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-197	31	1	PMS-163199	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:46:57.156282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-544	1045	4	PMS-376258	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:27:17.01565	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-555	190	4	PMS-BRG1471F0V	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:28:11.104784	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-561	1049	4	PMS-287657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:40.325557	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-387	353	4	PMS-203552	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:32:59.968507	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-611	872	4	PMS-141773	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:32:10.540817	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-613	859	4	PMS-316419	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:40:25.995941	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-635	879	4	PMS-146604	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:15.168847	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-196	978	4	\N	BRG14717VS	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:44:10.159508	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-402	360	1	PMS-203563	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:41:41.228553	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-206	931	4	PMS-301013	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:09:33.891882	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-208	932	4	PMS-235862	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:10:29.853318	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-404	361	1	PMS-305314	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:42:29.257777	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-212	935	4	PMS-367216	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:32.266175	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-214	934	4	\N	BRG1471FMR	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:13:28.495509	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-216	941	4	PMS-367241	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:14:42.926402	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-220	948	4	PMS-367242	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:16:14.573805	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-222	936	4	PMS-208604	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:18:42.165428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-224	936	4	PMS-234652	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:19:01.729635	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-412	987	1	PMS-306972	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:48:11.519962	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-226	940	4	\N	BRG1120RC8	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:19:42.544068	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-228	938	4	\N	BRG1090PZ5	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:20:17.209797	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-230	947	4	PMS-234621	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:35:31.163282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-232	979	4	PMS-367182	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:37:51.789807	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2009	1146	1	PMS-208499	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:42:46.771423	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-213	934	1	PMS-280045	None	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 15:13:18.079455	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2025	136	507	PMS-251327	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:49:16.956477	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-219	948	1	PMS-163089	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:15:58.978076	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-221	936	1	PMS-208480	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:18:02.912916	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-223	936	1	PMS-178128	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:18:52.829598	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-227	938	1	PMS-316351	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:20:08.746475	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-229	947	1	PMS-163327	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:35:05.703006	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-366	968	4	PMS-346002	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:31.414074	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-426	645	1	PMS-178355	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:10:20.662333	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-192	975	1	PMS-208438	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:41:48.204157	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-379	964	4	PMS-367178	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:35.356174	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-595	865	4	PMS-297213	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:25:32.865501	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-583	860	2	PMS-177848	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:17:27.063981	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-584	861	1	PMS-202480	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:17:52.630163	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-601	868	4	\N	VHC1895	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:27:26.3257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-600	868	1	PMS-173879	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:27:14.562799	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-605	871	1	PMS-163379	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:30:14.137021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-609	874	2	PMS-177791	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:31:12.516128	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-623	1051	4	PMS-367270	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:18.443883	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-625	1051	4	PMS-295194	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:40.694829	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-627	1051	4	\N	906SPED22084	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:55:25.976125	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-626	1051	1	PMS-178325	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:54:58.926302	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-629	1051	4	\N	BRG1471FFR	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:55:47.125855	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-631	879	2	PMS-177860	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:31.093562	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-564	163	1	PMS-308048	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:31:47.692359	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-565	163	4	PMS-139001	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:59.753886	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-577	200	1	PMS-173999	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:42.393884	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1250	9	4	PMS-367217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:07.169341	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-236	939	4	PMS-376252	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:40:22.91616	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1257	1080	4	PMS-392969	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:33:57.471516	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-238	939	4	PMS-239976	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:40:55.397396	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-240	939	4	PMS-208735	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:41:42.177266	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-242	946	4	PMS-235847	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:42:39.842042	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-244	643	4	PMS-367168	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:51:35.54797	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-405	361	4	PMS-249036	None	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:42:38.502167	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-248	642	4	PMS-367059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:53:48.508677	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-250	642	4	PMS-367077	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:54:11.5553	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-252	642	4	PMS-367157	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:55:13.487184	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-255	635	4	PMS-367099	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:51.966426	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-23	1	4	PMS-376248	BRC306036J	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:43.969333	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-257	635	4	PMS-367070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:57:32.232846	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-260	635	4	PMS-367088	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:12.576074	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-262	635	4	PMS-367151	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:41.640528	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-266	626	4	PMS-367137	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:01:30.953439	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-270	625	4	PMS-367094	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:20.430298	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1883	1112	649	PMS-298785	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 14:19:46.062632	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-272	624	4	PMS-367103	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:56.92744	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-274	623	4	PMS-367141	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:05:46.010548	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-24	1	1	PMS-366722	BRJ238232	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:34:32.073427	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-278	621	4	PMS-367595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:07.101021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1604	1011	4	PMS-367245	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:34:38.201448	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-280	619	4	PMS-367041	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:59.924862	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-282	618	4	PMS-367093	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:08:42.700199	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-284	617	4	PMS-367047	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:09:20.678833	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-286	615	4	PMS-367083	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:18.166971	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-288	615	4	PMS-367095	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:40.058314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-290	614	4	PMS-367251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:11:29.804905	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-292	36	4	PMS-367183	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:12:17.668266	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-298	647	4	PMS-208585	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:33:17.441083	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-308	651	4	PMS-253642	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:47:05.614493	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-324	980	4	PMS-208586	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:06:11.141178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-328	654	4	PMS-376236	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:07:40.734241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-330	654	4	PMS-208729	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:08:07.332987	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-367	968	4	PMS-367308	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:39.829428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-375	964	4	PMS-367327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:01:42.474161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-377	964	4	PMS-367276	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:13.488462	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-393	356	4	PMS-298352	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:35:17.630525	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2028	134	490	PMS-251317	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:50:28.252942	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-407	369	4	PMS-376250	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:43:49.916693	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-439	747	4	PMS-236938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:19:33.70724	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-441	747	4	PMS-234071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:02.374201	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-294	613	4	PMS-367160	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:13:11.157926	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-234	943	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:39:07.453158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-235	939	1	PMS-305463	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:40:08.854025	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-239	939	1	PMS-208695	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:41:12.08072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2032	134	490	PMS-251309	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:52:36.314227	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-268	622	4	PMS-367147	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:02:22.149643	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-273	623	1	PMS-208458	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:05:07.195858	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2036	1105	391	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:58:27.919662	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	4c523191eacb4e96b351040468f9ff07.jpg
-276	632	4	PMS-367085	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:23.004965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-264	638	4	\N	11100334	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:00:33.521741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2037	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:01:14.080257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	9ead5e2a186b4eb29867c239ee7e4756.jpg
-246	643	4	PMS-367050	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:52:43.862018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-263	638	1	PMS-141562	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 16:00:20.580303	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2038	1105	573	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:02:23.024712	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	351e5baa1c724da39ea032de84f7eeeb.jpg
-247	642	1	PMS-307975	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:53:22.063863	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-295	646	1	PMS-163437	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:23:44.706171	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-311	658	1	PMS-178309	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:51:15.676611	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2023	136	507	PMS-251329	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:48:27.211369	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-296	646	4	PMS-240731	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:32:41.592276	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-25	1	4	PMS-208642	BRL8502G0R	2	3	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:37:31.583099	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-26	1	4	PMS-208550	BRL9082WPY	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:38:57.641216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-332	656	4	PMS-376386	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:01.252842	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-334	656	4	PMS-208584	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:22.41335	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-371	55	4	PMS-376390	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:55.573174	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-411	362	4	PMS-376215	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:45:45.724569	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-389	353	4	PMS-220274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:33:17.403712	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-409	352	4	PMS-376257	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:44:27.116116	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-424	364	4	PMS-367284	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:57.323858	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-385	351	1	PMS-177628	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:32:02.940547	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-435	731	4	PMS-367226	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:17:11.40112	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2021	134	418	PMS-389539	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COR PRETA	t	\N	2026-10-26 18:47:35.936097	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-445	739	4	PMS-367219	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:15.301795	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-447	740	4	PMS-367246	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:56.250773	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-392	356	1	PMS-178312	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:35:03.483413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-300	648	4	PMS-376224	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:34:52.949213	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-306	650	4	\N	BRG147183B	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:46:26.21618	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-395	357	4	PMS-306976	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:39:00.098412	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-320	655	4	PMS-293610	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:03:52.412795	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-312	658	4	PMS-295752	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:51:24.050058	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-316	655	4	PMS-367287	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:54:03.190999	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-638	364	3	PMS-303966	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-16 00:33:29.491398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1881	1111	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 12:56:57.106581	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e2f2c1d7f92f485cb24a8d5ceed75e58.jpg
-241	946	1	PMS-301746	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:42:24.355638	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-637	722	4	\N	BRG14717HM	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-15 23:49:52.078421	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2018	136	418	PMS-389545	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COR PRETA	t	\N	2026-10-26 18:46:45.741457	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-644	709	4	PMS-207064	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:24:49.509316	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-646	709	4	PMS-367257	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:25:36.377761	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-648	710	4	PMS-294992	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:31:00.635189	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-650	1063	4	\N	BRG1471885	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:37:21.196288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-652	1064	4	PMS-367332	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:04.00123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-653	1064	4	PMS-367265	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:34.136002	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-657	713	4	PMS-146595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:41:32.87026	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-659	714	4	PMS-308251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:41:54.554405	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-661	714	4	PMS-235655	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:09.387609	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-663	715	4	PMS-281683	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:28.205637	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-665	715	4	PMS-305805	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:42.989589	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2031	134	490	PMS-251311	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:52:06.288922	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-302	649	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:39:36.655029	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-430	729	1	PMS-208485	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:11:21.924153	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-438	747	1	PMS-163105	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:19:24.081321	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-297	647	1	PMS-305348	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:33:06.976769	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-301	649	1	PMS-316357	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:39:17.961642	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-310	652	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:50:53.973195	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2034	1105	418	PMS-387867	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:54:25.951312	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-305	650	1	PMS-163352	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:46:08.10523	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-309	652	1	PMS-316392	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:47:25.649416	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-319	655	3	PMS-174352	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:03:44.513437	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-322	662	4	\N	BRG147184B	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:04:35.676852	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-326	653	4	\N	BRG1471FN4	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:06:51.737571	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-323	980	1	PMS-208461	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:05:48.727848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-325	653	1	PMS-177758	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 17:06:42.72579	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-329	654	3	PMS-174590	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:07:55.552315	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-655	712	4	\N	BRG1471888	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:57.769282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-333	656	1	PMS-208459	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:12.612181	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-380	986	1	PMS-173933	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 18:03:47.492244	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-647	710	1	PMS-177664	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:30:55.019621	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-654	712	1	PMS-307857	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:40:49.854358	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-667	716	4	\N	VHF4731	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:43:00.955492	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-656	713	1	PMS-177590	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:41:26.172371	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-658	714	1	PMS-173895	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:41:48.704969	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-660	714	1	PMS-163096	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:04.672913	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-662	715	1	PMS-163300	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:23.138066	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-666	716	1	PMS-163344	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:56.854979	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2016	136	418	PMS-389546	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COM ENCOSTO E ASSENTO PRETO	t	\N	2026-10-26 18:45:39.505117	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-669	1065	4	PMS-316427	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:24.891143	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-673	711	4	PMS-149204	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:08.509981	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-685	39	4	PMS-208633	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:50.030897	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-688	907	4	PMS-208634	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:38:46.76368	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-690	891	4	PMS-256714	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:42:42.836416	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-708	899	4	PMS-203547	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:31.860841	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-712	909	4	PMS-256696	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:02.844042	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-722	911	4	PMS-370774	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:45.878629	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-730	1068	4	PMS-312417	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:09:44.83476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1255	89	4	PMS-376378	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:45.784738	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-670	711	1	PMS-163134	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:44:39.126755	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1256	1080	1	PMS-393614	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:33:52.437775	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-27	1	1	PMS-174057	BRG204FQ2D	2	134	2025-01-01	\N	\N	inservivel	\N		t	\N	2026-03-18 22:42:24.051872	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-683	39	1	PMS-208507	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:39.08213	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2048	1105	495	PMS-337942	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:11:11.105301	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-687	907	1	PMS-208509	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:38:35.162838	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1613	1014	1	PMS-208693	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:55.272424	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-711	909	1	PMS-177659	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:57.211022	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1616	1015	4	PMS-208600	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:35.991972	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-725	911	1	PMS-316363	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:07:04.228904	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-735	903	1	PMS-163399	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:10:53.920364	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1622	1017	4	PMS-264277	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:15.311722	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1631	1024	1	PMS-163112	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:42:47.755324	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1636	1024	4	\N	VF60014	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:46:07.495648	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-28	1	1	PMS-174052	BRG204FPZJ	2	134	2025-01-01	\N	\N	inservivel	\N		t	\N	2026-03-18 22:43:13.901294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1634	1024	4	\N	KEJ65IA000439	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:45:50.392107	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1632	1024	4	PMS-264888	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:43:19.334445	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1640	1026	2	PMS-177933	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:50:08.716816	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1645	1029	4	PMS-208599	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:51:25.332444	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-30	1	4	PMS-376220	\N	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:31:04.301257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-31	1	4	PMS-376253	\N	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:32:08.57237	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-32	28	1	PMS-379330	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-27 22:11:51.715607	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-56	28	1	PMS-366794	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:47:05.927695	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-57	28	1	PMS-376186	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:49:20.872476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-58	28	1	PMS-376325	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:50:52.248965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-59	657	1	PMS-393163	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:47:50.428248	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-60	657	4	PMS-392668	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:48:38.359475	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-61	657	4	PMS-392669	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:48:56.367642	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-62	657	1	PMS-393171	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:49:47.322302	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-63	657	4	PMS-392675	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:50:17.225279	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-64	657	4	PMS-392672	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:50:43.874035	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-65	657	4	PMS-392933	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:51:20.556479	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-66	657	4	PMS-392955	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:51:48.63904	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-67	657	1	PMS-393705	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:52:31.787037	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-68	657	4	PMS-392950	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:52:59.30194	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-69	657	4	PMS-392935	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:53:45.64257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-70	657	1	PMS-393699	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:54:24.954994	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-71	657	4	PMS-392957	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:55:02.250311	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-72	657	4	PMS-392939	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:57:45.426844	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-73	657	1	PMS-393678	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:58:41.464331	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-74	657	4	PMS-392934	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:59:00.086757	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-76	657	1	PMS-393681	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:01:46.880056	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-77	1113	4	PMS-392914	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:02:09.56456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-78	1113	4	PMS-392903	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:02:34.252203	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-79	657	1	PMS-393559	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:03:03.75216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-80	657	4	PMS-392892	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:04:03.506269	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-81	657	4	PMS-392866	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:04:32.187285	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-82	1113	1	PMS-393557	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:15.297536	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-83	1113	4	PMS-392870	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:36.567224	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-84	1113	4	PMS-392917	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:57.674167	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-85	657	1	PMS-393640	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:06:27.308543	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-86	657	4	PMS-392937	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:34:14.297601	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-87	657	4	PMS-392772	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:34:50.120436	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-88	1113	1	PMS-393571	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:35:42.427796	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-89	1113	4	PMS-392891	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:36:03.435869	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-90	1113	4	PMS-392913	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:36:24.769257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-91	657	1	PMS-393568	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:37:23.822646	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-92	657	4	PMS-392869	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:37:48.480063	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-93	657	4	PMS-392915	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:38:15.725423	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-94	657	1	PMS-393549	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:38:44.182097	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-95	657	4	PMS-392899	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:39:11.510148	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-96	657	4	PMS-392902	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:39:34.066523	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-97	657	1	PMS-393554	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:04.752773	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2056	1105	418	PMS-389555	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:17:10.001818	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-671	711	4	PMS-207500	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:50.475622	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-681	39	4	PMS-235083	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:25.398079	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-692	892	4	PMS-257705	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:07.136944	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-694	893	4	PMS-305707	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:25.053887	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-696	894	4	PMS-227410	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:51.472209	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-702	897	4	PMS-208636	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:42.741344	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-744	262	4	PMS-367110	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:15:13.077132	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2070	1105	390	PMS-298763	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:29:55.63724	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-750	266	4	PMS-367104	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:28.067158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2077	1105	390	PMS-352888	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:38:39.358456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-678	1066	1	PMS-307879	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:46:40.712663	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2510	140	476	PMS-387695	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:57.314964	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-684	39	4	PMS-367316	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:45.098257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2081	1105	391	PMS-188446	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:40:37.292381	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-728	1067	4	PMS-302180	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:08:52.716122	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-701	897	1	PMS-208511	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:38.42554	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2347	105	583	PMS-365606	\N	292	\N	\N	\N	\N	ativo	boa	150l	t	\N	2026-10-27 18:37:25.80299	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-709	909	1	PMS-306969	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:42.427338	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-713	909	1	PMS-177674	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:47:09.228312	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2626	144	418	PMS-388284	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:15:55.901662	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2351	1106	383	PMS-204015	CK54032330	229	673	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:44:10.514234	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-729	1068	1	PMS-163223	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:09:38.46832	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2513	130	537	PMS-390206	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:56.631692	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2548	474	594	PMS-238584	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:27:29.888846	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1662	1109	4	PMS-376223	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:04:32.943029	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1742	141	4	PMS-376404	\N	2	\N	\N	\N	\N	ativo	boa	POSSUI 2 PATRIMÔNIOS 376404 e 381247	t	\N	2026-09-17 22:40:16.668286	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2468	457	1	PMS-208425	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:34:22.679964	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2471	220	4	PMS-208617	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:36:08.549921	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2524	24	537	PMS-389296	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:31.953235	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2478	133	436	PMS-389834	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:15.899675	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2486	125	1	PMS-201772	\N	401	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:40:03.363662	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2489	125	605	PMS-154456	\N	16	680	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:42:46.768796	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2532	140	651	PMS-203057	\N	403	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:10:12.271422	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2490	1105	495	PMS-389151	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:43:03.979708	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1687	466	4	PMS-301042	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:36:02.959218	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1691	466	1	PMS-208483	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:45:34.21926	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1692	466	4	PMS-208594	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:53:11.947134	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1696	466	4	PMS-317065	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:08:20.823182	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2495	133	651	PMS-164406	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:47:08.235827	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2553	474	594	PMS-62119	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:32:33.870819	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2498	1147	601	PMS-393154	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:49:38.847667	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1737	130	4	PMS-367238	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:35:50.167109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1744	2	1	PMS-305499	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:26:47.166826	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2353	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:48:21.299061	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1edc8ce33fc14a02864f79200b18d54e.jpg
-1751	68	4	PMS-367200	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:12.358862	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2534	140	507	PMS-14483	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-28 14:11:27.349944	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2564	24	537	PMS-394285	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:43:07.345383	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1761	223	4	PMS-367357	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:36:58.852392	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2536	174	511	PMS-318777	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:13:04.278515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1765	381	4	PMS-376359	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:58.28597	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2537	142	488	PMS-392269	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:13:12.702925	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2541	142	418	PMS-389544	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:18:12.432212	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2569	142	418	PMS-386690	\N	4	\N	\N	\N	\N	ativo	boa	AZUL	t	\N	2026-10-28 14:46:31.365973	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2545	180	513	PMS-300794	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:21:47.376866	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2547	474	594	PMS-374741	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:25:40.10423	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2607	142	651	PMS-173432	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 18:51:01.185014	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2574	142	4	PMS-249968	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:50:18.659825	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2620	142	605	PMS-134104	\N	408	\N	\N	\N	\N	inservivel	\N		t	\N	2026-10-28 19:05:06.361685	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2639	144	1	PMS-306959	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:37:59.015262	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2640	144	4	PMS-297533	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:38:57.594113	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2644	144	428	PMS-286071	\N	224	\N	\N	\N	\N	ativo	boa	O EQUIPAMENTO TAMBEM TEM OUTRO PATRIMONIO 114635	t	\N	2026-10-28 19:44:47.268273	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2646	144	656	PMS-285266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:47:06.228533	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2647	144	381	PMS-251339	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:49:35.773273	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2649	144	507	PMS-249983	\N	328	582	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:52:10.528784	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2652	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:56:12.621266	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-679	1066	4	PMS-245459	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:46:58.297583	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-682	39	4	PMS-367221	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:32.548595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-698	895	4	PMS-208639	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:11.705729	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-704	897	4	PMS-208637	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:53.693333	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-706	898	4	PMS-232636	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:12.509648	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-710	909	4	\N	504SPTM0H017	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:48.361877	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-716	908	4	PMS-376380	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:38.17841	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-720	910	4	PMS-367293	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:48:56.614595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-724	911	4	PMS-203536	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:56.613927	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-736	903	4	PMS-317070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:11:02.070175	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2010	136	495	PMS-254021	\N	\N	\N	\N	\N	\N	ativo	boa	MESA COM 2 PATRIMÔNIOS - 104437	t	\N	2026-10-26 18:43:14.641479	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-740	254	1	PMS-376235	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:35.495826	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-742	261	4	PMS-146666	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:56.094339	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-748	276	4	PMS-367139	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:07.665645	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2066	1105	390	PMS-298758	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:26:41.385651	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-672	711	1	PMS-301002	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-17 00:45:02.342735	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-689	891	1	PMS-173873	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:42:36.487009	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-695	894	1	PMS-163412	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:42.656242	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2071	1105	418	PMS-334187	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:31:48.851214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-697	895	1	PMS-208513	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:04.805561	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1777	1120	4	PMS-367295	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:46:18.121961	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-727	1067	1	PMS-163200	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:08:47.234159	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-707	899	1	PMS-174026	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:26.227903	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1779	382	4	PMS-367353	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:13.987051	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-717	910	1	PMS-174066	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:47:52.28041	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1783	227	1	PMS-163060	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:49:22.461311	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1784	227	4	PMS-289439	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:49:29.620848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-723	911	1	PMS-203568	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:06:51.179217	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2072	1105	390	PMS-298346	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:35:58.276492	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-731	900	1	PMS-208514	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:18.687722	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2080	1105	495	PMS-386768	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:40:17.359393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2508	1114	511	PMS-395795	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:04.8633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2085	1105	418	PMS-387868	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:47:49.445623	2026-10-29 12:23:04.063203	1900	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2086	1105	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:53:32.978448	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1688	466	1	PMS-316381	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:37:50.66567	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1694	466	4	PMS-169768	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:04:02.508861	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1695	466	1	PMS-208433	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:07:11.414613	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1697	466	4	PMS-305713	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:11:32.566803	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2087	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:53:51.240445	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2151ac84607147be9b5f3db9ed645415.jpg
-2348	1106	655	PMS-345868	1602234	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:37:46.101018	2026-10-29 12:23:04.063203	2021	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2503	140	418	PMS-389548	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:59:11.952899	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1736	127	4	PMS-308068	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:34:45.289655	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1741	141	1	PMS-376286	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:39:23.125527	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1743	466	1	PMS-202395	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:45:45.575219	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1745	2	4	PMS-367302	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:27:05.784201	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2492	474	1	PMS-200909	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:44:49.102385	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1747	3	4	PMS-367363	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:08.92308	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2487	125	1	PMS-174045	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:40:36.52365	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2357	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:50:17.852597	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3835b08f8956483c8c913aff265f02a7.jpg
-1757	71	4	PMS-367358	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:35:25.069571	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1763	381	4	PMS-367165	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:16.071367	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2473	125	656	PMS-251353	\N	\N	\N	\N	\N	\N	ativo	boa	Tampo em granito	t	\N	2026-10-28 13:36:15.956494	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1788	1121	4	PMS-367192	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:12.024859	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2363	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:59:09.420469	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3da6d362ff4a4986ab6b8dc08fccd6a7.jpg
-1790	109	4	PMS-367176	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:49.4092	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2488	125	418	PMS-167745	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:42:04.426685	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1796	1123	4	PMS-367333	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:48:23.188604	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1797	1124	1	PMS-166432	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:48:53.520016	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1799	1126	1	PMS-177774	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:49:43.099387	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1801	1127	1	PMS-208692	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:50:16.244307	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2358	1150	515	\N	\N	344	675	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:53:55.391607	2026-10-29 12:23:04.063203	2016	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bbd6cbfbd25b4f64bce061d8baaeeafd.jpg
-2496	180	601	PMS-399354	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:48:18.698476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2355	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:49:06.528837	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	4beb0bd9de3f4671acb5d6bfd8245a2e.jpg
-2518	140	1	PMS-307870	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:50.69679	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2517	24	537	PMS-394288	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:47.09119	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2514	140	495	PMS-386784	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:03:20.009977	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2519	140	4	PMS-305689	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:23.423072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2526	24	537	PMS-390209	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:54.782755	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2527	140	495	PMS-294586	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:07:24.511664	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2528	140	495	PMS-292230	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:07:58.960041	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2530	140	507	PMS-251330	\N	332	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-28 14:09:10.863521	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2531	140	4	PMS-207520	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:09:38.254107	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2533	140	1	PMS-163023	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:10:37.586196	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2539	452	404	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:15:09.37882	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-675	717	4	PMS-367214	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:28.361991	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-677	717	4	PMS-367215	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:40.244328	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-98	657	4	PMS-392859	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:28.137749	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-714	909	4	\N	190LM00019	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:16.644247	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2067	1105	390	PMS-298761	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:27:19.69633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-718	910	4	PMS-207041	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:56.362209	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-726	911	4	PMS-232608	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:07:10.246389	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-732	900	4	PMS-208638	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:24.718663	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-734	901	4	PMS-367339	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:42.802329	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-738	253	4	PMS-367121	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:16.842886	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-99	657	4	PMS-392909	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:57.305323	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-746	270	4	PMS-208622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:19:17.368808	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2084	1105	418	PMS-389557	\N	386	\N	\N	\N	\N	ativo	regular	Encosto um pouco solto.	t	\N	2026-10-26 19:47:36.709631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-752	826	4	PMS-367055	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:41.786738	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2073	1105	390	PMS-298760	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:36:37.55349	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-755	825	4	PMS-208623	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:40:45.590959	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-757	825	4	PMS-367068	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:01.34052	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2074	1105	495	PMS-337692	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:37:17.196478	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-763	257	4	PMS-367072	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:43:20.126842	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-765	1069	4	PMS-367131	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:43.279276	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-767	1069	4	PMS-367082	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:55.929311	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2078	1105	390	PMS-381050	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:39:42.121393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-769	1069	4	PMS-367081	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:09.514347	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-771	258	4	PMS-367111	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:27.879961	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-773	258	4	\N	236LM00014	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:41.715178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2485	1114	4	PMS-208627	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:46.77137	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-775	258	4	PMS-367053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:55.164585	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2079	1105	418	PMS-387874	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:39:43.666393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-779	260	4	PMS-367074	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:59.884405	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2359	1150	515	\N	\N	305	606	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:56:39.626387	2026-10-29 12:23:04.063203	2011	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	aae93abc13de4934b166cf335d1b71b6.jpg
-781	267	4	PMS-295762	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:18.717645	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-783	267	4	\N	401SPYR0L426	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:31.334294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2083	1105	418	PMS-387868	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:46:07.996646	2026-10-29 12:23:04.063203	1900	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-785	559	4	PMS-271185	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:29.216931	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-759	824	4	\N	VHC3698	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:59.009629	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2479	125	474	PMS-249663	\N	400	678	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:30.311696	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-792	563	4	PMS-245570	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:59.18661	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-794	564	4	PMS-282821	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:58:16.986591	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-754	825	1	PMS-165020	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:40:38.806214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-796	565	4	PMS-310733	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:58:31.870907	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-799	567	4	PMS-208741	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:00:18.557349	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-801	568	4	PMS-246938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:08.200021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2491	1105	418	PMS-387873	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:44:10.451349	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-809	573	4	\N	BRG1471FML	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:27.335575	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-761	256	4	\N	405SPGS1N935	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:42:45.676332	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-812	558	4	PMS-367351	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:50.903109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2493	125	428	PMS-35356	\N	390	681	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:45:59.295386	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-760	256	1	PMS-174023	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:42:40.893634	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-818	60	4	PMS-280691	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:36.188823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2497	475	601	PMS-280808	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:49:03.8178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-820	557	4	PMS-367282	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:52.623236	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-805	570	4	\N	BRG142153T	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:40.701625	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2499	465	605	PMS-397412	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:50:45.958345	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2356	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:49:44.175592	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	953366cd1164477ea8f3d62a558b7cb5.jpg
-791	563	1	PMS-195879	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:57:52.036353	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-793	564	1	PMS-178332	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:10.904812	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-797	566	2	PMS-162921	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:44.523157	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-798	567	1	PMS-208701	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:00:11.490774	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-800	568	1	PMS-163104	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:01.850062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2500	205	528	PMS-190924	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:53:04.822386	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2361	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:57:56.120484	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	a800317598be451882d5b08c749c7c1c.jpg
-806	571	2	PMS-177934	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:52.971072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-777	259	4	\N	BRG147187R	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:42.950793	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-808	573	1	PMS-174047	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:07:21.486551	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-810	573	2	PMS-177777	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:07:32.637456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2507	140	476	PMS-387698	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:03.27538	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2515	180	537	PMS-389299	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:03:43.8425	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-817	60	1	PMS-178438	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:08:30.688941	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-691	892	1	PMS-178335	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:00.754634	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-693	893	1	PMS-178404	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:20.288409	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-700	896	4	PMS-306949	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:48.706743	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-703	897	1	PMS-208512	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:48.308338	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-705	898	1	PMS-177721	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:05.844939	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2522	140	1	PMS-301315	\N	401	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:58.217916	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2525	140	4	PMS-297597	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:37.200463	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2529	174	511	PMS-162629	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:09:06.386718	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-772	258	1	PMS-331332	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:45:33.514117	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-782	267	1	PMS-208498	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:25.734696	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2068	1105	390	PMS-298762	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:28:07.254316	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-827	557	4	PMS-294819	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:32.190631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2440	454	390	PMS-245435	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:00:16.385439	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2069	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:28:08.896317	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e916ccf236c64fb98b10df42a00a3ecc.jpg
-2075	1105	551	PMS-285487	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:37:44.441469	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-850	550	4	PMS-367097	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:27.299018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-858	554	4	PMS-367135	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:38.769219	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-866	1071	4	PMS-367133	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:15.897408	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-872	1073	4	PMS-367128	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:24.653624	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2076	1105	495	PMS-326799	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:38:16.411882	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2082	1105	476	PMS-292266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:43:18.921342	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-826	557	1	PMS-316380	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:26.624529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2418	473	594	PMS-382934	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:12:11.492388	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2448	180	411	PMS-313573	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:16.646075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2374	1150	515	PMS-399407	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:09:27.14588	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2428	205	537	PMS-384933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:19:13.460593	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1689	466	4	PMS-245819	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:42:50.437197	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2383	125	4	PMS-310741	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:31:37.532768	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2372	1150	515	PMS-399403	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:07:54.531492	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2430	452	537	PMS-390252	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:20:36.05438	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2432	1114	537	PMS-390207	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:22:56.716296	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2450	180	411	PMS-313572	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:57.756476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2447	180	411	PMS-313574	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:15:58.016608	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1740	133	4	PMS-376345	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:38:38.21185	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1749	67	4	PMS-367338	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:56.508183	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1755	69	4	PMS-367356	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:17.967281	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1759	71	4	PMS-367364	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:36:01.804195	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1760	223	1	PMS-301592	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:36:39.019291	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1773	226	4	PMS-367311	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:43:59.251687	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1781	110	4	PMS-367361	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:48:10.353668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2516	140	418	PMS-337640	\N	402	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:13.653274	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2509	140	476	PMS-387697	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:30.249288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1792	72	4	PMS-367334	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:52:27.097864	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-520	1026	2	PMS-177971	None	2	2	\N	\N	\N	ativo	regular	Cadastrado automaticamente na transferência (termo #7) para UBS Vila Hortência.	t	\N	2026-06-07 19:59:42.528331	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1798	1124	4	PMS-207426	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:49:00.919122	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1800	1126	4	PMS-295055	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:49:56.363796	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1810	1131	1	PMS-308022	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:53:52.089901	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1813	1132	4	PMS-280892	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:54:34.769891	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1818	1117	4	PMS-208596	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:14.52755	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1831	1137	4	\N	KEJ65IA000918	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:00:04.174056	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1833	1137	4	PMS-367252	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:00:37.91937	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1835	1138	4	PMS-280674	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:01:22.950551	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-100	657	1	PMS-393573	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:41:29.722158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-101	657	4	PMS-392900	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:42:02.036051	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-102	657	4	PMS-392911	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:42:22.042149	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-115	719	1	PMS-367025	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:58:49.512328	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-118	721	1	PMS-376319	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:04:35.929592	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-120	723	1	PMS-366720	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:09:43.062701	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-123	726	1	PMS-366978	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:13:09.602844	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-127	727	1	PMS-367010	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:16:34.227988	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-129	728	1	PMS-367017	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:20:03.232357	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-135	734	1	PMS-366974	None	2	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-07 18:28:01.058823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-136	734	4	PMS-367117	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-07 18:28:31.423708	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-137	745	1	PMS-367022	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:31:58.555046	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-139	750	1	PMS-366973	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:36:06.288021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-141	755	1	PMS-307027	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:38:27.542326	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-143	758	1	PMS-366806	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:26.107921	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-145	758	1	PMS-366998	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:22.851918	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-154	768	1	PMS-366816	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:12.604741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-168	675	1	PMS-366892	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:37.633109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-178	970	1	PMS-366948	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:02.416714	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-209	935	1	PMS-366908	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:11:53.339336	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-211	935	1	PMS-366928	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:22.581526	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-215	941	1	PMS-366915	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:14:21.301361	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-217	941	1	PMS-376293	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:15:07.89351	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2511	220	511	PMS-351911	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:11.102366	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2512	140	495	PMS-386785	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:48.27398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2520	24	537	PMS-394328	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:27.602579	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2521	24	537	PMS-394327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:50.227899	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2523	24	537	PMS-384940	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:11.636087	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2542	142	418	PMS-389540	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:19:01.250859	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2544	142	391	PMS-387656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:20:16.341287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2549	474	594	PMS-65004	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:28:55.153799	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2552	474	594	PMS-299644	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:31:37.26719	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2555	474	594	PMS-382936	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:33:42.626655	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2567	24	537	PMS-389294	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:45:19.117955	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-824	557	4	PMS-207009	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:14.273119	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-830	541	4	PMS-367130	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:25.160059	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-832	34	4	PMS-367101	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:50.160794	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-838	544	4	PMS-367136	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:36.629759	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-840	545	4	PMS-367114	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:54.329489	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-842	546	4	PMS-367112	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:16.012941	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-846	547	4	PMS-367125	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:55.982563	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-848	549	4	PMS-367056	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:13.398067	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2113	1105	476	PMS-295320	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:03:48.911216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2088	136	495	PMS-280555	\N	\N	\N	\N	\N	\N	ativo	boa	MESA CINZA 2 GAVETAS	t	\N	2026-10-26 19:59:55.74468	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2099	1060	1	PMS-208468	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:36:06.355881	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2089	457	551	PMS-231355	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:45:15.527984	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-876	1073	4	PMS-367061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:53.18714	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-823	557	1	PMS-173931	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:09.196919	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2090	457	551	PMS-184745	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:46:19.393635	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-825	557	2	PMS-177983	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:20.391221	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-186	969	1	PMS-163081	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:37:09.297928	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-388	353	1	PMS-163169	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:33:09.455956	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2105	1055	3	PMS-393324	87195911f	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:47:30.364649	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1258	730	4	\N	BRG14717HD	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:26:16.296584	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2091	457	551	PMS-184685	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:59:57.723493	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1259	745	4	PMS-367086	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:26:53.747258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1261	760	4	\N	BRG142153P	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:55:26.55186	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-151	768	1	PMS-178201	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:44:47.857778	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2092	220	390	PMS-239491	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:01:14.623937	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1265	1082	4	PMS-367124	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:12.633891	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1269	1083	4	PMS-367106	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:19:50.468521	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1271	1083	4	PMS-367054	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:20:17.102413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2093	465	391	PMS-387663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:02:57.062221	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-218	941	4	PMS-376388	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:15:26.641655	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1277	825	4	\N	F19L	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:28:11.358207	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1690	466	1	PMS-200976	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:44:57.07814	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1693	466	1	PMS-302810	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:02:26.010656	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2096	454	563	PMS-373921	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:13:13.376118	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2107	1105	495	PMS-295324	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:51:36.302475	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2115	1105	418	PMS-387872	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:13:43.023508	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2109	1060	4	\N	190LM00019	8	667	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:59:04.530154	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1735	127	1	PMS-376193	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:33:32.661969	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1739	133	1	PMS-376326	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:38:14.883106	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1766	381	4	PMS-367288	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:39:34.921017	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1768	381	4	PMS-367354	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:40:04.328586	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1771	383	4	PMS-294356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:41:24.492425	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1775	225	4	PMS-367355	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:44:38.915902	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1786	1121	4	PMS-367297	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:48.928746	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1802	1127	4	PMS-208595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:51:39.087501	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1803	1128	1	PMS-208471	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:04.867352	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1817	1117	1	PMS-173882	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:56:07.614521	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1825	1135	4	PMS-280838	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:24.765132	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-231	979	1	PMS-376202	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:37:04.831612	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-233	943	1	PMS-366881	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:38:48.426708	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-243	643	1	PMS-366802	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:51:22.203598	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-245	643	1	PMS-366902	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:52:27.962053	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-249	642	1	PMS-366818	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:53:59.556975	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-251	642	1	PMS-366785	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:55:01.869476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-253	635	1	PMS-366771	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:22.188902	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-254	635	1	PMS-366756	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:41.784047	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-256	635	1	PMS-366690	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:57:22.564712	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-258	635	1	PMS-366831	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:58:06.675823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-259	635	1	PMS-366831	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-26 15:58:26.876682	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-261	635	1	PMS-366685	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:27.558582	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-265	626	1	PMS-366803	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:01:11.491983	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-267	622	1	PMS-366815	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:02:06.555229	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-269	625	1	PMS-366684	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:04.168281	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-271	624	1	PMS-366711	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:44.066688	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-275	632	1	PMS-366699	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:14.074924	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2126	1060	448	PMS-396789	\N	388	669	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:38:08.760382	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1738	130	1	PMS-376285	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:37:12.557406	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-836	543	4	PMS-367107	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:18.445606	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2094	454	551	PMS-231917	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:11:10.850704	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-856	553	4	PMS-367075	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:16.034112	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2097	141	418	PMS-388068	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:14:19.749485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-862	548	4	PMS-367113	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:09:42.927996	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-868	1072	4	PMS-367062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:45.565474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-870	1072	4	PMS-367142	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:57.783311	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2098	220	573	PMS-354661	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:16:08.25032	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2102	1060	1	PMS-376302	BRJ3136N1W	2	131	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:43:20.820342	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-29	1	1	PMS-393553	PE0F4LLJ	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:19:36.107101	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-403	360	4	PMS-306977	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:41:56.840002	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2103	1105	418	PMS-387880	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:44:42.00465	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2114	1105	495	PMS-387878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:09:02.374987	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2104	1105	418	PMS-387875	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:44:46.139687	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-863	1070	1	PMS-163273	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:10:19.664092	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-864	1070	4	\N	VHC1884	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:10:24.446462	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2106	1105	495	PMS-297554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:51:24.475471	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1267	1082	4	PMS-367058	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:39.583719	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1275	1085	4	PMS-367076	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:23:38.347153	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2110	1105	476	PMS-294562	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:01:33.789275	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1278	258	1	PMS-163080	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-31 00:35:28.564974	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-776	259	1	PMS-178334	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:46:34.917549	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1285	25	4	\N	000003	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 23:58:46.988718	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1293	400	2	PMS-177815	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:04:12.056241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1294	400	2	PMS-177982	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:04:28.823755	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1296	535	1	PMS-163195	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:06:42.841264	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1297	535	4	PMS-266181	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:06:49.924572	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1304	1087	4	PMS-216648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:15.815662	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1311	1088	4	PMS-247387	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:13.100666	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1315	1088	4	PMS-239234	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:42.733326	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1318	1088	4	PMS-232651	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:19:09.999592	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1305	1087	4	\N	BRG1471N3F	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:21.283072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1340	298	1	PMS-208493	\N	2	131	\N	\N	\N	ativo	regular		t	\N	2026-08-14 21:51:28.736471	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1306	1088	1	PMS-208491	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:43.23325	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1341	1089	1	PMS-163058	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:30:13.227728	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1342	1089	4	\N	BRG1471FN2	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:30:23.380682	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1312	1088	1	PMS-208422	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:20.266871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1317	1088	1	PMS-208515	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:54.34997	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1321	1088	1	PMS-307932	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:34:17.844276	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1324	1088	1	PMS-306989	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:34:45.794272	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1327	1088	1	PMS-177671	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:35:16.529233	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1329	1088	1	PMS-307846	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:35:38.680123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1337	481	4	PMS-155274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:26:49.537486	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1352	1093	4	PMS-367205	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:10.436334	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1335	481	1	PMS-163193	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-03 20:26:02.285219	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1290	294	3	PMS-177849	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:02:23.888506	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1338	1088	4	\N	\N	9	\N	\N	\N	\N	ativo	boa	Monitor sem identificação	t	\N	2026-08-03 21:54:44.663746	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2146	1105	495	\N	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:06:32.170653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e46c8b9980e94cc197dbabf275bff122.jpg
-1356	1095	4	PMS-367204	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:12.854471	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2133	1060	244	PMS-396796	\N	71	136	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:48:51.554537	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1360	1097	4	PMS-387177	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:07.123716	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1362	1097	4	PMS-256697	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:26.621577	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1368	1100	4	PMS-367193	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:54.428957	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1369	1101	1	PMS-173942	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:41:56.796459	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2151	1105	418	PMS-387877	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:13:14.463818	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1375	1103	1	PMS-307954	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:43:12.496353	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1376	1103	4	PMS-222321	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:43:23.846528	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1380	1103	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:10.564512	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1384	1102	1	PMS-173990	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:45:15.385317	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1385	1102	4	PMS-247998	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:45:23.484048	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2149	1060	418	PMS-338358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:08:42.41294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2157	1105	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Etiqueta (chapinha) desgastada	t	\N	2026-10-27 13:16:23.065126	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	05ff1473f13d47bfa51abfe20308419b.jpg
-2152	136	4	PMS-226924	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:14:06.538805	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2155	1105	391	PMS-188446	\N	387	\N	\N	\N	\N	ativo	boa	Armário do café	t	\N	2026-10-27 13:15:44.870111	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2111	1105	476	PMS-298448	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:01:34.718675	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2159	136	1	PMS-203567	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:16:52.672785	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2150	1105	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:10:09.35386	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2a31d3804cc74f1d91d64b3bcad0f873.jpg
-834	34	4	PMS-367116	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:02.828134	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-844	546	4	PMS-367126	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:36.731122	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-852	551	4	PMS-392615	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:43.499409	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-854	552	4	PMS-367071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:01.40106	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-860	555	4	PMS-367040	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:58.85222	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-874	1073	4	PMS-376246	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:38.353949	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-879	1074	4	PMS-367119	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:15:30.705147	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-883	842	4	PMS-252160	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:33.025578	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-164	673	1	PMS-262991	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:19:04.042404	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-885	836	4	PMS-252154	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:52.760499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-889	834	4	PMS-308255	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:18:26.860357	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-892	829	4	\N	BRG1471847	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:13.946614	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-199	683	1	PMS-155970	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:47:34.870622	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-894	829	4	PMS-305933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:27.530129	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-896	840	4	PMS-240795	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:48.87929	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2101	1060	3	PMS-388437	4AG97QD7R	1	1	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:37:28.360975	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2095	465	391	PMS-387668	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:12:17.10154	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-900	838	4	PMS-376367	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:22.380673	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-902	838	4	PMS-367152	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:36.281729	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-904	47	4	PMS-292284	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:01.299462	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2100	1105	418	\N	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:37:09.879855	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-906	47	4	PMS-376260	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:12.198408	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-907	47	4	\N	4700002076067	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:39.699134	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-909	831	4	PMS-346003	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:57.566786	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-913	843	4	PMS-367207	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:31.066784	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-915	843	4	PMS-367159	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:42.050993	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-917	844	4	PMS-208619	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:10.65213	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-919	1075	1	PMS-208500	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-22 22:45:07.043374	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2112	1060	630	PMS-386156	VPFK2603904MZ	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:02:01.151239	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2108	1060	4	PMS-208593	BRL9082WZJ	2	3	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:53:34.141444	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-922	145	4	PMS-379687	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:08:59.577872	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-926	138	4	\N	BRG1090P9T	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:10:07.204072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-928	151	4	PMS-371579	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:10:48.048637	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-931	167	4	PMS-208649	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:20.929824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-933	170	4	PMS-282646	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:37.795141	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-935	177	4	PMS-208650	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:54.376725	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-937	179	4	PMS-208647	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:43.249776	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-939	186	4	\N	BRG14717HJ	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:58.230877	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-941	186	4	PMS-376356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:10.501089	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-943	188	4	PMS-281053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:26.645668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-945	161	4	\N	504SPQJ0G900	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:42.360495	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-947	153	4	PMS-367268	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:58.424654	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-949	148	4	PMS-367264	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:14.074689	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-951	148	4	PMS-367314	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:26.48946	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-955	112	4	PMS-208648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:58.970337	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-881	841	4	\N	BRL9082WG3	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:09.475886	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-957	278	2	PMS-177823	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:41:32.271874	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-880	841	1	PMS-208702	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:04.541221	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-911	833	4	\N	BRG147183S	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:13.800542	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-882	842	1	PMS-163119	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:17:26.544812	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-886	835	1	PMS-200901	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:03.727293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-887	835	4	\N	BRG147188B	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:18:10.676158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-888	834	1	PMS-307882	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:21.562189	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-890	830	2	PMS-177969	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:54.945773	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-891	829	1	PMS-163120	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:06.994962	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-895	840	1	PMS-163459	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:43.713355	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-903	47	1	PMS-202358	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:20:54.382084	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-908	831	1	PMS-141432	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-18 23:21:51.433812	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-910	833	1	PMS-163232	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:22:08.418112	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-918	844	4	\N	BRC23801KP	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:18.653423	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-916	844	1	PMS-208495	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:05.852938	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-925	138	1	PMS-168734	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:09:52.69083	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-927	151	1	PMS-165254	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:10:39.40114	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-929	164	2	PMS-177839	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:11:04.882069	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-932	170	1	PMS-178321	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:11:31.579728	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-934	177	1	PMS-208525	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:47.410141	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-936	179	1	PMS-208522	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:37.266559	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-938	186	1	PMS-177593	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:13:52.715244	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-944	161	1	PMS-203581	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:14:37.277741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-954	112	1	PMS-208523	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:53.956333	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-277	621	1	PMS-366689	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:50.707255	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-396	357	1	PMS-307798	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:39:11.748533	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-960	281	2	PMS-177965	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:28.771701	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-961	282	2	PMS-177788	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:39.925715	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-279	619	1	PMS-366717	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:37.621287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2147	1105	495	PMS-294553	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:07:12.797637	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1274	1085	1	PMS-208703	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:23:32.688273	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1279	258	4	PMS-316403	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:35:33.963163	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-126	758	5	PMS-372233	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:14:30.044692	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1291	400	1	PMS-178462	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:03:55.372141	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1299	536	4	PMS-155794	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:07:25.674598	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1308	1088	4	PMS-208541	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:54.849374	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1310	1088	4	PMS-298397	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:07.448963	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1323	1088	4	PMS-155972	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:30.412529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1325	1088	4	PMS-154893	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:59.794514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1326	1088	4	PMS-256713	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:08.044211	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2148	1105	630	PMS-353413	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:08:06.286627	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1300	1087	1	PMS-305553	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:16:48.048867	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1309	1088	1	PMS-208417	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:01.098098	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1331	1088	4	\N	VHC1876	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:48:39.670738	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1334	295	4	PMS-208716	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:23:44.879633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1344	1090	4	PMS-367212	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:13.235215	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1364	1098	4	PMS-367213	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:55.090409	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1372	1101	4	PMS-367208	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:36.246689	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1374	1101	4	PMS-367210	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:52.946014	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1378	1103	4	\N	BRG1471B2P	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:43:46.930985	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1379	1103	1	PMS-163061	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:44:00.84741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1383	1103	4	\N	BRG1471B33	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:45.266208	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1386	296	1	PMS-366906	None	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-08-25 16:39:56.104976	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2421	474	594	PMS-382933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:14:48.105526	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1407	1105	4	PMS-208632	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:28.731175	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2166	134	605	PMS-154457	\N	390	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:19:33.064229	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2390	1060	654	PMS-223876	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:14:18.962503	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2168	1105	1	PMS-393191	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:20:47.015674	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1442	1105	4	PMS-367342	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:41.96182	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1443	1105	4	PMS-367250	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:48.377501	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2169	157	391	PMS-381063	\N	387	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:21:51.533668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2174	157	418	PMS-315269	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:23:49.094638	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2546	474	594	PMS-257892	\N	\N	\N	\N	\N	\N	ativo	boa	patrimônio com dois números 257892 e 43128	t	\N	2026-10-28 14:24:50.918514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1498	1106	1	PMS-208504	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:23.177782	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2400	141	495	PMS-362689	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:47:59.013176	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2426	454	5	PMS-372288	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:17:43.426161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2379	1106	404	PMS-185747	800304	262	456	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:17:18.511125	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2404	454	4	PMS-376403	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:54:08.156944	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2380	125	438	PMS-353229	\N	290	508	\N	\N	\N	ativo	ruim	CENTRÍFUGA QUEBROU CAÇAPA, SOLICITADO MANUTENÇÃO CORRETIVA EM: 02/09/2026	t	\N	2026-10-27 19:30:07.594108	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2384	125	4	PMS-306974	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:03.035556	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2407	4	630	PMS-386148	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:00:32.722923	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2573	142	476	PMS-255058	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:49:49.810262	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2409	452	4	PMS-376418	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:03:08.204603	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2436	130	514	PMS-239462	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 patrimônios 172755 e 239462	t	\N	2026-10-28 12:31:23.412647	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2412	474	4	PMS-207229	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:43.500358	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2415	457	594	PMS-382935	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:10:54.771915	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2444	475	551	PMS-238575	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:06:25.898148	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2420	474	594	PMS-257890	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:14:33.836004	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2371	1150	515	PMS-399406	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:07:13.485096	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2437	454	609	\N	\N	\N	\N	\N	\N	\N	ativo	boa	5 unidades	t	\N	2026-10-28 12:33:42.135485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2369	1150	515	PMS-399410	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:06:16.500086	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2441	457	551	PMS-232137	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:04:50.155724	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2535	142	486	PMS-392271	\N	321	568	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:12:33.036609	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2442	475	551	PMS-337907	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:05:29.903006	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2551	474	594	PMS-299645	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:30:46.458765	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2538	457	551	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:14:24.262073	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2571	142	486	PMS-383362	\N	404	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:47:46.859642	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2570	1147	537	PMS-384927	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:47:03.220385	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2575	142	380	PMS-209983	\N	368	640	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:53:22.842827	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2578	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:54:38.976241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2579	142	504	PMS-204225	\N	405	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:58:36.441159	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-386	353	1	PMS-173861	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:32:47.844431	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-962	283	2	PMS-177793	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:52.390514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-963	390	2	PMS-177780	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:43:07.624305	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2162	136	1	PMS-165035	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:17:42.579089	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1263	1081	4	PMS-367049	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:17:01.881359	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2170	1105	495	PMS-337937	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:01.629987	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1273	1084	4	PMS-367102	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:22:56.402873	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1281	1086	4	PMS-367096	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:37.720314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1283	1086	4	PMS-367042	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:44:03.168296	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1284	25	4	\N	00122804	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 23:58:23.502657	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1298	536	1	PMS-163189	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:07:18.642631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1313	1088	4	PMS-247571	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:25.965555	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1314	1088	4	PMS-264298	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:32.200393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1316	1088	4	\N	LS23C550HSMZD	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:47.850442	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1330	1088	4	PMS-154503	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:46.595534	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2172	1105	4	PMS-392693	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:36.590071	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1302	1087	4	PMS-331286	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:04.064787	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1303	1087	1	PMS-208681	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:09.398492	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1320	1088	1	PMS-208478	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:30:22.424375	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1328	1088	4	\N	VHB6009	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:23.605393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1332	1075	1	PMS-174027	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 17:52:17.371819	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2175	1105	418	PMS-184286	\N	4	\N	\N	\N	\N	ativo	boa	Cadeira giratória azul	t	\N	2026-10-27 13:23:53.614633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1333	295	1	PMS-208535	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:23:39.31573	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1336	481	4	\N	016293	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:26:42.66889	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1346	1091	4	PMS-367194	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:41.966182	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1361	1097	1	PMS-308425	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:39:18.222464	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1370	1101	4	\N	#10269	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:12.945241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1377	1103	1	PMS-307836	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:43:34.379879	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1381	1103	1	PMS-177660	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:44:24.732086	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1382	1103	4	PMS-383332	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:33.4157	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1389	1104	4	PMS-367261	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:13:41.228586	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1393	1104	4	PMS-208548	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:36.983175	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2406	180	4	PMS-227256	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:57:05.378941	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1398	1104	4	PMS-367234	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:07.271148	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2452	1147	421	PMS-339057	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:20:24.947887	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2408	4	476	PMS-294554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:02:44.12034	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2540	127	573	\N	\N	\N	\N	\N	\N	\N	ativo	boa	3 unidades - consultório 1, 2 e 3	t	\N	2026-10-28 14:18:03.995714	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2386	125	1	PMS-301789	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:57.561109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2411	474	4	PMS-207045	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:31.201979	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2393	1060	624	PMS-165054	\N	391	\N	\N	\N	\N	ativo	boa	*Tipo de equipamento não encontrado, estabilizador.	t	\N	2026-10-28 11:21:08.581308	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2416	473	594	PMS-374742	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:11:38.18612	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1454	1105	4	PMS-208556	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:37.58213	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1455	1105	4	PMS-208658	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:42.599244	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2543	142	418	PMS-388283	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:19:35.734332	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2429	454	537	PMS-384932	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:20:09.898836	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2433	454	537	PMS-384939	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:23:56.924397	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2434	454	537	PMS-390205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:24:17.756081	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2377	1150	515	PMS-399402	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:12:04.581863	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2373	1150	515	PMS-399404	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:08:30.848034	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2376	1150	515	PMS-399405	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:10:31.397278	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2550	474	594	PMS-226535	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:29:58.823578	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2554	474	594	PMS-374740	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:33:08.488309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2622	144	418	PMS-389537	\N	409	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:09:28.50468	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2628	144	391	PMS-387655	\N	410	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:17:46.671146	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2632	144	418	PMS-386687	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:22:54.480396	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2648	144	507	PMS-251328	\N	328	582	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:50:47.103365	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2650	125	651	\N	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:53:46.727698	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2651	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:54:56.7456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2654	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:16:37.159102	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2653	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:08:07.714458	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2655	125	495	PMS-282384	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:17:38.906154	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-964	284	4	PMS-257978	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 22:49:09.567958	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1032	469	1	PMS-163393	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:17:34.976182	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-281	618	1	PMS-366734	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:08:27.734481	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-956	277	2	PMS-165747	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:41:17.203401	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2165	136	507	PMS-28727	\N	334	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-27 13:18:31.700761	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-959	280	2	PMS-177789	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:17.572597	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-965	284	1	PMS-163265	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:31:56.779913	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-966	289	1	PMS-177644	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:32:48.364055	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-967	289	4	PMS-156872	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:33:25.696016	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-968	391	2	PMS-177972	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:35:36.834993	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-969	392	2	PMS-162927	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:35:52.252664	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-970	395	1	PMS-200952	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:37:22.439062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-971	395	4	PMS-257973	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:37:30.287012	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-972	396	1	PMS-177722	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:40:46.762083	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-973	396	4	PMS-248669	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:40:56.727561	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-974	397	2	PMS-248669	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:41:19.392599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-975	398	1	PMS-163214	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:42:12.445762	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-976	398	4	PMS-257681	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:42:19.012292	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-977	398	2	PMS-177776	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:42:31.496485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-979	398	4	PMS-297565	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:08.266278	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2171	157	391	PMS-381059	\N	387	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:28.399955	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-982	399	2	PMS-177987	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:44:54.251294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-985	407	2	PMS-177902	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:46:20.970217	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-986	407	1	PMS-163194	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:46:47.787587	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-987	407	4	\N	BRG14717QM	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:09.037534	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-988	407	1	PMS-208534	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:36.438068	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-989	407	4	PMS-208655	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:42.205887	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-990	408	1	PMS-163191	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:48:06.990303	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-991	408	4	\N	BRG1120Q2G	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:48:26.75642	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-992	412	1	PMS-316354	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:48:54.307791	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-993	412	4	PMS-207663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:05.190729	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-994	414	1	PMS-208530	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:31.04274	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-995	414	4	PMS-208714	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:37.359955	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-996	415	1	PMS-163190	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:55:10.301651	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-997	415	4	\N	BRG109005J	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:55:25.734834	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-998	415	1	PMS-202396	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:55:44.187638	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-999	415	4	PMS-207370	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:55:55.303867	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1000	419	1	PMS-208677	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:56:32.89161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1001	419	4	PMS-208713	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:56:37.904618	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1002	426	1	PMS-202729	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:57:08.037867	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1003	426	4	PMS-308191	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:57:16.32161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1004	426	2	PMS-162914	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:57:25.272514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1005	429	1	PMS-208670	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:58:28.310497	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1006	429	4	PMS-208660	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:58:34.592924	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1007	429	1	PMS-301603	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:58:52.809199	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1008	429	4	PMS-258573	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:00.408941	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1009	429	1	PMS-208673	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:15.626212	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1010	429	4	PMS-208657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:22.209062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1011	444	1	PMS-156763	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:00:03.977947	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1012	444	4	PMS-207006	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:00:10.377609	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1013	444	1	PMS-195584	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:01:10.695972	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1014	444	4	PMS-247364	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:01:20.713509	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1015	445	2	PMS-177779	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:01:50.464071	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1016	446	3	PMS-162177	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:02:29.66568	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1017	448	1	PMS-316396	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:03:09.68204	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1018	448	4	PMS-249570	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:03:15.284326	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1019	450	1	PMS-202765	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:03:45.05075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1020	450	4	PMS-295062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:03:49.400525	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1021	451	2	PMS-177978	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:04:15.083907	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1022	453	1	PMS-208539	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:04:45.334893	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1023	453	4	PMS-265988	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:08.654655	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1025	456	1	PMS-208529	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:43.137483	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1026	456	4	PMS-208712	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:50.371343	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1027	458	1	PMS-208675	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:06:16.339088	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1028	458	4	\N	BRG32802GX	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:06:54.939813	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1029	463	1	PMS-177646	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:16:40.4735	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1030	463	4	PMS-265943	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:16:47.090599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1031	467	2	PMS-177814	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:17:04.140553	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1033	469	4	PMS-BRG14717HL	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:17:44.842419	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1034	469	1	PMS-306968	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:18:19.043663	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1035	469	1	PMS-156062	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:18:43.428105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1036	469	4	\N	KEJ65IA000430	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:19:22.32825	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1037	469	1	PMS-178352	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:19:40.760975	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1038	469	4	\N	BRG1471FMB	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:19:59.560917	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1039	471	2	PMS-177825	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:20:20.829454	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1041	287	4	PMS-208656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:09.051661	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1042	287	1	PMS-163391	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:22:18.351958	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1049	449	4	PMS-376238	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:02.071462	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2167	134	418	PMS-20430	\N	\N	\N	\N	\N	\N	ativo	boa	TIPO MOCHA	t	\N	2026-10-27 13:20:26.445679	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1060	482	1	PMS-178142	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:29:19.361854	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1061	482	4	\N	KEJ65IA001736	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:29:29.861759	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1071	485	1	PMS-316655	\N	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:34:36.424823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1082	540	4	\N	BRG1120Q30	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:39:22.230997	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1084	540	4	PMS-258062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:40:32.39947	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1091	539	1	PMS-208527	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:53.752956	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1096	25	1	PMS-177779	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:45:36.607653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1100	25	1	PMS-202642	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:47:11.29376	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1102	25	4	PMS-201640	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:33.894472	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1107	25	4	PMS-294758	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:08.629254	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1112	25	4	PMS-149195	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:38.213361	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1117	25	4	PMS-243721	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:16.748142	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1120	25	1	PMS-156764	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:50:13.733473	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1126	25	4	PMS-295665	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:52:17.003732	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-205	931	1	PMS-173871	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:09:20.980753	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-207	932	1	PMS-177700	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:10:18.737362	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2425	474	594	PMS-152459	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:16:26.819016	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2173	1105	4	PMS-392705	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:23:30.685066	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1292	400	4	PMS-286548	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:04:01.639149	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1322	1088	4	PMS-149200	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:24.544933	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1301	1087	4	PMS-146575	None	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:16:56.665086	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1307	1088	4	PMS-308396	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:49.531861	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1319	1088	4	\N	906SPTM22321	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:19:16.366835	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-958	279	2	PMS-177938	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:06.171425	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1339	1075	1	PMS-208496	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-06 16:22:54.981007	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2568	24	537	PMS-390253	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:46:09.666333	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1396	1104	4	PMS-367337	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:15:13.799503	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1400	1104	4	PMS-367320	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:01.235256	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1404	1104	4	PMS-367362	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:18:10.055217	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2431	141	537	PMS-384934	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:22:06.731407	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2385	125	1	PMS-305465	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:30.457114	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2378	1150	515	PMS-399401	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:12:39.981052	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2375	1150	515	PMS-399409	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:10:00.010297	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2388	1055	624	PMS-393340	2528ZB02N508	399	677	\N	\N	\N	ativo	boa	*Tipo de equipamento não encontrado, câmera.	t	\N	2026-10-28 11:09:20.435397	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2446	220	655	PMS-354532	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:14:19.306271	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2405	454	4	PMS-377239	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:54:47.52499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2410	474	4	PMS-177975	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:00.575509	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1499	1106	4	PMS-208624	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:43.361871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2413	454	4	PMS-207321	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:05:25.713499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2449	180	411	PMS-313581	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:36.968184	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2417	473	594	PMS-62121	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:11:55.73538	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2422	474	594	PMS-337918	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:04.265935	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2576	1105	418	PMS-387855	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:53:28.13922	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2423	474	594	PMS-227073	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:37.601288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2453	220	4	PMS-208572	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:20:28.448408	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2424	474	594	PMS-374743	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:55.506816	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2556	457	594	PMS-226659	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:34:26.415739	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2610	142	488	PMS-170123	\N	324	570	\N	\N	\N	inservivel	\N		t	\N	2026-10-28 18:54:49.861437	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2560	174	528	PMS-342836	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:39:55.776258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2588	142	4	PMS-203551	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 17:59:51.958634	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2563	24	537	PMS-394286	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:42:18.733612	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2566	24	537	PMS-394291	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:44:39.705576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2604	142	651	PMS-173667	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 18:49:47.370149	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2617	142	474	PMS-135702	\N	407	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:00:42.799334	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2624	144	418	PMS-389536	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:14:07.745081	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2637	144	418	PMS-386686	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:33:48.806475	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1043	287	4	PMS-295315	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:28.96813	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1046	449	1	PMS-163253	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:24:20.103406	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1053	288	4	PMS-376372	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:21.207354	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1058	288	1	PMS-208668	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:45.293037	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1059	288	4	\N	BRG1471FMV	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:59.89461	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1064	487	2	PMS-162912	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:30:22.401021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1066	487	4	\N	912SPSLA7206	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:02.964084	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1068	487	4	PMS-376217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:25.468554	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1070	488	4	PMS-261108	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:32:08.668934	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1073	490	2	PMS-162907	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:34:59.474899	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1078	538	4	PMS-254698	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:37:54.86027	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1079	538	1	PMS-316362	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:38:09.461995	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1081	540	1	PMS-280052	\N	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:39:08.298769	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1085	539	1	PMS-163264	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:41:26.467588	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1088	539	4	PMS-376216	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:03.218568	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1089	539	1	PMS-208531	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:25.385038	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1092	539	4	PMS-208738	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:59.587572	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1094	539	4	PMS-258833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:43:29.055355	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2187	157	396	PMS-216500	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:48:20.407104	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1098	25	4	PMS-223642	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:31.126289	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1099	25	4	PMS-154218	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:47.609911	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1101	25	1	PMS-163252	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:47:27.49641	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1111	25	4	PMS-201345	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:32.07922	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2212	129	405	PMS-127393	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:00:40.607949	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2225	452	1	PMS-141449	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:27:49.443011	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2217	180	433	PMS-390153	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:55.451779	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2218	474	1	PMS-163366	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:17:50.735751	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2220	454	1	PMS-376323	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:21:59.930612	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2226	474	1	PMS-202395	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:29:31.549988	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2221	474	1	PMS-202514	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:22:44.259968	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2222	1114	1	PMS-178431	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:23:39.968998	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2242	205	490	PMS-238556	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:52:32.304838	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1770	383	1	PMS-169770	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:41:17.27995	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2223	454	1	PMS-163281	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:24:33.981485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1807	1129	4	PMS-305862	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:58.161979	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1809	1130	4	PMS-263755	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:53:26.74357	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2229	465	474	PMS-388535	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 números de patrimônio 388535 e 386962	t	\N	2026-10-27 14:35:39.244466	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1827	1135	4	PMS-367253	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:49.380189	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1828	1137	1	PMS-316352	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:59:17.86139	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-283	617	1	PMS-366797	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:09:04.921415	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-285	615	1	PMS-366848	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:03.331575	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-287	615	1	PMS-366826	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:30.328474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-289	614	1	PMS-366832	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:11:17.309039	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-291	36	1	PMS-366765	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:12:02.525881	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-293	613	1	PMS-366855	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:13:02.138933	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-299	648	1	PMS-376335	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:34:44.58782	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-303	649	1	PMS-393627	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:44:08.396063	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-304	649	4	PMS-392793	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:44:19.805944	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-313	658	1	PMS-393630	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:51:33.633529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-314	658	4	PMS-392799	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:53:18.179264	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-315	655	1	PMS-366895	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:53:50.017192	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2224	454	1	PMS-172865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:26:42.054496	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2230	465	476	PMS-387733	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:36:21.616085	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2236	454	609	PMS-338941	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:43:00.415499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2243	220	490	PMS-263004	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:54:09.695509	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2237	1147	436	PMS-353202	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:45:33.589067	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2239	180	436	PMS-203681	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:47:54.720035	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2215	1105	418	PMS-387876	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:38.185782	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2249	1105	476	PMS-294587	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:28:56.736695	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2260	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:36:27.524956	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	60778b30dc06422fa880f70e32f3e4d6.jpg
-1044	287	1	PMS-208669	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:41.802008	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1045	287	4	PMS-248349	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:51.383739	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1062	486	1	PMS-177746	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:29:55.865038	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1069	488	1	PMS-173903	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:31:58.871703	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1076	538	1	PMS-178331	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:37:41.594639	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1077	538	4	PMS-208606	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:37:49.495142	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1086	539	4	\N	BRL9082WPW	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:41:37.966906	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1090	539	4	PMS-208652	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:34.56925	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1093	539	1	PMS-203587	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:43:20.338327	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1097	25	4	PMS-295270	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:25.210565	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1108	25	4	PMS-265148	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:14.962269	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1110	25	4	PMS-201624	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:26.897538	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1115	25	4	\N	BRG10900K8	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:04.513602	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1118	25	4	PMS-243726	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:21.599314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1119	25	4	PMS-316662	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:26.683035	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1122	25	4	PMS-265927	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:24.765325	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1123	25	4	PMS-257977	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:31.083765	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1125	25	1	PMS-163259	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:51:06.584036	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2238	180	436	PMS-203680	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:47:00.064043	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2191	157	4	PMS-208654	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:49:28.607218	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1500	1106	4	PMS-316431	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:26:05.212225	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2196	157	417	PMS-182435	\N	\N	\N	\N	\N	\N	ativo	boa	AZUL	t	\N	2026-10-27 13:50:52.114975	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2227	1147	563	PMS-386454	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:33:14.458456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2244	128	396	PMS-203222	\N	250	\N	\N	\N	\N	ativo	boa	110V	t	\N	2026-10-27 14:58:09.941487	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2231	457	476	PMS-387732	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:37:27.77507	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2232	220	476	PMS-387731	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:38:30.040373	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2271	107	418	PMS-388031	\N	\N	\N	\N	\N	\N	ativo	boa	Estofado preto	t	\N	2026-10-27 17:44:45.369357	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1804	1128	4	PMS-208732	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:10.06645	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1805	1129	2	PMS-177954	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:52:24.882694	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1806	1129	1	PMS-165806	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:52:50.766749	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1808	1130	1	PMS-163107	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:53:18.827223	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1812	1132	1	PMS-1788472	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:54:22.054729	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1832	1137	1	PMS-195465	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 16:00:21.504499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1836	1115	6	\N	3352P752125	2	\N	\N	\N	\N	ativo	boa	IMPRESSORA RICOH IM 430F =- LOCADA	t	\N	2026-09-25 00:02:19.518517	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-317	655	1	PMS-366887	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:03:22.236551	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-327	654	1	PMS-376329	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:07:25.289988	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-331	656	1	PMS-366792	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:08:49.452595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-335	951	1	PMS-393622	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:04:14.548683	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-336	951	4	PMS-392764	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:09:37.329545	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-337	952	1	PMS-393636	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:09:54.549759	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-338	952	4	PMS-392852	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:10:04.44504	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-339	953	1	PMS-376320	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:45:49.097158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-341	953	1	PMS-376315	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:48:55.016202	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-343	954	1	PMS-366750	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:39.478197	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-345	955	1	PMS-376281	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:50:12.560284	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-347	957	1	PMS-393327	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-27 16:51:14.690353	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-348	957	3	PMS-393327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:51:43.802668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-349	958	1	PMS-393621	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:52:25.038056	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-350	958	4	PMS-392807	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:52:34.18339	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-351	960	1	PMS-393625	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:56:08.092532	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-357	959	1	PMS-393624	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:21.68871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-358	959	4	PMS-392768	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:33.050871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-359	961	1	PMS-366800	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:48:59.850485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-364	968	1	PMS-366857	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:00.2464	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-370	55	1	PMS-366838	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:44.409595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-372	985	1	PMS-392762	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:57:33.072792	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2275	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:30.02275	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2272	1106	495	PMS-297576	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:47:12.469647	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2276	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:30.417718	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2280	1106	418	PMS-387910	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:50:33.295658	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2281	1106	476	PMS-298470	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:51:06.301641	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2381	125	438	PMS-353228	\N	290	508	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:30:39.474096	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2382	125	630	PMS-315901	\N	398	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:31:12.874774	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2389	1060	654	PMS-223878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:13:37.554515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2392	1060	624	PMS-173159	\N	391	\N	\N	\N	\N	ativo	boa	*Tipo de equipamento encontrado, estabilizador	t	\N	2026-10-28 11:19:59.757948	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2401	130	495	PMS-362688	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:48:51.003369	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1047	449	4	\N	DTK3AIA011817	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:24:34.203576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1051	288	4	PMS-376239	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:57.256999	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1055	288	4	PMS-376251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:58.475198	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1057	288	4	PMS-376362	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:30.359477	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1063	486	4	PMS-258848	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:30:00.863075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1065	487	1	PMS-316377	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:30:46.680709	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1072	485	4	PMS-257687	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:34:41.738653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1075	537	4	PMS-208711	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:35:38.108091	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1080	538	4	PMS-245437	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:38:16.128215	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1083	540	1	PMS-163266	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:40:26.216704	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1103	25	4	PMS-258566	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:40.163789	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1104	25	4	\N	TW19HQBQA01822P	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:47.661246	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1105	25	4	PMS-308387	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:53.163253	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1106	25	4	PMS-265178	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:01.461871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1109	25	4	PMS-154877	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:21.629206	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1113	25	4	PMS-201635	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:43.680003	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1114	25	4	PMS-286063	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:48.74701	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1116	25	4	PMS-246931	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:11.514574	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1121	25	4	PMS-154648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:20.034799	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1124	25	4	\N	BR-09VFM4-07591-039-02CC	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:37.16723	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-203	930	1	PMS-174080	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:08:33.666587	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-225	940	1	PMS-163328	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:19:32.766587	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2233	220	476	PMS-387734	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:38:55.370047	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-237	939	1	PMS-178406	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:40:40.064394	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-114	720	1	PMS-366839	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:58:07.415551	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2189	157	1	PMS-208676	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:48:57.808753	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2205	157	651	PMS-164381	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:55:33.746384	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2213	129	467	PMS-152942	\N	224	554	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:04:04.96232	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2234	220	605	PMS-303372	\N	20	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:39:48.743134	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-455	736	1	PMS-163326	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:29:26.105201	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2214	1108	652	PMS-362839	FF-1905B	392	670	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:09:17.276848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-457	743	1	PMS-163347	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:29:58.008502	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-162	671	1	PMS-316347	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:17:55.122764	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2216	129	490	PMS-251315	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:46.041193	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-194	977	2	PMS-177833	None	2	2	\N	\N	\N	ativo	ruim		t	\N	2026-05-25 19:43:20.94926	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-784	559	1	PMS-163390	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:56:24.501046	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-786	560	2	PMS-177906	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:56:40.866903	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-795	565	1	PMS-316391	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:26.704307	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-804	570	1	PMS-163102	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:35.818723	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-811	558	1	PMS-370770	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:43.321112	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2219	454	1	PMS-376289	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:21:45.938623	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-307	651	1	PMS-177615	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:46:57.269027	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2235	465	605	PMS-373937	\N	20	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:41:00.621106	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-321	662	1	PMS-155876	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:04:26.849985	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2228	465	598	PMS-389017	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:34:37.840791	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-368	55	1	PMS-178184	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:54:16.733599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-586	862	1	PMS-164679	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:18:55.276625	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-588	862	1	PMS-203585	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:19:14.65687	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-596	866	1	PMS-307815	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:25:41.764466	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2240	130	436	PMS-261054	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:48:39.106021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-614	864	1	PMS-163735	None	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-10 18:42:30.075933	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-624	1051	1	PMS-307776	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:54:31.295606	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-628	1051	1	PMS-163143	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:55:39.975236	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-884	836	1	PMS-173886	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:17:46.22671	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-893	829	1	PMS-164986	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:19.796734	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-117	722	1	PMS-177704	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:03:49.504647	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2241	473	608	PMS-386507	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:50:37.601556	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2269	107	418	PMS-388032	\N	\N	\N	\N	\N	\N	ativo	boa	ESTOFADO PRETO	t	\N	2026-10-27 17:41:18.96065	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2270	107	418	PMS-388031	\N	\N	\N	\N	\N	\N	ativo	boa	Estofado preto	t	\N	2026-10-27 17:44:32.266976	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2273	1106	476	PMS-297580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:25.276566	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2274	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:26.298266	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2277	1106	391	PMS-298357	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:49:20.19055	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2402	465	599	PMS-376461	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:52:58.617008	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2278	1106	476	PMS-297539	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:49:42.229422	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2279	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:50:29.048006	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2bf8218ad19546e1a32921664fc41265.jpg
-2414	24	594	PMS-231762	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:08:28.411282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-901	838	1	PMS-366776	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:28.430102	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1134	286	1	PMS-177663	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-23 21:40:40.905173	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1137	489	4	PMS-376244	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:38.18523	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-503	206	1	PMS-166435	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:39:23.220828	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-518	214	4	PMS-203545	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:43:02.107486	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2193	157	630	PMS-204962	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:50:01.498592	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-557	193	2	PMS-165750	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:29:11.067003	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1811	1131	4	PMS-280833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:53:58.308792	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1814	1133	2	PMS-177846	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:54:59.667482	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1815	1134	1	PMS-307856	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:55:32.565476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1816	1134	4	PMS-263802	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:55:41.514133	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1820	1115	4	PMS-376384	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:49.358251	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1822	1136	1	PMS-307956	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:57:32.85402	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1823	1136	4	PMS-226538	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:57:39.470118	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1829	1137	4	PMS-367321	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:59:37.360157	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1834	1138	1	PMS-177599	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 16:01:11.134214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-373	985	4	PMS-393623	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:57:45.884221	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-374	964	1	PMS-366837	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:01:27.746369	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-376	964	1	PMS-366788	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:03.056393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-378	964	1	PMS-366768	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:27.956604	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-382	364	1	PMS-393660	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:30:57.902185	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-383	351	1	PMS-392822	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:31:13.523807	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-384	364	4	PMS-392822	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:31:47.4443	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-390	364	1	PMS-393662	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:34:15.58728	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-391	364	4	PMS-392806	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:34:27.964542	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-398	364	1	PMS-393658	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:11.631949	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-399	364	4	PMS-392802	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:21.493821	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-400	364	1	PMS-393657	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:44.529743	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-401	364	4	PMS-392829	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:59.608358	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-406	369	1	PMS-376184	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:43:39.00355	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-408	352	1	PMS-376195	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:44:14.834069	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-410	362	1	PMS-376208	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:45:25.528983	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-414	364	1	PMS-393656	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:48:48.150983	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-415	364	4	PMS-392853	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:00.879306	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-416	364	1	PMS-393659	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:21.046702	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-417	364	4	PMS-392831	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:31.030314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-418	365	3	PMS-388151	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:50:16.131885	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-419	365	1	PMS-366917	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:50:38.544158	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-420	365	4	PMS-367284	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:50:50.090653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-421	364	1	PMS-393661	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:54:57.677237	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-422	364	4	PMS-392826	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:15.190668	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-423	364	1	PMS-366917	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:48.244576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-428	645	1	PMS-376185	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:42.737373	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-434	731	1	PMS-366975	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:17:00.203398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-444	739	1	PMS-366982	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:56.921735	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-446	740	1	PMS-366958	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:38.77095	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-448	751	1	PMS-366814	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:29.634897	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-450	751	3	PMS-388444	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:56.512615	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-453	732	1	PMS-376174	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:26:29.923745	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-466	989	1	PMS-367008	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:35:27.485393	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-468	746	1	PMS-376199	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:16.822532	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-470	746	1	PMS-366987	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:44.395854	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-477	195	4	PMS-392838	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:17.732143	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-478	198	1	PMS-393606	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:47.419993	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-479	198	4	PMS-392771	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:59.129576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-482	203	1	PMS-393646	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:15.365258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-483	203	4	PMS-392812	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:25.811196	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-492	211	1	PMS-393649	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:31.176626	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-493	211	4	PMS-392810	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:42.770202	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-494	211	1	PMS-393600	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-03 18:28:59.186107	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-495	990	1	PMS-393600	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:16.741602	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-496	990	4	PMS-392817	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:28.487566	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-497	212	1	PMS-393605	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:48.440957	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-498	212	4	PMS-392809	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:59.768672	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-499	219	1	PMS-393619	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:34:30.404737	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-500	219	4	PMS-392825	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:34:43.349135	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-505	206	1	PMS-366955	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:44.447422	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-507	206	1	PMS-393603	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:09.547743	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-508	206	4	PMS-392776	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:18.262838	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-509	206	1	PMS-366956	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:27.962735	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-511	204	1	PMS-376180	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:14.580394	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-513	204	1	PMS-366941	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:35.676728	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1133	286	4	PMS-265987	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:40:29.490519	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1132	286	1	PMS-222870	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-23 21:40:21.525823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2289	1106	495	PMS-297585	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:55:45.57902	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2283	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:52:15.773238	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	8958d68209ea4763b1b7071c0c29c613.jpg
-2294	1106	630	PMS-354621	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:11.409982	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-476	195	1	PMS-393641	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:05.007026	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-489	210	4	PMS-392836	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:22.329057	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-515	207	1	PMS-393607	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:42:02.278443	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-516	207	4	PMS-392857	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:42:10.141498	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-521	981	1	PMS-376190	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:12:46.822919	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-527	196	3	PMS-393323	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:18:58.379515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-539	183	1	PMS-376187	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:25:14.927271	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-543	1045	1	PMS-366877	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:27:08.401293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-545	1046	1	PMS-366870	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:48:28.945381	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-551	1048	1	PMS-367021	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:25:48.546727	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-553	1048	3	PMS-388428	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:26:31.473357	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-556	193	1	PMS-165750	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-10 17:28:42.238075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-558	1049	1	PMS-376197	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:07.131985	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-560	1049	1	PMS-376192	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:31.726025	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-562	185	1	PMS-366736	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:04.779309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-578	856	1	PMS-393639	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:53:53.347524	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-579	856	4	PMS-392837	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:54:02.293505	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-582	860	1	PMS-177848	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-10 18:16:56.482909	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-603	870	1	PMS-393663	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:28:22.675356	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-604	870	4	PMS-392819	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:29:21.218507	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-607	888	1	PMS-393664	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:41.867438	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-608	888	4	PMS-392808	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:51.344985	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-618	881	1	PMS-392841	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:52.972685	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-619	881	4	PMS-393631	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:04.651824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-620	881	1	PMS-393620	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:24.814914	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-621	881	4	PMS-392845	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:31.365858	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-622	1051	1	PMS-367013	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:08.985029	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-632	879	3	PMS-393326	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:56:44.483063	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-639	707	1	PMS-393626	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:21:51.33996	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-640	707	4	PMS-392828	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:22:29.253978	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-641	708	1	PMS-393635	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:23:11.472024	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-642	708	4	PMS-392820	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:23:27.021736	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-643	709	1	PMS-366799	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:24:28.327293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-645	709	1	PMS-367020	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:25:29.176492	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-649	1063	1	PMS-366851	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:36:54.511897	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-651	1064	1	PMS-366860	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:39:58.78369	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-668	1065	1	PMS-366866	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:18.825832	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-674	717	1	PMS-367001	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:24.110832	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-676	717	1	PMS-366981	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:34.811292	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-680	39	1	PMS-376209	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:18.648186	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-686	39	3	PMS-388450	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:58.299413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-715	908	1	PMS-376330	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:32.646711	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-719	910	1	PMS-366896	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:48:02.245025	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-721	911	1	PMS-366885	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:40.064255	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-733	901	1	PMS-366709	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:36.453078	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-737	253	1	PMS-366697	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:12.809012	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-739	254	1	PMS-366989	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:27.809885	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-741	261	1	PMS-366763	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:51.693	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-743	262	1	PMS-366725	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:15:06.895053	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-745	270	1	PMS-366712	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:19:13.166175	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-747	276	1	PMS-366834	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:00.299957	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-749	266	1	PMS-366841	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:21.918449	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-751	826	1	PMS-366810	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:35.170025	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-753	826	3	PMS-388427	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:50.285811	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-756	825	1	PMS-366789	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:40:53.839178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-758	824	1	PMS-366688	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:53.790916	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-762	257	1	PMS-366944	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:42:54.361442	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-764	1069	1	PMS-366916	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:24.745312	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-766	1069	1	PMS-366710	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:50.513599	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-768	1069	1	PMS-366809	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:02.079493	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-770	258	1	PMS-366919	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:22.198298	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2419	474	594	PMS-257894	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 patrimônios 43135 e 257894	t	\N	2026-10-28 12:13:28.285317	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2309	1106	476	PMS-292281	\N	382	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:06:18.331142	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2427	454	5	PMS-319171	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:18:11.944162	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2435	133	514	PMS-239462	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:30:16.669125	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2438	475	7	PMS-373526	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:45:52.598847	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2439	473	608	PMS-386506	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:59:09.772742	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2443	24	599	PMS-399392	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:06:15.161311	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2445	465	655	PMS-354533	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:08:20.754155	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1135	286	4	PMS-259709	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:40:46.623049	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2299	1106	495	PMS-297600	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:00:56.110005	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2284	1106	476	PMS-298776	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:52:45.686443	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-540	183	4	PMS-370772	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:25:26.106702	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2290	1106	495	PMS-337938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:55:48.423016	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2296	1106	418	PMS-387916	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:59:38.012345	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2304	1106	630	PMS-353408	6002012001002873	13	672	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:03:00.038105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2302	1106	418	PMS-387915	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:01:37.810995	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-488	210	1	PMS-393618	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:13.135951	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-774	258	1	PMS-366852	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:51.297076	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-778	260	1	PMS-366770	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:55.902359	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-780	267	1	PMS-366861	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:15.300165	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-787	561	1	PMS-393650	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:50.151092	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-788	561	4	PMS-392830	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:55.584013	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-789	562	1	PMS-393651	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:20.636048	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-790	562	4	PMS-392816	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:29.519309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-802	569	1	PMS-393652	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:19.06788	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-803	569	4	PMS-392839	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:24.901018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-807	572	3	PMS-393333	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:03.770474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-813	558	1	PMS-393653	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:58.054549	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-814	558	4	PMS-392850	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:03.771593	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-815	558	1	PMS-393654	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:10.204487	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-816	558	4	PMS-392801	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:19.138231	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-819	557	1	PMS-366898	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:45.156707	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-821	557	1	PMS-363655	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:59.123246	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-822	557	4	PMS-392815	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:03.656939	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-828	557	3	PMS-388452	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:37.157309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-829	541	1	PMS-366742	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:19.593203	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-831	34	1	PMS-366739	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:43.194265	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-833	34	1	PMS-366719	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:56.796183	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-835	543	1	PMS-366751	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:14.012288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-837	544	1	PMS-376291	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:30.845399	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-839	545	1	PMS-366747	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:48.379051	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-841	546	1	PMS-366731	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:10.730718	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-843	546	1	PMS-366746	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:28.247623	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-845	547	1	PMS-366745	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:49.580964	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-847	549	1	PMS-366735	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:07.598923	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-849	550	1	PMS-366753	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:21.984032	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-851	551	1	PMS-392614	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:37.382809	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-853	552	1	PMS-366721	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:55.018317	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-855	553	1	PMS-366743	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:10.536014	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-857	554	1	PMS-366757	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:27.602265	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-859	555	1	PMS-366744	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:52.93436	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-861	548	1	PMS-366737	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:09:36.412201	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-865	1071	1	PMS-366754	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:10.782251	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-867	1072	1	PMS-366727	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:40.797876	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-869	1072	1	PMS-366752	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:53.749653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-871	1073	1	PMS-366730	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:20.053655	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-873	1073	1	PMS-366749	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:33.021671	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-875	1073	1	PMS-366748	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:45.955469	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-877	1073	3	PMS-388445	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:59.07167	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-878	1074	1	PMS-366723	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:15:23.538576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-897	840	1	PMS-393633	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:55.414178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-898	840	4	PMS-392823	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:00.829994	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-899	838	1	PMS-376164	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:14.597401	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-905	47	1	PMS-376200	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:06.931711	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-912	843	1	PMS-366808	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:26.352218	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-914	843	1	PMS-366787	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:36.718093	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-920	381	1	PMS-366949	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-30 16:11:28.501078	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-921	145	1	PMS-376173	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:08:46.064215	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-924	145	4	PMS-392786	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:09:36.873094	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-940	186	1	PMS-376196	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:03.964415	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-946	153	1	PMS-366824	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:53.076288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-948	148	1	PMS-366779	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:08.441528	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-952	112	1	PMS-393594	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:40.996227	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-953	112	4	PMS-392880	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:46.771196	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2307	1106	476	\N	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-27 18:04:11.848873	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	7fd98077b4b9458e804d472ff98ff79e.jpg
-2451	454	418	PMS-388066	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:18:52.027551	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2310	1106	418	PMS-387911	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:06:53.82485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2311	1106	6	\N	086121807974	393	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:07:55.102545	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2454	220	1	PMS-208865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:23:53.718601	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2557	454	594	PMS-164196	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:36:54.132474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2558	180	528	PMS-342840	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:38:19.096265	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2559	174	528	PMS-342833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:39:08.850757	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2562	24	537	PMS-394287	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:41:41.954582	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1139	489	4	PMS-376214	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:50.932443	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-533	171	1	PMS-203369	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:21:37.471564	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-566	1050	1	PMS-203370	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:33:28.767318	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2286	1106	418	PMS-387918	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:53:39.640883	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-664	715	1	PMS-203562	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:35.539308	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1140	228	2	PMS-177806	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:34:46.993848	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1141	229	1	PMS-173915	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:35:00.297383	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1202	1078	4	\N	906SPCA22195	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:10:06.420451	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1142	229	4	PMS-316429	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:35:05.86159	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2287	1106	630	PMS-303552	120660013340	13	671	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:54:09.171874	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1147	232	1	PMS-163086	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:42:41.651468	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1148	232	4	PMS-223324	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:42:48.501481	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1151	234	1	PMS-155209	\N	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-29 23:51:38.191421	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1152	234	4	\N	30695916	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:52:22.057708	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1153	234	1	PMS-305507	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:52:48.242946	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1154	234	4	\N	BRG1471B39	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:07.42894	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2293	1106	476	PMS-392279	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:00.190984	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1156	236	4	PMS-367274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:41.624601	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1157	236	1	PMS-163394	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:53:51.542205	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1158	236	4	PMS-223452	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:02.993465	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1160	238	4	PMS-367304	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:44.960832	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1161	248	1	PMS-163361	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:57:15.7118	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1162	248	4	PMS-154882	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:21.762633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2308	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:05:28.957962	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	022d7e36fcd54c4a8f020d24de43ef45.jpg
-2295	1106	418	PMS-388253	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:55.984431	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1166	243	4	PMS-367303	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:04.529458	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1169	240	1	PMS-208680	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:03.679229	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1170	240	4	PMS-208552	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:09.579294	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1171	240	1	PMS-208427	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:16.362476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1172	240	4	PMS-208720	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:22.246846	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2300	1106	418	PMS-387919	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:01:15.227999	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1175	1076	1	PMS-301598	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:00:41.696343	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1176	1076	4	PMS-308303	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:00:46.463933	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1177	1077	1	PMS-208428	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:02:04.948994	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1178	1077	4	PMS-208553	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:02:11.147515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1180	797	4	PMS-312419	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:06.198998	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1184	794	4	PMS-376348	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:45.033987	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1186	796	4	PMS-308301	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:59.221188	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1188	796	4	PMS-367237	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:11.452109	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1190	796	4	PMS-376394	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:25.502155	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1192	795	4	PMS-367249	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:12.034922	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1196	802	4	\N	MÇ256337	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:51.632007	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1198	800	4	PMS-376366	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:11.668697	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1200	803	4	\N	BRG1471B36	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:29.769115	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1182	798	4	\N	BRG1471FFS	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:21.616808	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1179	797	1	PMS-202249	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:01.484407	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1181	798	1	PMS-177764	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:16.917355	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1194	795	4	\N	BRG471F2Y	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:26.150892	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1201	1078	1	PMS-307049	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:09:59.852073	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2561	24	537	PMS-394292	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:41:03.333058	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1185	796	1	PMS-202268	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:53.6669	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2565	24	537	PMS-394290	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:43:52.711717	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1199	803	1	PMS-226923	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:08:24.186067	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2572	142	1	PMS-305562	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:48:14.667222	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1193	795	1	PMS-203577	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:07:18.201161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-699	896	1	PMS-203569	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:44:39.890061	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1195	802	1	PMS-203571	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:07:44.817473	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1203	58	4	PMS-155361	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:12:24.620083	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1204	58	4	PMS-236699	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:12:30.536934	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1205	58	1	PMS-203555	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:12:53.689279	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1206	1079	1	PMS-178475	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:14:19.20681	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1207	1079	4	PMS-298783	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:14:24.522018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2580	142	1	PMS-203560	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:59:08.050535	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2577	142	486	PMS-209518	\N	322	569	\N	\N	\N	ativo	ruim		t	\N	2026-10-28 14:54:15.068704	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1208	7	2	PMS-177903	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:24:50.013824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1218	80	2	PMS-177865	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:25.430595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1222	82	4	\N	BRG147183Y	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:02.080771	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1234	87	4	PMS-208589	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:39.883132	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-923	145	1	PMS-393609	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:09:25.490821	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1219	81	1	PMS-178212	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:35.39881	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2297	1106	495	PMS-298380	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:59:53.49402	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-978	398	1	PMS-366934	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:02.367227	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-980	398	3	PMS-388467	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:21.132428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-981	398	3	PMS-388471	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:31.733889	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-983	404	3	PMS-388459	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:45:47.851499	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-984	404	3	PMS-388476	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:45:56.684844	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1024	453	3	PMS-388475	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:20.752489	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1040	287	1	PMS-376211	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:02.083819	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1048	449	1	PMS-366943	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:24:56.254495	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1050	288	1	PMS-376204	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:52.406466	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1052	288	1	PMS-376168	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:15.689478	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1054	288	1	PMS-376172	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:37.140391	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1056	288	1	PMS-376179	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:24.559586	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1067	487	1	PMS-376201	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:20.217341	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1074	537	3	PMS-388470	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:35:32.093973	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1087	539	1	PMS-376203	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:41:56.336938	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1095	539	3	PMS-388160	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:43:40.039978	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1127	483	3	PMS-388463	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:34:48.310355	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1128	483	3	PMS-388161	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:34:59.194267	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1129	483	3	PMS-388172	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:08.425073	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1130	483	3	PMS-388479	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:18.693095	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1131	483	3	PMS-388461	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:30.810621	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1136	489	1	PMS-376328	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:29.632867	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1138	489	1	PMS-376303	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:44.9515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1143	230	1	PMS-393643	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:37:35.52964	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1144	230	4	PMS-392778	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:37:45.530992	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1145	231	1	PMS-393604	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:38:08.482972	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1146	231	4	PMS-392787	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:38:19.947421	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1149	233	1	PMS-393647	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:50:44.059198	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1150	233	4	PMS-392774	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:50:59.190383	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1155	236	1	PMS-366936	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:35.941552	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1159	238	1	PMS-366905	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:33.761021	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1163	243	1	PMS-393665	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:40.611332	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1164	243	4	PMS-392783	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:48.378093	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1165	243	1	PMS-366880	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:58.911271	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1167	243	1	PMS-393617	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:16.046496	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1168	243	4	PMS-392770	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:29.161506	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1173	240	1	PMS-393628	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:32.779984	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1174	240	4	PMS-392789	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:39.513858	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1183	794	1	PMS-366775	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:39.067064	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1187	796	1	PMS-366807	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:05.61748	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1189	796	1	PMS-366976	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:18.251878	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1191	795	1	PMS-367006	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:56.80148	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1197	800	1	PMS-366766	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:03.667409	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1247	9	1	PMS-366777	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:51.885856	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1249	9	1	PMS-366862	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:02.886425	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1252	89	1	PMS-393611	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:26.269675	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1253	89	4	PMS-392974	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:31.334963	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1254	89	1	PMS-376300	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:37.468414	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1260	793	3	PMS-393322	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:30:42.036258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1262	1081	1	PMS-366769	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:16:55.349255	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1264	1082	1	PMS-366828	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:06.03394	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1266	1082	1	PMS-366989a	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:33.583843	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1268	1083	1	PMS-366708	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:19:44.802022	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1270	1083	1	PMS-366715	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:20:09.519607	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1272	1084	1	PMS-366830	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:22:50.920595	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1276	824	3	PMS-393325	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:26:25.75718	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1280	1086	1	PMS-366691	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:32.137715	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1282	1086	1	PMS-366811	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:55.836376	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1286	290	3	PMS-388468	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:01:02.353793	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1287	290	3	PMS-388458	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:01:46.953569	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1288	291	3	PMS-388469	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:02:01.004919	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1289	291	3	PMS-388474	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:02:09.870898	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2298	1106	476	PMS-381070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:00:40.540018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2461	220	1	PMS-208688	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:32:21.769763	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-930	167	1	PMS-208524	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:14.615317	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1230	85	4	PMS-239803	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:10.149903	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1237	107	1	PMS-376166	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:25.586447	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1239	107	4	\N	BRG1471DN0	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:44.399327	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-950	148	1	PMS-366970	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:20.724471	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1212	76	4	PMS-392976	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:23.966877	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1229	85	1	PMS-208467	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:04.431699	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2312	1106	495	PMS-297205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:08:48.999242	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2314	1106	418	PMS-387929	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:10:03.288949	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2316	1106	476	PMS-298425	\N	382	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:11:08.949887	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1295	400	3	PMS-388478	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:04:37.255783	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1343	1090	1	PMS-366853	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:30:56.027407	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1345	1091	1	PMS-366793	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:30.683399	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1347	1092	1	PMS-393666	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:02.217252	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1348	1092	4	PMS-392855	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:14.234582	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1349	1093	1	PMS-393598	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:38.903049	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1350	1093	4	PMS-392844	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:47.28509	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1351	1093	1	PMS-366845	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:00.386199	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1353	1094	1	PMS-393629	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:33.771032	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1354	1094	4	PMS-392849	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:43.821035	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1355	1095	1	PMS-366758	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:05.321221	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1357	1096	1	PMS-393601	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:31.820731	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1358	1096	4	PMS-392843	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:40.555669	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1359	1097	1	PMS-366844	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:58.522517	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1363	1098	1	PMS-366805	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:46.174484	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1365	1099	1	PMS-393597	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:15.925645	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1366	1099	4	PMS-392784	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:23.70824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1367	1100	1	PMS-366804	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:46.243965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1371	1101	1	PMS-366761	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:25.097425	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1373	1101	1	PMS-366786	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:44.864083	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1387	296	1	PMS-393593	None	3	135	2026-01-01	9000.00	\N	ativo	boa		t	\N	2026-08-25 16:48:34.642163	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1388	1104	1	PMS-393667	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:12:53.196016	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1390	1104	4	PMS-392788	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:13:49.347052	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1391	1104	1	PMS-393690	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:09.714431	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1392	1104	4	PMS-392977	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:22.83206	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1394	1104	1	PMS-393595	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:55.549847	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1395	1104	4	PMS-392769	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:15:05.699246	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1397	1104	1	PMS-366782	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:00.520123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1399	1104	1	PMS-393669	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:44.985148	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1401	1104	4	PMS-392848	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:13.453353	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1402	1104	1	PMS-393642	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:50.187399	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1403	1104	4	PMS-392773	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:59.387177	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1405	1105	1	PMS-393179	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:04.128441	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1406	1105	4	PMS-392741	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:22.595039	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1408	1105	1	PMS-393188	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:50.82935	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1409	1105	4	PMS-392722	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:00.11602	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1410	1105	4	PMS-392723	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:08.198085	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1411	1105	1	PMS-393193	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:25.581991	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1412	1105	4	PMS-392730	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:42.830708	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1413	1105	4	PMS-392687	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:49.648453	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1414	1105	1	PMS-393183	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:24:47.466373	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1415	1105	4	PMS-392727	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:24:55.633872	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1416	1105	4	PMS-392716	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:04.051361	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1417	1105	1	PMS-393176	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:17.750232	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1418	1105	4	PMS-392747	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:29.133282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1419	1105	4	PMS-392690	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:37.567854	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1420	1105	1	PMS-393182	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:56.736002	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1421	1105	4	PMS-392736	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:04.851812	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1422	1105	4	PMS-392702	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:12.702699	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1423	1105	1	PMS-393180	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:41.919685	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1424	1105	4	PMS-392709	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:51.587174	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1425	1105	4	PMS-392734	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:11.003505	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1426	1105	1	PMS-393174	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:27.93791	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1427	1105	4	PMS-392735	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:35.837828	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1428	1105	4	PMS-392750	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:43.137532	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1429	1105	1	PMS-393186	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:58.921541	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1430	1105	4	PMS-392726	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:08.407807	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1431	1105	4	PMS-392696	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:17.023619	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1432	1105	1	PMS-393173	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:33.85736	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1433	1105	4	PMS-392720	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:43.506904	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1434	1105	4	PMS-392746	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:51.189288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1435	1105	1	PMS-393175	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:08.307203	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1436	1105	4	PMS-392742	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:23.641266	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2324	1106	418	\N	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:16:58.457602	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	5ec9a07b37794152b5f3a24d4ae80e9d.jpg
-2326	1106	495	\N	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:18:08.604748	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	94c1f2cfbc7b420a8003d289abb23d64.jpg
-2333	128	396	PMS-315826	\N	250	\N	\N	\N	\N	ativo	boa	220V	t	\N	2026-10-27 18:26:23.46486	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2341	125	391	PMS-387664	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:09.396827	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-942	188	1	PMS-177680	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:14:20.479474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1240	107	1	PMS-376312	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:50.751126	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1216	79	1	PMS-393612	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:05.580645	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1225	8	1	PMS-376271	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:30.29766	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1221	82	1	PMS-178330	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:56.247966	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1227	84	1	PMS-393616	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:45.582578	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1231	86	1	PMS-393613	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:19.884646	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1437	1105	4	PMS-392719	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:31.092372	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1235	88	1	PMS-366858	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:51.582833	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1599	1011	1	PMS-316372	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:32:20.324212	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1600	1011	4	PMS-295415	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:32.333208	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2313	1106	418	\N	\N	394	\N	\N	\N	\N	ativo	regular	Rodízio quebrado	t	\N	2026-10-27 18:09:08.993912	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	20df63be885c452eb8d1788054174b4b.jpg
-2328	1106	418	PMS-387927	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:19:31.43239	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1614	1014	4	PMS-208733	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:37:12.205228	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1615	1015	1	PMS-208472	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:18.720918	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1647	1030	4	PMS-295777	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:52:05.651515	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1440	1105	4	PMS-392683	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:08.675588	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1441	1105	1	PMS-366767	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:31.477105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1444	1105	1	PMS-393187	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:18.112134	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1445	1105	4	PMS-392745	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:25.178568	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1446	1105	4	PMS-392739	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:34.578491	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1447	1105	1	PMS-393184	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:50.14502	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1448	1105	4	PMS-392725	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:00.679376	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1449	1105	4	PMS-392711	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:09.646356	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1450	1105	1	PMS-393185	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:26.451075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1451	1105	4	PMS-392732	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:33.996252	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1452	1105	4	PMS-392688	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:42.712563	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1453	1105	1	PMS-367004	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:32.217258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1456	1105	1	PMS-393168	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:02.715981	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1457	1105	4	PMS-392671	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:12.768043	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1458	1105	4	PMS-392682	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:20.702428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1459	1105	1	PMS-393192	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:38.368918	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1460	1105	4	PMS-392701	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:49.96732	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1461	1105	4	PMS-392692	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:56.617965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1462	1105	1	PMS-393181	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:11.868846	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1463	1105	4	PMS-392751	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:22.384928	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1464	1105	4	PMS-392712	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:34.069282	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1465	1105	1	PMS-393177	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:12.755201	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1466	1105	4	PMS-392710	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:20.824225	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1467	1105	4	PMS-392700	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:29.521269	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1468	1105	1	PMS-393189	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:46.319578	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1469	1105	4	PMS-392706	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:52.236943	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1470	1105	4	PMS-392694	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:59.553823	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1471	1105	1	PMS-393191	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:17.905139	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1472	1105	4	PMS-392693	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:27.188105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1473	1105	4	PMS-392705	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:35.32212	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1474	1105	1	PMS-393190	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:06.557114	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1475	1105	4	PMS-392703	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:15.591965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1476	1105	4	PMS-392695	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:23.29066	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1477	1106	1	PMS-393200	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:19:45.801528	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1478	1106	4	PMS-392697	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:19:54.552034	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1479	1106	4	PMS-392708	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:03.222108	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1480	1106	1	PMS-393166	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:24.203624	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1481	1106	4	PMS-392678	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:32.952772	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1482	1106	4	PMS-392677	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:42.434966	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1483	1106	1	PMS-393204	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:21:49.572931	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1484	1106	4	PMS-392715	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:10.806934	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1485	1106	4	PMS-392689	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:20.506416	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1486	1106	1	PMS-393199	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:37.340326	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1487	1106	4	PMS-392713	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:46.641149	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1488	1106	4	PMS-392718	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:53.778753	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1489	1106	1	PMS-393680	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:14.327094	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1490	1106	4	PMS-392691	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:22.191965	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1491	1106	4	PMS-392731	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:29.742712	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1492	1106	1	PMS-393201	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:52.092289	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1493	1106	4	PMS-392699	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:05.293209	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1494	1106	4	PMS-392728	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:12.826293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1495	1106	1	PMS-393203	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:29.077226	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1496	1106	4	PMS-392714	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:37.810268	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1497	1106	4	PMS-392698	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:04.610907	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1501	1106	1	PMS-393684	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:23.051229	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1502	1106	4	PMS-392971	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:32.948408	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1503	1106	4	PMS-392882	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:40.532032	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2338	1106	655	PMS-387637	\N	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:33:49.365485	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1210	66	4	PMS-376358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:10.046765	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1213	77	2	PMS-177905	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:25:36.915123	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1224	83	4	PMS-205128	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:20.231197	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1226	8	4	PMS-376374	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:35.64898	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1236	88	4	PMS-367222	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:57.350244	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1238	107	4	PMS-208587	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:38.400065	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1242	107	4	PMS-207217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:02.834461	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1209	66	1	PMS-376269	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:03.046165	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1214	78	1	PMS-393615	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:47.966742	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1215	78	4	PMS-392975	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:55.448743	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1220	81	4	\N	11100345	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:43.083028	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2315	1106	495	PMS-297577	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:10:03.984214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2317	1106	630	\N	\N	13	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:11:36.856213	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	d7983e3436fb4b44a8db09a06c0eda53.jpg
-1624	1018	4	PMS-208597	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:49.018456	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1628	1021	4	PMS-208598	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:44.628068	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2323	1106	537	\N	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:16:00.224539	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	843711ed4ac444a6a44e5803f2ce7499.jpg
-2327	1106	476	PMS-297558	\N	\N	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:18:46.125309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1504	1106	1	PMS-393178	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:59.683301	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1641	1026	2	PMS-177964	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:50:18.684631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1644	1029	1	PMS-208474	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:51:09.444314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1646	1030	1	PMS-177620	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:51:40.699459	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1505	1106	4	PMS-392743	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:06.86797	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1639	1011	5	PMS-372309	None	10	132	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:57.679804	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1506	1106	4	PMS-392737	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:17.084398	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1507	1106	1	PMS-393565	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:41.418481	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1508	1106	4	PMS-392886	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:50.935302	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1509	1106	4	PMS-392875	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:05.001218	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1510	1106	1	PMS-393170	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:23.767305	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1511	1106	4	PMS-392674	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:36.667643	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1512	1106	4	PMS-392673	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:49.886854	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1513	1106	1	PMS-393197	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:37.104754	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1514	1106	4	PMS-392724	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:45.803732	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1515	1106	4	PMS-392740	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:54.937162	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1516	1106	1	PMS-393194	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:15.256817	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1517	1106	4	PMS-392749	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:22.956072	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1518	1106	4	PMS-392752	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:30.256212	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1519	1106	1	PMS-393202	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:44.939611	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1520	1106	4	PMS-392721	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:52.056131	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1521	1106	4	PMS-392748	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:01.057566	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1522	1106	1	PMS-393198	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:17.623502	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1523	1106	4	PMS-392744	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:24.623308	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1524	1106	4	PMS-392733	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:33.023689	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1525	1106	1	PMS-393577	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:46.709258	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1526	1106	4	PMS-392707	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:54.442836	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1527	1106	4	PMS-392738	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:01.924397	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1528	1106	1	PMS-393691	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:23.240863	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1529	1106	4	PMS-392978	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:37.609194	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1530	1106	4	PMS-392952	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:47.261216	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1531	1107	1	PMS-393682	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:00.734714	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1532	1107	4	PMS-392961	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:08.53454	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1533	1107	4	PMS-392945	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:15.684133	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1534	1107	1	PMS-393167	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:29.718181	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1535	1107	4	PMS-392670	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:43.717666	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1536	1107	4	PMS-392686	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:51.336059	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1537	1107	1	PMS-393704	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:33.120292	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1538	1107	4	PMS-392927	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:39.504347	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1539	1107	4	PMS-392956	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:47.37024	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1540	1107	1	PMS-393685	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:05.120984	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1541	1107	4	PMS-392928	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:13.803728	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1542	1107	4	PMS-392964	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:22.604243	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1543	1107	1	PMS-393688	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:55.539349	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1544	1107	4	PMS-392953	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:02.02118	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1545	1107	4	PMS-392943	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:11.522364	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1546	1107	1	PMS-393702	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:33.257	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1547	1107	4	PMS-392932	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:45.344084	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1548	1107	4	PMS-392962	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:53.890344	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1549	1107	1	PMS-393700	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:09.059651	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1550	1107	4	PMS-392965	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:16.625663	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1551	1107	4	PMS-392925	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:25.107354	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1552	1107	1	PMS-393686	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:42.175926	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1553	1107	4	PMS-392921	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:50.57518	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1554	1107	4	PMS-392958	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:00.210075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1555	1107	1	PMS-393693	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:17.22818	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2331	1106	390	PMS-293822	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:23:34.462265	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2334	128	398	PMS-206491	\N	253	439	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:27:28.325921	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2320	1106	391	PMS-269760	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:13:31.37908	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1241	107	4	PMS-376371	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:57.534079	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1211	76	1	PMS-393610	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:18.413552	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1217	79	4	PMS-392946	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:10.71575	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1228	84	4	PMS-392960	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:52.266851	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1232	86	4	PMS-392948	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:25.616345	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1223	83	1	PMS-163181	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:27:14.699177	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1556	1107	4	PMS-392924	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:24.711269	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1557	1107	4	PMS-392954	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:34.376367	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2318	1106	630	\N	\N	13	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:11:37.374214	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0d38ef8e933f4185af0461d52abfbd50.jpg
-1558	1107	1	PMS-393697	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:53.043474	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1233	87	1	PMS-208690	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:34.783553	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1602	1011	4	PMS-367285	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:56.10967	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1621	1017	1	PMS-316373	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:40:05.162894	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1623	1018	1	PMS-208475	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:33.962159	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1627	1021	1	PMS-208473	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:29.451741	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1633	1024	1	PMS-165259	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:43:33.5871	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1635	1024	1	PMS-178135	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:46:00.208614	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1559	1107	4	PMS-392930	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:02.278048	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1638	1025	4	PMS-367324	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:14.578494	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1560	1107	4	PMS-392919	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:16.545338	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1561	1107	1	PMS-393687	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:34.462662	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1562	1107	4	PMS-392926	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:43.595617	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1563	1107	4	PMS-392922	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:52.830178	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1564	1107	1	PMS-393205	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:22.446136	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1565	1107	4	PMS-392942	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:41.797105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1566	1107	4	PMS-392967	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:49.335241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1567	1107	1	PMS-393695	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:14.731857	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1568	1107	4	PMS-392947	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:21.615674	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1569	1107	4	PMS-392940	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:29.282272	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1570	1107	1	PMS-393164	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:54.800532	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1571	1107	4	PMS-392680	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:15.118047	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1572	1107	4	PMS-392667	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:21.61856	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1573	1107	1	PMS-393679	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:35.60193	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1574	1107	4	PMS-392923	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:50.568896	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1575	1107	4	PMS-392920	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:58.685816	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1576	1107	1	PMS-393696	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:14.967666	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1577	1107	4	PMS-392929	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:24.351849	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1578	1107	4	PMS-392963	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:31.39011	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1579	1108	1	PMS-393169	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:01.29682	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1580	1108	4	PMS-392681	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:10.297997	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1581	1108	4	PMS-392679	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:19.396065	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1582	1108	1	PMS-393698	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:33.679653	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1583	1108	4	PMS-392973	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:40.780062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1584	1108	4	PMS-392970	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:54.166105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1585	1108	1	PMS-393706	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:19.597845	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1586	1108	4	PMS-392879	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:28.147105	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1587	1108	4	PMS-392874	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:37.200293	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1588	1108	1	PMS-393550	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:54.085222	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1589	1108	4	PMS-392898	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:06.518102	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1590	1108	4	PMS-392918	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:17.684338	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1591	1108	1	PMS-393556	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:32.483745	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1592	1108	4	PMS-392860	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:42.634636	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1593	1108	4	PMS-392916	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:53.399634	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1594	1108	1	PMS-393683	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:08.402688	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1595	1108	4	PMS-392897	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:16.368001	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1596	1108	4	PMS-392876	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:23.184964	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1597	1	4	PMS-376387	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-08-27 00:48:43.229428	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1598	1	1	PMS-393703	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-08-27 00:50:17.482186	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1601	1011	1	PMS-376212	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:44.418937	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1603	1011	1	PMS-366931	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:33:11.749395	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1605	1012	1	PMS-393637	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:34:58.485999	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1606	1012	4	PMS-392840	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:07.667956	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1607	1013	1	PMS-393634	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:35.826313	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1608	1013	4	PMS-392767	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:43.81051	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1609	1013	1	PMS-393638	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:54.183052	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1610	1013	4	PMS-392851	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:02.822259	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1611	1013	1	PMS-393563	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:21.703032	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1612	1013	4	PMS-392833	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:30.937651	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1617	1016	1	PMS-393672	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:59.974184	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1618	1016	4	PMS-392804	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:07.455983	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1619	1016	1	PMS-393632	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:19.60947	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1620	1016	4	PMS-392814	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:29.210421	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1625	1019	1	PMS-393674	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:06.06325	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2319	1106	418	PMS-387895	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:12:50.911602	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2321	1106	476	PMS-2343580	\N	\N	\N	\N	\N	\N	ativo	boa	Gaveteito alto	t	\N	2026-10-27 18:14:57.497558	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2325	1106	654	\N	\N	396	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:17:05.81631	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2329	1106	630	PMS-386142	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:20:12.793707	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2332	107	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	marrom de madeira	t	\N	2026-10-27 18:26:20.155161	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1626	1019	4	PMS-392824	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:12.963784	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1629	1023	1	PMS-393572	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:42:16.368804	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1630	1023	4	PMS-392813	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:42:25.545905	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1637	1025	1	PMS-366947	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:07.904121	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1642	1028	1	PMS-393676	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:50:36.714119	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1643	1028	4	PMS-392763	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:50:44.861314	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1648	298	1	PMS-393585	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-09-03 22:21:41.467374	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1649	1109	1	PMS-393644	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:35:55.988794	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1650	1109	4	PMS-392846	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:21.07576	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1651	1109	4	PMS-392777	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:36.282758	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1652	1109	1	PMS-393689	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:55.905309	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1653	1109	4	PMS-392966	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:37:09.351062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1654	1109	4	PMS-392972	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:37:18.6853	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1655	1109	1	PMS-393692	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:30.851814	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1656	1109	4	PMS-392893	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:43.199574	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1657	1109	4	PMS-392864	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:51.104974	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1658	1109	1	PMS-393558	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:44:10.76942	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1659	1109	4	PMS-392884	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:14.35604	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1660	1109	4	PMS-392907	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:24.423066	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1661	1109	1	PMS-367012	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:41.202261	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1663	1110	1	PMS-393574	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:00.426348	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1664	1110	4	PMS-392872	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:11.026897	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1665	1110	4	PMS-392896	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:22.051296	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1666	1110	1	PMS-393570	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:36.582298	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1667	1110	4	PMS-392867	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:45.619088	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1668	1110	4	PMS-392863	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:17.987241	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1669	1110	1	PMS-393575	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:36.239451	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1670	1110	4	PMS-392906	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:44.231771	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1671	1110	4	PMS-392861	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:52.26574	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1672	1110	1	PMS-393576	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:14.771692	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1673	1110	4	PMS-392968	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:21.672255	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1674	1110	4	PMS-392951	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:29.485806	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1675	1111	1	PMS-393677	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:54.784986	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1676	1111	4	PMS-392936	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:01.973742	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1677	1111	4	PMS-392938	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:10.337242	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1678	1111	1	PMS-393694	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:25.976008	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1679	1111	4	PMS-392959	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:34.48878	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1680	1111	4	PMS-392941	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:44.694247	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1682	1112	4	PMS-392887	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:15.022647	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1683	1112	4	PMS-392877	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:43.807503	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1684	1112	1	PMS-393569	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:09.341242	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1685	1112	4	PMS-392862	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:18.037475	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1686	1112	4	PMS-392905	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:26.02716	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1698	4	1	PMS-393195	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:52:56.165231	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1699	4	4	PMS-392904	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:05.777855	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1700	4	4	PMS-392868	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:14.347376	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1701	4	1	PMS-393566	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:35.476511	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1702	4	4	PMS-392704	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:43.501588	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1703	4	4	PMS-392729	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:52.450622	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1704	4	1	PMS-393564	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:11.984568	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1705	4	4	PMS-392878	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:20.614868	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1706	4	4	PMS-392912	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:28.913388	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1707	4	1	PMS-393561	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:44.168035	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1708	4	4	PMS-392888	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:52.732866	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1709	4	4	PMS-392910	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:00.149544	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1710	4	1	PMS-393701	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:19.791476	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1711	4	4	PMS-392873	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:28.012956	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1712	4	4	PMS-392889	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:36.780034	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1713	4	1	PMS-393196	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:55.004037	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1715	4	4	PMS-392901	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:13.252636	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1716	4	1	PMS-393551	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:27.354487	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1717	4	4	PMS-392871	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:35.950527	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1718	4	4	PMS-392890	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:48.733842	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1719	4	1	PMS-393172	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:19.086906	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1720	4	4	PMS-392676	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:28.293225	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1721	4	4	PMS-392685	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:36.994529	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1722	4	3	PMS-388457	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:58:24.812982	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1723	1113	1	PMS-393560	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:32.24233	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1724	1113	4	PMS-392895	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:43.853536	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1725	1113	4	PMS-392883	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:52.57855	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1726	1113	1	PMS-393562	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:10.236082	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1727	1113	4	PMS-392881	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:19.754086	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1728	1113	4	PMS-392834	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:27.125781	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1729	1113	1	PMS-393552	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:46.42005	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1730	1113	4	PMS-392885	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:01.070329	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1731	1113	1	PMS-393555	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:21.227757	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1732	1113	1	PMS-393567	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:36.16185	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1733	1113	4	PMS-392944	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:20:30.57677	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1734	1113	4	PMS-392931	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:20:38.45813	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1681	1112	1	PMS-393548	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:06.992413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1746	3	1	PMS-366922	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:27:33.272862	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1748	67	1	PMS-366829	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:43.369275	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1750	68	1	PMS-366945	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:01.84798	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1752	70	1	PMS-366914	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:35.584585	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1753	70	4	PMS-367301	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:45.429911	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1754	69	1	PMS-366903	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:07.977348	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1756	71	1	PMS-376191	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:42.746765	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1758	71	1	PMS-366933	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:35:49.781219	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1762	381	1	PMS-366940	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:37:34.12304	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1764	381	1	PMS-366953	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:32.175172	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1767	381	1	PMS-370767	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:39:50.195264	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1769	381	3	PMS-393328	\N	\N	\N	\N	\N	\N	ativo	boa	Notebook Vaio - Telessaúde	t	\N	2026-09-22 20:40:34.527805	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1772	226	1	PMS-366952	\N	2	134	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:43:43.197678	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1774	225	1	PMS-366911	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:44:27.457694	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1776	1120	1	PMS-366920	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:46:10.155618	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1778	382	1	PMS-366918	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:04.367632	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1780	110	1	PMS-366696	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:56.620447	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1782	110	3	PMS-388431	\N	1	1	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:48:42.610278	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1785	1121	1	PMS-366950	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:37.692676	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1787	1121	1	PMS-366889	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:59.913995	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1789	109	1	PMS-366686	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:39.289983	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1791	72	1	PMS-36772	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:52:18.249962	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1793	1122	1	PMS-366938	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:53:20.767913	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1794	1122	4	PMS-376351	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:53:31.254972	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1795	1123	1	PMS-366822	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:48:14.456764	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1819	1115	1	PMS-376284	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:39.275332	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1821	1115	3	PMS-388449	\N	1	1	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:57:07.939676	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1824	1135	1	PMS-366994	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:19.48312	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1826	1135	1	PMS-366962	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:41.498693	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1830	1137	1	PMS-366760	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:59:53.924363	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1838	1	244	PMS-399547	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Ulisses Guimarães\r\nPatrimônio: PMS-399547\r\nE-mail: retinografo.ulysses@sorocaba.sp.gov.br	t	\N	2026-10-08 00:53:10.262173	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1839	1	244	PMS-396797	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Parque São Bento\r\nPatrimônio: PMS-396797\r\nE-mail: retinografo.parquesaobento@sorocaba.sp.gov.br	t	\N	2026-10-08 00:54:11.692299	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1840	1	244	PMS-396796	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Habiteto Ana Paula Eleutério\r\nPatrimônio: PMS-396796\r\nE-mail: retinografo.habiteto@sorocaba.sp.gov.br	t	\N	2026-10-08 00:54:51.543736	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1841	1	244	PMS-396798	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Jardim Rodrigo\r\nPatrimônio: PMS-396798\r\nE-mail: retinografo.jardimrodrigo@sorocaba.sp.gov.br	t	\N	2026-10-08 00:55:32.393981	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1842	1	244	PMS-399548	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Vila Barão\r\nPatrimônio: PMS-399548\r\nE-mail: retinografo.vilabarao@sorocaba.sp.gov.br	t	\N	2026-10-08 00:56:49.749621	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1843	1	244	PMS-396799	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Nova Esperança\r\nPatrimônio: PMS-396799\r\nE-mail: retinografo.novaesperanca@sorocaba.sp.gov.br	t	\N	2026-10-08 00:57:42.51526	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1844	1	244	PMS-396800	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Paineiras\r\nPatrimônio: PMS-396800\r\nE-mail: retinografo.paineiras@sorocaba.sp.gov.br	t	\N	2026-10-08 00:58:42.48844	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1845	1	244	PMS-396795	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Aparecidinha\r\nPatrimônio: PMS-396795\r\nE-mail: retinografo.aparecidinha@sorocaba.sp.gov.br	t	\N	2026-10-08 00:59:40.720633	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2322	1106	537	\N	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:15:03.099402	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0fc40dc809f04b7ab84346173afb754e.jpg
-2330	1106	630	PMS-354578	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:22:01.700569	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2335	107	537	PMS-384885	\N	395	\N	\N	\N	\N	ativo	ruim		t	\N	2026-10-27 18:29:58.818503	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2336	125	418	PMS-389547	\N	386	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:31:34.681754	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2362	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:58:28.841876	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0064b729ad9b45c4b570edb51d7b778c.jpg
-2337	125	418	PMS-389541	\N	386	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:32:22.823742	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2339	125	418	PMS-388281	\N	377	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:34:30.415018	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2343	125	391	PMS-387657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:44.49682	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2349	105	441	PMS-365872	\N	292	512	\N	\N	\N	ativo	boa	40l	t	\N	2026-10-27 18:38:24.592687	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2350	125	438	PMS-353230	\N	290	508	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:38:25.42303	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2466	220	1	PMS-208436	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:33:52.697192	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2469	220	4	PMS-392878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:34:22.818959	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2480	457	4	PMS-208543	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:43.631603	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2472	174	436	PMS-391432	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:36:11.329079	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2482	174	436	PMS-391434	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:12.712379	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2483	125	4	PMS-207375	\N	1	679	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:24.632465	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2484	174	436	PMS-391433	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:36.252286	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2494	180	449	PMS-346094	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:46:18.657439	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2501	180	454	PMS-362903	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:54:06.211758	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2360	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:57:22.050834	2026-10-29 12:23:04.063203	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	6bea6f8069ee4f5c95d8453a918221e9.jpg
-2502	220	413	PMS-391226	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:55:47.743075	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2504	140	418	PMS-389538	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:59:54.740287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2505	452	511	PMS-394236	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:00:02.027555	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2364	1150	515	\N	\N	305	606	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:59:57.123421	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3829c947b6d342339425728c29ad36ee.jpg
-2506	140	418	PMS-388282	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:00:25.761855	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2659	125	4	\N	\N	2	664	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:21:34.585757	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2657	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:19:55.701824	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2663	112	418	PMS-184194	\N	4	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-29 12:55:33.755478	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2658	125	613	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:20:49.20413	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2660	140	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:37:28.2962	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2661	112	537	PMS-390260	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 12:47:50.589463	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2662	112	495	PMS-182892	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 12:52:49.597036	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2664	112	476	PMS-280316	\N	380	\N	\N	\N	\N	ativo	regular	gaveteiro de madeira	t	\N	2026-10-29 14:07:14.614389	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2665	112	551	PMS-310622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:09:49.498532	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2666	112	391	PMS-310622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:20:02.554444	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2667	112	418	PMS-389474	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:22:19.431443	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2668	144	4	PMS-249971	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:46:26.546288	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2669	144	495	PMS-240740	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:47:54.392752	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2670	144	651	PMS-181352	\N	411	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:49:01.788606	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2671	144	1	PMS-177603	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:49:51.313957	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2672	144	1	PMS-172850	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:50:36.200254	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2673	144	4	PMS-149203	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:51:15.22952	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2674	147	486	PMS-392270	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:52:44.487049	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2675	147	488	PMS-392268	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:53:20.803286	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2676	147	418	PMS-389543	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:55:39.960577	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2677	147	418	PMS-389542	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:00:20.752528	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2678	147	418	PMS-388285	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:01:05.307062	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2679	147	391	PMS-387658	\N	410	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:03:02.366514	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2680	147	488	PMS-383363	\N	323	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:03:58.976572	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2681	147	488	PMS-309846	\N	324	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:04:51.725405	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2682	147	4	PMS-285410	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:05:26.067097	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2683	147	438	PMS-244380	\N	224	684	\N	\N	\N	ativo	boa	EMPRESTADA AO CMAE	t	\N	2026-10-29 15:06:59.552557	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-2684	147	605	PMS-242489	\N	16	680	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:08:44.68287	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
-1438	1105	1	PMS-393165	\N	3	135	\N	\N	\N	ativo	boa	\N	t	\N	2026-08-26 00:29:41.94292	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2706	334	456	\N	528002	\N	\N	\N	\N	\N	ativo	boa	Marca PA MED	t	\N	2026-10-29 18:09:40.935599	2026-10-29 15:09:40.933832	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2707	334	456	\N	625807	\N	\N	\N	\N	\N	ativo	boa	Marca PA MED	t	\N	2026-10-29 18:10:31.366684	2026-10-29 15:10:31.365437	2006	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2708	322	456	\N	5833598	\N	\N	\N	\N	\N	ativo	boa	Marca PREMIUM	t	\N	2026-10-29 18:11:28.348186	2026-10-29 15:11:28.346522	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2709	325	456	\N	5862290	\N	\N	\N	\N	\N	ativo	boa	Marca PREMIUM	t	\N	2026-10-29 18:12:10.290657	2026-10-29 15:12:10.289192	2019	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2710	333	456	\N	5778581	\N	\N	\N	\N	\N	ativo	boa	Marca PREMIUM	t	\N	2026-10-29 18:22:20.188018	2026-10-29 15:22:20.186083	2006	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2711	325	456	\N	3177467	\N	\N	\N	\N	\N	ativo	boa	Modelo/ Marca PREMIUM	t	\N	2026-10-29 18:23:46.991555	2026-10-29 15:23:46.990367	2013	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2712	325	456	\N	3184390	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: PREMIUM	t	\N	2026-10-29 18:24:36.430623	2026-10-29 15:24:36.428996	2013	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2713	334	456	\N	3050138	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: PREMIUM	t	\N	2026-10-29 18:25:33.253048	2026-10-29 15:25:33.252243	2013	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2703	334	456	\N	11107655	\N	\N	\N	\N	\N	ativo	boa	BD	t	\N	2026-10-29 17:57:03.714017	2026-10-29 14:57:03.711035	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2704	334	456	\N	990214952	\N	\N	\N	\N	\N	ativo	boa	MARCA BD	t	\N	2026-10-29 17:57:52.164025	2026-10-29 14:57:52.16242	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2705	334	456	\N	525948	\N	\N	\N	\N	\N	ativo	boa	Marca PA MED	t	\N	2026-10-29 17:58:40.643553	2026-10-29 14:58:40.641632	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2714	325	456	\N	3050130	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: Premium	t	\N	2026-10-29 18:26:25.383232	2026-10-29 15:26:25.381839	2013	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2715	334	456	\N	3179943	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: PREMIUM	t	\N	2026-10-29 18:27:08.197602	2026-10-29 15:27:08.195617	2013	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2716	334	456	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca Wan Ross	t	\N	2026-10-29 18:28:01.847411	2026-10-29 15:28:01.845616	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2726	334	517	\N	CGC72021.223/001-46	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: Mikatos/TK	t	\N	2026-10-29 18:44:59.494667	2026-10-29 15:44:59.492913	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2717	325	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:28:56.796377	2026-10-29 15:28:56.794238	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2720	325	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:30:18.515871	2026-10-29 15:30:18.513607	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2718	333	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:29:32.481647	2026-10-29 15:29:32.479649	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2719	322	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:29:57.062394	2026-10-29 15:29:57.061065	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2721	333	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:32:36.551801	2026-10-29 15:32:36.549477	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2727	334	517	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: OPALINE	t	\N	2026-10-29 18:45:43.438145	2026-10-29 15:45:43.435986	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2722	318	596	\N	\N	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:33:17.000607	2026-10-29 15:33:16.999153	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2723	318	517	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca OPLINE	t	\N	2026-10-29 18:33:58.070315	2026-10-29 15:33:58.069183	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2724	334	517	\N	CGC72021.223/001-48	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: Mikatos/TK	t	\N	2026-10-29 18:40:48.008853	2026-10-29 15:40:48.007608	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2725	322	517	\N	CGC72021.223/001-46	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: Mikatos/TK	t	\N	2026-10-29 18:41:37.58401	2026-10-29 15:41:37.582339	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2728	325	517	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: OPALINE	t	\N	2026-10-29 18:48:00.393691	2026-10-29 15:48:00.392246	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2729	325	517	\N	CGC7200278154100-40	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: MIKATOS/TK	t	\N	2026-10-29 18:48:57.929426	2026-10-29 15:48:57.927698	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2730	318	456	\N	AA474695-1	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:49:55.774459	2026-10-29 15:49:55.772838	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2738	322	457	\N	623460	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: PA MED	t	\N	2026-10-29 19:04:10.773423	2026-10-29 16:04:10.77157	2011	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2739	298	457	\N	5964661	\N	\N	\N	\N	\N	ativo	boa	Marca/modelo: PREMIUM	t	\N	2026-10-29 19:04:54.26069	2026-10-29 16:04:54.259227	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2740	333	457	\N	2165395	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:05:33.621388	2026-10-29 16:05:33.619678	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2745	334	456	\N	2396957	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:08:31.33048	2026-10-29 16:08:31.329393	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2746	334	456	\N	98460	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: SANKEN	t	\N	2026-10-29 19:09:18.206899	2026-10-29 16:09:18.205456	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2761	334	456	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca BD	t	\N	2026-10-29 19:27:03.09343	2026-10-29 16:27:03.091376	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2764	334	456	\N	626548	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo PA MED	t	\N	2026-10-29 19:28:52.427825	2026-10-29 16:28:52.426453	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2776	325	456	\N	2522184	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:34:55.01737	2026-10-29 16:34:55.015127	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2741	334	456	\N	505043	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo SOLIDOR	t	\N	2026-10-29 19:06:12.948935	2026-10-29 16:06:12.947197	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2743	334	456	\N	3179988	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:07:18.605278	2026-10-29 16:07:18.603476	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2773	325	456	\N	623486	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo: PA MED	t	\N	2026-10-29 19:33:59.185228	2026-10-29 16:33:59.184069	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2742	334	456	\N	5854252	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:06:45.251841	2026-10-29 16:06:45.250645	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2763	334	456	\N	3186279	\N	\N	\N	\N	\N	ativo	boa	Modelo/ marca: OSEMIM	t	\N	2026-10-29 19:28:01.295728	2026-10-29 16:28:01.294013	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2767	334	456	\N	2386977	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:30:27.73579	2026-10-29 16:30:27.733988	2007	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2769	334	456	\N	2396959	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:31:26.19387	2026-10-29 16:31:26.192406	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2771	334	456	\N	6727269	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:32:35.077756	2026-10-29 16:32:35.076564	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2744	334	456	\N	3177478	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:07:54.675713	2026-10-29 16:07:54.673874	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2805	325	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:53:45.607307	2026-10-29 16:53:45.606077	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2806	325	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:54:08.199148	2026-10-29 16:54:08.196991	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2765	334	456	\N	2393005	\N	\N	\N	\N	\N	ativo	boa	Marca/ modelo PA MED	t	\N	2026-10-29 19:29:52.962626	2026-10-29 16:29:52.961508	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2807	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:54:38.833265	2026-10-29 16:54:38.830905	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2770	334	456	\N	2515489	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:31:56.92071	2026-10-29 16:31:56.919757	2012	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2772	334	456	\N	3047169	310	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:33:05.07923	2026-10-29 16:33:05.077056	2009	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2786	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:45:34.67671	2026-10-29 16:45:34.675178	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2788	322	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:46:05.252601	2026-10-29 16:46:05.251742	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2790	325	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:47:05.438653	2026-10-29 16:47:05.436783	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2792	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca BD	t	\N	2026-10-29 19:47:38.009758	2026-10-29 16:47:38.007715	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2793	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Marca: INCOTERM	t	\N	2026-10-29 19:48:11.976553	2026-10-29 16:48:11.974255	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2796	318	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:48:51.717538	2026-10-29 16:48:51.715594	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2797	325	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:49:58.286383	2026-10-29 16:49:58.284503	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2798	333	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:50:32.022799	2026-10-29 16:50:32.021078	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2799	325	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:51:00.905875	2026-10-29 16:51:00.904918	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2800	322	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:51:35.246591	2026-10-29 16:51:35.245056	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2801	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:52:07.515873	2026-10-29 16:52:07.515096	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2802	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:52:30.091615	2026-10-29 16:52:30.089378	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2803	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:52:55.252955	2026-10-29 16:52:55.251324	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2804	334	596	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:53:22.333279	2026-10-29 16:53:22.332402	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2	1	7	\N	1441185365YU72B	14	49	2023-01-01	\N	\N	ativo	regular		t	\N	2026-03-16 06:38:22.836789	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1887	1142	418	PMS-388299	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:34:35.748525	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1931	1108	3	PMS-388456	4AG97QF13	1	1	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:47:24.007748	2026-10-30 11:51:41.839903	2023	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1888	1106	383	PMS-203384	47498	226	405	\N	\N	\N	sobressalente	boa		t	\N	2026-10-23 16:41:30.535371	2026-10-30 11:51:41.839903	2014	t	aquisicao	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1714	4	4	PMS-392894	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:05.834244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1889	1142	495	PMS-03181	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:50:38.591643	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1849	4	1	PMS-393552	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-21 15:27:28.757043	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1953	466	390	PMS-235656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:56:44.468849	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1897	1142	630	\N	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:17:58.686228	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1850	4	4	PMS-392885	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:00:43.134073	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1846	1141	1	PMS-393577	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-10-16 14:05:07.947398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1936	1143	418	PMS-341059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:23:23.025204	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1855	1141	513	PMS-12345	12345	309	604	\N	0.00	\N	inservivel	\N		t	\N	2026-10-22 10:53:38.777765	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+33	5	1	PMS-177733	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-04-27 22:27:29.576068	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+34	5	1	PMS-173869	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:28:33.507343	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+35	5	1	PMS-173867	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:29:33.593876	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+36	5	1	PMS-163105	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:33:50.134353	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+37	5	1	PMS-177753	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:36:05.192764	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+38	5	1	PMS-163381	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:38:18.56822	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+39	5	1	PMS-141434	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:41:30.598743	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+40	5	2	PMS-178156	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:51:01.939294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+41	5	1	PMS-163309	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 22:52:20.993275	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+42	5	4	PMS-152411	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-27 23:02:05.026888	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+43	5	4	PMS-307055	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:05:01.134323	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+44	5	4	PMS-308310	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:10:43.339511	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+45	5	4	PMS-154211	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:14:03.246845	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+46	5	4	PMS-295189	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:20:58.006934	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+47	5	4	PMS-201646	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:27:17.380685	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+48	5	4	PMS-155990	\N	8	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-27 23:28:41.915563	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+49	5	4	PMS-234462	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:11:37.009089	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+50	5	4	PMS-155799	\N	10	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:12:49.470043	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+51	5	4	PMS-308348	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:30:03.974334	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+52	5	4	PMS-146650	\N	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:31:33.47996	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+53	5	4	PMS-305819	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:44:50.106661	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+54	5	4	PMS-203531	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:45:32.701498	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+55	5	4	PMS-313186	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-04-28 00:46:37.814771	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1943	1143	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:54.390444	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1937	1143	418	PMS-377865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:24:08.878608	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1902	1108	495	PMS-297586	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:37:40.398387	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1884	1106	418	PMS-387920	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 15:08:24.630321	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1932	1108	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Patrimônio ilegível	t	\N	2026-10-26 11:31:12.176692	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	42ab12c5a7d345bbb7aa76b8e2584879.jpg
+1885	1106	390	\N	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:26:25.991517	2026-10-30 11:51:41.839903	\N	t	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	fe5de8cd9c264a06b46d6b50d1b75db6.jpg
+1903	1142	1	PMS-307873	\N	3	663	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:42:37.070306	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1886	1142	3	PMS-151393	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 16:28:48.311601	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1908	1142	4	PMS-305751	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:54:57.349722	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1910	1142	418	PMS-388301	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:56:26.361482	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1933	1108	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Patrimônio ilegível	t	\N	2026-10-26 11:31:59.13568	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	130b866429264fdba7b29b366b95ddcd.jpg
+1915	1142	4	PMS-261165	\N	2	664	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:01:03.280399	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1923	1142	4	\N	8RG1471CTT	2	665	\N	\N	\N	inservivel	\N		t	\N	2026-10-23 19:07:34.195042	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1938	1143	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:24:36.626133	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1925	1108	418	PMS-387847	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:08:25.346011	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1928	1142	391	PMS-381065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:31:47.617075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1950	127	418	PMS-388064	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 17:45:13.2242	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1934	1108	495	\N	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 11:34:11.025653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	ea73aa3d2777465595c97f4e78d652b9.jpg
+1939	1143	573	PMS-354648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:27:20.062123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1935	1143	605	PMS-394415	\N	20	666	\N	\N	\N	ativo	boa	BRANCA, 127V	t	\N	2026-10-26 13:22:13.047224	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1944	1143	613	PMS-381086	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:32:18.38484	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1940	1143	573	PMS-354662	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:27:48.343118	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1941	1143	573	PMS-354651	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:04.363108	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1947	1144	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 16:27:01.053648	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1949	127	495	PMS-362690	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:41:36.363827	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1952	127	537	PMS-390254	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:54:56.243872	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1954	466	553	PMS-382953	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:58:00.411831	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1957	466	418	PMS-388069	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:01:59.625837	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1958	466	418	PMS-388070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:02:38.678848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1959	466	418	PMS-388065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:03:12.013892	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1963	466	418	PMS-388061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:05:37.470953	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1964	466	418	PMS-388063	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:06:20.148951	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1926	1108	495	PMS-298796	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:09:12.22418	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1851	4	1	PMS-393562	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:01:45.278076	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+10	1	1	PMS-366235	BRJ2371QQS	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 21:36:14.166845	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+11	1	1	PMS-366991	BRJ23822HF	2	131	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:20:57.373529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+12	1	5	PMS-372264	AF112243056322	10	132	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:22:00.889799	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1243	107	1	PMS-208463	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:08.543633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+346	955	4	PMS-376391	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:50:23.140995	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1890	1142	1	PMS-208508	\N	2	\N	\N	\N	\N	ativo	boa	HP ELITE	t	\N	2026-10-23 16:59:39.93764	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+355	983	4	PMS-123131	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:46:53.835179	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1927	1108	418	PMS-387846	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:10:58.041958	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1893	1142	4	PMS-305685	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:08:11.673839	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+460	744	4	PMS-236956	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:30:41.300504	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+462	744	4	\N	BEJE2011PX	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:31:00.449045	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+465	989	1	PMS-174098	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:32:57.427973	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+467	989	4	PMS-367209	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:35:42.136322	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+472	5	4	\N	S38971A002074	8	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:28:07.206383	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+474	5	1	PMS-178482	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:31:20.710837	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1895	1142	476	\N	\N	380	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:13:47.0856	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1956	466	565	PMS-354571	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:00:52.797972	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1905	1142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:46:01.603287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1929	1142	391	PMS-381061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:32:14.95107	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1907	1142	418	PMS-388302	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:48:30.776002	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1912	1142	418	PMS-388300	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:58:07.290919	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+512	204	4	PMS-376357	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:24.908623	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1914	1142	2	PMS-162910	\N	2	2	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:59:31.38301	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1930	1142	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Cinza	t	\N	2026-10-23 19:33:06.520409	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1917	1108	476	PMS-298302	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:02:47.525239	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1918	1108	495	PMS-321228	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:03:47.09864	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1924	1108	495	PMS-298793	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:07:54.905329	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+356	983	4	PMS-317071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:03.350231	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1942	1143	573	PMS-354650	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:28:25.864358	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+449	751	4	PMS-367211	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:44.845404	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+454	732	4	PMS-376230	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:26:38.632161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+469	746	4	PMS-376232	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:29.549606	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+475	5	1	PMS-178469	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:32:02.854159	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1945	1143	390	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:32:56.965778	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+491	213	4	PMS-155356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:08.591294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1978	466	495	PMS-386730	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:13:38.107146	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1946	1143	594	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 13:34:13.706705	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+506	206	4	PMS-367298	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:56.113361	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1962	466	418	PMS-388062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:04:53.217325	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+510	206	4	PMS-367307	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:38.643853	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+514	204	4	PMS-367299	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:41.574123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+522	981	4	PMS-376420	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:12:56.684143	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1948	1144	551	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 16:27:38.191289	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1951	127	436	PMS-389833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 17:53:35.441968	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1969	466	476	PMS-155065	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:10:36.264623	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+352	960	4	PMS-392805	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:44:40.41178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+481	208	4	PMS-155366	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:15:51.450848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+361	962	1	PMS-163403	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:49:51.644223	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+484	203	4	\N	BRG147183V	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:34.143775	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+504	206	4	\N	VHC6683	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:34.954071	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+490	213	1	PMS-301781	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:27:54.013702	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+517	214	1	PMS-178359	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:42:48.925195	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+536	197	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:23:49.12761	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+535	197	1	PMS-163094	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:23:18.271125	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+537	194	1	PMS-208431	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:24:43.377351	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2340	1106	655	PMS-387636	1752726	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:34:48.879523	2026-10-30 11:51:41.839903	2024	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2346	125	390	PMS-387588	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:38.220085	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2463	220	1	PMS-208423	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:32:46.961732	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2474	141	436	PMS-389835	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:37:13.01192	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2476	220	4	PMS-342912	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:37:43.949185	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2366	1150	515	PMS-399411	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:04:50.341898	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+531	171	4	PMS-208560	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:15.920845	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1244	107	4	PMS-208740	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:15.502682	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+538	194	4	PMS-152527	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:24:50.691783	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+13	1	4	PMS-376247	BRC2520429	2	133	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:25:05.591468	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1976	466	495	PMS-386752	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:12:56.359152	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1899	1108	495	PMS-297571	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:22:43.663344	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+75	657	4	PMS-392949	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:59:17.927693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+360	961	4	PMS-295808	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:49:32.277937	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+451	751	4	PMS-273549	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:23:06.594015	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+458	743	4	PMS-238093	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:30:13.17066	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+463	989	1	PMS-366759	\N	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-29 19:32:26.869577	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+464	989	4	PMS-367179	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:32:41.91109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+473	5	4	\N	VHF3661	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 00:29:22.5684	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+487	210	4	PMS-227411	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:02.169965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+502	219	4	PMS-228580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:35:12.347637	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1919	1108	476	PMS-298725	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:04:44.054798	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+526	196	4	PMS-226663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:18:34.365973	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1852	4	4	PMS-392834	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:02:34.863627	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1853	4	4	PMS-392881	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-21 17:03:15.195589	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+340	953	4	PMS-367259	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:46:07.217757	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+452	751	4	\N	BRG1471FMC	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:23:16.927614	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+456	736	4	PMS-247359	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:29:32.823379	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+471	746	4	PMS-367223	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:37:06.511767	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1891	1142	495	PMS-001604	\N	379	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:04:59.471558	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1906	1142	418	PMS-388298	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:46:57.529084	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+529	202	4	PMS-287676	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:20:36.856484	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1894	1142	4	\N	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:10:03.275138	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1898	1142	630	\N	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:18:55.753835	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1909	1142	2	PMS-177813	\N	2	2	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:55:51.147064	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+103	28	4	PMS-367066	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:11:00.340123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+104	28	4	PMS-208730	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:12:53.36003	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+105	28	4	PMS-208632	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 21:13:54.360385	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+106	28	4	PMS-350913	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:05:32.062766	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+107	28	4	PMS-208730	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:08:11.244455	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+108	28	1	PMS-208420	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:14:06.067151	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+109	28	4	PMS-350913	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-04 22:19:19.510826	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+110	28	4	PMS-207029	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-05 17:36:13.071588	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+111	28	4	\N	30691782	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-05 17:36:46.344811	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+112	720	4	PMS-367134	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:53:41.66168	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+113	719	4	PMS-367052	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:57:36.885098	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1971	466	476	PMS-297561	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:11:16.801612	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+116	721	4	PMS-367248	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:03:01.225314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1913	1142	495	PMS-049605	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:58:48.682281	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+121	723	4	PMS-367039	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:10:26.494982	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+122	725	1	PMS-367024	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:12:25.434113	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+124	726	4	PMS-367138	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:13:43.817216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+119	724	2	PMS-177967	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:09:29.349896	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+125	725	4	PMS-367092	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:14:02.559254	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1982	466	495	PMS-338931	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:15:27.492599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+459	744	1	PMS-178141	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:30:33.208639	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+461	744	1	PMS-178343	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:30:51.600344	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+344	954	4	\N	107U00190	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:49.907053	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+485	203	1	PMS-178478	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 17:16:43.360502	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+353	983	1	PMS-195709	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:46:30.856171	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+480	208	1	PMS-316350	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 17:15:42.186592	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+486	210	1	PMS-178358	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:06:51.338975	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1983	466	495	PMS-294578	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:15:55.14407	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+501	219	1	PMS-195582	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:35:04.568881	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+519	222	1	PMS-226480	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:43:26.17374	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+524	1044	4	PMS-295419	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:17:07.969	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+523	1044	1	PMS-178437	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:16:54.660293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+532	171	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:27.852973	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+525	196	1	PMS-202325	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:18:25.865282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+528	202	1	PMS-177585	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:20:26.791036	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+530	171	1	PMS-208435	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:21:02.059999	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+534	173	2	PMS-177808	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:22:10.75631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2342	1106	655	PMS-387638	1752724	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:36.135822	2026-10-30 11:51:41.839903	2024	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2344	125	390	PMS-387589	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:16.081854	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+14	1	1	PMS-370669	BRJ2433JP9	2	131	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:26:03.766283	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+128	727	4	PMS-367154	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:17:09.224996	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+130	728	4	PMS-367044	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:20:26.497824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+138	750	4	PMS-367117	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:34:49.556216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+140	737	4	\N	BRG1471C89	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:38:00.060585	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+142	755	4	PMS-367051	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:13.616065	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1892	1142	418	PMS-377880	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:06:54.553561	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+144	758	4	PMS-367057	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:49.056327	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+147	760	4	PMS-288205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:52.699385	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1911	1142	495	PMS-001773	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:57:05.782024	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1896	1142	476	\N	\N	380	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 17:14:30.841666	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+152	768	4	PMS-278721	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:45:14.323185	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1900	1108	418	PMS-387854	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:27:21.883521	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1901	1108	476	PMS-298476	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 18:34:14.187448	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1920	1108	418	PMS-387860	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:05:22.96254	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1916	1108	418	PMS-387857	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:02:01.560514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+160	793	4	\N	504SPSL0G998	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:54:11.344538	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1245	107	4	PMS-208592	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:23.317394	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1251	9	4	PMS-308266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:13.650049	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+166	674	1	PMS-173884	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:19:51.204168	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+163	671	4	PMS-270706	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:18:21.736741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+165	673	4	PMS-297235	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:19:15.967033	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+169	675	4	PMS-261029	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:48.733146	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+171	676	4	PMS-208564	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:42.745312	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+173	676	4	PMS-208723	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:22:04.240915	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+177	976	4	PMS-270874	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:30:23.350052	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+185	973	4	PMS-222509	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:35:55.500822	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+193	975	4	PMS-208565	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:42:03.048295	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+174	677	1	PMS-163239	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:24:19.639327	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+204	930	4	PMS-234622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:08:44.913754	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+210	935	4	PMS-367244	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:10.834756	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+342	953	4	PMS-376401	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:07.410239	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1921	1108	476	PMS-298358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:05:59.166978	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+175	677	4	\N	BRG147183L	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:24:33.452618	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+542	1045	4	PMS-208554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:26:56.052636	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1922	1108	418	PMS-387862	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 19:06:59.926264	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+559	1049	4	PMS-370777	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:15.860447	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+567	1050	4	PMS-257670	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:33:39.233466	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+568	1050	4	PMS-305843	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:33:47.397525	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+572	200	4	PMS-307053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:34:50.563634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+574	200	4	PMS-305775	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:35:10.176214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+146	758	4	PMS-367067	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:50.704431	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+131	730	1	PMS-178211	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:21:09.923519	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+133	737	1	PMS-163147	BRG1471C89	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:26:26.387733	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+167	674	4	\N	BRG147103X	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:05.565152	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1980	466	495	PMS-303498	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:14:39.317949	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+134	734	4	\N	BRG14717HF	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:26:40.745563	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+170	676	1	PMS-208439	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:30.897257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+172	676	1	PMS-208441	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:21:54.325531	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+176	976	1	PMS-307950	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:30:10.376845	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+195	978	1	PMS-208447	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:44:01.013078	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+200	683	4	PMS-E2011PX	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:47:52.014672	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+354	983	1	PMS-195722	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:46:43.701136	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+594	865	1	PMS-163150	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:25:22.636693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+597	866	4	\N	8068PXV22018	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:25:51.945302	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2345	1106	655	PMS-345869	1601130	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:36:31.710091	2026-10-30 11:51:41.839903	2021	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+610	872	1	PMS-163108	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:32:01.645997	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+554	190	1	PMS-316361	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:27:58.890646	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+571	200	1	PMS-177787	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:34:32.445581	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+575	200	1	PMS-307037	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:21.443804	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+132	734	1	PMS-177706	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:24:50.471119	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+159	793	1	PMS-312423	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:53:00.348925	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+161	828	1	PMS-163145	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-08 16:44:03.857037	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+149	760	4	PMS-307025	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:44:14.018164	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+155	760	4	PMS-240734	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:17.405653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+148	760	1	PMS-164989	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:42:09.290904	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+150	760	1	PMS-202769	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:44:37.286205	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+153	760	1	PMS-307041	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:45:56.737287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+158	760	1	PMS-202604	BRG142153P	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:48:15.70592	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+157	768	1	PMS-178150	None	2	134	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:48:00.242222	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+156	768	4	PMS-367170	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:34.668611	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+547	1075	4	PMS-298435	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:03:00.244599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1246	90	2	PMS-177955	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:30:40.702307	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+615	864	4	PMS-305697	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:42:48.420873	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+617	858	4	PMS-208613	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:26.452135	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+183	972	4	\N	BRG1471FMG	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:34:57.721665	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+179	970	4	PMS-367281	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:13.026219	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+191	974	4	PMS-277590	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:41:22.834827	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+198	31	4	PMS-295717	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:47:10.78291	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+202	680	4	PMS-238414	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:49:14.360802	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+184	973	1	PMS-178357	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:35:39.022493	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+413	987	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:48:21.182324	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+362	962	4	PMS-263786	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:50:49.040138	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+381	986	4	PMS-316397	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:04:00.066391	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+15	1	4	PMS-367188	BRC2380087	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:28:38.235114	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+16	1	4	PMS-208570	BRL9223C8B	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:29:45.000008	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+17	1	4	PMS-208605	BRL9082WPF	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:00.169	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+18	1	4	PMS-208646	BRL8502FJN	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:19.313632	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+19	1	1	PMS-366692	BRJ238246N	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:30:57.919564	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+433	729	4	PMS-236968	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:16:30.223095	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+437	988	4	PMS-208737	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:18:15.431582	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+443	738	4	PMS-208610	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:34.889239	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+20	1	4	PMS-208563	BRL9082WFP	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:31:17.696222	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+180	971	1	PMS-366913	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:46.210826	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+550	1047	4	\N	BRG14717J9	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:17:40.237006	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+570	200	4	PMS-207439	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:34:22.678385	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+581	857	4	PMS-367306	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:16:34.111767	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+394	357	1	PMS-306970	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:38:45.637352	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+634	879	4	PMS-307058	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:05.437319	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+187	969	4	PMS-208635	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:37:16.896402	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+189	681	4	PMS-257480	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:38:11.794028	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+431	729	4	PMS-208609	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:11:35.635617	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2033	136	476	PMS-251072	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:53:42.376268	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+546	1046	4	PMS-376381	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:53:40.322398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+552	1048	4	PMS-367172	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:25:57.160077	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+563	185	4	PMS-370776	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:21.704506	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+576	200	4	PMS-307052	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:35:33.97581	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+585	861	4	PMS-307059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:18:06.241494	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+593	863	4	PMS-123124	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:22:21.459031	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+432	729	1	PMS-317062	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:16:19.656849	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+436	988	1	PMS-208697	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:18:07.232848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+440	747	1	PMS-178426	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:19:51.792256	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+442	738	1	PMS-208484	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:26.175631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+182	972	1	PMS-316358	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:34:40.822559	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+363	984	1	PMS-203367	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:52:22.837363	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+369	55	4	PMS-203535	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:27.843712	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2043	1105	418	PMS-387870	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:09:13.624009	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+580	857	1	PMS-178189	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:16:20.589155	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+587	862	4	PMS-203525	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:19:05.621129	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+589	862	4	PMS-316417	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:19:21.902274	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+591	863	4	\N	BRG1471DNG	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:21:42.561282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+590	863	1	PMS-177647	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:21:27.951194	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+592	863	1	PMS-163427	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:22:01.900449	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+598	867	1	PMS-155882	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-10 18:26:31.232523	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+599	867	4	\N	BEJL1942HT	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:26:47.66023	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+606	871	4	\N	VHB8362	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:24.114315	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+602	869	2	PMS-165748	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:27:52.461107	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+612	859	1	PMS-177788	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:39:51.702916	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+616	858	1	PMS-208443	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:15.108033	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+630	1051	3	PMS-156768	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:01.473529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+541	1045	1	PMS-208429	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:26:41.624331	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+549	1047	1	PMS-163462	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:17:19.38112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+569	200	1	PMS-307039	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:34:12.400215	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+573	200	1	PMS-177738	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:02.692391	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+636	879	1	PMS-202548	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:34.350668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+425	9	5	PMS-372306	None	10	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 18:00:16.411934	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+548	1075	1	PMS-307874	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:03:24.763724	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1248	9	4	PMS-367228	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:57.885428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+21	1	4	PMS-208681	BRL8502G25	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:03.683424	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+633	879	4	PMS-119351	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:56.587033	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+181	971	4	PMS-367278	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:34:06.277584	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+365	968	4	PMS-367271	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:16.664567	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+201	680	1	PMS-178169	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:49:06.144413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+188	681	1	PMS-177682	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:38:01.247681	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+190	974	1	PMS-178220	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:41:12.77262	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+22	1	4	PMS-208544	BRL9082WKZ	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:38.537633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+397	357	4	PMS-249580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:39:27.86361	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+427	645	4	PMS-236966	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:32.988862	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+429	645	4	PMS-367199	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:53.622445	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+197	31	1	PMS-163199	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:46:57.156282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+544	1045	4	PMS-376258	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:27:17.01565	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+555	190	4	PMS-BRG1471F0V	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:28:11.104784	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+561	1049	4	PMS-287657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:40.325557	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+387	353	4	PMS-203552	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:32:59.968507	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+611	872	4	PMS-141773	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:32:10.540817	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+613	859	4	PMS-316419	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:40:25.995941	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+635	879	4	PMS-146604	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:57:15.168847	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+196	978	4	\N	BRG14717VS	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:44:10.159508	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+402	360	1	PMS-203563	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:41:41.228553	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+206	931	4	PMS-301013	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:09:33.891882	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+208	932	4	PMS-235862	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:10:29.853318	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+404	361	1	PMS-305314	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:42:29.257777	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+212	935	4	PMS-367216	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:32.266175	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+214	934	4	\N	BRG1471FMR	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:13:28.495509	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+216	941	4	PMS-367241	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:14:42.926402	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+220	948	4	PMS-367242	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:16:14.573805	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+222	936	4	PMS-208604	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:18:42.165428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+224	936	4	PMS-234652	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:19:01.729635	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+412	987	1	PMS-306972	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:48:11.519962	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+226	940	4	\N	BRG1120RC8	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:19:42.544068	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+228	938	4	\N	BRG1090PZ5	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:20:17.209797	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+230	947	4	PMS-234621	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:35:31.163282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+232	979	4	PMS-367182	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:37:51.789807	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2009	1146	1	PMS-208499	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:42:46.771423	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+213	934	1	PMS-280045	None	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 15:13:18.079455	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2025	136	507	PMS-251327	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:49:16.956477	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+219	948	1	PMS-163089	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:15:58.978076	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+221	936	1	PMS-208480	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:18:02.912916	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+223	936	1	PMS-178128	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:18:52.829598	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+227	938	1	PMS-316351	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:20:08.746475	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+229	947	1	PMS-163327	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:35:05.703006	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+366	968	4	PMS-346002	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:31.414074	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+426	645	1	PMS-178355	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:10:20.662333	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+192	975	1	PMS-208438	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:41:48.204157	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+379	964	4	PMS-367178	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:35.356174	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+595	865	4	PMS-297213	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:25:32.865501	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+583	860	2	PMS-177848	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:17:27.063981	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+584	861	1	PMS-202480	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:17:52.630163	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+601	868	4	\N	VHC1895	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:27:26.3257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+600	868	1	PMS-173879	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:27:14.562799	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+605	871	1	PMS-163379	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:30:14.137021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+609	874	2	PMS-177791	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:31:12.516128	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+623	1051	4	PMS-367270	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:18.443883	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+625	1051	4	PMS-295194	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:40.694829	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+627	1051	4	\N	906SPED22084	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:55:25.976125	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+626	1051	1	PMS-178325	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:54:58.926302	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+629	1051	4	\N	BRG1471FFR	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:55:47.125855	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+631	879	2	PMS-177860	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:56:31.093562	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+564	163	1	PMS-308048	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:31:47.692359	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+565	163	4	PMS-139001	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:59.753886	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+577	200	1	PMS-173999	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:35:42.393884	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1250	9	4	PMS-367217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:07.169341	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+236	939	4	PMS-376252	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:40:22.91616	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1257	1080	4	PMS-392969	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:33:57.471516	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+238	939	4	PMS-239976	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:40:55.397396	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+240	939	4	PMS-208735	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:41:42.177266	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+242	946	4	PMS-235847	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:42:39.842042	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+244	643	4	PMS-367168	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:51:35.54797	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+405	361	4	PMS-249036	None	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:42:38.502167	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+248	642	4	PMS-367059	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:53:48.508677	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+250	642	4	PMS-367077	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:54:11.5553	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+252	642	4	PMS-367157	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:55:13.487184	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+255	635	4	PMS-367099	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:51.966426	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+23	1	4	PMS-376248	BRC306036J	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:32:43.969333	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+257	635	4	PMS-367070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:57:32.232846	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+260	635	4	PMS-367088	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:12.576074	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+262	635	4	PMS-367151	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:41.640528	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+266	626	4	PMS-367137	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:01:30.953439	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+270	625	4	PMS-367094	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:20.430298	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1883	1112	649	PMS-298785	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 14:19:46.062632	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+272	624	4	PMS-367103	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:56.92744	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+274	623	4	PMS-367141	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:05:46.010548	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+24	1	1	PMS-366722	BRJ238232	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:34:32.073427	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+278	621	4	PMS-367595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:07.101021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1604	1011	4	PMS-367245	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:34:38.201448	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+280	619	4	PMS-367041	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:59.924862	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+282	618	4	PMS-367093	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:08:42.700199	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+284	617	4	PMS-367047	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:09:20.678833	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+286	615	4	PMS-367083	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:18.166971	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+288	615	4	PMS-367095	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:40.058314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+290	614	4	PMS-367251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:11:29.804905	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+292	36	4	PMS-367183	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:12:17.668266	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+298	647	4	PMS-208585	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:33:17.441083	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+308	651	4	PMS-253642	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:47:05.614493	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+324	980	4	PMS-208586	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:06:11.141178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+328	654	4	PMS-376236	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:07:40.734241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+330	654	4	PMS-208729	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:08:07.332987	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+367	968	4	PMS-367308	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:39.829428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+375	964	4	PMS-367327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:01:42.474161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+377	964	4	PMS-367276	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:13.488462	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+393	356	4	PMS-298352	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:35:17.630525	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2028	134	490	PMS-251317	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:50:28.252942	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+407	369	4	PMS-376250	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:43:49.916693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+439	747	4	PMS-236938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:19:33.70724	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+441	747	4	PMS-234071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:02.374201	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+294	613	4	PMS-367160	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:13:11.157926	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+234	943	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:39:07.453158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+235	939	1	PMS-305463	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:40:08.854025	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+239	939	1	PMS-208695	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:41:12.08072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2032	134	490	PMS-251309	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:52:36.314227	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+268	622	4	PMS-367147	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:02:22.149643	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+273	623	1	PMS-208458	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:05:07.195858	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2036	1105	391	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:58:27.919662	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	4c523191eacb4e96b351040468f9ff07.jpg
+276	632	4	PMS-367085	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:23.004965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+264	638	4	\N	11100334	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:00:33.521741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2037	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:01:14.080257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	9ead5e2a186b4eb29867c239ee7e4756.jpg
+246	643	4	PMS-367050	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:52:43.862018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+263	638	1	PMS-141562	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 16:00:20.580303	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2038	1105	573	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:02:23.024712	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	351e5baa1c724da39ea032de84f7eeeb.jpg
+247	642	1	PMS-307975	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:53:22.063863	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+295	646	1	PMS-163437	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:23:44.706171	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+311	658	1	PMS-178309	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:51:15.676611	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2023	136	507	PMS-251329	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-26 18:48:27.211369	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+296	646	4	PMS-240731	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:32:41.592276	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+25	1	4	PMS-208642	BRL8502G0R	2	3	\N	\N	\N	ativo	boa		t	\N	2026-03-18 22:37:31.583099	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+26	1	4	PMS-208550	BRL9082WPY	2	3	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-18 22:38:57.641216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+332	656	4	PMS-376386	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:01.252842	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+334	656	4	PMS-208584	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:22.41335	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+371	55	4	PMS-376390	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:55.573174	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+411	362	4	PMS-376215	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:45:45.724569	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+389	353	4	PMS-220274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:33:17.403712	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+409	352	4	PMS-376257	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:44:27.116116	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+424	364	4	PMS-367284	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:57.323858	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+385	351	1	PMS-177628	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:32:02.940547	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+435	731	4	PMS-367226	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:17:11.40112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2021	134	418	PMS-389539	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COR PRETA	t	\N	2026-10-26 18:47:35.936097	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+445	739	4	PMS-367219	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:15.301795	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+447	740	4	PMS-367246	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:56.250773	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+392	356	1	PMS-178312	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:35:03.483413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+300	648	4	PMS-376224	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:34:52.949213	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+306	650	4	\N	BRG147183B	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:46:26.21618	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+395	357	4	PMS-306976	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:39:00.098412	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+320	655	4	PMS-293610	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:03:52.412795	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+312	658	4	PMS-295752	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:51:24.050058	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+316	655	4	PMS-367287	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:54:03.190999	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+638	364	3	PMS-303966	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-16 00:33:29.491398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1881	1111	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-23 12:56:57.106581	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e2f2c1d7f92f485cb24a8d5ceed75e58.jpg
+241	946	1	PMS-301746	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:42:24.355638	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+637	722	4	\N	BRG14717HM	9	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-15 23:49:52.078421	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2018	136	418	PMS-389545	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COR PRETA	t	\N	2026-10-26 18:46:45.741457	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+644	709	4	PMS-207064	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:24:49.509316	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+646	709	4	PMS-367257	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:25:36.377761	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+648	710	4	PMS-294992	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:31:00.635189	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+650	1063	4	\N	BRG1471885	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:37:21.196288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+652	1064	4	PMS-367332	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:04.00123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+653	1064	4	PMS-367265	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:34.136002	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+657	713	4	PMS-146595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:41:32.87026	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+659	714	4	PMS-308251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:41:54.554405	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+661	714	4	PMS-235655	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:09.387609	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+663	715	4	PMS-281683	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:28.205637	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+665	715	4	PMS-305805	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:42:42.989589	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2031	134	490	PMS-251311	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:52:06.288922	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+302	649	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:39:36.655029	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+430	729	1	PMS-208485	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:11:21.924153	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+438	747	1	PMS-163105	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:19:24.081321	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+297	647	1	PMS-305348	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:33:06.976769	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+301	649	1	PMS-316357	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:39:17.961642	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+310	652	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:50:53.973195	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2034	1105	418	PMS-387867	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 18:54:25.951312	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+305	650	1	PMS-163352	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:46:08.10523	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+309	652	1	PMS-316392	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:47:25.649416	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+319	655	3	PMS-174352	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:03:44.513437	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+322	662	4	\N	BRG147184B	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:04:35.676852	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+326	653	4	\N	BRG1471FN4	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:06:51.737571	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+323	980	1	PMS-208461	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:05:48.727848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+325	653	1	PMS-177758	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 17:06:42.72579	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+329	654	3	PMS-174590	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:07:55.552315	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+655	712	4	\N	BRG1471888	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:40:57.769282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+333	656	1	PMS-208459	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:09:12.612181	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+380	986	1	PMS-173933	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 18:03:47.492244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+647	710	1	PMS-177664	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:30:55.019621	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+654	712	1	PMS-307857	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:40:49.854358	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+667	716	4	\N	VHF4731	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:43:00.955492	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+656	713	1	PMS-177590	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:41:26.172371	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+658	714	1	PMS-173895	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:41:48.704969	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+660	714	1	PMS-163096	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:04.672913	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+662	715	1	PMS-163300	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:23.138066	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+666	716	1	PMS-163344	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:56.854979	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2016	136	418	PMS-389546	\N	384	\N	\N	\N	\N	ativo	boa	CADEIRA COM ENCOSTO E ASSENTO PRETO	t	\N	2026-10-26 18:45:39.505117	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+669	1065	4	PMS-316427	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:24.891143	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+673	711	4	PMS-149204	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:08.509981	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+685	39	4	PMS-208633	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:50.030897	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+688	907	4	PMS-208634	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:38:46.76368	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+690	891	4	PMS-256714	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:42:42.836416	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+708	899	4	PMS-203547	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:31.860841	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+712	909	4	PMS-256696	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:02.844042	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+722	911	4	PMS-370774	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:45.878629	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+730	1068	4	PMS-312417	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:09:44.83476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1255	89	4	PMS-376378	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:45.784738	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+670	711	1	PMS-163134	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:44:39.126755	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1256	1080	1	PMS-393614	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:33:52.437775	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+27	1	1	PMS-174057	BRG204FQ2D	2	134	2025-01-01	\N	\N	inservivel	\N		t	\N	2026-03-18 22:42:24.051872	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+683	39	1	PMS-208507	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:39.08213	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2048	1105	495	PMS-337942	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:11:11.105301	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+687	907	1	PMS-208509	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:38:35.162838	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1613	1014	1	PMS-208693	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:55.272424	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+711	909	1	PMS-177659	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:57.211022	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1616	1015	4	PMS-208600	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:35.991972	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+725	911	1	PMS-316363	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:07:04.228904	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+735	903	1	PMS-163399	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:10:53.920364	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1622	1017	4	PMS-264277	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:15.311722	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1631	1024	1	PMS-163112	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:42:47.755324	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1636	1024	4	\N	VF60014	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:46:07.495648	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+28	1	1	PMS-174052	BRG204FPZJ	2	134	2025-01-01	\N	\N	inservivel	\N		t	\N	2026-03-18 22:43:13.901294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1634	1024	4	\N	KEJ65IA000439	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:45:50.392107	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1632	1024	4	PMS-264888	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:43:19.334445	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1640	1026	2	PMS-177933	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:50:08.716816	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1645	1029	4	PMS-208599	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:51:25.332444	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+30	1	4	PMS-376220	\N	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:31:04.301257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+31	1	4	PMS-376253	\N	2	133	2025-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:32:08.57237	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+32	28	1	PMS-379330	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-27 22:11:51.715607	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+56	28	1	PMS-366794	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:47:05.927695	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+57	28	1	PMS-376186	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:49:20.872476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+58	28	1	PMS-376325	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 18:50:52.248965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+59	657	1	PMS-393163	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:47:50.428248	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+60	657	4	PMS-392668	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:48:38.359475	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+61	657	4	PMS-392669	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:48:56.367642	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+62	657	1	PMS-393171	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:49:47.322302	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+63	657	4	PMS-392675	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:50:17.225279	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+64	657	4	PMS-392672	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:50:43.874035	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+65	657	4	PMS-392933	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:51:20.556479	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+66	657	4	PMS-392955	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:51:48.63904	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+67	657	1	PMS-393705	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:52:31.787037	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+68	657	4	PMS-392950	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:52:59.30194	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+69	657	4	PMS-392935	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:53:45.64257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+70	657	1	PMS-393699	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:54:24.954994	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+71	657	4	PMS-392957	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:55:02.250311	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+72	657	4	PMS-392939	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:57:45.426844	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+73	657	1	PMS-393678	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:58:41.464331	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+74	657	4	PMS-392934	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 21:59:00.086757	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+76	657	1	PMS-393681	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:01:46.880056	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+77	1113	4	PMS-392914	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:02:09.56456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+78	1113	4	PMS-392903	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:02:34.252203	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+79	657	1	PMS-393559	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:03:03.75216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+80	657	4	PMS-392892	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:04:03.506269	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+81	657	4	PMS-392866	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:04:32.187285	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+82	1113	1	PMS-393557	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:15.297536	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+83	1113	4	PMS-392870	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:36.567224	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+84	1113	4	PMS-392917	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:05:57.674167	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+85	657	1	PMS-393640	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:06:27.308543	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+86	657	4	PMS-392937	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:34:14.297601	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+87	657	4	PMS-392772	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:34:50.120436	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+88	1113	1	PMS-393571	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:35:42.427796	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+89	1113	4	PMS-392891	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:36:03.435869	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+90	1113	4	PMS-392913	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:36:24.769257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+91	657	1	PMS-393568	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:37:23.822646	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+92	657	4	PMS-392869	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:37:48.480063	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+93	657	4	PMS-392915	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:38:15.725423	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+94	657	1	PMS-393549	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:38:44.182097	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+95	657	4	PMS-392899	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:39:11.510148	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+96	657	4	PMS-392902	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:39:34.066523	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+97	657	1	PMS-393554	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:04.752773	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2056	1105	418	PMS-389555	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:17:10.001818	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+671	711	4	PMS-207500	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:50.475622	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+681	39	4	PMS-235083	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:25.398079	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+692	892	4	PMS-257705	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:07.136944	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+694	893	4	PMS-305707	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:25.053887	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+696	894	4	PMS-227410	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:43:51.472209	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+702	897	4	PMS-208636	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:42.741344	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+744	262	4	PMS-367110	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:15:13.077132	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2070	1105	390	PMS-298763	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:29:55.63724	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+750	266	4	PMS-367104	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:28.067158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2077	1105	390	PMS-352888	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:38:39.358456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+678	1066	1	PMS-307879	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:46:40.712663	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2510	140	476	PMS-387695	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:57.314964	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+684	39	4	PMS-367316	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:45.098257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2081	1105	391	PMS-188446	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:40:37.292381	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+728	1067	4	PMS-302180	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:08:52.716122	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+701	897	1	PMS-208511	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:38.42554	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2347	105	583	PMS-365606	\N	292	\N	\N	\N	\N	ativo	boa	150l	t	\N	2026-10-27 18:37:25.80299	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+709	909	1	PMS-306969	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:42.427338	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+713	909	1	PMS-177674	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:47:09.228312	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2626	144	418	PMS-388284	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:15:55.901662	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2351	1106	383	PMS-204015	CK54032330	229	673	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:44:10.514234	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+729	1068	1	PMS-163223	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:09:38.46832	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2513	130	537	PMS-390206	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:56.631692	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2548	474	594	PMS-238584	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:27:29.888846	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1662	1109	4	PMS-376223	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:04:32.943029	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1742	141	4	PMS-376404	\N	2	\N	\N	\N	\N	ativo	boa	POSSUI 2 PATRIMÔNIOS 376404 e 381247	t	\N	2026-09-17 22:40:16.668286	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2468	457	1	PMS-208425	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:34:22.679964	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2471	220	4	PMS-208617	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:36:08.549921	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2524	24	537	PMS-389296	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:31.953235	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2478	133	436	PMS-389834	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:15.899675	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2486	125	1	PMS-201772	\N	401	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:40:03.363662	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2489	125	605	PMS-154456	\N	16	680	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:42:46.768796	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2532	140	651	PMS-203057	\N	403	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:10:12.271422	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2490	1105	495	PMS-389151	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:43:03.979708	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1687	466	4	PMS-301042	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:36:02.959218	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1691	466	1	PMS-208483	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:45:34.21926	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1692	466	4	PMS-208594	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:53:11.947134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1696	466	4	PMS-317065	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:08:20.823182	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2495	133	651	PMS-164406	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:47:08.235827	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2553	474	594	PMS-62119	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:32:33.870819	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2498	1147	601	PMS-393154	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:49:38.847667	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1737	130	4	PMS-367238	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:35:50.167109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1744	2	1	PMS-305499	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:26:47.166826	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2353	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:48:21.299061	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	1edc8ce33fc14a02864f79200b18d54e.jpg
+1751	68	4	PMS-367200	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:12.358862	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2534	140	507	PMS-14483	\N	328	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-28 14:11:27.349944	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2564	24	537	PMS-394285	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:43:07.345383	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1761	223	4	PMS-367357	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:36:58.852392	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2536	174	511	PMS-318777	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:13:04.278515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1765	381	4	PMS-376359	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:58.28597	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2537	142	488	PMS-392269	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:13:12.702925	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2541	142	418	PMS-389544	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:18:12.432212	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2569	142	418	PMS-386690	\N	4	\N	\N	\N	\N	ativo	boa	AZUL	t	\N	2026-10-28 14:46:31.365973	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2545	180	513	PMS-300794	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:21:47.376866	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2547	474	594	PMS-374741	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:25:40.10423	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2607	142	651	PMS-173432	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 18:51:01.185014	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2574	142	4	PMS-249968	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:50:18.659825	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2620	142	605	PMS-134104	\N	408	\N	\N	\N	\N	inservivel	\N		t	\N	2026-10-28 19:05:06.361685	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2639	144	1	PMS-306959	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:37:59.015262	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2640	144	4	PMS-297533	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:38:57.594113	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2644	144	428	PMS-286071	\N	224	\N	\N	\N	\N	ativo	boa	O EQUIPAMENTO TAMBEM TEM OUTRO PATRIMONIO 114635	t	\N	2026-10-28 19:44:47.268273	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2646	144	656	PMS-285266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:47:06.228533	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2647	144	381	PMS-251339	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:49:35.773273	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2649	144	507	PMS-249983	\N	328	582	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:52:10.528784	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2652	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:56:12.621266	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+679	1066	4	PMS-245459	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:46:58.297583	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+682	39	4	PMS-367221	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:32.548595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+698	895	4	PMS-208639	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:11.705729	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+704	897	4	PMS-208637	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:53.693333	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+706	898	4	PMS-232636	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:12.509648	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+710	909	4	\N	504SPTM0H017	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:46:48.361877	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+716	908	4	PMS-376380	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:38.17841	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+720	910	4	PMS-367293	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:48:56.614595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+724	911	4	PMS-203536	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:56.613927	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+736	903	4	PMS-317070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:11:02.070175	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2010	136	495	PMS-254021	\N	\N	\N	\N	\N	\N	ativo	boa	MESA COM 2 PATRIMÔNIOS - 104437	t	\N	2026-10-26 18:43:14.641479	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+740	254	1	PMS-376235	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:35.495826	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+742	261	4	PMS-146666	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:56.094339	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+748	276	4	PMS-367139	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:07.665645	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2066	1105	390	PMS-298758	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:26:41.385651	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+672	711	1	PMS-301002	None	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-17 00:45:02.342735	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+689	891	1	PMS-173873	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:42:36.487009	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+695	894	1	PMS-163412	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:42.656242	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2071	1105	418	PMS-334187	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:31:48.851214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+697	895	1	PMS-208513	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:04.805561	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1777	1120	4	PMS-367295	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:46:18.121961	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+727	1067	1	PMS-163200	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:08:47.234159	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+707	899	1	PMS-174026	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:26.227903	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1779	382	4	PMS-367353	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:13.987051	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+717	910	1	PMS-174066	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:47:52.28041	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1783	227	1	PMS-163060	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:49:22.461311	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1784	227	4	PMS-289439	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:49:29.620848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+723	911	1	PMS-203568	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:06:51.179217	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2072	1105	390	PMS-298346	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:35:58.276492	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+731	900	1	PMS-208514	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:18.687722	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2080	1105	495	PMS-386768	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:40:17.359393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2508	1114	511	PMS-395795	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:04.8633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2085	1105	418	PMS-387868	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:47:49.445623	2026-10-30 11:51:41.839903	1900	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2086	1105	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:53:32.978448	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1688	466	1	PMS-316381	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:37:50.66567	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1694	466	4	PMS-169768	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:04:02.508861	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1695	466	1	PMS-208433	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:07:11.414613	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1697	466	4	PMS-305713	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:11:32.566803	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2087	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:53:51.240445	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2151ac84607147be9b5f3db9ed645415.jpg
+2348	1106	655	PMS-345868	1602234	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:37:46.101018	2026-10-30 11:51:41.839903	2021	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2503	140	418	PMS-389548	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:59:11.952899	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1736	127	4	PMS-308068	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:34:45.289655	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1741	141	1	PMS-376286	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:39:23.125527	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1743	466	1	PMS-202395	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:45:45.575219	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1745	2	4	PMS-367302	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:27:05.784201	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2492	474	1	PMS-200909	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:44:49.102385	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1747	3	4	PMS-367363	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:08.92308	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2487	125	1	PMS-174045	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:40:36.52365	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2357	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:50:17.852597	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3835b08f8956483c8c913aff265f02a7.jpg
+1757	71	4	PMS-367358	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:35:25.069571	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1763	381	4	PMS-367165	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:16.071367	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2473	125	656	PMS-251353	\N	\N	\N	\N	\N	\N	ativo	boa	Tampo em granito	t	\N	2026-10-28 13:36:15.956494	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1788	1121	4	PMS-367192	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:12.024859	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2363	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:59:09.420469	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3da6d362ff4a4986ab6b8dc08fccd6a7.jpg
+1790	109	4	PMS-367176	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:49.4092	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2488	125	418	PMS-167745	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:42:04.426685	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1796	1123	4	PMS-367333	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:48:23.188604	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1797	1124	1	PMS-166432	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:48:53.520016	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1799	1126	1	PMS-177774	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:49:43.099387	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1801	1127	1	PMS-208692	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:50:16.244307	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2358	1150	515	\N	\N	344	675	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:53:55.391607	2026-10-30 11:51:41.839903	2016	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	bbd6cbfbd25b4f64bce061d8baaeeafd.jpg
+2496	180	601	PMS-399354	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:48:18.698476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2355	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:49:06.528837	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	4beb0bd9de3f4671acb5d6bfd8245a2e.jpg
+2518	140	1	PMS-307870	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:50.69679	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2517	24	537	PMS-394288	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:47.09119	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2514	140	495	PMS-386784	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:03:20.009977	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2519	140	4	PMS-305689	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:23.423072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2526	24	537	PMS-390209	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:54.782755	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2527	140	495	PMS-294586	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:07:24.511664	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2528	140	495	PMS-292230	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:07:58.960041	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2530	140	507	PMS-251330	\N	332	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-28 14:09:10.863521	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2531	140	4	PMS-207520	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:09:38.254107	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2533	140	1	PMS-163023	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:10:37.586196	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2539	452	404	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:15:09.37882	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+675	717	4	PMS-367214	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:28.361991	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+677	717	4	PMS-367215	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:40.244328	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+98	657	4	PMS-392859	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:28.137749	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+714	909	4	\N	190LM00019	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:16.644247	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2067	1105	390	PMS-298761	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:27:19.69633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+718	910	4	PMS-207041	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:56.362209	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+726	911	4	PMS-232608	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:07:10.246389	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+732	900	4	PMS-208638	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:24.718663	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+734	901	4	PMS-367339	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:42.802329	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+738	253	4	PMS-367121	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:16.842886	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+99	657	4	PMS-392909	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:40:57.305323	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+746	270	4	PMS-208622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:19:17.368808	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2084	1105	418	PMS-389557	\N	386	\N	\N	\N	\N	ativo	regular	Encosto um pouco solto.	t	\N	2026-10-26 19:47:36.709631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+752	826	4	PMS-367055	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:41.786738	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2073	1105	390	PMS-298760	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:36:37.55349	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+755	825	4	PMS-208623	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:40:45.590959	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+757	825	4	PMS-367068	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:01.34052	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2074	1105	495	PMS-337692	\N	378	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:37:17.196478	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+763	257	4	PMS-367072	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:43:20.126842	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+765	1069	4	PMS-367131	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:43.279276	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+767	1069	4	PMS-367082	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:55.929311	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2078	1105	390	PMS-381050	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:39:42.121393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+769	1069	4	PMS-367081	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:09.514347	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+771	258	4	PMS-367111	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:27.879961	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+773	258	4	\N	236LM00014	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:41.715178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2485	1114	4	PMS-208627	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:46.77137	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+775	258	4	PMS-367053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:55.164585	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2079	1105	418	PMS-387874	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:39:43.666393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+779	260	4	PMS-367074	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:59.884405	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2359	1150	515	\N	\N	305	606	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:56:39.626387	2026-10-30 11:51:41.839903	2011	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	aae93abc13de4934b166cf335d1b71b6.jpg
+781	267	4	PMS-295762	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:18.717645	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+783	267	4	\N	401SPYR0L426	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:31.334294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2083	1105	418	PMS-387868	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:46:07.996646	2026-10-30 11:51:41.839903	1900	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+785	559	4	PMS-271185	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:29.216931	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+759	824	4	\N	VHC3698	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:59.009629	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2479	125	474	PMS-249663	\N	400	678	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:30.311696	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+792	563	4	PMS-245570	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:59.18661	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+794	564	4	PMS-282821	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:58:16.986591	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+754	825	1	PMS-165020	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:40:38.806214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+796	565	4	PMS-310733	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:58:31.870907	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+799	567	4	PMS-208741	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:00:18.557349	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+801	568	4	PMS-246938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:08.200021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2491	1105	418	PMS-387873	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:44:10.451349	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+809	573	4	\N	BRG1471FML	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:27.335575	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+761	256	4	\N	405SPGS1N935	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:42:45.676332	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+812	558	4	PMS-367351	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:50.903109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2493	125	428	PMS-35356	\N	390	681	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:45:59.295386	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+760	256	1	PMS-174023	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:42:40.893634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+818	60	4	PMS-280691	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:36.188823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2497	475	601	PMS-280808	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:49:03.8178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+820	557	4	PMS-367282	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:52.623236	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+805	570	4	\N	BRG142153T	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:40.701625	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2499	465	605	PMS-397412	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:50:45.958345	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2356	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:49:44.175592	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	953366cd1164477ea8f3d62a558b7cb5.jpg
+791	563	1	PMS-195879	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:57:52.036353	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+793	564	1	PMS-178332	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:10.904812	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+797	566	2	PMS-162921	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:44.523157	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+798	567	1	PMS-208701	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:00:11.490774	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+800	568	1	PMS-163104	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:01.850062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2500	205	528	PMS-190924	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:53:04.822386	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2361	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:57:56.120484	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	a800317598be451882d5b08c749c7c1c.jpg
+806	571	2	PMS-177934	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:52.971072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+777	259	4	\N	BRG147187R	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:42.950793	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+808	573	1	PMS-174047	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:07:21.486551	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+810	573	2	PMS-177777	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:07:32.637456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2507	140	476	PMS-387698	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:03.27538	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2515	180	537	PMS-389299	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:03:43.8425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+817	60	1	PMS-178438	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:08:30.688941	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+691	892	1	PMS-178335	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:00.754634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+693	893	1	PMS-178404	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:43:20.288409	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+700	896	4	PMS-306949	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:44:48.706743	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+703	897	1	PMS-208512	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:45:48.308338	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+705	898	1	PMS-177721	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:46:05.844939	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2522	140	1	PMS-301315	\N	401	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:58.217916	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2525	140	4	PMS-297597	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:37.200463	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2529	174	511	PMS-162629	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:09:06.386718	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+772	258	1	PMS-331332	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:45:33.514117	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+782	267	1	PMS-208498	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:25.734696	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2068	1105	390	PMS-298762	\N	376	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:28:07.254316	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+827	557	4	PMS-294819	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:32.190631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2440	454	390	PMS-245435	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:00:16.385439	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2069	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:28:08.896317	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e916ccf236c64fb98b10df42a00a3ecc.jpg
+2075	1105	551	PMS-285487	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:37:44.441469	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+850	550	4	PMS-367097	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:27.299018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+858	554	4	PMS-367135	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:38.769219	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+866	1071	4	PMS-367133	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:15.897408	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+872	1073	4	PMS-367128	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:24.653624	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2076	1105	495	PMS-326799	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:38:16.411882	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2082	1105	476	PMS-292266	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-26 19:43:18.921342	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+826	557	1	PMS-316380	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:26.624529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2418	473	594	PMS-382934	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:12:11.492388	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2448	180	411	PMS-313573	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:16.646075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2374	1150	515	PMS-399407	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:09:27.14588	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2428	205	537	PMS-384933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:19:13.460593	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1689	466	4	PMS-245819	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:42:50.437197	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2383	125	4	PMS-310741	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:31:37.532768	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2372	1150	515	PMS-399403	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:07:54.531492	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2430	452	537	PMS-390252	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:20:36.05438	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2432	1114	537	PMS-390207	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:22:56.716296	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2450	180	411	PMS-313572	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:57.756476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2447	180	411	PMS-313574	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:15:58.016608	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1740	133	4	PMS-376345	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:38:38.21185	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1749	67	4	PMS-367338	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:56.508183	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1755	69	4	PMS-367356	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:17.967281	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1759	71	4	PMS-367364	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:36:01.804195	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1760	223	1	PMS-301592	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:36:39.019291	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1773	226	4	PMS-367311	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:43:59.251687	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1781	110	4	PMS-367361	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:48:10.353668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2516	140	418	PMS-337640	\N	402	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:04:13.653274	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2509	140	476	PMS-387697	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:01:30.249288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1792	72	4	PMS-367334	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:52:27.097864	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+520	1026	2	PMS-177971	None	2	2	\N	\N	\N	ativo	regular	Cadastrado automaticamente na transferência (termo #7) para UBS Vila Hortência.	t	\N	2026-06-07 19:59:42.528331	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1798	1124	4	PMS-207426	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:49:00.919122	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1800	1126	4	PMS-295055	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:49:56.363796	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1810	1131	1	PMS-308022	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:53:52.089901	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1813	1132	4	PMS-280892	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:54:34.769891	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1818	1117	4	PMS-208596	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:14.52755	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1831	1137	4	\N	KEJ65IA000918	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:00:04.174056	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1833	1137	4	PMS-367252	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:00:37.91937	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1835	1138	4	PMS-280674	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 16:01:22.950551	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+100	657	1	PMS-393573	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:41:29.722158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+101	657	4	PMS-392900	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:42:02.036051	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+102	657	4	PMS-392911	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-04-29 22:42:22.042149	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+115	719	1	PMS-367025	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:58:49.512328	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+118	721	1	PMS-376319	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:04:35.929592	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+120	723	1	PMS-366720	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:09:43.062701	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+123	726	1	PMS-366978	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:13:09.602844	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+127	727	1	PMS-367010	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:16:34.227988	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+129	728	1	PMS-367017	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:20:03.232357	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+135	734	1	PMS-366974	None	2	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-07 18:28:01.058823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+136	734	4	PMS-367117	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-07 18:28:31.423708	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+137	745	1	PMS-367022	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:31:58.555046	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+139	750	1	PMS-366973	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:36:06.288021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+141	755	1	PMS-307027	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:38:27.542326	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+143	758	1	PMS-366806	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:39:26.107921	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+145	758	1	PMS-366998	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:41:22.851918	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+154	768	1	PMS-366816	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:46:12.604741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+168	675	1	PMS-366892	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:20:37.633109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+178	970	1	PMS-366948	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-25 19:33:02.416714	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+209	935	1	PMS-366908	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:11:53.339336	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+211	935	1	PMS-366928	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:12:22.581526	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+215	941	1	PMS-366915	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:14:21.301361	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+217	941	1	PMS-376293	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:15:07.89351	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2511	220	511	PMS-351911	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:11.102366	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2512	140	495	PMS-386785	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:02:48.27398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2520	24	537	PMS-394328	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:27.602579	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2521	24	537	PMS-394327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:05:50.227899	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2523	24	537	PMS-384940	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:06:11.636087	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2542	142	418	PMS-389540	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:19:01.250859	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2544	142	391	PMS-387656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:20:16.341287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2549	474	594	PMS-65004	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:28:55.153799	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2552	474	594	PMS-299644	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:31:37.26719	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2555	474	594	PMS-382936	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:33:42.626655	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2567	24	537	PMS-389294	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:45:19.117955	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+824	557	4	PMS-207009	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:14.273119	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+830	541	4	PMS-367130	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:25.160059	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+832	34	4	PMS-367101	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:50.160794	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+838	544	4	PMS-367136	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:36.629759	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+840	545	4	PMS-367114	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:54.329489	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+842	546	4	PMS-367112	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:16.012941	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+846	547	4	PMS-367125	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:55.982563	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+848	549	4	PMS-367056	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:13.398067	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2113	1105	476	PMS-295320	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:03:48.911216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2088	136	495	PMS-280555	\N	\N	\N	\N	\N	\N	ativo	boa	MESA CINZA 2 GAVETAS	t	\N	2026-10-26 19:59:55.74468	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2099	1060	1	PMS-208468	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:36:06.355881	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2089	457	551	PMS-231355	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:45:15.527984	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+876	1073	4	PMS-367061	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:53.18714	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+823	557	1	PMS-173931	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:09.196919	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2090	457	551	PMS-184745	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:46:19.393635	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+825	557	2	PMS-177983	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:09:20.391221	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+186	969	1	PMS-163081	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:37:09.297928	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+388	353	1	PMS-163169	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:33:09.455956	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2105	1055	3	PMS-393324	87195911f	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:47:30.364649	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1258	730	4	\N	BRG14717HD	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:26:16.296584	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2091	457	551	PMS-184685	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 10:59:57.723493	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1259	745	4	PMS-367086	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:26:53.747258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1261	760	4	\N	BRG142153P	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:55:26.55186	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+151	768	1	PMS-178201	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:44:47.857778	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2092	220	390	PMS-239491	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:01:14.623937	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1265	1082	4	PMS-367124	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:12.633891	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1269	1083	4	PMS-367106	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:19:50.468521	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1271	1083	4	PMS-367054	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:20:17.102413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2093	465	391	PMS-387663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:02:57.062221	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+218	941	4	PMS-376388	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:15:26.641655	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1277	825	4	\N	F19L	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:28:11.358207	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1690	466	1	PMS-200976	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 19:44:57.07814	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1693	466	1	PMS-302810	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:02:26.010656	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2096	454	563	PMS-373921	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:13:13.376118	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2107	1105	495	PMS-295324	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:51:36.302475	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2115	1105	418	PMS-387872	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:13:43.023508	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2109	1060	4	\N	190LM00019	8	667	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:59:04.530154	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1735	127	1	PMS-376193	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:33:32.661969	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1739	133	1	PMS-376326	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:38:14.883106	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1766	381	4	PMS-367288	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:39:34.921017	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1768	381	4	PMS-367354	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:40:04.328586	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1771	383	4	PMS-294356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:41:24.492425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1775	225	4	PMS-367355	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:44:38.915902	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1786	1121	4	PMS-367297	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:48.928746	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1802	1127	4	PMS-208595	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:51:39.087501	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1803	1128	1	PMS-208471	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:04.867352	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1817	1117	1	PMS-173882	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:56:07.614521	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1825	1135	4	PMS-280838	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:24.765132	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+231	979	1	PMS-376202	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:37:04.831612	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+233	943	1	PMS-366881	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:38:48.426708	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+243	643	1	PMS-366802	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:51:22.203598	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+245	643	1	PMS-366902	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:52:27.962053	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+249	642	1	PMS-366818	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:53:59.556975	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+251	642	1	PMS-366785	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:55:01.869476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+253	635	1	PMS-366771	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:22.188902	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+254	635	1	PMS-366756	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:56:41.784047	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+256	635	1	PMS-366690	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:57:22.564712	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+258	635	1	PMS-366831	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:58:06.675823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+259	635	1	PMS-366831	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-26 15:58:26.876682	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+261	635	1	PMS-366685	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 15:59:27.558582	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+265	626	1	PMS-366803	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:01:11.491983	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+267	622	1	PMS-366815	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:02:06.555229	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+269	625	1	PMS-366684	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:04.168281	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+271	624	1	PMS-366711	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:03:44.066688	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+275	632	1	PMS-366699	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:14.074924	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2126	1060	448	PMS-396789	\N	388	669	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:38:08.760382	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1738	130	1	PMS-376285	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 22:37:12.557406	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+836	543	4	PMS-367107	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:18.445606	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2094	454	551	PMS-231917	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:11:10.850704	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+856	553	4	PMS-367075	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:16.034112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2097	141	418	PMS-388068	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:14:19.749485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+862	548	4	PMS-367113	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:09:42.927996	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+868	1072	4	PMS-367062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:45.565474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+870	1072	4	PMS-367142	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:57.783311	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2098	220	573	PMS-354661	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:16:08.25032	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2102	1060	1	PMS-376302	BRJ3136N1W	2	131	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:43:20.820342	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+29	1	1	PMS-393553	PE0F4LLJ	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-03-27 00:19:36.107101	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+403	360	4	PMS-306977	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:41:56.840002	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2103	1105	418	PMS-387880	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:44:42.00465	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2114	1105	495	PMS-387878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:09:02.374987	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2104	1105	418	PMS-387875	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:44:46.139687	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+863	1070	1	PMS-163273	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:10:19.664092	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+864	1070	4	\N	VHC1884	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:10:24.446462	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2106	1105	495	PMS-297554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:51:24.475471	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1267	1082	4	PMS-367058	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:39.583719	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1275	1085	4	PMS-367076	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:23:38.347153	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2110	1105	476	PMS-294562	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:01:33.789275	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1278	258	1	PMS-163080	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-31 00:35:28.564974	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+776	259	1	PMS-178334	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:46:34.917549	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1285	25	4	\N	000003	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 23:58:46.988718	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1293	400	2	PMS-177815	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:04:12.056241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1294	400	2	PMS-177982	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:04:28.823755	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1296	535	1	PMS-163195	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:06:42.841264	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1297	535	4	PMS-266181	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:06:49.924572	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1304	1087	4	PMS-216648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:15.815662	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1311	1088	4	PMS-247387	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:13.100666	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1315	1088	4	PMS-239234	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:42.733326	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1318	1088	4	PMS-232651	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:19:09.999592	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1305	1087	4	\N	BRG1471N3F	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:21.283072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1340	298	1	PMS-208493	\N	2	131	\N	\N	\N	ativo	regular		t	\N	2026-08-14 21:51:28.736471	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1306	1088	1	PMS-208491	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:43.23325	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1341	1089	1	PMS-163058	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:30:13.227728	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1342	1089	4	\N	BRG1471FN2	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:30:23.380682	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1312	1088	1	PMS-208422	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:20.266871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1317	1088	1	PMS-208515	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:54.34997	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1321	1088	1	PMS-307932	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:34:17.844276	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1324	1088	1	PMS-306989	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:34:45.794272	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1327	1088	1	PMS-177671	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:35:16.529233	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1329	1088	1	PMS-307846	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:35:38.680123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1337	481	4	PMS-155274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:26:49.537486	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1352	1093	4	PMS-367205	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:10.436334	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1335	481	1	PMS-163193	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-03 20:26:02.285219	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1290	294	3	PMS-177849	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:02:23.888506	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1338	1088	4	\N	\N	9	\N	\N	\N	\N	ativo	boa	Monitor sem identificação	t	\N	2026-08-03 21:54:44.663746	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2146	1105	495	\N	\N	385	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:06:32.170653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	e46c8b9980e94cc197dbabf275bff122.jpg
+1356	1095	4	PMS-367204	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:12.854471	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2133	1060	244	PMS-396796	\N	71	136	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:48:51.554537	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1360	1097	4	PMS-387177	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:07.123716	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1362	1097	4	PMS-256697	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:26.621577	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1368	1100	4	PMS-367193	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:54.428957	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1369	1101	1	PMS-173942	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:41:56.796459	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2151	1105	418	PMS-387877	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:13:14.463818	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1375	1103	1	PMS-307954	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:43:12.496353	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1376	1103	4	PMS-222321	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:43:23.846528	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1380	1103	4	\N	190LM00019	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:10.564512	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1384	1102	1	PMS-173990	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:45:15.385317	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1385	1102	4	PMS-247998	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:45:23.484048	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2149	1060	418	PMS-338358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:08:42.41294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2157	1105	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	Etiqueta (chapinha) desgastada	t	\N	2026-10-27 13:16:23.065126	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	05ff1473f13d47bfa51abfe20308419b.jpg
+2152	136	4	PMS-226924	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:14:06.538805	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2155	1105	391	PMS-188446	\N	387	\N	\N	\N	\N	ativo	boa	Armário do café	t	\N	2026-10-27 13:15:44.870111	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2111	1105	476	PMS-298448	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:01:34.718675	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2159	136	1	PMS-203567	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:16:52.672785	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2150	1105	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:10:09.35386	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2a31d3804cc74f1d91d64b3bcad0f873.jpg
+834	34	4	PMS-367116	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:02.828134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+844	546	4	PMS-367126	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:36.731122	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+852	551	4	PMS-392615	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:43.499409	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+854	552	4	PMS-367071	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:01.40106	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+860	555	4	PMS-367040	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:58.85222	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+874	1073	4	PMS-376246	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:38.353949	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+879	1074	4	PMS-367119	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:15:30.705147	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+883	842	4	PMS-252160	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:33.025578	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+164	673	1	PMS-262991	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:19:04.042404	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+885	836	4	PMS-252154	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:52.760499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+889	834	4	PMS-308255	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:18:26.860357	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+892	829	4	\N	BRG1471847	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:13.946614	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+199	683	1	PMS-155970	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:47:34.870622	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+894	829	4	PMS-305933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:27.530129	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+896	840	4	PMS-240795	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:48.87929	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2101	1060	3	PMS-388437	4AG97QD7R	1	1	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:37:28.360975	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2095	465	391	PMS-387668	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:12:17.10154	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+900	838	4	PMS-376367	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:22.380673	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+902	838	4	PMS-367152	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:36.281729	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+904	47	4	PMS-292284	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:01.299462	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2100	1105	418	\N	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:37:09.879855	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+906	47	4	PMS-376260	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:12.198408	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+907	47	4	\N	4700002076067	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:39.699134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+909	831	4	PMS-346003	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:57.566786	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+913	843	4	PMS-367207	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:31.066784	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+915	843	4	PMS-367159	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:42.050993	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+917	844	4	PMS-208619	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:10.65213	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+919	1075	1	PMS-208500	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-22 22:45:07.043374	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2112	1060	630	PMS-386156	VPFK2603904MZ	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 12:02:01.151239	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2108	1060	4	PMS-208593	BRL9082WZJ	2	3	\N	\N	\N	ativo	boa		t	\N	2026-10-27 11:53:34.141444	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+922	145	4	PMS-379687	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:08:59.577872	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+926	138	4	\N	BRG1090P9T	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:10:07.204072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+928	151	4	PMS-371579	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:10:48.048637	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+931	167	4	PMS-208649	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:20.929824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+933	170	4	PMS-282646	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:37.795141	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+935	177	4	PMS-208650	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:54.376725	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+937	179	4	PMS-208647	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:43.249776	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+939	186	4	\N	BRG14717HJ	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:58.230877	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+941	186	4	PMS-376356	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:10.501089	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+943	188	4	PMS-281053	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:26.645668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+945	161	4	\N	504SPQJ0G900	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:42.360495	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+947	153	4	PMS-367268	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:58.424654	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+949	148	4	PMS-367264	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:14.074689	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+951	148	4	PMS-367314	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:26.48946	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+955	112	4	PMS-208648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:58.970337	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+881	841	4	\N	BRL9082WG3	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:09.475886	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+957	278	2	PMS-177823	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:41:32.271874	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+880	841	1	PMS-208702	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:17:04.541221	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+911	833	4	\N	BRG147183S	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:13.800542	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+882	842	1	PMS-163119	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:17:26.544812	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+886	835	1	PMS-200901	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:03.727293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+887	835	4	\N	BRG147188B	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:18:10.676158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+888	834	1	PMS-307882	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:21.562189	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+890	830	2	PMS-177969	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:18:54.945773	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+891	829	1	PMS-163120	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:06.994962	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+895	840	1	PMS-163459	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:43.713355	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+903	47	1	PMS-202358	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:20:54.382084	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+908	831	1	PMS-141432	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-18 23:21:51.433812	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+910	833	1	PMS-163232	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:22:08.418112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+918	844	4	\N	BRC23801KP	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:18.653423	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+916	844	1	PMS-208495	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:23:05.852938	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+925	138	1	PMS-168734	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:09:52.69083	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+927	151	1	PMS-165254	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:10:39.40114	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+929	164	2	PMS-177839	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:11:04.882069	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+932	170	1	PMS-178321	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:11:31.579728	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+934	177	1	PMS-208525	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:47.410141	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+936	179	1	PMS-208522	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:13:37.266559	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+938	186	1	PMS-177593	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:13:52.715244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+944	161	1	PMS-203581	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:14:37.277741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+954	112	1	PMS-208523	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:53.956333	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+277	621	1	PMS-366689	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:06:50.707255	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+396	357	1	PMS-307798	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:39:11.748533	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+960	281	2	PMS-177965	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:28.771701	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+961	282	2	PMS-177788	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:39.925715	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+279	619	1	PMS-366717	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:07:37.621287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2147	1105	495	PMS-294553	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:07:12.797637	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1274	1085	1	PMS-208703	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:23:32.688273	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1279	258	4	PMS-316403	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:35:33.963163	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+126	758	5	PMS-372233	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-07 18:14:30.044692	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1291	400	1	PMS-178462	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:03:55.372141	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1299	536	4	PMS-155794	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:07:25.674598	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1308	1088	4	PMS-208541	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:54.849374	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1310	1088	4	PMS-298397	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:07.448963	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1323	1088	4	PMS-155972	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:30.412529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1325	1088	4	PMS-154893	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:59.794514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1326	1088	4	PMS-256713	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:08.044211	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2148	1105	630	PMS-353413	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:08:06.286627	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1300	1087	1	PMS-305553	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:16:48.048867	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1309	1088	1	PMS-208417	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:01.098098	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1331	1088	4	\N	VHC1876	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:48:39.670738	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1334	295	4	PMS-208716	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:23:44.879633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1344	1090	4	PMS-367212	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:13.235215	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1364	1098	4	PMS-367213	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:55.090409	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1372	1101	4	PMS-367208	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:36.246689	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1374	1101	4	PMS-367210	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:52.946014	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1378	1103	4	\N	BRG1471B2P	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:43:46.930985	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1379	1103	1	PMS-163061	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:44:00.84741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1383	1103	4	\N	BRG1471B33	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:45.266208	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1386	296	1	PMS-366906	None	2	131	2025-01-01	\N	\N	ativo	boa		t	\N	2026-08-25 16:39:56.104976	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2421	474	594	PMS-382933	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:14:48.105526	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1407	1105	4	PMS-208632	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:28.731175	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2166	134	605	PMS-154457	\N	390	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:19:33.064229	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2390	1060	654	PMS-223876	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:14:18.962503	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2168	1105	1	PMS-393191	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:20:47.015674	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1442	1105	4	PMS-367342	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:41.96182	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1443	1105	4	PMS-367250	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:48.377501	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2169	157	391	PMS-381063	\N	387	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:21:51.533668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2174	157	418	PMS-315269	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:23:49.094638	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2546	474	594	PMS-257892	\N	\N	\N	\N	\N	\N	ativo	boa	patrimônio com dois números 257892 e 43128	t	\N	2026-10-28 14:24:50.918514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1498	1106	1	PMS-208504	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:23.177782	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2400	141	495	PMS-362689	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:47:59.013176	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2426	454	5	PMS-372288	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:17:43.426161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2379	1106	404	PMS-185747	800304	262	456	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:17:18.511125	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2404	454	4	PMS-376403	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:54:08.156944	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2380	125	438	PMS-353229	\N	290	508	\N	\N	\N	ativo	ruim	CENTRÍFUGA QUEBROU CAÇAPA, SOLICITADO MANUTENÇÃO CORRETIVA EM: 02/09/2026	t	\N	2026-10-27 19:30:07.594108	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2384	125	4	PMS-306974	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:03.035556	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2407	4	630	PMS-386148	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:00:32.722923	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2573	142	476	PMS-255058	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:49:49.810262	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2409	452	4	PMS-376418	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:03:08.204603	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2436	130	514	PMS-239462	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 patrimônios 172755 e 239462	t	\N	2026-10-28 12:31:23.412647	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2412	474	4	PMS-207229	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:43.500358	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2415	457	594	PMS-382935	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:10:54.771915	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2444	475	551	PMS-238575	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:06:25.898148	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2420	474	594	PMS-257890	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:14:33.836004	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2371	1150	515	PMS-399406	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:07:13.485096	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2437	454	609	\N	\N	\N	\N	\N	\N	\N	ativo	boa	5 unidades	t	\N	2026-10-28 12:33:42.135485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2369	1150	515	PMS-399410	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:06:16.500086	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2441	457	551	PMS-232137	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:04:50.155724	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2535	142	486	PMS-392271	\N	321	568	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:12:33.036609	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2442	475	551	PMS-337907	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:05:29.903006	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2551	474	594	PMS-299645	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:30:46.458765	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2538	457	551	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:14:24.262073	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2571	142	486	PMS-383362	\N	404	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:47:46.859642	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2570	1147	537	PMS-384927	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:47:03.220385	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2575	142	380	PMS-209983	\N	368	640	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:53:22.842827	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2578	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:54:38.976241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2579	142	504	PMS-204225	\N	405	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:58:36.441159	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+386	353	1	PMS-173861	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-28 16:32:47.844431	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+962	283	2	PMS-177793	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:52.390514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+963	390	2	PMS-177780	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:43:07.624305	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2162	136	1	PMS-165035	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:17:42.579089	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1263	1081	4	PMS-367049	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:17:01.881359	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2170	1105	495	PMS-337937	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:01.629987	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1273	1084	4	PMS-367102	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:22:56.402873	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1281	1086	4	PMS-367096	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:37.720314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1283	1086	4	PMS-367042	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:44:03.168296	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1284	25	4	\N	00122804	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 23:58:23.502657	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1298	536	1	PMS-163189	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-01 00:07:18.642631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1313	1088	4	PMS-247571	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:25.965555	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1314	1088	4	PMS-264298	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:32.200393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1316	1088	4	\N	LS23C550HSMZD	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:18:47.850442	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1330	1088	4	PMS-154503	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:46.595534	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2172	1105	4	PMS-392693	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:36.590071	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1302	1087	4	PMS-331286	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:04.064787	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1303	1087	1	PMS-208681	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:09.398492	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1320	1088	1	PMS-208478	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:30:22.424375	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1328	1088	4	\N	VHB6009	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:35:23.605393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1332	1075	1	PMS-174027	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 17:52:17.371819	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2175	1105	418	PMS-184286	\N	4	\N	\N	\N	\N	ativo	boa	Cadeira giratória azul	t	\N	2026-10-27 13:23:53.614633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1333	295	1	PMS-208535	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:23:39.31573	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1336	481	4	\N	016293	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-03 20:26:42.66889	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1346	1091	4	PMS-367194	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:41.966182	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1361	1097	1	PMS-308425	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:39:18.222464	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1370	1101	4	\N	#10269	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:12.945241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1377	1103	1	PMS-307836	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:43:34.379879	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1381	1103	1	PMS-177660	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-08-20 22:44:24.732086	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1382	1103	4	PMS-383332	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:44:33.4157	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1389	1104	4	PMS-367261	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:13:41.228586	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1393	1104	4	PMS-208548	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:36.983175	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2406	180	4	PMS-227256	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:57:05.378941	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1398	1104	4	PMS-367234	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:07.271148	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2452	1147	421	PMS-339057	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:20:24.947887	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2408	4	476	PMS-294554	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:02:44.12034	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2540	127	573	\N	\N	\N	\N	\N	\N	\N	ativo	boa	3 unidades - consultório 1, 2 e 3	t	\N	2026-10-28 14:18:03.995714	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2386	125	1	PMS-301789	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:57.561109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2411	474	4	PMS-207045	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:31.201979	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2393	1060	624	PMS-165054	\N	391	\N	\N	\N	\N	ativo	boa	*Tipo de equipamento não encontrado, estabilizador.	t	\N	2026-10-28 11:21:08.581308	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2416	473	594	PMS-374742	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:11:38.18612	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1454	1105	4	PMS-208556	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:37.58213	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1455	1105	4	PMS-208658	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:42.599244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2543	142	418	PMS-388283	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:19:35.734332	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2429	454	537	PMS-384932	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:20:09.898836	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2433	454	537	PMS-384939	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:23:56.924397	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2434	454	537	PMS-390205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:24:17.756081	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2377	1150	515	PMS-399402	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:12:04.581863	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2373	1150	515	PMS-399404	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:08:30.848034	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2376	1150	515	PMS-399405	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:10:31.397278	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2550	474	594	PMS-226535	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:29:58.823578	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2554	474	594	PMS-374740	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:33:08.488309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2622	144	418	PMS-389537	\N	409	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:09:28.50468	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2628	144	391	PMS-387655	\N	410	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:17:46.671146	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2648	144	507	PMS-251328	\N	328	582	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:50:47.103365	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2650	125	651	\N	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:53:46.727698	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2651	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:54:56.7456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2654	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:16:37.159102	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2653	125	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:08:07.714458	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2655	125	495	PMS-282384	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:17:38.906154	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2632	144	418	PMS-386687	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-10-28 19:22:54.480396	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+964	284	4	PMS-257978	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 22:49:09.567958	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1032	469	1	PMS-163393	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:17:34.976182	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+281	618	1	PMS-366734	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:08:27.734481	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+956	277	2	PMS-165747	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:41:17.203401	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2165	136	507	PMS-28727	\N	334	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-27 13:18:31.700761	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+959	280	2	PMS-177789	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:17.572597	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+965	284	1	PMS-163265	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:31:56.779913	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+966	289	1	PMS-177644	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:32:48.364055	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+967	289	4	PMS-156872	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:33:25.696016	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+968	391	2	PMS-177972	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:35:36.834993	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+969	392	2	PMS-162927	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:35:52.252664	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+970	395	1	PMS-200952	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:37:22.439062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+971	395	4	PMS-257973	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:37:30.287012	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+972	396	1	PMS-177722	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:40:46.762083	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+973	396	4	PMS-248669	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:40:56.727561	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+974	397	2	PMS-248669	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:41:19.392599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+975	398	1	PMS-163214	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:42:12.445762	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+976	398	4	PMS-257681	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:42:19.012292	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+977	398	2	PMS-177776	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:42:31.496485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+979	398	4	PMS-297565	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:08.266278	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2171	157	391	PMS-381059	\N	387	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:22:28.399955	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+982	399	2	PMS-177987	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:44:54.251294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+985	407	2	PMS-177902	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:46:20.970217	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+986	407	1	PMS-163194	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:46:47.787587	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+987	407	4	\N	BRG14717QM	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:09.037534	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+988	407	1	PMS-208534	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:36.438068	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+989	407	4	PMS-208655	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:47:42.205887	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+990	408	1	PMS-163191	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:48:06.990303	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+991	408	4	\N	BRG1120Q2G	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:48:26.75642	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+992	412	1	PMS-316354	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:48:54.307791	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+993	412	4	PMS-207663	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:05.190729	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+994	414	1	PMS-208530	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:31.04274	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+995	414	4	PMS-208714	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:49:37.359955	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+996	415	1	PMS-163190	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:55:10.301651	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+997	415	4	\N	BRG109005J	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:55:25.734834	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+998	415	1	PMS-202396	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:55:44.187638	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+999	415	4	PMS-207370	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:55:55.303867	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1000	419	1	PMS-208677	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:56:32.89161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1001	419	4	PMS-208713	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:56:37.904618	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1002	426	1	PMS-202729	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:57:08.037867	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1003	426	4	PMS-308191	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:57:16.32161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1004	426	2	PMS-162914	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:57:25.272514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1005	429	1	PMS-208670	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:58:28.310497	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1006	429	4	PMS-208660	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:58:34.592924	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1007	429	1	PMS-301603	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-07 23:58:52.809199	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1008	429	4	PMS-258573	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:00.408941	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1009	429	1	PMS-208673	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:15.626212	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1010	429	4	PMS-208657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:59:22.209062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1011	444	1	PMS-156763	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:00:03.977947	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1012	444	4	PMS-207006	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:00:10.377609	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1013	444	1	PMS-195584	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:01:10.695972	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1014	444	4	PMS-247364	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:01:20.713509	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1015	445	2	PMS-177779	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:01:50.464071	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1016	446	3	PMS-162177	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:02:29.66568	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1017	448	1	PMS-316396	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:03:09.68204	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1018	448	4	PMS-249570	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:03:15.284326	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1019	450	1	PMS-202765	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:03:45.05075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1020	450	4	PMS-295062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:03:49.400525	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1021	451	2	PMS-177978	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:04:15.083907	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1022	453	1	PMS-208539	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:04:45.334893	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1023	453	4	PMS-265988	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:08.654655	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1025	456	1	PMS-208529	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:43.137483	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1026	456	4	PMS-208712	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:50.371343	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1027	458	1	PMS-208675	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:06:16.339088	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1028	458	4	\N	BRG32802GX	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:06:54.939813	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1029	463	1	PMS-177646	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:16:40.4735	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1030	463	4	PMS-265943	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:16:47.090599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1031	467	2	PMS-177814	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:17:04.140553	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1033	469	4	PMS-BRG14717HL	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:17:44.842419	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1034	469	1	PMS-306968	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:18:19.043663	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1035	469	1	PMS-156062	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:18:43.428105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1036	469	4	\N	KEJ65IA000430	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:19:22.32825	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1037	469	1	PMS-178352	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:19:40.760975	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1038	469	4	\N	BRG1471FMB	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:19:59.560917	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1039	471	2	PMS-177825	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:20:20.829454	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1041	287	4	PMS-208656	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:09.051661	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1042	287	1	PMS-163391	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:22:18.351958	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1049	449	4	PMS-376238	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:02.071462	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2167	134	418	PMS-20430	\N	\N	\N	\N	\N	\N	ativo	boa	TIPO MOCHA	t	\N	2026-10-27 13:20:26.445679	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1060	482	1	PMS-178142	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:29:19.361854	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1061	482	4	\N	KEJ65IA001736	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:29:29.861759	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1071	485	1	PMS-316655	\N	\N	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:34:36.424823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1082	540	4	\N	BRG1120Q30	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:39:22.230997	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1084	540	4	PMS-258062	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:40:32.39947	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1091	539	1	PMS-208527	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:53.752956	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1096	25	1	PMS-177779	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:45:36.607653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1100	25	1	PMS-202642	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:47:11.29376	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1102	25	4	PMS-201640	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:33.894472	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1107	25	4	PMS-294758	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:08.629254	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1112	25	4	PMS-149195	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:38.213361	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1117	25	4	PMS-243721	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:16.748142	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1120	25	1	PMS-156764	\N	2	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:50:13.733473	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1126	25	4	PMS-295665	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:52:17.003732	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+205	931	1	PMS-173871	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:09:20.980753	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+207	932	1	PMS-177700	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:10:18.737362	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2425	474	594	PMS-152459	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:16:26.819016	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2173	1105	4	PMS-392705	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:23:30.685066	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1292	400	4	PMS-286548	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:04:01.639149	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1322	1088	4	PMS-149200	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:34:24.544933	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1301	1087	4	PMS-146575	None	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:16:56.665086	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1307	1088	4	PMS-308396	None	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:17:49.531861	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1319	1088	4	\N	906SPTM22321	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:19:16.366835	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+958	279	2	PMS-177938	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-07 22:42:06.171425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1339	1075	1	PMS-208496	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-06 16:22:54.981007	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2568	24	537	PMS-390253	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:46:09.666333	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1396	1104	4	PMS-367337	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:15:13.799503	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1400	1104	4	PMS-367320	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:01.235256	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1404	1104	4	PMS-367362	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:18:10.055217	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2431	141	537	PMS-384934	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:22:06.731407	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2385	125	1	PMS-305465	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:32:30.457114	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2378	1150	515	PMS-399401	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:12:39.981052	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2375	1150	515	PMS-399409	\N	318	676	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 19:10:00.010297	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2388	1055	624	PMS-393340	2528ZB02N508	399	677	\N	\N	\N	ativo	boa	*Tipo de equipamento não encontrado, câmera.	t	\N	2026-10-28 11:09:20.435397	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2446	220	655	PMS-354532	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:14:19.306271	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2405	454	4	PMS-377239	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:54:47.52499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2410	474	4	PMS-177975	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:04:00.575509	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1499	1106	4	PMS-208624	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:43.361871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2413	454	4	PMS-207321	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:05:25.713499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2449	180	411	PMS-313581	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:16:36.968184	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2417	473	594	PMS-62121	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:11:55.73538	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2422	474	594	PMS-337918	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:04.265935	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2576	1105	418	PMS-387855	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:53:28.13922	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2423	474	594	PMS-227073	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:37.601288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2453	220	4	PMS-208572	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:20:28.448408	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2424	474	594	PMS-374743	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:15:55.506816	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2556	457	594	PMS-226659	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:34:26.415739	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2610	142	488	PMS-170123	\N	324	570	\N	\N	\N	inservivel	\N		t	\N	2026-10-28 18:54:49.861437	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2560	174	528	PMS-342836	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:39:55.776258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2588	142	4	PMS-203551	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 17:59:51.958634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2563	24	537	PMS-394286	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:42:18.733612	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2566	24	537	PMS-394291	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:44:39.705576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2604	142	651	PMS-173667	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 18:49:47.370149	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2617	142	474	PMS-135702	\N	407	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:00:42.799334	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2624	144	418	PMS-389536	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:14:07.745081	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2637	144	418	PMS-386686	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 19:33:48.806475	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1043	287	4	PMS-295315	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:28.96813	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1046	449	1	PMS-163253	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:24:20.103406	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1053	288	4	PMS-376372	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:21.207354	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1058	288	1	PMS-208668	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:45.293037	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1059	288	4	\N	BRG1471FMV	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:59.89461	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1064	487	2	PMS-162912	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:30:22.401021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1066	487	4	\N	912SPSLA7206	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:02.964084	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1068	487	4	PMS-376217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:25.468554	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1070	488	4	PMS-261108	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:32:08.668934	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1073	490	2	PMS-162907	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:34:59.474899	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1078	538	4	PMS-254698	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:37:54.86027	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1079	538	1	PMS-316362	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:38:09.461995	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1081	540	1	PMS-280052	\N	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-08 00:39:08.298769	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1085	539	1	PMS-163264	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:41:26.467588	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1088	539	4	PMS-376216	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:03.218568	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1089	539	1	PMS-208531	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:25.385038	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1092	539	4	PMS-208738	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:59.587572	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1094	539	4	PMS-258833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:43:29.055355	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2187	157	396	PMS-216500	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:48:20.407104	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1098	25	4	PMS-223642	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:31.126289	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1099	25	4	PMS-154218	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:47.609911	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1101	25	1	PMS-163252	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:47:27.49641	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1111	25	4	PMS-201345	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:32.07922	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2212	129	405	PMS-127393	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:00:40.607949	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2225	452	1	PMS-141449	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:27:49.443011	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2217	180	433	PMS-390153	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:55.451779	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2218	474	1	PMS-163366	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:17:50.735751	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2220	454	1	PMS-376323	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:21:59.930612	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2226	474	1	PMS-202395	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:29:31.549988	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2221	474	1	PMS-202514	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:22:44.259968	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2222	1114	1	PMS-178431	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:23:39.968998	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2242	205	490	PMS-238556	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:52:32.304838	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1770	383	1	PMS-169770	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-22 20:41:17.27995	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2223	454	1	PMS-163281	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:24:33.981485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1807	1129	4	PMS-305862	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:58.161979	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1809	1130	4	PMS-263755	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:53:26.74357	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2229	465	474	PMS-388535	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 números de patrimônio 388535 e 386962	t	\N	2026-10-27 14:35:39.244466	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1827	1135	4	PMS-367253	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:49.380189	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1828	1137	1	PMS-316352	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:59:17.86139	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+283	617	1	PMS-366797	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:09:04.921415	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+285	615	1	PMS-366848	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:03.331575	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+287	615	1	PMS-366826	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:10:30.328474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+289	614	1	PMS-366832	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:11:17.309039	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+291	36	1	PMS-366765	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:12:02.525881	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+293	613	1	PMS-366855	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:13:02.138933	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+299	648	1	PMS-376335	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:34:44.58782	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+303	649	1	PMS-393627	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:44:08.396063	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+304	649	4	PMS-392793	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:44:19.805944	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+313	658	1	PMS-393630	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:51:33.633529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+314	658	4	PMS-392799	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:53:18.179264	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+315	655	1	PMS-366895	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 16:53:50.017192	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2224	454	1	PMS-172865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:26:42.054496	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2230	465	476	PMS-387733	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:36:21.616085	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2236	454	609	PMS-338941	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:43:00.415499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2243	220	490	PMS-263004	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:54:09.695509	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2237	1147	436	PMS-353202	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:45:33.589067	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2239	180	436	PMS-203681	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:47:54.720035	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2215	1105	418	PMS-387876	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:38.185782	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2249	1105	476	PMS-294587	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:28:56.736695	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2260	1105	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:36:27.524956	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	60778b30dc06422fa880f70e32f3e4d6.jpg
+1044	287	1	PMS-208669	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:41.802008	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1045	287	4	PMS-248349	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:51.383739	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1062	486	1	PMS-177746	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:29:55.865038	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1069	488	1	PMS-173903	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:31:58.871703	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1076	538	1	PMS-178331	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:37:41.594639	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1077	538	4	PMS-208606	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:37:49.495142	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1086	539	4	\N	BRL9082WPW	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:41:37.966906	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1090	539	4	PMS-208652	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:42:34.56925	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1093	539	1	PMS-203587	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:43:20.338327	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1097	25	4	PMS-295270	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:46:25.210565	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1108	25	4	PMS-265148	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:14.962269	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1110	25	4	PMS-201624	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:26.897538	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1115	25	4	\N	BRG10900K8	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:04.513602	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1118	25	4	PMS-243726	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:21.599314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1119	25	4	PMS-316662	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:26.683035	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1122	25	4	PMS-265927	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:24.765325	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1123	25	4	PMS-257977	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:31.083765	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1125	25	1	PMS-163259	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:51:06.584036	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2238	180	436	PMS-203680	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:47:00.064043	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2191	157	4	PMS-208654	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:49:28.607218	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1500	1106	4	PMS-316431	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:26:05.212225	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2196	157	417	PMS-182435	\N	\N	\N	\N	\N	\N	ativo	boa	AZUL	t	\N	2026-10-27 13:50:52.114975	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2227	1147	563	PMS-386454	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:33:14.458456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2244	128	396	PMS-203222	\N	250	\N	\N	\N	\N	ativo	boa	110V	t	\N	2026-10-27 14:58:09.941487	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2231	457	476	PMS-387732	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:37:27.77507	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2232	220	476	PMS-387731	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:38:30.040373	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2271	107	418	PMS-388031	\N	\N	\N	\N	\N	\N	ativo	boa	Estofado preto	t	\N	2026-10-27 17:44:45.369357	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1804	1128	4	PMS-208732	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:52:10.06645	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1805	1129	2	PMS-177954	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:52:24.882694	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1806	1129	1	PMS-165806	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:52:50.766749	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1808	1130	1	PMS-163107	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:53:18.827223	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1812	1132	1	PMS-1788472	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:54:22.054729	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1832	1137	1	PMS-195465	\N	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 16:00:21.504499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1836	1115	6	\N	3352P752125	2	\N	\N	\N	\N	ativo	boa	IMPRESSORA RICOH IM 430F =- LOCADA	t	\N	2026-09-25 00:02:19.518517	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+317	655	1	PMS-366887	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:03:22.236551	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+327	654	1	PMS-376329	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:07:25.289988	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+331	656	1	PMS-366792	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-26 17:08:49.452595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+335	951	1	PMS-393622	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:04:14.548683	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+336	951	4	PMS-392764	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:09:37.329545	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+337	952	1	PMS-393636	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:09:54.549759	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+338	952	4	PMS-392852	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:10:04.44504	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+339	953	1	PMS-376320	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:45:49.097158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+341	953	1	PMS-376315	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:48:55.016202	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+343	954	1	PMS-366750	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:49:39.478197	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+345	955	1	PMS-376281	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:50:12.560284	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+347	957	1	PMS-393327	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-27 16:51:14.690353	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+348	957	3	PMS-393327	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:51:43.802668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+349	958	1	PMS-393621	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:52:25.038056	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+350	958	4	PMS-392807	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:52:34.18339	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+351	960	1	PMS-393625	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 16:56:08.092532	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+357	959	1	PMS-393624	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:21.68871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+358	959	4	PMS-392768	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:47:33.050871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+359	961	1	PMS-366800	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:48:59.850485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+364	968	1	PMS-366857	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:53:00.2464	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+370	55	1	PMS-366838	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:54:44.409595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+372	985	1	PMS-392762	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:57:33.072792	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2275	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:30.02275	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2272	1106	495	PMS-297576	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:47:12.469647	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2276	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:30.417718	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2280	1106	418	PMS-387910	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:50:33.295658	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2281	1106	476	PMS-298470	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:51:06.301641	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2381	125	438	PMS-353228	\N	290	508	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:30:39.474096	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2382	125	630	PMS-315901	\N	398	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 19:31:12.874774	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2389	1060	654	PMS-223878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:13:37.554515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2392	1060	624	PMS-173159	\N	391	\N	\N	\N	\N	ativo	boa	*Tipo de equipamento encontrado, estabilizador	t	\N	2026-10-28 11:19:59.757948	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2401	130	495	PMS-362688	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:48:51.003369	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1047	449	4	\N	DTK3AIA011817	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:24:34.203576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1051	288	4	PMS-376239	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:57.256999	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1055	288	4	PMS-376251	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:58.475198	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1057	288	4	PMS-376362	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:30.359477	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1063	486	4	PMS-258848	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:30:00.863075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1065	487	1	PMS-316377	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:30:46.680709	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1072	485	4	PMS-257687	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:34:41.738653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1075	537	4	PMS-208711	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:35:38.108091	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1080	538	4	PMS-245437	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:38:16.128215	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1083	540	1	PMS-163266	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-08 00:40:26.216704	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1103	25	4	PMS-258566	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:40.163789	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1104	25	4	\N	TW19HQBQA01822P	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:47.661246	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1105	25	4	PMS-308387	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:47:53.163253	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1106	25	4	PMS-265178	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:01.461871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1109	25	4	PMS-154877	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:21.629206	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1113	25	4	PMS-201635	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:43.680003	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1114	25	4	PMS-286063	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:48:48.74701	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1116	25	4	PMS-246931	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:49:11.514574	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1121	25	4	PMS-154648	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:20.034799	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1124	25	4	\N	BR-09VFM4-07591-039-02CC	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:50:37.16723	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+203	930	1	PMS-174080	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:08:33.666587	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+225	940	1	PMS-163328	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:19:32.766587	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2233	220	476	PMS-387734	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:38:55.370047	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+237	939	1	PMS-178406	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 15:40:40.064394	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+114	720	1	PMS-366839	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-07 17:58:07.415551	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2189	157	1	PMS-208676	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:48:57.808753	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2205	157	651	PMS-164381	\N	391	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:55:33.746384	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2213	129	467	PMS-152942	\N	224	554	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:04:04.96232	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2234	220	605	PMS-303372	\N	20	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:39:48.743134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+455	736	1	PMS-163326	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:29:26.105201	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2214	1108	652	PMS-362839	FF-1905B	392	670	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:09:17.276848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+457	743	1	PMS-163347	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-29 19:29:58.008502	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+162	671	1	PMS-316347	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-25 19:17:55.122764	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2216	129	490	PMS-251315	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:15:46.041193	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+194	977	2	PMS-177833	None	2	2	\N	\N	\N	ativo	ruim		t	\N	2026-05-25 19:43:20.94926	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+784	559	1	PMS-163390	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:56:24.501046	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+786	560	2	PMS-177906	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:56:40.866903	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+795	565	1	PMS-316391	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 21:58:26.704307	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+804	570	1	PMS-163102	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 22:06:35.818723	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+811	558	1	PMS-370770	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:43.321112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2219	454	1	PMS-376289	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:21:45.938623	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+307	651	1	PMS-177615	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-26 16:46:57.269027	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2235	465	605	PMS-373937	\N	20	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:41:00.621106	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+321	662	1	PMS-155876	None	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-05-26 17:04:26.849985	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2228	465	598	PMS-389017	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:34:37.840791	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+368	55	1	PMS-178184	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-05-27 17:54:16.733599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+586	862	1	PMS-164679	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:18:55.276625	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+588	862	1	PMS-203585	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:19:14.65687	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+596	866	1	PMS-307815	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:25:41.764466	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2240	130	436	PMS-261054	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:48:39.106021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+614	864	1	PMS-163735	None	1	\N	\N	\N	\N	ativo	ruim		t	\N	2026-06-10 18:42:30.075933	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+624	1051	1	PMS-307776	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:54:31.295606	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+628	1051	1	PMS-163143	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 18:55:39.975236	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+884	836	1	PMS-173886	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:17:46.22671	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+893	829	1	PMS-164986	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 23:19:19.796734	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+117	722	1	PMS-177704	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-05-07 18:03:49.504647	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2241	473	608	PMS-386507	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 14:50:37.601556	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2269	107	418	PMS-388032	\N	\N	\N	\N	\N	\N	ativo	boa	ESTOFADO PRETO	t	\N	2026-10-27 17:41:18.96065	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2270	107	418	PMS-388031	\N	\N	\N	\N	\N	\N	ativo	boa	Estofado preto	t	\N	2026-10-27 17:44:32.266976	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2273	1106	476	PMS-297580	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:25.276566	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2274	1106	495	PMS-297521	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:48:26.298266	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2277	1106	391	PMS-298357	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:49:20.19055	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2402	465	599	PMS-376461	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 11:52:58.617008	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2278	1106	476	PMS-297539	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:49:42.229422	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2279	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:50:29.048006	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	2bf8218ad19546e1a32921664fc41265.jpg
+2414	24	594	PMS-231762	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:08:28.411282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+901	838	1	PMS-366776	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:28.430102	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1134	286	1	PMS-177663	None	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-23 21:40:40.905173	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1137	489	4	PMS-376244	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:38.18523	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+503	206	1	PMS-166435	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-06-03 18:39:23.220828	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+518	214	4	PMS-203545	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:43:02.107486	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2193	157	630	PMS-204962	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 13:50:01.498592	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+557	193	2	PMS-165750	None	2	2	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:29:11.067003	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1811	1131	4	PMS-280833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:53:58.308792	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1814	1133	2	PMS-177846	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:54:59.667482	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1815	1134	1	PMS-307856	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:55:32.565476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1816	1134	4	PMS-263802	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:55:41.514133	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1820	1115	4	PMS-376384	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:49.358251	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1822	1136	1	PMS-307956	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-24 15:57:32.85402	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1823	1136	4	PMS-226538	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:57:39.470118	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1829	1137	4	PMS-367321	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:59:37.360157	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1834	1138	1	PMS-177599	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-24 16:01:11.134214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+373	985	4	PMS-393623	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-27 17:57:45.884221	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+374	964	1	PMS-366837	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:01:27.746369	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+376	964	1	PMS-366788	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:03.056393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+378	964	1	PMS-366768	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-27 18:02:27.956604	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+382	364	1	PMS-393660	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:30:57.902185	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+383	351	1	PMS-392822	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:31:13.523807	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+384	364	4	PMS-392822	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:31:47.4443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+390	364	1	PMS-393662	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:34:15.58728	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+391	364	4	PMS-392806	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:34:27.964542	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+398	364	1	PMS-393658	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:11.631949	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+399	364	4	PMS-392802	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:21.493821	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+400	364	1	PMS-393657	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:44.529743	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+401	364	4	PMS-392829	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:40:59.608358	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+406	369	1	PMS-376184	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:43:39.00355	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+408	352	1	PMS-376195	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:44:14.834069	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+410	362	1	PMS-376208	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:45:25.528983	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+414	364	1	PMS-393656	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:48:48.150983	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+415	364	4	PMS-392853	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:00.879306	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+416	364	1	PMS-393659	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:21.046702	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+417	364	4	PMS-392831	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:49:31.030314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+418	365	3	PMS-388151	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:50:16.131885	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+419	365	1	PMS-366917	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:50:38.544158	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+420	365	4	PMS-367284	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-05-28 16:50:50.090653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+421	364	1	PMS-393661	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:54:57.677237	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+422	364	4	PMS-392826	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:15.190668	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+423	364	1	PMS-366917	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-28 16:55:48.244576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+428	645	1	PMS-376185	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:10:42.737373	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+434	731	1	PMS-366975	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:17:00.203398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+444	739	1	PMS-366982	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:20:56.921735	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+446	740	1	PMS-366958	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:21:38.77095	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+448	751	1	PMS-366814	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:29.634897	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+450	751	3	PMS-388444	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:22:56.512615	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+453	732	1	PMS-376174	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:26:29.923745	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+466	989	1	PMS-367008	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:35:27.485393	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+468	746	1	PMS-376199	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:16.822532	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+470	746	1	PMS-366987	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-05-29 19:36:44.395854	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+477	195	4	PMS-392838	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:17.732143	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+478	198	1	PMS-393606	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:47.419993	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+479	198	4	PMS-392771	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:59.129576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+482	203	1	PMS-393646	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:15.365258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+483	203	4	PMS-392812	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:16:25.811196	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+492	211	1	PMS-393649	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:31.176626	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+493	211	4	PMS-392810	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:28:42.770202	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+494	211	1	PMS-393600	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-03 18:28:59.186107	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+495	990	1	PMS-393600	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:16.741602	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+496	990	4	PMS-392817	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:28.487566	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+497	212	1	PMS-393605	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:48.440957	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+498	212	4	PMS-392809	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:33:59.768672	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+499	219	1	PMS-393619	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:34:30.404737	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+500	219	4	PMS-392825	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:34:43.349135	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+505	206	1	PMS-366955	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:39:44.447422	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+507	206	1	PMS-393603	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:09.547743	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+508	206	4	PMS-392776	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:18.262838	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+509	206	1	PMS-366956	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:40:27.962735	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+511	204	1	PMS-376180	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:14.580394	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+513	204	1	PMS-366941	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:41:35.676728	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1133	286	4	PMS-265987	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:40:29.490519	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1132	286	1	PMS-222870	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-23 21:40:21.525823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2289	1106	495	PMS-297585	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:55:45.57902	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2283	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:52:15.773238	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	8958d68209ea4763b1b7071c0c29c613.jpg
+2294	1106	630	PMS-354621	\N	381	668	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:11.409982	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+476	195	1	PMS-393641	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 17:10:05.007026	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+489	210	4	PMS-392836	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:22.329057	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+515	207	1	PMS-393607	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:42:02.278443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+516	207	4	PMS-392857	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:42:10.141498	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+521	981	1	PMS-376190	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:12:46.822919	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+527	196	3	PMS-393323	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:18:58.379515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+539	183	1	PMS-376187	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:25:14.927271	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+543	1045	1	PMS-366877	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:27:08.401293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+545	1046	1	PMS-366870	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:48:28.945381	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+551	1048	1	PMS-367021	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:25:48.546727	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+553	1048	3	PMS-388428	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:26:31.473357	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+556	193	1	PMS-165750	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-10 17:28:42.238075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+558	1049	1	PMS-376197	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:07.131985	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+560	1049	1	PMS-376192	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:30:31.726025	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+562	185	1	PMS-366736	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:31:04.779309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+578	856	1	PMS-393639	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:53:53.347524	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+579	856	4	PMS-392837	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 17:54:02.293505	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+582	860	1	PMS-177848	\N	\N	\N	\N	\N	\N	inservivel	\N		t	\N	2026-06-10 18:16:56.482909	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+603	870	1	PMS-393663	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:28:22.675356	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+604	870	4	PMS-392819	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:29:21.218507	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+607	888	1	PMS-393664	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:41.867438	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+608	888	4	PMS-392808	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:30:51.344985	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+618	881	1	PMS-392841	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:43:52.972685	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+619	881	4	PMS-393631	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:04.651824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+620	881	1	PMS-393620	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:24.814914	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+621	881	4	PMS-392845	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:44:31.365858	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+622	1051	1	PMS-367013	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:54:08.985029	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+632	879	3	PMS-393326	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 18:56:44.483063	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+639	707	1	PMS-393626	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:21:51.33996	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+640	707	4	PMS-392828	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:22:29.253978	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+641	708	1	PMS-393635	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:23:11.472024	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+642	708	4	PMS-392820	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:23:27.021736	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+643	709	1	PMS-366799	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:24:28.327293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+645	709	1	PMS-367020	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:25:29.176492	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+649	1063	1	PMS-366851	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:36:54.511897	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+651	1064	1	PMS-366860	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:39:58.78369	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+668	1065	1	PMS-366866	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:44:18.825832	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+674	717	1	PMS-367001	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:24.110832	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+676	717	1	PMS-366981	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:45:34.811292	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+680	39	1	PMS-376209	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:18.648186	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+686	39	3	PMS-388450	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-17 00:47:58.299413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+715	908	1	PMS-376330	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:47:32.646711	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+719	910	1	PMS-366896	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 20:48:02.245025	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+721	911	1	PMS-366885	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:06:40.064255	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+733	901	1	PMS-366709	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:10:36.453078	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+737	253	1	PMS-366697	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:12.809012	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+739	254	1	PMS-366989	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:27.809885	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+741	261	1	PMS-366763	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:14:51.693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+743	262	1	PMS-366725	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:15:06.895053	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+745	270	1	PMS-366712	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:19:13.166175	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+747	276	1	PMS-366834	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:00.299957	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+749	266	1	PMS-366841	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:37:21.918449	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+751	826	1	PMS-366810	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:35.170025	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+753	826	3	PMS-388427	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:38:50.285811	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+756	825	1	PMS-366789	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:40:53.839178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+758	824	1	PMS-366688	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:41:53.790916	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+762	257	1	PMS-366944	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:42:54.361442	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+764	1069	1	PMS-366916	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:24.745312	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+766	1069	1	PMS-366710	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:44:50.513599	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+768	1069	1	PMS-366809	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:02.079493	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+770	258	1	PMS-366919	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:22.198298	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2419	474	594	PMS-257894	\N	\N	\N	\N	\N	\N	ativo	boa	possui 2 patrimônios 43135 e 257894	t	\N	2026-10-28 12:13:28.285317	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2309	1106	476	PMS-292281	\N	382	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:06:18.331142	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2427	454	5	PMS-319171	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:18:11.944162	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2435	133	514	PMS-239462	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:30:16.669125	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2438	475	7	PMS-373526	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:45:52.598847	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2439	473	608	PMS-386506	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 12:59:09.772742	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2443	24	599	PMS-399392	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:06:15.161311	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2445	465	655	PMS-354533	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:08:20.754155	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1135	286	4	PMS-259709	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:40:46.623049	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2299	1106	495	PMS-297600	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:00:56.110005	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2284	1106	476	PMS-298776	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:52:45.686443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+540	183	4	PMS-370772	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-10 16:25:26.106702	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2290	1106	495	PMS-337938	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:55:48.423016	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2296	1106	418	PMS-387916	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:59:38.012345	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2304	1106	630	PMS-353408	6002012001002873	13	672	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:03:00.038105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2302	1106	418	PMS-387915	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:01:37.810995	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+488	210	1	PMS-393618	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-03 18:07:13.135951	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+774	258	1	PMS-366852	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:45:51.297076	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+778	260	1	PMS-366770	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:46:55.902359	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+780	267	1	PMS-366861	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:47:15.300165	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+787	561	1	PMS-393650	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:50.151092	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+788	561	4	PMS-392830	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:56:55.584013	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+789	562	1	PMS-393651	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:20.636048	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+790	562	4	PMS-392816	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 21:57:29.519309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+802	569	1	PMS-393652	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:19.06788	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+803	569	4	PMS-392839	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:06:24.901018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+807	572	3	PMS-393333	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:03.770474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+813	558	1	PMS-393653	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:07:58.054549	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+814	558	4	PMS-392850	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:03.771593	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+815	558	1	PMS-393654	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:10.204487	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+816	558	4	PMS-392801	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:19.138231	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+819	557	1	PMS-366898	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:45.156707	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+821	557	1	PMS-363655	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:08:59.123246	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+822	557	4	PMS-392815	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:03.656939	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+828	557	3	PMS-388452	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:09:37.157309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+829	541	1	PMS-366742	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:19.593203	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+831	34	1	PMS-366739	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:43.194265	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+833	34	1	PMS-366719	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:11:56.796183	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+835	543	1	PMS-366751	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:14.012288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+837	544	1	PMS-376291	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:30.845399	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+839	545	1	PMS-366747	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:12:48.379051	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+841	546	1	PMS-366731	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:10.730718	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+843	546	1	PMS-366746	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:28.247623	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+845	547	1	PMS-366745	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:13:49.580964	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+847	549	1	PMS-366735	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:07.598923	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+849	550	1	PMS-366753	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:21.984032	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+851	551	1	PMS-392614	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:37.382809	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+853	552	1	PMS-366721	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:14:55.018317	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+855	553	1	PMS-366743	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:10.536014	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+857	554	1	PMS-366757	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:27.602265	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+859	555	1	PMS-366744	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 22:15:52.93436	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+861	548	1	PMS-366737	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:09:36.412201	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+865	1071	1	PMS-366754	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:10.782251	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+867	1072	1	PMS-366727	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:40.797876	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+869	1072	1	PMS-366752	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:11:53.749653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+871	1073	1	PMS-366730	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:20.053655	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+873	1073	1	PMS-366749	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:33.021671	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+875	1073	1	PMS-366748	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:45.955469	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+877	1073	3	PMS-388445	None	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:14:59.07167	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+878	1074	1	PMS-366723	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:15:23.538576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+897	840	1	PMS-393633	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:19:55.414178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+898	840	4	PMS-392823	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:00.829994	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+899	838	1	PMS-376164	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:20:14.597401	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+905	47	1	PMS-376200	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:21:06.931711	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+912	843	1	PMS-366808	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:26.352218	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+914	843	1	PMS-366787	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-18 23:22:36.718093	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+920	381	1	PMS-366949	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-06-30 16:11:28.501078	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+921	145	1	PMS-376173	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:08:46.064215	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+924	145	4	PMS-392786	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:09:36.873094	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+940	186	1	PMS-376196	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:03.964415	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+946	153	1	PMS-366824	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:14:53.076288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+948	148	1	PMS-366779	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:08.441528	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+952	112	1	PMS-393594	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:40.996227	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+953	112	4	PMS-392880	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:46.771196	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2307	1106	476	\N	\N	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-27 18:04:11.848873	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	7fd98077b4b9458e804d472ff98ff79e.jpg
+2451	454	418	PMS-388066	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:18:52.027551	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2310	1106	418	PMS-387911	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:06:53.82485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2311	1106	6	\N	086121807974	393	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:07:55.102545	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2454	220	1	PMS-208865	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:23:53.718601	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2557	454	594	PMS-164196	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:36:54.132474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2558	180	528	PMS-342840	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:38:19.096265	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2559	174	528	PMS-342833	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:39:08.850757	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2562	24	537	PMS-394287	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:41:41.954582	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1139	489	4	PMS-376214	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:50.932443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+533	171	1	PMS-203369	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 16:21:37.471564	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+566	1050	1	PMS-203370	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-10 17:33:28.767318	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2286	1106	418	PMS-387918	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:53:39.640883	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+664	715	1	PMS-203562	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-17 00:42:35.539308	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1140	228	2	PMS-177806	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:34:46.993848	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1141	229	1	PMS-173915	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:35:00.297383	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1202	1078	4	\N	906SPCA22195	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:10:06.420451	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1142	229	4	PMS-316429	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:35:05.86159	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2287	1106	630	PMS-303552	120660013340	13	671	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:54:09.171874	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1147	232	1	PMS-163086	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:42:41.651468	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1148	232	4	PMS-223324	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:42:48.501481	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1151	234	1	PMS-155209	\N	3	\N	\N	\N	\N	ativo	ruim		t	\N	2026-07-29 23:51:38.191421	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1152	234	4	\N	30695916	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:52:22.057708	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1153	234	1	PMS-305507	\N	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:52:48.242946	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1154	234	4	\N	BRG1471B39	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:07.42894	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2293	1106	476	PMS-392279	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:00.190984	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1156	236	4	PMS-367274	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:41.624601	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1157	236	1	PMS-163394	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:53:51.542205	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1158	236	4	PMS-223452	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:02.993465	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1160	238	4	PMS-367304	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:44.960832	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1161	248	1	PMS-163361	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-29 23:57:15.7118	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1162	248	4	PMS-154882	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:21.762633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2308	1106	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:05:28.957962	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	022d7e36fcd54c4a8f020d24de43ef45.jpg
+2295	1106	418	PMS-388253	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:58:55.984431	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1166	243	4	PMS-367303	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:04.529458	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1169	240	1	PMS-208680	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:03.679229	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1170	240	4	PMS-208552	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:09.579294	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1171	240	1	PMS-208427	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:16.362476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1172	240	4	PMS-208720	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:22.246846	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2300	1106	418	PMS-387919	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:01:15.227999	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1175	1076	1	PMS-301598	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:00:41.696343	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1176	1076	4	PMS-308303	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:00:46.463933	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1177	1077	1	PMS-208428	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:02:04.948994	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1178	1077	4	PMS-208553	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:02:11.147515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1180	797	4	PMS-312419	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:06.198998	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1184	794	4	PMS-376348	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:45.033987	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1186	796	4	PMS-308301	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:59.221188	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1188	796	4	PMS-367237	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:11.452109	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1190	796	4	PMS-376394	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:25.502155	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1192	795	4	PMS-367249	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:12.034922	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1196	802	4	\N	MÇ256337	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:51.632007	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1198	800	4	PMS-376366	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:11.668697	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1200	803	4	\N	BRG1471B36	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:29.769115	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1182	798	4	\N	BRG1471FFS	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:21.616808	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1179	797	1	PMS-202249	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:01.484407	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1181	798	1	PMS-177764	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:16.917355	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1194	795	4	\N	BRG471F2Y	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:07:26.150892	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1201	1078	1	PMS-307049	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:09:59.852073	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2561	24	537	PMS-394292	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:41:03.333058	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1185	796	1	PMS-202268	None	1	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:05:53.6669	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2565	24	537	PMS-394290	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:43:52.711717	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1199	803	1	PMS-226923	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:08:24.186067	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2572	142	1	PMS-305562	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:48:14.667222	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1193	795	1	PMS-203577	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:07:18.201161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+699	896	1	PMS-203569	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-06-18 20:44:39.890061	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1195	802	1	PMS-203571	None	3	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 00:07:44.817473	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1203	58	4	PMS-155361	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:12:24.620083	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1204	58	4	PMS-236699	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:12:30.536934	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1205	58	1	PMS-203555	None	\N	\N	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:12:53.689279	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1206	1079	1	PMS-178475	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:14:19.20681	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1207	1079	4	PMS-298783	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:14:24.522018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2580	142	1	PMS-203560	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:59:08.050535	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2577	142	486	PMS-209518	\N	322	569	\N	\N	\N	ativo	ruim		t	\N	2026-10-28 14:54:15.068704	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1208	7	2	PMS-177903	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:24:50.013824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1218	80	2	PMS-177865	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:25.430595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1222	82	4	\N	BRG147183Y	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:02.080771	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1234	87	4	PMS-208589	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:39.883132	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+923	145	1	PMS-393609	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:09:25.490821	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1219	81	1	PMS-178212	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:35.39881	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2297	1106	495	PMS-298380	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 17:59:53.49402	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+978	398	1	PMS-366934	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:02.367227	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+980	398	3	PMS-388467	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:21.132428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+981	398	3	PMS-388471	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:44:31.733889	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+983	404	3	PMS-388459	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:45:47.851499	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+984	404	3	PMS-388476	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-07 23:45:56.684844	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1024	453	3	PMS-388475	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:05:20.752489	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1040	287	1	PMS-376211	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:22:02.083819	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1048	449	1	PMS-366943	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:24:56.254495	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1050	288	1	PMS-376204	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:25:52.406466	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1052	288	1	PMS-376168	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:15.689478	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1054	288	1	PMS-376172	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:26:37.140391	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1056	288	1	PMS-376179	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:27:24.559586	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1067	487	1	PMS-376201	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:31:20.217341	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1074	537	3	PMS-388470	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:35:32.093973	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1087	539	1	PMS-376203	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:41:56.336938	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1095	539	3	PMS-388160	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-08 00:43:40.039978	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1127	483	3	PMS-388463	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:34:48.310355	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1128	483	3	PMS-388161	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:34:59.194267	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1129	483	3	PMS-388172	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:08.425073	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1130	483	3	PMS-388479	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:18.693095	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1131	483	3	PMS-388461	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-17 00:35:30.810621	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1136	489	1	PMS-376328	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:29.632867	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1138	489	1	PMS-376303	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-23 21:55:44.9515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1143	230	1	PMS-393643	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:37:35.52964	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1144	230	4	PMS-392778	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:37:45.530992	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1145	231	1	PMS-393604	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:38:08.482972	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1146	231	4	PMS-392787	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:38:19.947421	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1149	233	1	PMS-393647	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:50:44.059198	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1150	233	4	PMS-392774	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:50:59.190383	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1155	236	1	PMS-366936	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:53:35.941552	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1159	238	1	PMS-366905	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:54:33.761021	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1163	243	1	PMS-393665	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:40.611332	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1164	243	4	PMS-392783	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:48.378093	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1165	243	1	PMS-366880	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:57:58.911271	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1167	243	1	PMS-393617	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:16.046496	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1168	243	4	PMS-392770	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:58:29.161506	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1173	240	1	PMS-393628	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:32.779984	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1174	240	4	PMS-392789	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-29 23:59:39.513858	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1183	794	1	PMS-366775	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:05:39.067064	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1187	796	1	PMS-366807	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:05.61748	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1189	796	1	PMS-366976	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:18.251878	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1191	795	1	PMS-367006	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:06:56.80148	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1197	800	1	PMS-366766	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 00:08:03.667409	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1247	9	1	PMS-366777	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:51.885856	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1249	9	1	PMS-366862	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:02.886425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1252	89	1	PMS-393611	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:26.269675	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1253	89	4	PMS-392974	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:31.334963	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1254	89	1	PMS-376300	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:31:37.468414	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1260	793	3	PMS-393322	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 23:30:42.036258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1262	1081	1	PMS-366769	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:16:55.349255	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1264	1082	1	PMS-366828	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:06.03394	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1266	1082	1	PMS-366989a	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:18:33.583843	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1268	1083	1	PMS-366708	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:19:44.802022	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1270	1083	1	PMS-366715	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:20:09.519607	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1272	1084	1	PMS-366830	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:22:50.920595	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1276	824	3	PMS-393325	None	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:26:25.75718	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1280	1086	1	PMS-366691	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:32.137715	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1282	1086	1	PMS-366811	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-31 00:43:55.836376	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1286	290	3	PMS-388468	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:01:02.353793	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1287	290	3	PMS-388458	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:01:46.953569	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1288	291	3	PMS-388469	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:02:01.004919	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1289	291	3	PMS-388474	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:02:09.870898	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2298	1106	476	PMS-381070	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:00:40.540018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2461	220	1	PMS-208688	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:32:21.769763	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+930	167	1	PMS-208524	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:11:14.615317	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1230	85	4	PMS-239803	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:10.149903	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1237	107	1	PMS-376166	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:25.586447	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1239	107	4	\N	BRG1471DN0	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:44.399327	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+950	148	1	PMS-366970	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-04 00:15:20.724471	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1212	76	4	PMS-392976	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:23.966877	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1229	85	1	PMS-208467	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:04.431699	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2312	1106	495	PMS-297205	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:08:48.999242	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2314	1106	418	PMS-387929	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:10:03.288949	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2316	1106	476	PMS-298425	\N	382	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:11:08.949887	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1295	400	3	PMS-388478	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-01 00:04:37.255783	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1343	1090	1	PMS-366853	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:30:56.027407	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1345	1091	1	PMS-366793	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:35:30.683399	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1347	1092	1	PMS-393666	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:02.217252	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1348	1092	4	PMS-392855	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:14.234582	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1349	1093	1	PMS-393598	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:38.903049	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1350	1093	4	PMS-392844	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:36:47.28509	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1351	1093	1	PMS-366845	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:00.386199	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1353	1094	1	PMS-393629	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:33.771032	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1354	1094	4	PMS-392849	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:37:43.821035	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1355	1095	1	PMS-366758	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:05.321221	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1357	1096	1	PMS-393601	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:31.820731	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1358	1096	4	PMS-392843	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:40.555669	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1359	1097	1	PMS-366844	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:38:58.522517	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1363	1098	1	PMS-366805	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:39:46.174484	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1365	1099	1	PMS-393597	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:15.925645	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1366	1099	4	PMS-392784	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:23.70824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1367	1100	1	PMS-366804	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:40:46.243965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1371	1101	1	PMS-366761	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:25.097425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1373	1101	1	PMS-366786	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-20 22:42:44.864083	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1387	296	1	PMS-393593	None	3	135	2026-01-01	9000.00	\N	ativo	boa		t	\N	2026-08-25 16:48:34.642163	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1388	1104	1	PMS-393667	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:12:53.196016	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1390	1104	4	PMS-392788	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:13:49.347052	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1391	1104	1	PMS-393690	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:09.714431	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1392	1104	4	PMS-392977	\N	3	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:22.83206	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1394	1104	1	PMS-393595	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:14:55.549847	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1395	1104	4	PMS-392769	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:15:05.699246	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1397	1104	1	PMS-366782	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:00.520123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1399	1104	1	PMS-393669	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:16:44.985148	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1401	1104	4	PMS-392848	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:13.453353	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1402	1104	1	PMS-393642	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:50.187399	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1403	1104	4	PMS-392773	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:17:59.387177	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1405	1105	1	PMS-393179	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:04.128441	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1406	1105	4	PMS-392741	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:22.595039	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1408	1105	1	PMS-393188	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:22:50.82935	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1409	1105	4	PMS-392722	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:00.11602	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1410	1105	4	PMS-392723	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:08.198085	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1411	1105	1	PMS-393193	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:25.581991	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1412	1105	4	PMS-392730	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:42.830708	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1413	1105	4	PMS-392687	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:23:49.648453	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1414	1105	1	PMS-393183	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:24:47.466373	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1415	1105	4	PMS-392727	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:24:55.633872	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1416	1105	4	PMS-392716	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:04.051361	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1417	1105	1	PMS-393176	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:17.750232	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1418	1105	4	PMS-392747	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:29.133282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1419	1105	4	PMS-392690	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:37.567854	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1420	1105	1	PMS-393182	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:25:56.736002	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1421	1105	4	PMS-392736	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:04.851812	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1422	1105	4	PMS-392702	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:12.702699	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1423	1105	1	PMS-393180	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:41.919685	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1424	1105	4	PMS-392709	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:26:51.587174	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1425	1105	4	PMS-392734	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:11.003505	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1426	1105	1	PMS-393174	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:27.93791	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1427	1105	4	PMS-392735	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:35.837828	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1428	1105	4	PMS-392750	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:43.137532	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1429	1105	1	PMS-393186	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:27:58.921541	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1430	1105	4	PMS-392726	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:08.407807	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1431	1105	4	PMS-392696	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:17.023619	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1432	1105	1	PMS-393173	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:33.85736	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1433	1105	4	PMS-392720	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:43.506904	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1434	1105	4	PMS-392746	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:28:51.189288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1435	1105	1	PMS-393175	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:08.307203	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1436	1105	4	PMS-392742	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:23.641266	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2324	1106	418	\N	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:16:58.457602	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	5ec9a07b37794152b5f3a24d4ae80e9d.jpg
+2326	1106	495	\N	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:18:08.604748	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	94c1f2cfbc7b420a8003d289abb23d64.jpg
+2333	128	396	PMS-315826	\N	250	\N	\N	\N	\N	ativo	boa	220V	t	\N	2026-10-27 18:26:23.46486	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2341	125	391	PMS-387664	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:09.396827	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+942	188	1	PMS-177680	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-04 00:14:20.479474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1240	107	1	PMS-376312	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:50.751126	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1216	79	1	PMS-393612	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:05.580645	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1225	8	1	PMS-376271	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:30.29766	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1221	82	1	PMS-178330	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:26:56.247966	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1227	84	1	PMS-393616	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:45.582578	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1231	86	1	PMS-393613	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:19.884646	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1437	1105	4	PMS-392719	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:29:31.092372	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1235	88	1	PMS-366858	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:51.582833	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1599	1011	1	PMS-316372	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:32:20.324212	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1600	1011	4	PMS-295415	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:32.333208	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2313	1106	418	\N	\N	394	\N	\N	\N	\N	ativo	regular	Rodízio quebrado	t	\N	2026-10-27 18:09:08.993912	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	20df63be885c452eb8d1788054174b4b.jpg
+2328	1106	418	PMS-387927	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:19:31.43239	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1614	1014	4	PMS-208733	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:37:12.205228	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1615	1015	1	PMS-208472	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:18.720918	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1647	1030	4	PMS-295777	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:52:05.651515	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1440	1105	4	PMS-392683	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:08.675588	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1441	1105	1	PMS-366767	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:30:31.477105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1444	1105	1	PMS-393187	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:18.112134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1445	1105	4	PMS-392745	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:25.178568	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1446	1105	4	PMS-392739	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:34.578491	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1447	1105	1	PMS-393184	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:31:50.14502	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1448	1105	4	PMS-392725	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:00.679376	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1449	1105	4	PMS-392711	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:09.646356	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1450	1105	1	PMS-393185	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:26.451075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1451	1105	4	PMS-392732	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:33.996252	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1452	1105	4	PMS-392688	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:32:42.712563	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1453	1105	1	PMS-367004	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:33:32.217258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1456	1105	1	PMS-393168	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:02.715981	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1457	1105	4	PMS-392671	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:12.768043	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1458	1105	4	PMS-392682	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:20.702428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1459	1105	1	PMS-393192	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:38.368918	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1460	1105	4	PMS-392701	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:49.96732	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1461	1105	4	PMS-392692	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:34:56.617965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1462	1105	1	PMS-393181	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:11.868846	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1463	1105	4	PMS-392751	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:22.384928	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1464	1105	4	PMS-392712	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:35:34.069282	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1465	1105	1	PMS-393177	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:12.755201	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1466	1105	4	PMS-392710	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:20.824225	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1467	1105	4	PMS-392700	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:29.521269	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1468	1105	1	PMS-393189	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:46.319578	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1469	1105	4	PMS-392706	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:52.236943	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1470	1105	4	PMS-392694	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:36:59.553823	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1471	1105	1	PMS-393191	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:17.905139	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1472	1105	4	PMS-392693	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:27.188105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1473	1105	4	PMS-392705	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:37:35.32212	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1474	1105	1	PMS-393190	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:06.557114	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1475	1105	4	PMS-392703	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:15.591965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1476	1105	4	PMS-392695	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 00:38:23.29066	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1477	1106	1	PMS-393200	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:19:45.801528	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1478	1106	4	PMS-392697	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:19:54.552034	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1479	1106	4	PMS-392708	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:03.222108	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1480	1106	1	PMS-393166	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:24.203624	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1481	1106	4	PMS-392678	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:32.952772	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1482	1106	4	PMS-392677	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:20:42.434966	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1483	1106	1	PMS-393204	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:21:49.572931	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1484	1106	4	PMS-392715	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:10.806934	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1485	1106	4	PMS-392689	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:20.506416	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1486	1106	1	PMS-393199	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:37.340326	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1487	1106	4	PMS-392713	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:46.641149	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1488	1106	4	PMS-392718	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:22:53.778753	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1489	1106	1	PMS-393680	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:14.327094	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1490	1106	4	PMS-392691	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:22.191965	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1491	1106	4	PMS-392731	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:29.742712	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1492	1106	1	PMS-393201	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:23:52.092289	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1493	1106	4	PMS-392699	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:05.293209	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1494	1106	4	PMS-392728	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:12.826293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1495	1106	1	PMS-393203	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:29.077226	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1496	1106	4	PMS-392714	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:24:37.810268	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1497	1106	4	PMS-392698	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:25:04.610907	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1501	1106	1	PMS-393684	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:23.051229	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1502	1106	4	PMS-392971	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:32.948408	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1503	1106	4	PMS-392882	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:40.532032	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2338	1106	655	PMS-387637	\N	397	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:33:49.365485	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1210	66	4	PMS-376358	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:10.046765	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1213	77	2	PMS-177905	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:25:36.915123	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1224	83	4	PMS-205128	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:20.231197	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1226	8	4	PMS-376374	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:35.64898	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1236	88	4	PMS-367222	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:57.350244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1238	107	4	PMS-208587	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:38.400065	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1242	107	4	PMS-207217	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:30:02.834461	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1209	66	1	PMS-376269	None	2	131	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:03.046165	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1214	78	1	PMS-393615	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:47.966742	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1215	78	4	PMS-392975	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:55.448743	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1220	81	4	\N	11100345	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:43.083028	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2315	1106	495	PMS-297577	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:10:03.984214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2317	1106	630	\N	\N	13	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:11:36.856213	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	d7983e3436fb4b44a8db09a06c0eda53.jpg
+1624	1018	4	PMS-208597	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:49.018456	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1628	1021	4	PMS-208598	\N	2	3	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:44.628068	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2323	1106	537	\N	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:16:00.224539	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	843711ed4ac444a6a44e5803f2ce7499.jpg
+2327	1106	476	PMS-297558	\N	\N	\N	\N	\N	\N	ativo	boa	Gaveteiro alto	t	\N	2026-10-27 18:18:46.125309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1504	1106	1	PMS-393178	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:27:59.683301	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1641	1026	2	PMS-177964	\N	2	2	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:50:18.684631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1644	1029	1	PMS-208474	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:51:09.444314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1646	1030	1	PMS-177620	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:51:40.699459	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1505	1106	4	PMS-392743	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:06.86797	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1639	1011	5	PMS-372309	None	10	132	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:57.679804	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1506	1106	4	PMS-392737	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:17.084398	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1507	1106	1	PMS-393565	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:41.418481	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1508	1106	4	PMS-392886	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:28:50.935302	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1509	1106	4	PMS-392875	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:05.001218	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1510	1106	1	PMS-393170	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:23.767305	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1511	1106	4	PMS-392674	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:36.667643	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1512	1106	4	PMS-392673	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:29:49.886854	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1513	1106	1	PMS-393197	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:37.104754	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1514	1106	4	PMS-392724	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:45.803732	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1515	1106	4	PMS-392740	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:30:54.937162	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1516	1106	1	PMS-393194	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:15.256817	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1517	1106	4	PMS-392749	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:22.956072	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1518	1106	4	PMS-392752	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:30.256212	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1519	1106	1	PMS-393202	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:44.939611	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1520	1106	4	PMS-392721	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:31:52.056131	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1521	1106	4	PMS-392748	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:01.057566	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1522	1106	1	PMS-393198	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:17.623502	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1523	1106	4	PMS-392744	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:24.623308	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1524	1106	4	PMS-392733	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:33.023689	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1525	1106	1	PMS-393577	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:46.709258	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1526	1106	4	PMS-392707	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:32:54.442836	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1527	1106	4	PMS-392738	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:01.924397	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1528	1106	1	PMS-393691	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:23.240863	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1529	1106	4	PMS-392978	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:37.609194	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1530	1106	4	PMS-392952	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:33:47.261216	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1531	1107	1	PMS-393682	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:00.734714	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1532	1107	4	PMS-392961	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:08.53454	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1533	1107	4	PMS-392945	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:15.684133	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1534	1107	1	PMS-393167	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:29.718181	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1535	1107	4	PMS-392670	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:43.717666	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1536	1107	4	PMS-392686	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:38:51.336059	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1537	1107	1	PMS-393704	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:33.120292	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1538	1107	4	PMS-392927	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:39.504347	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1539	1107	4	PMS-392956	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:39:47.37024	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1540	1107	1	PMS-393685	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:05.120984	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1541	1107	4	PMS-392928	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:13.803728	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1542	1107	4	PMS-392964	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:22.604243	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1543	1107	1	PMS-393688	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:40:55.539349	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1544	1107	4	PMS-392953	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:02.02118	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1545	1107	4	PMS-392943	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:11.522364	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1546	1107	1	PMS-393702	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:33.257	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1547	1107	4	PMS-392932	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:45.344084	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1548	1107	4	PMS-392962	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:41:53.890344	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1549	1107	1	PMS-393700	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:09.059651	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1550	1107	4	PMS-392965	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:16.625663	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1551	1107	4	PMS-392925	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:25.107354	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1552	1107	1	PMS-393686	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:42.175926	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1553	1107	4	PMS-392921	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:42:50.57518	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1554	1107	4	PMS-392958	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:00.210075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1555	1107	1	PMS-393693	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:17.22818	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2331	1106	390	PMS-293822	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:23:34.462265	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2334	128	398	PMS-206491	\N	253	439	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:27:28.325921	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2320	1106	391	PMS-269760	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:13:31.37908	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1241	107	4	PMS-376371	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:29:57.534079	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1211	76	1	PMS-393610	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:25:18.413552	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1217	79	4	PMS-392946	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:26:10.71575	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1228	84	4	PMS-392960	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:27:52.266851	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1232	86	4	PMS-392948	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:25.616345	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1223	83	1	PMS-163181	None	2	134	\N	\N	\N	ativo	regular		t	\N	2026-07-30 21:27:14.699177	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1556	1107	4	PMS-392924	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:24.711269	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1557	1107	4	PMS-392954	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:34.376367	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2318	1106	630	\N	\N	13	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:11:37.374214	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0d38ef8e933f4185af0461d52abfbd50.jpg
+1558	1107	1	PMS-393697	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:43:53.043474	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1233	87	1	PMS-208690	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-07-30 21:28:34.783553	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1602	1011	4	PMS-367285	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:56.10967	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1621	1017	1	PMS-316373	\N	2	\N	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:40:05.162894	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1623	1018	1	PMS-208475	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:40:33.962159	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1627	1021	1	PMS-208473	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:29.451741	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1633	1024	1	PMS-165259	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:43:33.5871	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1635	1024	1	PMS-178135	\N	2	134	\N	\N	\N	ativo	regular		t	\N	2026-09-02 00:46:00.208614	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1559	1107	4	PMS-392930	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:02.278048	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1638	1025	4	PMS-367324	None	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:14.578494	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1560	1107	4	PMS-392919	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:16.545338	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1561	1107	1	PMS-393687	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:34.462662	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1562	1107	4	PMS-392926	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:43.595617	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1563	1107	4	PMS-392922	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:44:52.830178	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1564	1107	1	PMS-393205	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:22.446136	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1565	1107	4	PMS-392942	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:41.797105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1566	1107	4	PMS-392967	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:45:49.335241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1567	1107	1	PMS-393695	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:14.731857	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1568	1107	4	PMS-392947	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:21.615674	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1569	1107	4	PMS-392940	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:29.282272	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1570	1107	1	PMS-393164	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:46:54.800532	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1571	1107	4	PMS-392680	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:15.118047	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1572	1107	4	PMS-392667	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:21.61856	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1573	1107	1	PMS-393679	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:35.60193	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1574	1107	4	PMS-392923	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:50.568896	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1575	1107	4	PMS-392920	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:47:58.685816	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1576	1107	1	PMS-393696	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:14.967666	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1577	1107	4	PMS-392929	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:24.351849	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1578	1107	4	PMS-392963	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 20:48:31.39011	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1579	1108	1	PMS-393169	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:01.29682	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1580	1108	4	PMS-392681	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:10.297997	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1581	1108	4	PMS-392679	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:19.396065	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1582	1108	1	PMS-393698	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:33.679653	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1583	1108	4	PMS-392973	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:40.780062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1584	1108	4	PMS-392970	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:51:54.166105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1585	1108	1	PMS-393706	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:19.597845	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1586	1108	4	PMS-392879	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:28.147105	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1587	1108	4	PMS-392874	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:37.200293	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1588	1108	1	PMS-393550	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:52:54.085222	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1589	1108	4	PMS-392898	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:06.518102	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1590	1108	4	PMS-392918	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:17.684338	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1591	1108	1	PMS-393556	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:32.483745	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1592	1108	4	PMS-392860	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:42.634636	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1593	1108	4	PMS-392916	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:53:53.399634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1594	1108	1	PMS-393683	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:08.402688	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1595	1108	4	PMS-392897	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:16.368001	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1596	1108	4	PMS-392876	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-08-26 21:54:23.184964	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1597	1	4	PMS-376387	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-08-27 00:48:43.229428	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1598	1	1	PMS-393703	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-08-27 00:50:17.482186	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1601	1011	1	PMS-376212	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:32:44.418937	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1603	1011	1	PMS-366931	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:33:11.749395	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1605	1012	1	PMS-393637	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:34:58.485999	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1606	1012	4	PMS-392840	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:07.667956	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1607	1013	1	PMS-393634	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:35.826313	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1608	1013	4	PMS-392767	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:43.81051	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1609	1013	1	PMS-393638	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:35:54.183052	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1610	1013	4	PMS-392851	None	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:02.822259	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1611	1013	1	PMS-393563	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:21.703032	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1612	1013	4	PMS-392833	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:36:30.937651	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1617	1016	1	PMS-393672	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:38:59.974184	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1618	1016	4	PMS-392804	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:07.455983	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1619	1016	1	PMS-393632	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:19.60947	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1620	1016	4	PMS-392814	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:39:29.210421	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1625	1019	1	PMS-393674	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:06.06325	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2319	1106	418	PMS-387895	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:12:50.911602	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2321	1106	476	PMS-2343580	\N	\N	\N	\N	\N	\N	ativo	boa	Gaveteito alto	t	\N	2026-10-27 18:14:57.497558	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2325	1106	654	\N	\N	396	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:17:05.81631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2329	1106	630	PMS-386142	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:20:12.793707	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2332	107	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa	marrom de madeira	t	\N	2026-10-27 18:26:20.155161	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1626	1019	4	PMS-392824	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:41:12.963784	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1629	1023	1	PMS-393572	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:42:16.368804	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1630	1023	4	PMS-392813	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:42:25.545905	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1637	1025	1	PMS-366947	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:49:07.904121	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1642	1028	1	PMS-393676	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:50:36.714119	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1643	1028	4	PMS-392763	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-02 00:50:44.861314	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1648	298	1	PMS-393585	\N	3	135	2026-01-01	\N	\N	ativo	boa		t	\N	2026-09-03 22:21:41.467374	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1649	1109	1	PMS-393644	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:35:55.988794	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1650	1109	4	PMS-392846	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:21.07576	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1651	1109	4	PMS-392777	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:36.282758	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1652	1109	1	PMS-393689	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:36:55.905309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1653	1109	4	PMS-392966	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:37:09.351062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1654	1109	4	PMS-392972	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:37:18.6853	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1655	1109	1	PMS-393692	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:30.851814	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1656	1109	4	PMS-392893	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:43.199574	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1657	1109	4	PMS-392864	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:43:51.104974	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1658	1109	1	PMS-393558	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 22:44:10.76942	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1659	1109	4	PMS-392884	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:14.35604	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1660	1109	4	PMS-392907	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:24.423066	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1661	1109	1	PMS-367012	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:03:41.202261	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1663	1110	1	PMS-393574	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:00.426348	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1664	1110	4	PMS-392872	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:11.026897	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1665	1110	4	PMS-392896	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:22.051296	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1666	1110	1	PMS-393570	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:36.582298	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1667	1110	4	PMS-392867	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:10:45.619088	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1668	1110	4	PMS-392863	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:17.987241	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1669	1110	1	PMS-393575	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:36.239451	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1670	1110	4	PMS-392906	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:44.231771	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1671	1110	4	PMS-392861	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:11:52.26574	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1672	1110	1	PMS-393576	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:14.771692	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1673	1110	4	PMS-392968	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:21.672255	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1674	1110	4	PMS-392951	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:29.485806	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1675	1111	1	PMS-393677	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:12:54.784986	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1676	1111	4	PMS-392936	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:01.973742	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1677	1111	4	PMS-392938	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:10.337242	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1678	1111	1	PMS-393694	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:25.976008	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1679	1111	4	PMS-392959	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:34.48878	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1680	1111	4	PMS-392941	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:13:44.694247	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1682	1112	4	PMS-392887	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:15.022647	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1683	1112	4	PMS-392877	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:43.807503	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1684	1112	1	PMS-393569	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:09.341242	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1685	1112	4	PMS-392862	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:18.037475	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1686	1112	4	PMS-392905	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:15:26.02716	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1698	4	1	PMS-393195	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:52:56.165231	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1699	4	4	PMS-392904	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:05.777855	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1700	4	4	PMS-392868	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:14.347376	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1701	4	1	PMS-393566	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:35.476511	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1702	4	4	PMS-392704	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:43.501588	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1703	4	4	PMS-392729	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:53:52.450622	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1704	4	1	PMS-393564	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:11.984568	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1705	4	4	PMS-392878	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:20.614868	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1706	4	4	PMS-392912	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:28.913388	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1707	4	1	PMS-393561	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:44.168035	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1708	4	4	PMS-392888	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:54:52.732866	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1709	4	4	PMS-392910	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:00.149544	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1710	4	1	PMS-393701	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:19.791476	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1711	4	4	PMS-392873	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:28.012956	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1712	4	4	PMS-392889	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:36.780034	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1713	4	1	PMS-393196	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:55:55.004037	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1715	4	4	PMS-392901	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:13.252636	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1716	4	1	PMS-393551	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:27.354487	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1717	4	4	PMS-392871	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:35.950527	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1718	4	4	PMS-392890	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:56:48.733842	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1719	4	1	PMS-393172	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:19.086906	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1720	4	4	PMS-392676	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:28.293225	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1721	4	4	PMS-392685	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:57:36.994529	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1722	4	3	PMS-388457	\N	1	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 20:58:24.812982	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1723	1113	1	PMS-393560	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:32.24233	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1724	1113	4	PMS-392895	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:43.853536	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1725	1113	4	PMS-392883	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:17:52.57855	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1726	1113	1	PMS-393562	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:10.236082	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1727	1113	4	PMS-392881	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:19.754086	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1728	1113	4	PMS-392834	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:27.125781	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1729	1113	1	PMS-393552	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:18:46.42005	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1730	1113	4	PMS-392885	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:01.070329	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1731	1113	1	PMS-393555	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:21.227757	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1732	1113	1	PMS-393567	\N	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:19:36.16185	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1733	1113	4	PMS-392944	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:20:30.57677	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1734	1113	4	PMS-392931	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-09-17 21:20:38.45813	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1681	1112	1	PMS-393548	None	3	135	\N	\N	\N	ativo	boa		t	\N	2026-09-08 23:14:06.992413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1746	3	1	PMS-366922	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:27:33.272862	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1748	67	1	PMS-366829	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:28:43.369275	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1750	68	1	PMS-366945	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:01.84798	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1752	70	1	PMS-366914	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:35.584585	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1753	70	4	PMS-367301	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:33:45.429911	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1754	69	1	PMS-366903	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:07.977348	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1756	71	1	PMS-376191	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:34:42.746765	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1758	71	1	PMS-366933	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:35:49.781219	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1762	381	1	PMS-366940	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:37:34.12304	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1764	381	1	PMS-366953	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:38:32.175172	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1767	381	1	PMS-370767	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:39:50.195264	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1769	381	3	PMS-393328	\N	\N	\N	\N	\N	\N	ativo	boa	Notebook Vaio - Telessaúde	t	\N	2026-09-22 20:40:34.527805	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1772	226	1	PMS-366952	\N	2	134	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:43:43.197678	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1774	225	1	PMS-366911	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:44:27.457694	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1776	1120	1	PMS-366920	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:46:10.155618	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1778	382	1	PMS-366918	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:04.367632	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1780	110	1	PMS-366696	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:47:56.620447	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1782	110	3	PMS-388431	\N	1	1	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:48:42.610278	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1785	1121	1	PMS-366950	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:37.692676	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1787	1121	1	PMS-366889	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:50:59.913995	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1789	109	1	PMS-366686	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:51:39.289983	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1791	72	1	PMS-36772	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:52:18.249962	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1793	1122	1	PMS-366938	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:53:20.767913	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1794	1122	4	PMS-376351	\N	2	133	\N	\N	\N	ativo	boa		t	\N	2026-09-22 20:53:31.254972	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1795	1123	1	PMS-366822	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:48:14.456764	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1819	1115	1	PMS-376284	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:56:39.275332	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1821	1115	3	PMS-388449	\N	1	1	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:57:07.939676	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1824	1135	1	PMS-366994	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:19.48312	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1826	1135	1	PMS-366962	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:58:41.498693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1830	1137	1	PMS-366760	\N	2	131	\N	\N	\N	ativo	boa		t	\N	2026-09-24 15:59:53.924363	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1838	1	244	PMS-399547	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Ulisses Guimarães\r\nPatrimônio: PMS-399547\r\nE-mail: retinografo.ulysses@sorocaba.sp.gov.br	t	\N	2026-10-08 00:53:10.262173	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1839	1	244	PMS-396797	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Parque São Bento\r\nPatrimônio: PMS-396797\r\nE-mail: retinografo.parquesaobento@sorocaba.sp.gov.br	t	\N	2026-10-08 00:54:11.692299	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1840	1	244	PMS-396796	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Habiteto Ana Paula Eleutério\r\nPatrimônio: PMS-396796\r\nE-mail: retinografo.habiteto@sorocaba.sp.gov.br	t	\N	2026-10-08 00:54:51.543736	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1841	1	244	PMS-396798	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Jardim Rodrigo\r\nPatrimônio: PMS-396798\r\nE-mail: retinografo.jardimrodrigo@sorocaba.sp.gov.br	t	\N	2026-10-08 00:55:32.393981	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1842	1	244	PMS-399548	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Vila Barão\r\nPatrimônio: PMS-399548\r\nE-mail: retinografo.vilabarao@sorocaba.sp.gov.br	t	\N	2026-10-08 00:56:49.749621	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1843	1	244	PMS-396799	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Nova Esperança\r\nPatrimônio: PMS-396799\r\nE-mail: retinografo.novaesperanca@sorocaba.sp.gov.br	t	\N	2026-10-08 00:57:42.51526	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1844	1	244	PMS-396800	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Paineiras\r\nPatrimônio: PMS-396800\r\nE-mail: retinografo.paineiras@sorocaba.sp.gov.br	t	\N	2026-10-08 00:58:42.48844	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1845	1	244	PMS-396795	\N	71	136	2026-01-01	40865.02	\N	ativo	boa	Unidade: USF Aparecidinha\r\nPatrimônio: PMS-396795\r\nE-mail: retinografo.aparecidinha@sorocaba.sp.gov.br	t	\N	2026-10-08 00:59:40.720633	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2322	1106	537	\N	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:15:03.099402	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0fc40dc809f04b7ab84346173afb754e.jpg
+2330	1106	630	PMS-354578	\N	381	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:22:01.700569	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2335	107	537	PMS-384885	\N	395	\N	\N	\N	\N	ativo	ruim		t	\N	2026-10-27 18:29:58.818503	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2336	125	418	PMS-389547	\N	386	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:31:34.681754	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2362	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:58:28.841876	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	0064b729ad9b45c4b570edb51d7b778c.jpg
+2337	125	418	PMS-389541	\N	386	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:32:22.823742	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2339	125	418	PMS-388281	\N	377	\N	\N	\N	\N	ativo	boa	PRETA	t	\N	2026-10-27 18:34:30.415018	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2343	125	391	PMS-387657	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:35:44.49682	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2349	105	441	PMS-365872	\N	292	512	\N	\N	\N	ativo	boa	40l	t	\N	2026-10-27 18:38:24.592687	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2350	125	438	PMS-353230	\N	290	508	\N	\N	\N	ativo	boa		t	\N	2026-10-27 18:38:25.42303	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2466	220	1	PMS-208436	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:33:52.697192	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2469	220	4	PMS-392878	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:34:22.818959	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2480	457	4	PMS-208543	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:38:43.631603	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2472	174	436	PMS-391432	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:36:11.329079	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2482	174	436	PMS-391434	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:12.712379	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2483	125	4	PMS-207375	\N	1	679	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:24.632465	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2484	174	436	PMS-391433	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:39:36.252286	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2494	180	449	PMS-346094	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:46:18.657439	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2501	180	454	PMS-362903	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:54:06.211758	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2360	1150	515	\N	\N	305	674	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:57:22.050834	2026-10-30 11:51:41.839903	2022	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	6bea6f8069ee4f5c95d8453a918221e9.jpg
+2502	220	413	PMS-391226	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:55:47.743075	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2504	140	418	PMS-389538	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 13:59:54.740287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2505	452	511	PMS-394236	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:00:02.027555	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2364	1150	515	\N	\N	305	606	\N	\N	\N	sobressalente	boa		t	\N	2026-10-27 18:59:57.123421	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	3829c947b6d342339425728c29ad36ee.jpg
+2506	140	418	PMS-388282	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 14:00:25.761855	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2656	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:18:28.100448	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2659	125	4	\N	\N	2	664	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:21:34.585757	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2657	125	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:19:55.701824	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2663	112	418	PMS-184194	\N	4	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-29 12:55:33.755478	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2658	125	613	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:20:49.20413	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2660	140	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-28 20:37:28.2962	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2661	112	537	PMS-390260	\N	395	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 12:47:50.589463	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2662	112	495	PMS-182892	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 12:52:49.597036	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2664	112	476	PMS-280316	\N	380	\N	\N	\N	\N	ativo	regular	gaveteiro de madeira	t	\N	2026-10-29 14:07:14.614389	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2689	147	605	PMS-134105	\N	408	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:28:39.238147	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2665	112	551	PMS-310622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:09:49.498532	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2666	112	391	PMS-310622	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:20:02.554444	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2667	112	418	PMS-389474	\N	386	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:22:19.431443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2690	147	495	PMS-58725	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:29:57.025742	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2668	144	4	PMS-249971	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:46:26.546288	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2669	144	495	PMS-240740	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:47:54.392752	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2670	144	651	PMS-181352	\N	411	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:49:01.788606	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2691	149	474	PMS-361045	\N	280	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-29 15:31:46.676729	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2671	144	1	PMS-177603	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:49:51.313957	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2672	144	1	PMS-172850	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:50:36.200254	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2673	144	4	PMS-149203	\N	8	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:51:15.22952	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2692	149	516	PMS-319931	\N	288	607	\N	\N	\N	ativo	ruim		t	\N	2026-10-29 15:33:04.029157	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2674	147	486	PMS-392270	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:52:44.487049	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2675	147	488	PMS-392268	\N	321	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:53:20.803286	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2676	147	418	PMS-389543	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 14:55:39.960577	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2693	149	428	PMS-316651	\N	279	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:34:29.087796	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2677	147	418	PMS-389542	\N	4	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:00:20.752528	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2678	147	418	PMS-388285	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:01:05.307062	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2679	147	391	PMS-387658	\N	410	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:03:02.366514	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2694	149	428	PMS-236973	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:35:20.439368	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2680	147	488	PMS-383363	\N	323	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:03:58.976572	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2681	147	488	PMS-309846	\N	324	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:04:51.725405	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2682	147	4	PMS-285410	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:05:26.067097	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2695	149	474	PMS-209497	\N	412	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:36:12.378443	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2683	147	438	PMS-244380	\N	224	684	\N	\N	\N	ativo	boa	EMPRESTADA AO CMAE	t	\N	2026-10-29 15:06:59.552557	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2684	147	605	PMS-242489	\N	16	680	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:08:44.68287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2685	147	486	PMS-206492	\N	322	\N	\N	\N	\N	ativo	regular		t	\N	2026-10-29 15:24:17.319631	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2696	149	474	PMS-205186	\N	412	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:36:49.998716	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2686	147	1	PMS-178479	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:26:17.779339	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2687	147	400	PMS-137928	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:26:54.834716	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2688	147	467	PMS-135940	\N	224	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:27:40.661888	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2697	149	474	PMS-135703	\N	407	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:38:32.753112	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2698	149	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:39:47.296419	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2699	149	638	\N	\N	\N	\N	\N	\N	\N	ativo	boa	COM TAMPO DE MARMORE	t	\N	2026-10-29 15:41:03.116898	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2700	149	428	\N	\N	277	483	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:42:21.06425	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2701	142	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:43:53.336519	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2702	142	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 15:44:21.861087	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2731	142	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:52:27.720868	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2732	142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:54:06.529565	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2733	142	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:54:58.569963	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2734	142	656	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 18:57:31.643244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2735	144	656	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:00:56.371843	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2736	144	476	\N	\N	380	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:01:33.656169	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2737	144	418	PMS-389537	\N	409	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:03:52.300932	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2751	147	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:15:43.126948	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2752	147	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:16:29.408548	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2756	156	418	PMS-388288	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:22:28.506309	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2753	156	417	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:19:08.261874	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2757	156	418	PMS-388287	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:23:51.602447	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2762	156	4	PMS-261219	\N	9	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:27:12.192134	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2768	156	495	PMS-240742	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:30:56.688133	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2778	154	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:38:10.618386	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2749	147	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:12:54.158287	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2775	156	1	PMS-208537	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:34:43.734504	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2777	156	2	PMS-177799	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:35:24.024628	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2748	147	476	\N	\N	413	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:11:56.233272	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2750	147	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:15:08.462114	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2754	156	495	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:20:30.836732	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2760	156	1	PMS-305468	\N	389	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:26:32.709699	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2766	156	495	PMS-240744	\N	382	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:30:00.81967	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2779	154	418	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:38:40.12448	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2747	147	476	\N	\N	413	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:11:19.850045	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2755	156	476	\N	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:21:27.282709	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2758	156	418	PMS-388279	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:24:32.202734	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2759	156	476	PMS-387696	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:25:39.99693	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2774	156	4	PMS-208662	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:34:06.569866	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2808	150	573	PMS-146228	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:32:25.937634	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2780	154	418	PMS-388286	\N	377	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:39:36.260058	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2781	154	476	PMS-387699	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:40:55.806269	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2782	154	495	PMS-381104	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:41:53.800013	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2809	150	573	PMS-146227	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:33:20.380169	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2783	154	390	PMS-381052	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:42:37.780244	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2784	154	1	PMS-208651	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:43:15.118967	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2785	154	4	PMS-208533	\N	2	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:44:04.313472	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2810	150	573	PMS-146225	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:33:48.012816	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2787	150	638	\N	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:45:37.551897	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2789	150	605	PMS-303397	\N	20	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:46:16.960327	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2791	150	565	PMS-252455	\N	415	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:47:27.699179	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2811	150	573	PMS-146223	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:34:01.566484	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2794	150	390	PMS-249651	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:48:12.475768	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2795	150	391	PMS-245988	\N	414	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 19:48:44.399994	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2812	150	573	PMS-146221	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:34:20.239253	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2813	150	573	PMS-146213	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:34:34.317709	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2814	150	573	PMS-146207	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:34:48.007146	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+2815	150	573	PMS-146202	\N	\N	\N	\N	\N	\N	ativo	boa		t	\N	2026-10-29 20:35:06.414137	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+1438	1105	1	PMS-393165	\N	3	135	\N	\N	\N	ativo	boa	\N	t	\N	2026-08-26 00:29:41.94292	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -9857,6 +10172,8 @@ COPY public.historico_equipamento (id, equipamento_id, usuario_id, acao, observa
 139	2358	\N	Realocado de Divisão de Administração e Gestão para Almoxarifado de Equipamentos	\N	2026-10-28 14:00:51.718901
 140	2540	\N	Realocado de Sala de Medicação para Consultorio 1	\N	2026-10-28 14:18:44.422559
 141	2556	\N	Realocado de Arquivo para Sala do Enfermeiro	\N	2026-10-28 14:35:14.409611
+142	2632	\N	Marcado como inservível/sem recuperação	\N	2026-10-29 19:07:52.188934
+143	2753	\N	Tipo alterado de Cadeira de Escritório Giratória para Cadeira Fixa Estofada	\N	2026-10-29 19:23:04.276586
 2	1	\N	Transferência cancelado	\N	2026-03-06 17:17:17.219796
 4	1	\N	Transferência cancelado	\N	2026-03-06 18:56:06.017827
 5	35	\N	Transferência solicitada para USF Wanel Ville	\N	2026-04-30 01:02:21.004332
@@ -9891,6 +10208,8 @@ COPY public.historico_equipamento (id, equipamento_id, usuario_id, acao, observa
 82	384	\N	Transferência aceito — alocado em Sala coordenação C/ identificação na porta (UBS Maria Eugênia)	\N	2026-09-14 10:31:31.043068
 83	88	\N	Transferência solicitada para Núcleo Gestor de Urgência e Emergência (NUGUE)	\N	2026-09-17 21:01:50.66884
 84	82	\N	Transferência aceito — alocado em Núcleo Gestor de Urgência e Emergência (NUGUE) (Núcleo Gestor de Urgência e Emergência (NUGUE))	\N	2026-09-17 21:11:30.844175
+117	2374	\N	Estado e condição atualizados	\N	2026-10-28 13:10:07.861619
+127	2357	\N	Estado e condição atualizados	\N	2026-10-28 13:15:08.870012
 85	88	\N	Transferência aceito — alocado em Núcleo Gestor de Urgência e Emergência (NUGUE) (Núcleo Gestor de Urgência e Emergência (NUGUE))	\N	2026-09-17 21:12:51.769639
 86	83	\N	Transferência aceito — alocado em Núcleo Gestor de Urgência e Emergência (NUGUE) (Núcleo Gestor de Urgência e Emergência (NUGUE))	\N	2026-09-17 21:14:05.484188
 87	89	\N	Transferência aceito — alocado em Núcleo Gestor de Urgência e Emergência (NUGUE) (Núcleo Gestor de Urgência e Emergência (NUGUE))	\N	2026-09-17 21:14:05.484188
@@ -9908,8 +10227,6 @@ COPY public.historico_equipamento (id, equipamento_id, usuario_id, acao, observa
 100	2023	\N	Estado e condição atualizados	\N	2026-10-26 18:48:44.569733
 109	2086	\N	Documento incluído no prontuário	\N	2026-10-27 11:25:33.011239
 110	2100	\N	Documento incluído no prontuário	\N	2026-10-27 11:37:58.443669
-117	2374	\N	Estado e condição atualizados	\N	2026-10-28 13:10:07.861619
-127	2357	\N	Estado e condição atualizados	\N	2026-10-28 13:15:08.870012
 \.
 
 
@@ -10354,6 +10671,7 @@ COPY public.marca_tipo_equipamento (marca_id, tipo_equipamento_id) FROM stdin;
 405	504
 409	418
 410	391
+414	391
 2	1
 2	2
 2	6
@@ -10677,6 +10995,13 @@ COPY public.marca_tipo_equipamento (marca_id, tipo_equipamento_id) FROM stdin;
 408	605
 380	391
 411	651
+412	474
+413	476
+414	476
+414	495
+414	390
+414	638
+415	565
 \.
 
 
@@ -10902,6 +11227,10 @@ COPY public.marcas (id, nome, criado_em, atualizado_em, pendente) FROM stdin;
 409	peccini	2026-10-28 19:09:28.508099	2026-10-28 19:09:28.508099	t
 410	SOPRENO	2026-10-28 19:17:46.67415	2026-10-28 19:17:46.67415	t
 411	SMS	2026-10-29 14:49:01.793247	2026-10-29 14:49:01.793247	t
+412	FRICON	2026-10-29 15:36:12.383449	2026-10-29 15:36:12.383449	t
+413	RIVIERA	2026-10-29 19:11:19.953036	2026-10-29 19:11:19.953036	t
+414	MDF	2026-10-29 19:25:40.000929	2026-10-29 19:25:40.000929	t
+415	IBBL	2026-10-29 19:47:27.705144	2026-10-29 19:47:27.705144	t
 \.
 
 
@@ -10910,6 +11239,24 @@ COPY public.marcas (id, nome, criado_em, atualizado_em, pendente) FROM stdin;
 --
 
 COPY public.matriculas_profissionais (id, usuario_id, numero, vinculo, tipo_vinculo, cbo, reg_conselho, orgao_emissor, ativo, criado_em, atualizado_em) FROM stdin;
+\.
+
+
+--
+-- Data for Name: metabase_config; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.metabase_config (id, site_url, secret_key, intervalo_segundos, atualizado_em) FROM stdin;
+1	https://saudedigital.sorocaba.sp.gov.br/metabase		40	2026-10-30 11:39:34.584934
+\.
+
+
+--
+-- Data for Name: metabase_paineis; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+COPY public.metabase_paineis (id, nome, descricao, resource_id, bordered, titled, ativo, ordem, perfis_acesso, tipos_unidade_ids, cbos, criado_por, criado_em, atualizado_em, with_downloads, embedding_params, initial_parameters, params) FROM stdin;
+1	Integração de Vacinas à RNDS	Dashboard incorporado do Metabase.	580	f	f	t	0	["todos"]	[]	[]	\N	2026-10-30 11:39:34.584934	2026-10-30 14:45:57.199674	f	{}	{}	{}
 \.
 
 
@@ -11634,6 +11981,10 @@ gestor_secretaria	CONF_Campanhas	t	t	t
 coordenador	CONF_Campanhas	t	t	t
 administrativo	CONF_Campanhas	t	t	t
 profissional	CONF_Campanhas	f	f	f
+gestor_secretaria	OUT_Metabase	t	t	t
+coordenador	OUT_Metabase	t	f	f
+administrativo	OUT_Metabase	t	f	f
+profissional	OUT_Metabase	t	f	f
 \.
 
 
@@ -11807,8 +12158,9 @@ COPY public.planejamentos (id, unidade_id, titulo, descricao, gravidade, urgenci
 102	66	SC 460/2026 - SEI 20594/2026 - AQUISIÇÃO DE MÓVEIS MÉDICOS	Processo com recurso de Emenda Impositiva	4	3	3	\N	2026-10-27 11:31:52.58261	\N	2026-10-27 11:32:54.883024
 9	1	Contratação de Serviço de Comunicação Omnichannel	\N	4	4	4	\N	2026-03-13 17:10:44.131458	\N	2026-09-03 20:11:55.644796
 25	1	Participação das reuniões de TB (Aplicativo do Estado)	\N	4	2	1	\N	2026-03-13 19:06:20.793809	\N	2026-09-03 21:03:34.038888
-106	66	SC 2190/2026 - SEI 68901/2026 - RP PEÇAS DE MÃO	\N	3	3	3	\N	2026-10-27 11:44:23.786197	\N	2026-10-27 16:26:27.364889
+106	66	SC 2190/2026 - SEI 68901/2026 - RP PEÇAS DE MÃO	\N	3	3	3	\N	2026-10-27 11:44:23.786197	\N	2026-10-29 16:27:12.530405
 1	1	SOLUÇÕES TECNOLÓGICAS - Implantação do PEC nos CAPS	\N	2	2	1	\N	2026-03-05 19:44:59.2789	\N	2026-10-22 12:59:26.937374
+67	1	CULTURA DIGITAL - Curso de alfabetização digital	\N	1	1	1	\N	2026-09-03 19:46:21.214493	\N	2026-10-29 19:55:49.063898
 17	1	SOLUÇÕES TECNOLÓGICAS - Sistema de Notificação de Dengue - River	\N	3	3	3	\N	2026-03-13 17:47:01.499191	\N	2026-10-21 15:32:29.197008
 23	1	Vagas de Saúde Mental no SIRESP (Regula Leitos)	\N	3	3	3	\N	2026-03-13 19:02:14.928153	\N	2026-10-22 12:26:59.450541
 12	1	SOLUÇÕES TECNOLÓGICAS - Customizações SISWEB	\N	5	4	3	\N	2026-03-13 17:21:12.119358	\N	2026-10-22 12:46:20.521662
@@ -11820,7 +12172,6 @@ COPY public.planejamentos (id, unidade_id, titulo, descricao, gravidade, urgenci
 19	1	SOLUÇÕES TECNOLÓGICAS - Falta de Carência nos Exames Laboratoriais	\N	3	2	2	\N	2026-03-13 17:51:52.817491	\N	2026-10-22 12:52:39.852988
 15	1	INTEROPERABILIDADE - Integração RNDS no SISWEB	\N	2	3	1	\N	2026-03-13 17:31:04.418569	\N	2026-10-22 12:56:46.009882
 69	1	GESTÃO E GOVERNANÇA - Atualização de situação do PDTI	https://survey.sorocaba.sp.gov.br/index.php/468815<br><br>Prazo: 15/10	1	1	1	\N	2026-09-15 18:41:00.631055	\N	2026-10-22 12:59:01.994368
-67	1	CULTURA DIGITAL - Curso de alfabetização digital	\N	1	1	1	\N	2026-09-03 19:46:21.214493	\N	2026-10-22 13:00:03.082363
 108	66	SC 3852/2026 / SEI 126489/2026 - AQUISIÇÃO MEDIDOR DE CLORO	\N	2	2	2	\N	2026-10-27 11:52:21.951462	\N	2026-10-27 16:52:02.561575
 109	66	SC 4731/2026 - SEI 130159/2026 - AQUISIÇÃO DE ESFIGMO E ESTETOSCOPIO	\N	3	3	3	\N	2026-10-27 11:52:59.55345	\N	2026-10-27 16:52:23.41057
 21	1	Parametrização de Protocolos de Encaminhamento	A Configuração deve seguir o padrão definido no manual em&nbsp;<a href="https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sisweb/page/configuracao-do-protocolo-de-encaminhamento" target="_blank" rel="noopener noreferrer">https://estante-ses.sorocaba.sp.gov.br/books/manuais-de-utilizacao-do-sisweb/page/configuracao-do-protocolo-de-encaminhamento</a>.	3	3	2	\N	2026-03-13 18:08:56.117716	\N	2026-06-03 14:21:55.118837
@@ -11848,9 +12199,9 @@ COPY public.planejamentos (id, unidade_id, titulo, descricao, gravidade, urgenci
 61	4	Migração dos protocolos técnicos de saúde para a Estante SES	Até dia 11/08	1	3	1	\N	2026-07-27 14:27:30.00609	\N	2026-07-27 19:53:16.035094
 52	55	Teste de Planejamento	\N	5	5	5	\N	2026-05-26 14:51:00.819284	\N	2026-09-22 23:34:44.406677
 104	66	SC 1329/2026 - SEI 45828/2026 - RP EQUIPAMENTOS ODONDOLÓGICOS	Aguarda análise jurídica desde 09/10/26	4	3	3	\N	2026-10-27 11:38:40.476659	\N	2026-10-27 11:39:30.245783
+105	66	SC 1774/2026 - SEI 56037/2026 - RP EQUIPAMENTOS MÉDICOS	4ª análise do NACP	3	3	3	\N	2026-10-27 11:40:51.882733	\N	2026-10-29 16:31:12.469122
 65	1	Nova Configuração de Alta com Continuidade do Cuidado de Saúde Bucal	<p class="isSelectedEnd">Realizar a configuração de um novo fluxo de <strong>Alta com Continuidade do Cuidado em Saúde Bucal</strong>, destinado aos pacientes atendidos em unidade de urgência odontológica que necessitem de continuidade do cuidado na Atenção Primária à Saúde (APS).</p><p class="isSelectedEnd">Diferentemente do fluxo atual de Alta com Continuidade do Cuidado, as solicitações de Saúde Bucal <strong>não deverão gerar agendamento automático na APS</strong>. Elas deverão ser encaminhadas para uma <strong>fila de regulação</strong>, que será acompanhada pela Central de Regulação Odontológica do Município.</p><p class="isSelectedEnd">A implantação inicial será realizada em formato piloto, contemplando somente a <strong>UPA Zona Oeste</strong>.</p><h2>1. Criação do novo serviço</h2><p class="isSelectedEnd">Cadastrar o seguinte serviço no sistema:</p><p class="isSelectedEnd"><strong>ALTA COM CONTINUIDADE DO CUIDADO EM SAÚDE BUCAL</strong></p><p class="isSelectedEnd">O novo serviço deverá ser independente do serviço atualmente utilizado para a Alta com Continuidade do Cuidado geral, uma vez que possuem regras de funcionamento distintas.</p><h3>Configuração do serviço</h3><p class="isSelectedEnd">O serviço deverá:</p><ul data-spread="false"><li>Trabalhar com a lógica de <strong>1 solicitação para N procedimentos</strong>;</li><li>Permitir a inclusão de <strong>um ou mais procedimentos em uma mesma solicitação</strong>;</li><li>Direcionar as solicitações para <strong>fila de regulação</strong>;</li><li>Não gerar agendamento automático do paciente na APS;</li><li>Permitir acompanhamento das solicitações pela <strong>fila de regulação por serviço</strong>;</li><li>Disponibilizar para utilização somente a prioridade <strong>P1 - E</strong>.</li></ul><h2>2. Procedimentos vinculados ao serviço</h2><p class="isSelectedEnd">Vincular ao novo serviço os procedimentos correspondentes às seguintes condições:</p><ul data-spread="false"><li><strong>Cárie ativa múltipla</strong>;</li><li><strong>Destruições coronárias extensas</strong>;</li><li><strong>Restos radiculares múltiplos</strong>;</li><li><strong>Doença periodontal avançada</strong>;</li><li><strong>Gestante – obrigatório</strong>.</li></ul><p class="isSelectedEnd">Deverão ser reaproveitados, sempre que possível, os códigos de procedimentos já existentes no sistema, realizando o vínculo destes ao novo serviço.</p><p class="isSelectedEnd">Caso algum dos procedimentos necessários não possua cadastro compatível com o novo fluxo, deverá ser criado ou adequado o respectivo procedimento.</p><h2>3. Fluxo da solicitação</h2><p class="isSelectedEnd">O fluxo deverá funcionar da seguinte forma:</p><p class="isSelectedEnd"><strong>UPA Zona Oeste → Registro da solicitação → Seleção de um ou mais procedimentos → Fila de Regulação Odontológica → Análise pela Regulação → Encaminhamento/orientação para continuidade do cuidado na APS.</strong></p><p class="isSelectedEnd">A abertura da solicitação <strong>não deverá reservar agenda ou gerar agendamento para o paciente</strong>.</p><p class="isSelectedEnd">A Central de Regulação Odontológica será responsável por consultar a fila do serviço, analisar as solicitações e realizar posteriormente o encaminhamento/orientação às unidades de referência dos pacientes, conforme processo operacional definido pela área.</p><h2>4. Unidade solicitante – implantação piloto</h2><p class="isSelectedEnd">Nesta primeira etapa, habilitar <strong>somente a UPA Zona Oeste</strong> como unidade solicitante do novo serviço.</p><p class="isSelectedEnd">As demais unidades não deverão possuir acesso para abertura de novas solicitações de <strong>Alta com Continuidade do Cuidado em Saúde Bucal</strong> durante a fase piloto.</p><p class="isSelectedEnd">Também deverão ser retirados/inativados para as demais unidades os acessos aos procedimentos de ACC relacionados à Saúde Bucal no fluxo anterior, evitando que novas solicitações odontológicas sejam registradas utilizando o serviço geral de Alta com Continuidade do Cuidado.</p><p class="isSelectedEnd">A ampliação do novo fluxo para outras unidades ocorrerá posteriormente.</p><h2>5. Perfil da Central de Regulação Odontológica</h2><p class="isSelectedEnd">Garantir que os usuários/perfis responsáveis pela <strong>Central de Regulação Odontológica</strong> possuam acesso ao novo serviço e consigam visualizar as solicitações por meio da <strong>fila de regulação por serviço</strong>.</p><p class="isSelectedEnd">A fila deverá permitir a identificação e análise das solicitações encaminhadas pela UPA Zona Oeste.</p><h2>6. Prioridade</h2><p class="isSelectedEnd">Configurar o serviço para disponibilizar ao solicitante somente a prioridade:</p><p class="isSelectedEnd"><strong>P1 - E</strong></p><p class="isSelectedEnd">Não deverão ser disponibilizadas outras prioridades para utilização neste fluxo durante a implantação inicial.</p><h2>7. Regras principais da configuração</h2><p class="isSelectedEnd">O novo fluxo deverá observar as seguintes regras:</p><ol data-spread="false" start="1"><li>O serviço será exclusivo para <strong>Alta com Continuidade do Cuidado em Saúde Bucal</strong>;</li><li>A implantação inicial será restrita à <strong>UPA Zona Oeste</strong>;</li><li>Uma solicitação poderá conter <strong>N procedimentos</strong>;</li><li>A solicitação será encaminhada para <strong>fila de regulação</strong>, e não para agenda;</li><li><strong>Não deverá ocorrer agendamento automático na APS</strong>;</li><li>A fila será acompanhada pela <strong>Central de Regulação Odontológica</strong>;</li><li>O solicitante utilizará somente a prioridade <strong>P1 - E</strong>;</li><li>Serão disponibilizados inicialmente os cinco procedimentos/condições definidos para o fluxo;</li><li>As demais unidades permanecerão sem acesso para abertura de solicitações de ACC de Saúde Bucal durante o piloto;</li><li>Sempre que possível, deverão ser <strong>reaproveitados os procedimentos/códigos já existentes</strong>, evitando duplicidade de cadastros.</li></ol><h2>8. Implantação</h2><p class="isSelectedEnd">A implantação do novo fluxo deverá ocorrer inicialmente na <strong>UPA Zona Oeste</strong>, com início previsto para <strong>sexta-feira, às 09h</strong>.</p><p class="isSelectedEnd">No início da implantação será realizada orientação/demonstração para a equipe da unidade sobre a abertura da solicitação, inclusão dos procedimentos e funcionamento do novo fluxo.</p><h2>Resultado esperado</h2><p class="isSelectedEnd">Ao final da configuração, a UPA Zona Oeste deverá conseguir registrar uma única solicitação de <strong>Alta com Continuidade do Cuidado em Saúde Bucal</strong>, selecionar um ou mais dos procedimentos habilitados e encaminhá-la para a fila da Central de Regulação Odontológica, <strong>sem geração de agendamento automático na APS</strong>.</p><p>A Central de Regulação Odontológica deverá conseguir localizar e acompanhar essas solicitações pela fila de regulação do novo serviço, dando continuidade ao fluxo conforme processo definido para Saúde Bucal.</p>	3	2	1	\N	2026-08-17 21:24:53.558191	\N	2026-08-27 14:48:42.133873
 63	1	SEGURANÇA DE DADOS - Verificar cadastro de Operadores SIS	Há relatos de operadores que não estão mais ligados a prefeitura acessando o sistema. Devemos procurar os inativos e desativar os operadores.	3	3	3	\N	2026-07-31 19:13:51.115486	\N	2026-10-22 12:50:25.345929
-105	66	SC 1774/2026 - SEI 56037/2026 - RP EQUIPAMENTOS MÉDICOS	4ª análise do NACP	3	3	3	\N	2026-10-27 11:40:51.882733	\N	2026-10-27 12:15:06.450308
 107	66	SC 3683/2026 - SEI 101904/2026 - RP MOBILIÁRIOS MÉDICOS	\N	3	3	3	\N	2026-10-27 11:51:30.16448	\N	2026-10-27 16:38:07.376021
 70	1	Criar usuários SIGUS sob demanda	Enviado e-mail para as equipes de gestão e administração de unidades para dar ciência da existencia do SIGUS e incentivar o começo da utilização. Já foram criados diversos usuários de coordenadores e administrativos das unidades, vez que esse podem fazer gestão de cadastros das unidades, porém, talvez exista necessidade de cadastro dos que foram "esquecidos" de algum jeito.<div><br></div><div>Sendo assim, fora orientado, em e-mail, para solicitarem via e-mail da Saúde Digital cadastro de usuários para começarem a utilizar o SIGUS.</div><div><br></div><div>O Cadastro de Usuários ocorre em Configurações &gt;&nbsp; Usuários. Uma vez que a pessoa é criada dentro do sistema, temos que cadastrar matriculas para essa pessoa, uma pessoa pode ter N matricular e esse é o motivo de estar em um passo distinto.</div><div><br></div><div>Após cadastrar uma pessoa e cadastrar matriculas, para ter acesso aos dados de uma unidade, o gestor deve ir até Gestão da Unidade &gt; Clicar no nome da unidade &gt; Alterar para a aba de profissionais e vincular o profissional em questão na unidade (isso criará, inclusive, a ficha CNES que deverá ser encaminhada para cadastro no CNES e no SIS).</div>	2	2	1	\N	2026-09-15 19:31:20.229751	\N	2026-09-28 15:18:30.266587
 71	1	Higienização de Cadastro de Operadores/Profissionais no SISWEB	<b>Esse planejamento tem documentação complementar no Processo SEI Nº&nbsp;<a href="https://cidades.sei.sp.gov.br/sorocaba/sei/controlador.php?acao=procedimento_trabalhar&amp;id_procedimento=2509632" target="_blank" rel="noopener noreferrer">3552205.404.00104602/2026-21</a></b><div><br></div><div>Enviamos ao RH uma lista com todos os operadores/profissionais criados no SIS. O RH retornou o processo com uma lista indicando quais, da lista que passamos, tem ainda vínculo com a Prefeitura.</div><div><br></div><div>Essas informações devem servir de base para filtrarmos os operadores que devem ser inativados, principalmente como operadores, do SISWEB.</div><div><br></div><div><b>ATENÇÃO: Devemos tomar cuidado com operadores vinculados a unidades terceiras e a profissionais CNPJ.</b></div>	4	3	3	\N	2026-09-15 19:37:37.759615	\N	2026-09-15 22:46:30.21568
@@ -11858,7 +12209,7 @@ COPY public.planejamentos (id, unidade_id, titulo, descricao, gravidade, urgenci
 68	1	SOLUÇÕES TECNOLÓGICAS - Configuração protocolo Agendamento Oftalmologia	<div>Demanda solicitada pela CREDAC</div><div>&lt;<a href="mailto:gestaoregulacao@sorocaba.sp.gov.br" target="_blank" rel="noopener noreferrer">gestaoregulacao@sorocaba.sp.gov.br</a>&gt; e &lt;<a href="mailto:tpoles@sorocaba.sp.gov.br" target="_blank" rel="noopener noreferrer">tpoles@sorocaba.sp.gov.br</a><span style="font-size: 0.95rem;">&gt;</span></div><div><br></div><div>O protocolo inicial já se encontra configurado no ambiente de produção, contemplando os seguintes itens:</div><div><br></div><div><ul><li>Questões: 673 a 691;</li><li>Grupos de questão: 92 a 94;</li><li>Modelo de questão: 35.</li></ul></div><div><span style="font-size: 0.95rem;">No entanto, houve uma atualização no conteúdo do protocolo. Dessa forma, é necessário revisar e ajustar a configuração atual de acordo com a última versão do protocolo encaminhada pela CREDAC.</span></div><div><br></div><div>Além disso, deverá ser configurada uma nova ficha de impressão, contendo o protocolo atualizado em sua íntegra.</div><div><br></div><div>A configuração da impressão deverá garantir que:</div><div><br></div><div><ul><li>o protocolo seja apresentado integralmente na segunda folha da impressão;</li><li>o conteúdo do protocolo não seja dividido entre a primeira e a segunda folha;</li><li>a segunda folha seja destinada ao protocolo completo, conforme a versão mais recente.</li></ul></div>	2	2	1	\N	2026-09-09 04:01:42.37397	\N	2026-10-22 12:58:41.330259
 72	1	SOLUÇÕES TECNOLÓGICAS - Implantação e Adequação de Ferramentas Digitais para a Coordenadoria de Educação em Saúde	<p class="w6asjq_TextBase _85PZeG_Text" data-d-component="text">Planejar e apoiar a implantação e adequação de ferramentas digitais destinadas à Coordenadoria de Educação em Saúde, contemplando a disponibilização de uma página institucional e a implantação de um ambiente virtual de aprendizagem (Moodle) para gestão e oferta de cursos.</p><p class="w6asjq_TextBase _85PZeG_Text" data-d-component="text">A iniciativa busca ampliar a autonomia da Coordenadoria na gestão de conteúdos educacionais, facilitar a divulgação de suas atividades e possibilitar a oferta de capacitações tanto aos servidores municipais quanto ao público externo.</p><p class="w6asjq_TextBase _85PZeG_Text" data-d-component="text">A Saúde Digital atuará no levantamento das necessidades, na articulação com a Coordenadoria Geral de Tecnologia da Informação (TI), a Escola de Gestão Pública (EGP) e demais setores envolvidos, bem como no acompanhamento das etapas necessárias à implantação das ferramentas.</p><p class="w6asjq_TextBase _85PZeG_Text" data-d-component="text">O planejamento será desenvolvido em conjunto com a Coordenadoria de Educação em Saúde, respeitando as responsabilidades técnicas e administrativas de cada setor.</p>	3	3	3	\N	2026-09-21 15:33:01.157318	\N	2026-10-22 12:49:10.426938
 75	1	CULTURA DIGITAL - Tutorial relatórios SIS Delphi	Endereço remoto<br>win.sorocaba-sp.vivver.com<br><br>Usuário<br>VMX\\{usuario_de_rede)<br><br>Senha padrão<br>123456<br><br>Ambulatório -&gt; Gestor	1	1	1	\N	2026-09-22 22:59:26.991318	\N	2026-10-22 13:01:00.950523
-110	66	SC 4837/2026 - SEI 145333/2026 - ADESÃO DE COLPOSCÓPIO	\N	5	4	5	\N	2026-10-27 11:53:39.814447	\N	2026-10-29 13:08:23.133912
+110	66	SC 4837/2026 - SEI 145333/2026 - ADESÃO DE COLPOSCÓPIO	\N	5	4	5	\N	2026-10-27 11:53:39.814447	\N	2026-10-29 17:35:31.236687
 77	1	Conferir e regularizar guias não importadas das unidades	Após a importação de guias das unidades por script, a unidade Brigadeiro Tobias informou que alguns pacientes não constavam entre os registros importados. O script foi preparado para identificar as guias não importadas e informar o motivo de cada falha. As tabelas serão disponibilizadas em um arquivo ZIP anexado ao planejamento para que Michel confira os resultados e comunique cada unidade. Cada unidade deverá verificar os registros sob sua responsabilidade, sanar os problemas identificados e inserir manualmente as guias que permanecerem necessárias. O resultado esperado é obter a conferência e a regularização pelas unidades, com registro das devolutivas.	4	3	1	\N	2026-09-23 16:51:15.326958	\N	2026-09-28 21:44:51.26255
 85	1	GESTÃO E GOVERNANÇA	A GOVERNAÇA&nbsp; define as diretrizes, as prioridades, as responsabilidades e os mecanismos de controle da Saúde Digital;<div>A GESTÃO&nbsp; transforma essas decisões em ações concretas, garantindo o funcionamento dos sistemas, dos processos e dos serviços.</div>	4	3	5	\N	2026-10-21 14:16:01.976339	\N	2026-10-22 13:09:07.697676
 100	70	CPL 086/2025 - SIAM 936/2025 - ATA DE VENTILADORES	\N	4	3	4	\N	2026-10-26 20:28:31.285175	\N	2026-10-26 20:35:50.858135
@@ -12631,7 +12982,7 @@ COPY public.salas (id, unidade_id, nome, tipo, responsavel, ativo, observacoes, 
 617	32	Sala 07	Consultório	CAROLINA TUMA KHOURI SIYOUFI	t		2026-04-29 15:47:37.279196	2026-04-29 09:00:13.809807	2		1	f
 622	32	Sala 12	Sala de Vacina		t	SALA DE VACINA (CAMPANHAS)	2026-04-29 15:56:17.151301	2026-04-29 09:00:53.531921	10		2	f
 608	39	Banheiro Feminino Hall CTA (pacientes)	Banheiro Feminino		t		2026-04-28 22:29:46.470968	2026-04-28 22:29:46.470974	34		0	f
-619	32	Sala 09	Acolhimento	\N	t		2026-04-29 15:50:49.258153	2026-10-29 12:23:04.063203	24		1	f
+619	32	Sala 09	Acolhimento	\N	t		2026-04-29 15:50:49.258153	2026-10-30 11:51:41.839903	24		1	f
 610	39	Sala de espera CTA	Recepção		t	Hall dos consultórios do CTA equipado com longarinas.	2026-04-28 22:31:07.945241	2026-04-28 22:31:07.945246	3		0	f
 607	39	Consultório 14	Consultório		t		2026-04-28 22:29:21.342892	2026-04-28 15:31:18.031348	2	8815	1	f
 620	32	Sala 10	Sala de Emergência		t		2026-04-29 15:53:22.742141	2026-04-29 15:53:22.742147	8		4	f
@@ -13081,35 +13432,35 @@ COPY public.salas (id, unidade_id, nome, tipo, responsavel, ativo, observacoes, 
 1145	78	Almoxarifado	Almoxarifado		t		2026-10-23 13:48:40.246708	2026-10-23 13:48:40.246708	21		0	f
 1148	17	SALA DE ARQUIVOS	Arquivo de Prontuários		t		2026-10-28 12:29:29.005272	2026-10-28 09:30:05.769824	82		1	f
 1149	17	BANHEIRO FEMININO DE FUNCIONARIOS	Banheiro / Vestiário Feminino de Funcionários		t		2026-10-28 12:31:31.868573	2026-10-28 12:31:31.868573	31		0	f
-5	55	Almoxarifado de Equipamentos	Almoxarifado	\N	t		2026-03-13 08:34:06.362337	2026-10-29 12:23:04.063203	21	\N	0	f
-252	17	ACOLHIMENTO	Consultório	\N	t	SALA 4 ENDEE REALIZADO O ACOLHIMENTO DE ENFERMAGEM	2026-04-25 01:43:20.182022	2026-10-29 12:23:04.063203	2		2	f
-1058	17	SALA DE REUNIÃO	Sala de Reunião	\N	t		2026-06-11 00:41:06.589882	2026-10-29 12:23:04.063203	13		6	f
-1060	17	COORDENAÇÃO	Coordenação	\N	t		2026-06-11 00:42:31.098128	2026-10-29 12:23:04.063203	6		2	f
-1061	17	PÓS-CONSULTA	Pós-consulta	\N	t		2026-06-11 00:43:49.826311	2026-10-29 12:23:04.063203	4		1	f
-1062	17	RECEPÇÃO	Recepção	\N	t		2026-06-11 00:44:28.488498	2026-10-29 12:23:04.063203	3		2	f
-52	17	CONSULTÓRIO EQUIPE II	Consultório	\N	t	SALA 6, CONSULTÓRIO MÉDICO  DA EQUIPE II	2026-03-19 20:49:42.13431	2026-10-29 12:23:04.063203	2		1	f
-1059	17	CONSULTÓRIO 25	Consultório	\N	t	SALA 25	2026-06-11 00:41:51.466879	2026-10-29 12:23:04.063203	2		0	f
-1057	17	CONSULTÓRIO ODONTOLOGICO	Consultório Odontológico	\N	t	SALA 10 E SALA 11	2026-06-11 00:39:22.982199	2026-10-29 12:23:04.063203	5		2	f
-1055	17	CONSULTÓRIO TELEMEDICINA	Consultório Telemedicina	\N	t	SALA 9	2026-06-11 00:36:22.774899	2026-10-29 12:23:04.063203	40		1	f
-1054	17	CONSULTÓRIO GO	Consultório Médico – Ginecologia	\N	t	SALA 8	2026-06-11 00:35:14.608807	2026-10-29 12:23:04.063203	11		2	f
-1056	17	CONSULTÓRIO PEDIATRA	Consultório	\N	t	SALA 14, CONSULTÓRIO DE PEDIATRIA	2026-06-11 00:37:43.923188	2026-10-29 12:23:04.063203	2		1	f
-1144	49	Conforto - CRL	Conforto	\N	t		2026-10-23 13:47:59.184288	2026-10-29 12:23:04.063203	18		5	f
-616	32	Sala 06	Consultório	\N	t	SALA DE EXAME ELETROCARDIOGRAMA	2026-04-29 15:45:24.219473	2026-10-29 12:23:04.063203	2		1	f
-613	32	Sala 01	Acolhimento	\N	t		2026-04-29 15:38:42.671971	2026-10-29 12:23:04.063203	24		1	f
-621	32	Sala 11	Consultório	\N	t	CONSULTÓRIO PEDIÁTRICO	2026-04-29 15:54:30.080212	2026-10-29 12:23:04.063203	2		1	f
-615	32	Sala 05	Consultório de Ginecologia	\N	t		2026-04-29 15:42:28.011427	2026-10-29 12:23:04.063203	11		2	f
-623	32	Sala 13	Consultório de Ginecologia	\N	t		2026-04-29 15:57:05.969223	2026-10-29 12:23:04.063203	11		2	f
-614	32	Sala 04	Consultório	\N	t		2026-04-29 15:41:37.1231	2026-10-29 12:23:04.063203	2		1	f
-635	32	Coordenação	Coordenação	\N	t		2026-04-29 16:17:16.896985	2026-10-29 12:23:04.063203	6		4	f
-618	32	Sala 08	Consultório	\N	t	COLETA DE EXAMES	2026-04-29 15:49:38.220865	2026-10-29 12:23:04.063203	2		6	f
-913	44	SETOR ADMINISTRATIVO	Coordenação	\N	t	COORDENAÇÃO	2026-05-12 18:01:49.616073	2026-10-29 12:23:04.063203	6	1978	1	f
-1116	34	SALA DE ARQUIVO	Administração	\N	t	SEM COMPUTADORES	2026-09-18 20:50:17.038795	2026-10-29 12:23:04.063203	1		0	f
-1142	49	Central de Regulação de Leitos - CRL	Sala da Coordenação / Gestão Administrativa	\N	t		2026-10-23 13:46:28.270054	2026-10-29 12:23:04.063203	6	2513	5	f
-1053	17	CONSULTÓRIO EQUIPE I	Consultório	\N	t	SALA 7, CONSULTÓRIO MÉDICO DA EQUIPE I	2026-06-11 00:33:34.648182	2026-10-29 12:23:04.063203	2		1	f
-1115	34	COORDENAÇÃO	Coordenação	\N	t	01 COMPUTADOR E 01 NOTEBOOK	2026-09-18 20:46:20.367538	2026-10-29 12:23:04.063203	6		1	f
-1143	49	Copa - CRL	Copa de Funcionários	\N	t		2026-10-23 13:47:22.893847	2026-10-29 12:23:04.063203	14		5	f
-689	17	CONSULTÓRIO PAC	Sala do PAC	\N	t	SALA DO PAC ONDE É REALIZADO A PESSAGEM DAS CRIANÇAS E AGENDAMENTO DE CONSULTAS	2026-05-07 15:58:04.43278	2026-10-29 12:23:04.063203	12		1	f
-1052	17	CONSULTÓRIO EQUIPE III	Consultório	\N	t	SALA 5 , CONSULTÓRIO MÉDICO DA EQUIPE III	2026-06-11 00:31:24.464662	2026-10-29 12:23:04.063203	2		1	f
+5	55	Almoxarifado de Equipamentos	Almoxarifado	\N	t		2026-03-13 08:34:06.362337	2026-10-30 11:51:41.839903	21	\N	0	f
+252	17	ACOLHIMENTO	Consultório	\N	t	SALA 4 ENDEE REALIZADO O ACOLHIMENTO DE ENFERMAGEM	2026-04-25 01:43:20.182022	2026-10-30 11:51:41.839903	2		2	f
+1058	17	SALA DE REUNIÃO	Sala de Reunião	\N	t		2026-06-11 00:41:06.589882	2026-10-30 11:51:41.839903	13		6	f
+1060	17	COORDENAÇÃO	Coordenação	\N	t		2026-06-11 00:42:31.098128	2026-10-30 11:51:41.839903	6		2	f
+1061	17	PÓS-CONSULTA	Pós-consulta	\N	t		2026-06-11 00:43:49.826311	2026-10-30 11:51:41.839903	4		1	f
+1062	17	RECEPÇÃO	Recepção	\N	t		2026-06-11 00:44:28.488498	2026-10-30 11:51:41.839903	3		2	f
+52	17	CONSULTÓRIO EQUIPE II	Consultório	\N	t	SALA 6, CONSULTÓRIO MÉDICO  DA EQUIPE II	2026-03-19 20:49:42.13431	2026-10-30 11:51:41.839903	2		1	f
+1059	17	CONSULTÓRIO 25	Consultório	\N	t	SALA 25	2026-06-11 00:41:51.466879	2026-10-30 11:51:41.839903	2		0	f
+1057	17	CONSULTÓRIO ODONTOLOGICO	Consultório Odontológico	\N	t	SALA 10 E SALA 11	2026-06-11 00:39:22.982199	2026-10-30 11:51:41.839903	5		2	f
+1055	17	CONSULTÓRIO TELEMEDICINA	Consultório Telemedicina	\N	t	SALA 9	2026-06-11 00:36:22.774899	2026-10-30 11:51:41.839903	40		1	f
+1054	17	CONSULTÓRIO GO	Consultório Médico – Ginecologia	\N	t	SALA 8	2026-06-11 00:35:14.608807	2026-10-30 11:51:41.839903	11		2	f
+1056	17	CONSULTÓRIO PEDIATRA	Consultório	\N	t	SALA 14, CONSULTÓRIO DE PEDIATRIA	2026-06-11 00:37:43.923188	2026-10-30 11:51:41.839903	2		1	f
+1144	49	Conforto - CRL	Conforto	\N	t		2026-10-23 13:47:59.184288	2026-10-30 11:51:41.839903	18		5	f
+616	32	Sala 06	Consultório	\N	t	SALA DE EXAME ELETROCARDIOGRAMA	2026-04-29 15:45:24.219473	2026-10-30 11:51:41.839903	2		1	f
+613	32	Sala 01	Acolhimento	\N	t		2026-04-29 15:38:42.671971	2026-10-30 11:51:41.839903	24		1	f
+621	32	Sala 11	Consultório	\N	t	CONSULTÓRIO PEDIÁTRICO	2026-04-29 15:54:30.080212	2026-10-30 11:51:41.839903	2		1	f
+615	32	Sala 05	Consultório de Ginecologia	\N	t		2026-04-29 15:42:28.011427	2026-10-30 11:51:41.839903	11		2	f
+623	32	Sala 13	Consultório de Ginecologia	\N	t		2026-04-29 15:57:05.969223	2026-10-30 11:51:41.839903	11		2	f
+614	32	Sala 04	Consultório	\N	t		2026-04-29 15:41:37.1231	2026-10-30 11:51:41.839903	2		1	f
+635	32	Coordenação	Coordenação	\N	t		2026-04-29 16:17:16.896985	2026-10-30 11:51:41.839903	6		4	f
+618	32	Sala 08	Consultório	\N	t	COLETA DE EXAMES	2026-04-29 15:49:38.220865	2026-10-30 11:51:41.839903	2		6	f
+913	44	SETOR ADMINISTRATIVO	Coordenação	\N	t	COORDENAÇÃO	2026-05-12 18:01:49.616073	2026-10-30 11:51:41.839903	6	1978	1	f
+1116	34	SALA DE ARQUIVO	Administração	\N	t	SEM COMPUTADORES	2026-09-18 20:50:17.038795	2026-10-30 11:51:41.839903	1		0	f
+1142	49	Central de Regulação de Leitos - CRL	Sala da Coordenação / Gestão Administrativa	\N	t		2026-10-23 13:46:28.270054	2026-10-30 11:51:41.839903	6	2513	5	f
+1053	17	CONSULTÓRIO EQUIPE I	Consultório	\N	t	SALA 7, CONSULTÓRIO MÉDICO DA EQUIPE I	2026-06-11 00:33:34.648182	2026-10-30 11:51:41.839903	2		1	f
+1115	34	COORDENAÇÃO	Coordenação	\N	t	01 COMPUTADOR E 01 NOTEBOOK	2026-09-18 20:46:20.367538	2026-10-30 11:51:41.839903	6		1	f
+1143	49	Copa - CRL	Copa de Funcionários	\N	t		2026-10-23 13:47:22.893847	2026-10-30 11:51:41.839903	14		5	f
+689	17	CONSULTÓRIO PAC	Sala do PAC	\N	t	SALA DO PAC ONDE É REALIZADO A PESSAGEM DAS CRIANÇAS E AGENDAMENTO DE CONSULTAS	2026-05-07 15:58:04.43278	2026-10-30 11:51:41.839903	12		1	f
+1052	17	CONSULTÓRIO EQUIPE III	Consultório	\N	t	SALA 5 , CONSULTÓRIO MÉDICO DA EQUIPE III	2026-06-11 00:31:24.464662	2026-10-30 11:51:41.839903	2		1	f
 \.
 
 
@@ -13168,27 +13519,29 @@ COPY public.status_de_equipamento (id, codigo, nome, badge_cor, pede_condicao, p
 -- Data for Name: tipos_acao; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.tipos_acao (id, nome, codigo_esus, descricao, ativo, ordem, criado_em, atualizado_em) FROM stdin;
-1	Alimentação saudável	1	\N	t	1	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-2	Alimentação complementar saudável	32	\N	t	2	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-3	Amamentação	31	\N	t	3	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-4	Agravos e doenças negligenciadas	19	\N	t	4	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-5	Ações de combate ao Aedes aegypti	29	\N	t	5	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-6	Autocuidado de pessoas com doenças crônicas	4	\N	t	6	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-7	Cidadania e direitos humanos	5	\N	t	7	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-8	Envelhecimento / climatério / andropausa	8	\N	t	8	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-9	Outros	21	\N	t	9	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-10	Plantas medicinais / fitoterapia	10	\N	t	10	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-11	Prevenção ao uso de álcool, tabaco e outras drogas	7	\N	t	11	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-12	Prevenção da violência e cultura da paz	13	\N	t	12	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-13	Saúde ambiental	14	\N	t	13	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-14	Saúde bucal	15	\N	t	14	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-15	Saúde do trabalhador	6	\N	t	15	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-16	Saúde mental	16	\N	t	16	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-17	Saúde sexual e reprodutiva	17	\N	t	17	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-18	Semana saúde na escola	18	\N	t	18	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751
-19	Saúde da Mulher	\N	\N	t	0	2026-10-12 12:55:59.677343	2026-10-12 12:55:59.677343
-20	Saúde Digital	\N	\N	t	0	2026-10-19 20:19:48.968378	2026-10-19 20:19:48.968378
+COPY public.tipos_acao (id, nome, codigo_esus, descricao, ativo, ordem, criado_em, atualizado_em, campanha_id) FROM stdin;
+1	Alimentação saudável	1	\N	t	1	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+2	Alimentação complementar saudável	32	\N	t	2	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+3	Amamentação	31	\N	t	3	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+4	Agravos e doenças negligenciadas	19	\N	t	4	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+5	Ações de combate ao Aedes aegypti	29	\N	t	5	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+6	Autocuidado de pessoas com doenças crônicas	4	\N	t	6	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+7	Cidadania e direitos humanos	5	\N	t	7	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+8	Envelhecimento / climatério / andropausa	8	\N	t	8	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+9	Outros	21	\N	t	9	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+10	Plantas medicinais / fitoterapia	10	\N	t	10	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+11	Prevenção ao uso de álcool, tabaco e outras drogas	7	\N	t	11	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+12	Prevenção da violência e cultura da paz	13	\N	t	12	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+13	Saúde ambiental	14	\N	t	13	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+14	Saúde bucal	15	\N	t	14	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+15	Saúde do trabalhador	6	\N	t	15	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+16	Saúde mental	16	\N	t	16	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+17	Saúde sexual e reprodutiva	17	\N	t	17	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+18	Semana saúde na escola	18	\N	t	18	2026-09-14 16:49:34.70751	2026-09-14 16:49:34.70751	\N
+20	Saúde Digital	\N	\N	t	0	2026-10-19 20:19:48.968378	2026-10-19 20:19:48.968378	\N
+21	Saúde adulto	\N	\N	t	0	2026-10-29 16:15:02.702103	2026-10-29 16:15:02.702103	\N
+19	Saúde da Mulher	\N	\N	t	0	2026-10-12 12:55:59.677343	2026-10-29 16:51:48.584269	16
+37	Outubro Rosa	\N	Câncer de mama. Mês instituído pela Lei nº 13.733/2018. O dia mundial é 19 de outubro.	f	210	2026-10-29 16:31:27.116981	2026-10-29 17:15:21.184174	16
 \.
 
 
@@ -13762,7 +14115,7 @@ COPY public.usuario_unidade (id, usuario_id, unidade_id, papel, ativo, vinculado
 --
 
 COPY public.usuarios (id, nome, email, senha_hash, perfil, ativo, criado_em, atualizado_em, whatsapp, cpf, cns, sexo, data_nasc, nome_mae, nome_pai, nacionalidade, uf_nasc, municipio_nasc, dt_entrada_pais, pais_origem, rg, rg_uf, rg_orgao, rg_emissao, escolaridade, end_logradouro, end_numero, end_complemento, end_bairro, end_municipio, end_uf, end_cep, telefone, reg_conselho, orgao_emissor, vinculo, tipo_vinculo, carga_horaria, cbo, especialidade_residencia, dt_entrada_unidade, matricula, frequenta_escola, foto_perfil, unidade_padrao_id) FROM stdin;
-474	Administrador	admin@localhost	scrypt:32768:8:1$IvCwR1R1SHolaKik$72cae1f74a28a37bf96f45f6ec4c7f80739b23129aa9409b599722e2770a7d5673957d5178bea8f67b39f44f27828b6215dbcc47e471c9c3ae590a2b3d47ae9e	administrador	t	2026-10-29 12:23:04.063203	2026-10-29 12:23:04.063203	\N	\N	\N	\N	\N	\N	\N	brasileira	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
+474	Administrador	admin@localhost	scrypt:32768:8:1$FGida8a3ClVFtOx3$ff6dfbe785afe98a46ac11fa73de5455436a00d3370d793f2c8294f44a5ff7dd968f1641c2c600e2f293a08a038679b430a3acfb6a4509c73ea6d01d2671ffc3	administrador	t	2026-10-30 11:51:41.839903	2026-10-30 11:51:41.839903	\N	\N	\N	\N	\N	\N	\N	brasileira	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -15548,21 +15901,21 @@ SELECT pg_catalog.setval('public.acao_local_curtidas_id_seq', 1, false);
 -- Name: acao_local_fotos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.acao_local_fotos_id_seq', 17, true);
+SELECT pg_catalog.setval('public.acao_local_fotos_id_seq', 20, true);
 
 
 --
 -- Name: acoes_locais_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.acoes_locais_id_seq', 12, true);
+SELECT pg_catalog.setval('public.acoes_locais_id_seq', 14, true);
 
 
 --
 -- Name: acoes_plano_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.acoes_plano_id_seq', 388, true);
+SELECT pg_catalog.setval('public.acoes_plano_id_seq', 394, true);
 
 
 --
@@ -15744,7 +16097,7 @@ SELECT pg_catalog.setval('public.empresas_contratadas_id_seq', 3, true);
 -- Name: equipamento_campo_valores_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.equipamento_campo_valores_id_seq', 1473, true);
+SELECT pg_catalog.setval('public.equipamento_campo_valores_id_seq', 1583, true);
 
 
 --
@@ -15765,7 +16118,7 @@ SELECT pg_catalog.setval('public.equipamento_usuarios_id_seq', 1, false);
 -- Name: equipamentos_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.equipamentos_id_seq', 2684, true);
+SELECT pg_catalog.setval('public.equipamentos_id_seq', 2815, true);
 
 
 --
@@ -15814,7 +16167,7 @@ SELECT pg_catalog.setval('public.freq_lancamentos_id_seq', 1, false);
 -- Name: historico_equipamento_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.historico_equipamento_id_seq', 141, true);
+SELECT pg_catalog.setval('public.historico_equipamento_id_seq', 143, true);
 
 
 --
@@ -15849,7 +16202,7 @@ SELECT pg_catalog.setval('public.links_uteis_id_seq', 40, true);
 -- Name: marcas_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.marcas_id_seq', 411, true);
+SELECT pg_catalog.setval('public.marcas_id_seq', 415, true);
 
 
 --
@@ -15857,6 +16210,13 @@ SELECT pg_catalog.setval('public.marcas_id_seq', 411, true);
 --
 
 SELECT pg_catalog.setval('public.matriculas_profissionais_id_seq', 1, false);
+
+
+--
+-- Name: metabase_paineis_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
+--
+
+SELECT pg_catalog.setval('public.metabase_paineis_id_seq', 1, true);
 
 
 --
@@ -16017,7 +16377,7 @@ SELECT pg_catalog.setval('public.status_de_equipamento_id_seq', 5, true);
 -- Name: tipos_acao_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.tipos_acao_id_seq', 20, true);
+SELECT pg_catalog.setval('public.tipos_acao_id_seq', 40, true);
 
 
 --
@@ -16628,6 +16988,22 @@ ALTER TABLE ONLY public.marcas
 
 ALTER TABLE ONLY public.matriculas_profissionais
     ADD CONSTRAINT matriculas_profissionais_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: metabase_config metabase_config_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metabase_config
+    ADD CONSTRAINT metabase_config_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: metabase_paineis metabase_paineis_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metabase_paineis
+    ADD CONSTRAINT metabase_paineis_pkey PRIMARY KEY (id);
 
 
 --
@@ -18537,6 +18913,14 @@ ALTER TABLE ONLY public.matriculas_profissionais
 
 
 --
+-- Name: metabase_paineis metabase_paineis_criado_por_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.metabase_paineis
+    ADD CONSTRAINT metabase_paineis_criado_por_fkey FOREIGN KEY (criado_por) REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
+
+--
 -- Name: modelos modelos_marca_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -18985,6 +19369,14 @@ ALTER TABLE ONLY public.solicitacoes_vinculo
 
 
 --
+-- Name: tipos_acao tipos_acao_campanha_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tipos_acao
+    ADD CONSTRAINT tipos_acao_campanha_id_fkey FOREIGN KEY (campanha_id) REFERENCES public.campanhas_saude(id) ON DELETE SET NULL;
+
+
+--
 -- Name: tipos_equipamento tipos_equipamento_categoria_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -19196,5 +19588,4 @@ ALTER TABLE ONLY sueq.emendas
 -- PostgreSQL database dump complete
 --
 
-\unrestrict qzqhVBT0YJKTtvsCtM28ZLteO3aqDnVOUx7tEpP2wFUAyGA8zo4DECg0PdEqsBN
 

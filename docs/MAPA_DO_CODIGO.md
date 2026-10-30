@@ -31,6 +31,7 @@ Registro: `app/__init__.py` (`create_app`).
 | `usuarios` | `/usuarios` | `app/routes/usuarios.py` | Usuários (quem tem permissão) |
 | `configuracoes` | `/configuracoes` | `app/routes/configuracoes.py` | Tipos (sala com kit padrão, equipamento com catálogo ITEM), marcas, perfis, feriados, CBOs e funções do RH × CBO, catálogos NSP, auditoria |
 | `links` | `/links` | `app/routes/links.py` | Links úteis: `/links` é interno para quem está logado e público para quem não está; `/links/publico` é sempre público; administração; QR code por link |
+| `metabase` | `/metabase` | `app/routes/metabase.py` | Painéis incorporados, apresentação e pedido de acesso. Configuração em `/metabase/configurar`. Ver [METABASE.md](METABASE.md) |
 | `notificacoes` | `/notificacoes` | `app/routes/notificacoes.py` | Sino (JSON) |
 
 Redirects legados (continuam funcionando): `/unidades` → `/configuracoes/unidades`, `/predios` → `/configuracoes/predios`, URLs antigas do mapa → `/mapa-da-saude`.
@@ -80,6 +81,7 @@ Pasta `app/models/`. Os mais centrais:
 | Transferência / lojinha | `transferencia.py` |
 | NSP | `nsp.py` |
 | Permissões | `perfil_permissao.py` |
+| Metabase | `metabase.py` (`MetabaseConfig`, `MetabasePainel`) |
 | Auditoria | `auditoria.py` |
 | SUEQ | `sueq.py` (tabelas no schema PostgreSQL `sueq`) |
 

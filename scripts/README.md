@@ -5,6 +5,7 @@ Rode na **raiz** do repositório, com venv e `.env`. Nenhum script deve receber 
 | Script | Uso |
 |---|---|
 | `scripts/clone_banco.py` | `pg_dump` → `database/sigus_backup_*.sql` (gitignore) |
+| `scripts/gerar_dump_inicial.py` | Base pública `database/sigus_inicial.sql`: sem pessoas, sem chave do Metabase, sem o token `\restrict` |
 | `scripts/restaura_banco.py` | Restaura ZIP ou SQL em `database/` no banco do `.env` |
 | `scripts/reset_usuario_sigus.py` | Troca senha e/ou perfil. Ferramenta correta para admin perdido |
 | `scripts/pub_estante_sigus.py` | Publica/atualiza o livro de manuais no BookStack (capítulos gerais). `--somente-noticias` atualiza dashboard, comunicados e mural. |

@@ -30,6 +30,7 @@ Leia na ordem se estiver assumindo o sistema. Depois use a tabela como mapa.
 | [AGENDA_E_PLANEJAMENTOS.md](AGENDA_E_PLANEJAMENTOS.md) | Agenda estilo Google, ausência/férias, arrastar eventos, prazos editáveis com histórico |
 | [PADRAO_SALAS_EQUIPAMENTOS.md](PADRAO_SALAS_EQUIPAMENTOS.md) | Ambientes padrão (AMB), catálogo de itens (ITEM), kit por tipo de sala, importação da planilha do Planejamento e relatório de aderência |
 | [FREQUENCIA_RH.md](FREQUENCIA_RH.md) | Importar a planilha de frequência, Meus apontamentos, banco de horas, horas extras e de-para função × CBO |
+| [METABASE.md](METABASE.md) | Painéis do Metabase no menu, apresentação, pedido de acesso e chave que não entra no Git |
 | [INSTALACAO.md](INSTALACAO.md) | Clone, banco vazio, primeiro admin, identidade |
 | [migrations/README.md](../migrations/README.md) | Scripts idempotentes de schema |
 | [scripts/README.md](../scripts/README.md) | Dump, restore, Estante, SUEQ, reset de senha |
@@ -44,7 +45,7 @@ sigus/
 ├── web.config           # IIS / HttpPlatformHandler
 ├── requirements.txt
 ├── .env.example         # Modelo — copiar para .env (nunca versionar o .env)
-├── database/            # Dump ZIP de desenvolvimento; dumps .sql ficam fora do Git
+├── database/            # sigus_inicial.sql (base pública, sem pessoas e sem chave); backups ficam fora do Git
 ├── docs/                # Esta documentação
 ├── migrations/          # Scripts Python one-shot (não é Alembic)
 ├── scripts/             # Operação: dump, restore, publicações

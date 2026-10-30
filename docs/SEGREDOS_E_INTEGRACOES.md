@@ -22,6 +22,8 @@ Modelo versionado: `.env.example`. Cópia real: `.env` (gitignore).
 | `SIS_AMBIENTE` | NSP | `producao` ou o que o robô esperar |
 | `SIS_SSL_VERIFY` | NSP | `true` em produção |
 | `ESTANTE_EMAIL` / `ESTANTE_SENHA` | Só na máquina que publica manuais | BookStack; não precisa existir no IIS |
+| `METABASE_SITE_URL` | Não | URL https do Metabase daquela instalação. Se vazia, vale o que estiver em Configurações → Metabase |
+| `METABASE_SECRET_KEY` | Não | Chave de incorporação. O `add_metabase.py` só grava se o campo no banco ainda estiver vazio. Não versionar |
 
 `SECRET_KEY` default insegura em `config.py` (`sigus-dev-key-insegura`) — **só** desenvolvimento. Produção sem chave própria = sessão previsível.
 
@@ -34,6 +36,10 @@ Não commitar `SIS_SENHA`. Não logar CPF/CNS em texto corrido.
 ## Manuais (BookStack, opcional)
 
 Se a instalação publicar manuais num BookStack, a URL e o login ficam no ambiente da máquina que publica (`ESTANTE_BASE`, `ESTANTE_EMAIL`, `ESTANTE_SENHA`, `SIGUS_PUBLIC_URL`). Scripts: `scripts/pub_estante_sigus.py` e `scripts/pub_estante_patrimonio.py`. Ver [MANUAIS_ESTANTE.md](MANUAIS_ESTANTE.md). Nada disso entra no Git.
+
+## Metabase
+
+A chave de incorporação fica no `.env` da máquina ou na tabela `metabase_config`. O navegador só recebe o token assinado. `database/sigus_inicial.sql` pode trazer o dashboard de exemplo, com `secret_key` vazio. Quem for usar cola a chave da própria instalação. Detalhe: [METABASE.md](METABASE.md).
 
 ## Admin da aplicação
 

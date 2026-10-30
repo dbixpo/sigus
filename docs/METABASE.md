@@ -53,7 +53,7 @@ Depois do `git pull`, com backup do banco:
 
 Os dois scripts de banco são idempotentes. O de permissão só cria a linha que ainda não existe.
 
-A chave: ou `METABASE_SECRET_KEY` no `.env` **daquela** máquina antes de rodar `add_metabase.py` (ele só preenche se o banco estiver vazio), ou colar em Configurações → Metabase depois. Não commitar o `.env`.
+A chave: ou `METABASE_SECRET_KEY` no `.env` **daquela** máquina antes de rodar `add_metabase.py` (ele só preenche se o banco estiver vazio), ou colar em Configurações → Metabase depois. Não commitar o `.env`. O `database/sigus_inicial.sql` deixa essa chave vazia.
 
 Reinicie só o processo do SIGUS. Não use `iisreset` se o IIS atende outro site.
 

@@ -69,6 +69,8 @@ $env:SIGUS_ADMIN_SENHA='uma-senha-forte'
 
 Em instalação já povoada, para trocar senha: `scripts/reset_usuario_sigus.py`.
 
+Quem quiser a base que já vem no Git (unidades, catálogos e o dashboard 580, sem pessoas e sem a chave do Metabase), em vez do banco vazio: crie o `sigus` vazio e rode `python scripts/restaura_banco.py`. Num clone novo ele usa `database/sigus_inicial.sql`. Entre com `admin@localhost` / `sigus-inicial` e troque a senha. A chave do Metabase se cola em Configurações → Metabase. Não use esse restore por cima de um banco que já atende gente.
+
 ---
 
 ## 3. Primeiro acesso

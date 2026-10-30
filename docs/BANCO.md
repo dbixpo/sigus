@@ -14,7 +14,7 @@ Schema principal: **`public`** (SIGUS). Módulo de emendas/licitações do Patri
 | Base pública, sem pessoas | `python scripts/gerar_dump_inicial.py` | Gera `database/sigus_inicial.sql` — este arquivo **vai** no Git |
 | Restaurar | `python scripts/restaura_banco.py` | Usa o backup local, se existir; senão `database/sigus_inicial.sql` |
 
-`database/sigus_inicial.sql` é a base para quem começa: unidades, salas, equipamentos, catálogos e um administrador só (`admin@localhost` / `sigus-inicial`). Não tem usuário real, CPF, e-mail de pessoa nem senha de quem usa o sistema. Troque essa senha no primeiro acesso.
+`database/sigus_inicial.sql` é a base para quem começa: unidades, salas, equipamentos, catálogos, o dashboard 580 do Metabase e um administrador só (`admin@localhost` / `sigus-inicial`). Não tem usuário real, CPF, e-mail de pessoa, senha de quem usa o sistema nem a chave de incorporação do Metabase. O token `\restrict` que o `pg_dump` recente grava também sai do arquivo. Troque a senha do administrador no primeiro acesso e cole a chave em Configurações → Metabase, se for usar os painéis.
 
 Os outros dumps **não** entram no Git. Backup de cada instalação é da equipe que opera aquele servidor. **Não** commitar dump com gente. **Não** restaurar um dump em cima de um banco que já atende gente sem cópia prévia.
 

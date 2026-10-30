@@ -2,7 +2,7 @@
 
 **Sistema Integrado de Gestão das Unidades de Saúde.** Software livre de **Diego Bispo Fernandes** ([dbixpo](https://github.com/dbixpo)), licença [MIT](LICENSE).
 
-O SIGUS é a gestão da unidade: patrimônio, chamados, planejamentos, agenda, pessoas, contratos, emendas e Segurança do Paciente. **Não é prontuário.** O atendimento clínico continua no sistema clínico da rede.
+O SIGUS é a gestão da unidade: patrimônio, chamados, planejamentos, agenda, pessoas, contratos, emendas, Segurança do Paciente e painéis do Metabase. **Não é prontuário.** O atendimento clínico continua no sistema clínico da rede.
 
 | | |
 |---|---|
@@ -57,7 +57,17 @@ $env:SIGUS_ADMIN_SENHA = "uma-senha-longa"
 
 Abra **http://localhost:5001/sigus/**.
 
-Identidade da instalação (nome da secretaria, município, logos) fica em Configurações, gravada no banco local. O código não traz uma instalação pronta.
+Identidade da instalação (nome da secretaria, município, logos) fica em Configurações, gravada no banco local.
+
+Base pronta, sem gente e sem senha de servidor: o arquivo `database/sigus_inicial.sql` traz unidades, catálogos e o dashboard 580 do Metabase, com a chave de incorporação vazia. Num clone novo, `scripts/restaura_banco.py` usa esse arquivo (um `sigus_backup_*.sql` local, se existir, tem prioridade e **não** vai para o Git).
+
+```powershell
+psql -U postgres -c "CREATE DATABASE sigus;"
+.\venv\Scripts\python.exe scripts\restaura_banco.py
+.\venv\Scripts\python.exe run.py
+```
+
+Entre com `admin@localhost` / `sigus-inicial` e troque a senha. Para os painéis, cole a chave em Configurações → Metabase. Não restaure esse arquivo por cima de um banco que já atende gente.
 
 Se você tiver um dump **seu**, feito de propósito para desenvolvimento e sem obrigação de sigilo que impeça tê-lo nesta máquina:
 
@@ -85,6 +95,7 @@ A pasta [docs/](docs/00_INDICE.md) é o manual para quem for manter o sistema.
 | Receber o sistema (checklist) | [docs/CHECKLIST_TRANSFERENCIA.md](docs/CHECKLIST_TRANSFERENCIA.md) |
 | Senhas e integrações | [docs/SEGREDOS_E_INTEGRACOES.md](docs/SEGREDOS_E_INTEGRACOES.md) |
 | Cores e logo | [docs/IDENTIDADE_VISUAL.md](docs/IDENTIDADE_VISUAL.md) |
+| Painéis do Metabase | [docs/METABASE.md](docs/METABASE.md) |
 
 Como alterar o código: [CONTRIBUTING.md](CONTRIBUTING.md).
 

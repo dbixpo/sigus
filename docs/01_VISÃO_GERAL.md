@@ -1,6 +1,6 @@
 # Visão Geral do SIGUS
 
-O **SIGUS** (Sistema Integrado de Gestão das Unidades de Saúde) é o software livre de **Diego Bispo Fernandes** ([dbixpo](https://github.com/dbixpo)), licença MIT. Cobre patrimônio, chamados, pessoas, contratos, agenda, planejamentos e Segurança do Paciente.
+O **SIGUS** (Sistema Integrado de Gestão das Unidades de Saúde) é o software livre de **Diego Bispo Fernandes** ([dbixpo](https://github.com/dbixpo)), licença MIT. Cobre patrimônio, chamados, pessoas, contratos, agenda, planejamentos, Segurança do Paciente e os painéis do Metabase.
 
 Ele **não é prontuário**. Consulta, vacina e guia continuam no sistema clínico da rede. O SIGUS cuida do que faz a unidade funcionar. Nome da secretaria, município e logos ficam na identidade da instalação (banco), não no código.
 
@@ -35,6 +35,7 @@ Documentação técnica: [00_INDICE.md](00_INDICE.md). Licença: [LICENSE](../LI
 - **Agenda** — Estilo Google: compromissos, períodos e reuniões, arrastar para remarcar, reserva de veículos e de salas de reunião, prazos dos planejamentos e feriados municipais
 - **Segurança do Paciente** — Fluxo do Núcleo (SNI-SGQSP): qualquer pessoa notifica, com ou sem login e de forma anônima; o Núcleo qualifica e encaminha às comissões das unidades; protocolo `SP-AAAA-XXXXXX` ([SEGURANCA_PACIENTE.md](SEGURANCA_PACIENTE.md))
 - **Links úteis** — Lista com busca, versão pública sem login e QR code para baixar em cada link
+- **Metabase** — Painéis incorporados no menu, visíveis conforme perfil, tipo de unidade e CBO. A apresentação troca sozinha; a chave de incorporação fica só na instalação ([METABASE.md](METABASE.md))
 - **Relatórios** — Inventário, salas, contratos, NSP, mapa da saúde (com acesso público e QR code), aniversariantes…
 
 ### Recursos humanos

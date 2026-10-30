@@ -4,8 +4,9 @@
 Gera database/sigus_inicial.sql a partir do banco local.
 
 Copia o banco, apaga pessoas (usuários, CPF, e-mail, senha, RH, frequência,
-solicitações, fichas, NSP, chamados) e deixa um administrador genérico:
-admin@localhost / sigus-inicial.
+solicitações, fichas, NSP, chamados), esvazia a chave do Metabase e deixa
+um administrador genérico: admin@localhost / sigus-inicial.
+O token \\restrict do pg_dump não entra no arquivo.
 
 Só roda se a DATABASE_URL for localhost. Não altera o banco sigus.
 """
@@ -158,6 +159,7 @@ def main():
         _apagar_pessoas(conn)
         _limpar_texto(conn, segredos)
         _contato_avulso(conn)
+        _limpar_credenciais(conn)
         _criar_admin(conn)
         conn.execute(text('DELETE FROM usuarios WHERE email <> :e'), {'e': EMAIL_ADMIN})
     with destino.connect() as conn:
@@ -191,6 +193,7 @@ def main():
         print('  [ERRO] pg_dump da base inicial falhou.')
         sys.exit(1)
 
+    _tirar_restrict(DESTINO)
     sobrou = _vazamento(DESTINO, segredos)
     with admin.connect() as conn:
         conn.execute(text(
@@ -254,6 +257,11 @@ def _coletar_segredos(conn):
             SELECT nome_afetado FROM nsp_ocorrencias
             WHERE nome_afetado IS NOT NULL AND length(nome_afetado) >= 10
               AND position(' ' in nome_afetado) > 0
+        """)
+    if conn.execute(text("SELECT to_regclass('public.metabase_config')")).scalar():
+        add("""
+            SELECT secret_key FROM metabase_config
+            WHERE secret_key IS NOT NULL AND secret_key <> ''
         """)
     return valores
 
@@ -363,6 +371,24 @@ def _contato_avulso(conn):
                SET fiscalizado_por = NULL
              WHERE fiscalizado_por IS NOT NULL
         '''))
+
+
+def _limpar_credenciais(conn):
+    """Tira segredo de instalação. A estrutura do Metabase fica; a chave não."""
+    if conn.execute(text("SELECT to_regclass('public.metabase_config')")).scalar():
+        conn.execute(text("UPDATE metabase_config SET secret_key = ''"))
+
+
+def _tirar_restrict(caminho):
+    """O pg_dump 17 grava um token \\restrict que não é senha do banco e não vai para o Git."""
+    with open(caminho, encoding='utf-8', newline='') as arquivo:
+        linhas = arquivo.readlines()
+    limpas = [
+        linha for linha in linhas
+        if not linha.startswith('\\restrict ') and not linha.startswith('\\unrestrict ')
+    ]
+    with open(caminho, 'w', encoding='utf-8', newline='\n') as arquivo:
+        arquivo.writelines(limpas)
 
 
 def _criar_admin(conn):
